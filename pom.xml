@@ -52,6 +52,17 @@
         </dependency>
 
         <!--
+            Spring Security: authentication foundation.
+            Provides the servlet filter chain, form login, session-based authentication
+            and the password encoders (BCrypt). The version is managed by Spring Boot's
+            dependency management (spring-boot-dependencies).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!--
             Microsoft JDBC Driver for Microsoft SQL Server.
             The version is managed by Spring Boot's dependency management
             (spring-boot-dependencies), so no explicit version is needed here.
@@ -67,6 +78,18 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!--
+            Spring Security Test: MockMvc request builders/post-processors for
+            form login, CSRF and authenticated-session tests.
+            The version is managed by Spring Boot's dependency management
+            (spring-boot-dependencies -> Spring Security ${spring-security.version}).
+        -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
