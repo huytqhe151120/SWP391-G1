@@ -17,20 +17,15 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 /**
- * Verifies the minimal application error handling (Phase 2):
- * the 404 status code for unknown URLs and the user-friendly 404 page rendered
- * by Spring Boot's normal error handling (the {@code error/404} Thymeleaf
- * template, reachable at {@code /error}).
+ * Verifies the 404 error handling: unknown URLs return 404 and the
+ * user-friendly page renders through Spring Boot's normal error handling.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ErrorHandlingTests {
 
-    /**
-     * Standard servlet request attribute used by Spring Boot's error handling to
-     * communicate the error status code (see {@code jakarta.servlet.error.*}).
-     */
+    // Standard servlet attribute that carries the error status code.
     private static final String SERVLET_ERROR_STATUS_CODE_ATTRIBUTE = "jakarta.servlet.error.status_code";
 
     private static final String DEV_PASSWORD = "admin123";

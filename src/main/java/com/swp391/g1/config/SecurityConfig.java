@@ -18,35 +18,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Spring Security configuration for the v1.0 authentication foundation.
- *
- * <p>The account source is intentionally a temporary in-memory
- * {@link UserDetailsService} because the business User/Account model has not
- * been finalized yet - there is deliberately no entity, table or repository.
- * The development credentials are configuration-backed
- * ({@code app.auth.dev-account.*}); the password is stored as a BCrypt hash
- * and is never compared as plain text. This placeholder must be replaced by
- * the final business account store in a later phase.
- */
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    /**
-     * BCrypt encoder used to verify the development account credentials.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     /**
-     * Temporary in-memory {@link UserDetailsService} backed by configuration.
-     *
-     * @param devUsername     configured development username
-     * @param devPasswordHash configured BCrypt-encoded development password
-     * @param devRoles        configured authorities (kept minimal; no roles in v1.0)
+     * Temporary account source until the business account model is finalized.
      */
     @Bean
     public UserDetailsService userDetailsService(
@@ -56,10 +39,6 @@ public class SecurityConfig {
         return new InMemoryDevUserDetails(devUsername, devPasswordHash, devRoles);
     }
 
-    /**
-     * Builds the security filter chain: URL-level access rules, form login and
-     * logout. CSRF stays enabled (default) - it is never disabled.
-     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -77,10 +56,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Temporary single-account {@link UserDetailsService} until the business
-     * account model is finalized.
-     */
     private static final class InMemoryDevUserDetails implements UserDetailsService {
 
         private final String username;
@@ -98,9 +73,6 @@ public class SecurityConfig {
             if (!this.username.equals(username)) {
                 throw new UsernameNotFoundException("No such user: " + username);
             }
-            // The configured value is the pre-encoded BCrypt hash; the
-            // DaoAuthenticationProvider verifies it with the BCrypt encoder, so
-            // plain-text passwords are never stored.
             return User.withUsername(this.username)
                     .password(this.passwordHash)
                     .authorities(this.authorities)

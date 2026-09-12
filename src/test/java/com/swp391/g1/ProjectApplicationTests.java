@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * Verifies that the entire Spring application context can be loaded.
- *
- * The context starts WITHOUT a live database because the Hibernate dialect is
- * configured explicitly and ddl-auto is "none" (see application.properties).
+ * Verifies the full application context loads without a live database.
  */
 @SpringBootTest
 class ProjectApplicationTests {

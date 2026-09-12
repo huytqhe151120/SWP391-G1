@@ -22,20 +22,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 /**
- * MockMvc integration tests for the v1.0 authentication foundation.
+ * MockMvc integration tests for the authentication flow.
  *
- * <p>The full Spring context (with the real Spring Security filter chain, CSRF
- * enabled) is booted, so these tests assert real HTTP-level behavior. The
- * {@code test} profile excludes the JPA/DataSource auto-configurations, so no
- * SQL Server is required. Credentials come from the configuration-backed v1.0
- * development account.
+ * <p>Booted with the {@code test} profile so no SQL Server is required.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AuthenticationFlowTests {
 
-    /** Development placeholder password matching the BCrypt hash in application.properties. */
+    /** Plain password for the temporary development account (see application.properties). */
     private static final String DEV_PASSWORD = "admin123";
 
     @Autowired
@@ -89,8 +85,7 @@ class AuthenticationFlowTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?logout"));
 
-        // Session is invalidated by the logout handler; a fresh request is
-        // unauthenticated again and /home redirects to /login.
+        // Session is invalidated, so a fresh request cannot access /home anymore.
         Assertions.assertTrue(session.isInvalid());
         mockMvc.perform(get("/home"))
                 .andExpect(status().is3xxRedirection())
@@ -103,10 +98,6 @@ class AuthenticationFlowTests {
                 .andExpect(status().isForbidden());
     }
 
-    /**
-     * Logs in with the configuration-backed development account and returns the
-     * authenticated session.
-     */
     private MockHttpSession logIn() throws Exception {
         MvcResult result = mockMvc.perform(formLogin().user(this.devUsername).password(DEV_PASSWORD))
                 .andExpect(status().is3xxRedirection())
