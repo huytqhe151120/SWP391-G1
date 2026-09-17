@@ -2,19 +2,14 @@
 
 Common technical skeleton for the SWP391-G1 team project.
 
-The business domain and requirements are **not finalized yet**, so this repository
-contains **no business functionality**: no business entities, controllers, services,
-repositories, DTOs, validation, authentication, or authorization. It provides only the
-shared technical foundation the team will build on.
-
 ## Technology Stack
 
 | Concern     | Technology                           |
 | ----------- | ------------------------------------ |
 | Language    | Java 21                              |
 | Framework   | Spring Boot 3.5.16                   |
-| Web         | Spring MVC                           |
-| View        | Thymeleaf                            |
+| Web         | Jakarta Servlet                      |
+| View        | JSP / JSTL                           |
 | Persistence | Spring Data JPA / Hibernate          |
 | Database    | Microsoft SQL Server                 |
 | JDBC        | Microsoft JDBC Driver (`mssql-jdbc`) |
@@ -28,7 +23,7 @@ Request flow:
 ```text
 Browser
     ↓
-Controller
+Servlet
     ↓
 Service
     ↓
@@ -40,14 +35,23 @@ Hibernate
     ↓
 JDBC
     ↓
-Microsoft SQL Server
+SQL Server
 ```
 
-Thymeleaf is used for server-side rendering: Controller → Model → Thymeleaf → HTML.
+View rendering: Servlet → JSP / JSTL → HTML.
+
+* Servlets are the Controller layer (registered with `@WebServlet`).
+* JSP is the View layer (rendered by the embedded Tomcat Jasper engine).
+* Services contain the business logic.
+* Repositories own the database access.
+* Spring MVC `@Controller` is not used for application controllers.
+* Thymeleaf is not used.
+
+JSP views live under `src/main/webapp/WEB-INF/views/`.
 
 ## Team Conventions
 
-* Controllers remain thin.
+* Controllers (Servlets) remain thin.
 * Business logic belongs in services.
 * Database access belongs in repositories.
 * Prefer constructor injection.
@@ -65,3 +69,5 @@ mvn clean test
 ```bash
 mvn spring-boot:run
 ```
+
+Open http://localhost:8080/home

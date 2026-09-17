@@ -30,10 +30,6 @@ bin/
 # ------------------------------------------------------------------
 # VS Code
 # ------------------------------------------------------------------
-# Local user settings (workspace settings, launch configs with machine
-# paths, etc.) are ignored. If the team later decides to share a specific
-# VS Code file (e.g. .vscode/extensions.json), commit it explicitly:
-#   !.vscode/extensions.json
 .vscode/
 
 # ------------------------------------------------------------------
@@ -46,11 +42,7 @@ desktop.ini
 # ------------------------------------------------------------------
 # Local configuration and secrets
 # ------------------------------------------------------------------
-# Shared configuration templates (application.properties) must be
-# committed. Only local/machine-specific files and real credentials are ignored.
 .env
 .env.*
 application-local.properties
 application-local.yml
-# If the team later wants to commit an .env template, add an exception:
-#   !.env.example

@@ -23,47 +23,44 @@
         <java.version>21</java.version>
     </properties>
 
+    <!-- Web / Servlet / Tomcat -->
     <dependencies>
-        <!--
-            Spring MVC (web layer).
-            Brings Spring MVC controllers, the embedded Tomcat web server,
-            request/data binding and Jackson for (de)serialisation.
-        -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!--
-            Thymeleaf: server-side HTML rendering for Spring MVC.
-        -->
+        <!-- JSP / JSTL -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <scope>provided</scope>
         </dependency>
 
-        <!--
-            Spring Data JPA + Hibernate ORM: persistence layer.
-            Also brings the JDBC infrastructure (DataSource, transaction manager).
-        -->
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Persistence -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!--
-            Microsoft JDBC Driver for Microsoft SQL Server.
-            The version is managed by Spring Boot's dependency management
-            (spring-boot-dependencies), so no explicit version is needed here.
-        -->
+        <!-- Database -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
         </dependency>
 
-        <!--
-            Test stack: JUnit 5 (Jupiter), Spring Boot Test, AssertJ, Mockito.
-        -->
+        <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -72,6 +69,15 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>src/main/webapp</directory>
+            </resource>
+        </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
