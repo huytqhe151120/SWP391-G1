@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home - SWP391-G1</title>
+</head>
+<body>
+<main>
+    <h1>Welcome</h1>
+    <p>You are authenticated.</p>
+
+    <!-- Logout is a POST handled by Spring Security; CSRF stays enabled. -->
+    <form th:action="@{/logout}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+        <button type="submit">Logout</button>
+    </form>
+</main>
+</body>
+</html>
