@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class AuthController {
+    @GetMapping("/")
+    public String landingPage() {
+        return "redirect:/extracurricular-activities";
+    }
+
     @GetMapping("/login")
     public String loginPage(
             @RequestParam(required = false) String error,

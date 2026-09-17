@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" th:content="${_csrf.token}">
+    <meta name="csrf-header" th:content="${_csrf.headerName}">
+    <title>Activity desk | SWP391-G1</title>
+    <link rel="stylesheet" th:href="@{/css/extracurricular-activities.css}">
+</head>
+<body>
+<div class="app-shell">
+    <header class="topbar">
+        <a class="brand" th:href="@{/home}" aria-label="SWP391 home">
+            <span class="brand-mark">G1</span>
+            <span>
+                <strong>Campus pulse</strong>
+                <small>SWP391 · operations</small>
+            </span>
+        </a>
+        <div class="topbar-actions">
+            <span class="live-dot"><i></i> Live workspace</span>
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button class="text-button" type="submit">Sign out</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">PROGRAMME CONTROL / 04</p>
+                <h1>Extracurricular activities</h1>
+                <p class="heading-copy">Shape the semester calendar, keep ownership clear, and track every activity from draft to done.</p>
+            </div>
+            <button class="primary-button" id="open-create" type="button"><span>+</span> New activity</button>
+        </section>
+
+        <section class="summary-grid" aria-label="Activity summary">
+            <article class="summary-card summary-card-accent">
+                <span class="summary-label">Total activities</span>
+                <strong id="total-count">--</strong>
+                <small>Across all semesters</small>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">In progress</span>
+                <strong id="progress-count">--</strong>
+                <small>Currently running</small>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Points issued</span>
+                <strong id="points-count">--</strong>
+                <small>Bonus points planned</small>
+            </article>
+            <article class="summary-card summary-card-warm">
+                <span class="summary-label">Cancelled</span>
+                <strong id="cancelled-count">--</strong>
+                <small>Needs attention</small>
+            </article>
+        </section>
+
+        <section class="workspace-panel">
+            <div class="panel-toolbar">
+                <div>
+                    <h2>Activity register</h2>
+                    <p id="result-count">Loading activity records...</p>
+                </div>
+                <div class="filters">
+                    <label class="search-field">
+                        <span aria-hidden="true">⌕</span>
+                        <input id="search-input" type="search" placeholder="Search code, name, address" autocomplete="off">
+                    </label>
+                    <label class="select-field">
+                        <span class="sr-only">Filter by status</span>
+                        <select id="status-filter">
+                            <option value="">All statuses</option>
+                            <option value="NOT_STARTED">Not started</option>
+                            <option value="IN_PROGRESS">In progress</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                    </label>
+                    <button class="icon-button" id="refresh-button" type="button" title="Refresh activities" aria-label="Refresh activities">↻</button>
+                </div>
+            </div>
+
+            <div id="notice" class="notice" role="status" hidden></div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Activity</th>
+                        <th>Schedule</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Points</th>
+                        <th><span class="sr-only">Actions</span></th>
+                    </tr>
+                    </thead>
+                    <tbody id="activity-table-body"></tbody>
+                </table>
+                <div id="empty-state" class="empty-state" hidden>
+                    <div class="empty-icon">◎</div>
+                    <h3>No activities found</h3>
+                    <p>Adjust your filters or create the first activity for this workspace.</p>
+                    <button class="secondary-button" id="empty-create" type="button">Create activity</button>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="modal-backdrop" id="activity-modal" hidden>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow" id="modal-eyebrow">NEW RECORD</p>
+                <h2 id="modal-title">Create activity</h2>
+            </div>
+            <button class="close-button" id="close-modal" type="button" aria-label="Close dialog">×</button>
+        </div>
+        <form id="activity-form">
+            <div class="form-grid">
+                <label class="form-field">
+                    <span>Activity code <b>*</b></span>
+                    <input name="code" required maxlength="40" placeholder="e.g. ECA-2026-01">
+                </label>
+                <label class="form-field">
+                    <span>Activity name <b>*</b></span>
+                    <input name="name" required maxlength="150" placeholder="Name your activity">
+                </label>
+                <label class="form-field">
+                    <span>Semester ID <b>*</b></span>
+                    <input name="semesterId" type="number" min="1" required placeholder="e.g. 1">
+                </label>
+                <label class="form-field">
+                    <span>Activity type <b>*</b></span>
+                    <input name="activityType" required maxlength="80" placeholder="e.g. Volunteer">
+                </label>
+                <label class="form-field">
+                    <span>Activity status <b>*</b></span>
+                    <select name="activityStatus" required>
+                        <option value="NOT_STARTED">Not started</option>
+                        <option value="IN_PROGRESS">In progress</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </label>
+                <label class="form-field">
+                    <span>Approval status <b>*</b></span>
+                    <input name="approvalStatus" required maxlength="40" value="PENDING" placeholder="e.g. APPROVED">
+                </label>
+                <label class="form-field">
+                    <span>Bonus points <b>*</b></span>
+                    <input name="bonusPoint" type="number" min="0" step="1" required value="0">
+                </label>
+                <label class="form-field">
+                    <span>Penalty points <b>*</b></span>
+                    <input name="penaltyPoint" type="number" min="0" step="1" required value="0">
+                </label>
+                <label class="form-field">
+                    <span>Responsible department ID</span>
+                    <input name="responsibleDepartmentId" type="number" min="1" placeholder="Optional">
+                </label>
+                <label class="form-field">
+                    <span>Responsible staff ID</span>
+                    <input name="responsibleStaffId" type="number" min="1" placeholder="Optional">
+                </label>
+                <label class="form-field">
+                    <span>Partner ID</span>
+                    <input name="partnerId" type="number" min="1" placeholder="Optional">
+                </label>
+                <label class="form-field">
+                    <span>Partner staff ID</span>
+                    <input name="partnerStaffId" type="number" min="1" placeholder="Optional">
+                </label>
+                <label class="form-field form-field-wide">
+                    <span>Address</span>
+                    <input name="address" maxlength="200" placeholder="Where will it take place?">
+                </label>
+                <label class="form-field form-field-wide">
+                    <span>Description</span>
+                    <textarea name="description" rows="3" maxlength="500" placeholder="Add useful context for the team..."></textarea>
+                </label>
+            </div>
+            <div class="modal-footer">
+                <span class="required-note"><b>*</b> Required fields</span>
+                <div class="modal-actions">
+                    <button class="secondary-button" id="cancel-modal" type="button">Cancel</button>
+                    <button class="primary-button" id="save-button" type="submit">Save activity</button>
+                </div>
+            </div>
+        </form>
+    </section>
+</div>
+<script th:src="@{/js/extracurricular-activities.js}"></script>
+</body>
+</html>
