@@ -5,12 +5,12 @@ Common technical skeleton for the SWP391-G1 team project.
 ## Technology Stack
 
 | Concern     | Technology                           |
-| ----------- | ------------------------------------ |
+| ----------- |--------------------------------------|
 | Language    | Java 21                              |
-| Framework   | Spring Boot 3.5.16                   |
+| Framework   | Jakarta EE Web API                   |
 | Web         | Jakarta Servlet                      |
 | View        | JSP / JSTL                           |
-| Persistence | Spring Data JPA / Hibernate          |
+| Persistence | JDBC                                 |
 | Database    | Microsoft SQL Server                 |
 | JDBC        | Microsoft JDBC Driver (`mssql-jdbc`) |
 | Build       | Maven                                |
@@ -27,11 +27,7 @@ Servlet
     ↓
 Service
     ↓
-Repository
-    ↓
-Spring Data JPA
-    ↓
-Hibernate
+DAO
     ↓
 JDBC
     ↓
@@ -41,10 +37,9 @@ SQL Server
 View rendering: Servlet → JSP / JSTL → HTML.
 
 * Servlets are the Controller layer (registered with `@WebServlet`).
-* JSP is the View layer (rendered by the embedded Tomcat Jasper engine).
+* JSP is the View layer and is rendered by the JSP engine provided by Tomcat..
 * Services contain the business logic.
-* Repositories own the database access.
-* Spring MVC `@Controller` is not used for application controllers.
+* DAO classes handle database access.
 * Thymeleaf is not used.
 
 JSP views live under `src/main/webapp/WEB-INF/views/`.
@@ -53,21 +48,20 @@ JSP views live under `src/main/webapp/WEB-INF/views/`.
 
 * Controllers (Servlets) remain thin.
 * Business logic belongs in services.
-* Database access belongs in repositories.
-* Prefer constructor injection.
+* Database access belongs in DAO classes.
 * Use DTOs only when they provide a meaningful boundary.
 * Do not create business classes before requirements exist.
-* Keep `spring.jpa.hibernate.ddl-auto=none`.
 * Do not add dependencies or technologies without a project requirement and team decision.
 
 ## Run
 
 ```bash
 mvn clean test
+Run the web application using Apache Tomcat 10.1.
 ```
 
 ```bash
-mvn spring-boot:run
+Tomcat
 ```
 
 Open http://localhost:8080/home

@@ -5,83 +5,60 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.16</version>
-        <relativePath/>
-    </parent>
-
     <groupId>com.swp391.g1</groupId>
     <artifactId>swp391-g1</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+
     <name>SWP391-G1</name>
-    <description>SWP391 (Group 1) - Common Spring Boot template codebase for the team project.</description>
+    <description>SWP391 (Group 1) - Servlet JSP project</description>
 
     <properties>
-        <!-- Java 21 LTS -->
-        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <!-- Web / Servlet / Tomcat -->
     <dependencies>
+
+        <!-- Servlet API -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- JSP / JSTL -->
         <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-jasper</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>jakarta.servlet.jsp.jstl</groupId>
             <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
-            <scope>provided</scope>
+            <version>3.0.2</version>
         </dependency>
+
         <dependency>
             <groupId>org.glassfish.web</groupId>
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>
-            <scope>provided</scope>
+            <version>3.0.1</version>
         </dependency>
 
-        <!-- Persistence -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <!-- Database -->
+        <!-- SQL Server JDBC -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
+            <version>13.4.0.jre11</version>
         </dependency>
 
-        <!-- Test -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-            <resource>
-                <directory>src/main/webapp</directory>
-            </resource>
-        </resources>
+        <finalName>swp391-g1</finalName>
 
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
             </plugin>
         </plugins>
     </build>
