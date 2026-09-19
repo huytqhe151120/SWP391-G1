@@ -18,6 +18,7 @@ target/
 *.iws
 *.ipr
 out/
+.smarttomcat/
 
 # ------------------------------------------------------------------
 # Eclipse
@@ -44,6 +45,5 @@ desktop.ini
 # ------------------------------------------------------------------
 .env
 .env.*
-!.env.example
 application-local.properties
 application-local.yml

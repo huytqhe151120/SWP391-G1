@@ -5,100 +5,60 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.16</version>
-        <relativePath/>
-    </parent>
-
     <groupId>com.swp391.g1</groupId>
     <artifactId>swp391-g1</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+
     <name>SWP391-G1</name>
-    <description>SWP391 (Group 1) - Common Spring Boot template codebase for the team project.</description>
+    <description>SWP391 (Group 1) - Servlet JSP project</description>
 
     <properties>
-        <!-- Java 21 LTS -->
-        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
-        <!--
-            Spring MVC (web layer).
-            Brings Spring MVC controllers, the embedded Tomcat web server,
-            request/data binding and Jackson for (de)serialisation.
-        -->
+
+        <!-- Servlet API -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>6.0.0</version>
+            <scope>provided</scope>
         </dependency>
 
-        <!--
-            Thymeleaf: server-side HTML rendering for Spring MVC.
-        -->
+        <!-- JSP / JSTL -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>3.0.2</version>
         </dependency>
 
-        <!--
-            Spring Data JPA + Hibernate ORM: persistence layer.
-            Also brings the JDBC infrastructure (DataSource, transaction manager).
-        -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>3.0.1</version>
         </dependency>
 
-        <!--
-            Spring Security: authentication foundation.
-            Provides the servlet filter chain, form login, session-based authentication
-            and the password encoders (BCrypt). The version is managed by Spring Boot's
-            dependency management (spring-boot-dependencies).
-        -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-
-        <!--
-            Microsoft JDBC Driver for Microsoft SQL Server.
-            The version is managed by Spring Boot's dependency management
-            (spring-boot-dependencies), so no explicit version is needed here.
-        -->
+        <!-- SQL Server JDBC -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
+            <version>13.4.0.jre11</version>
         </dependency>
 
-        <!--
-            Test stack: JUnit 5 (Jupiter), Spring Boot Test, AssertJ, Mockito.
-        -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!--
-            Spring Security Test: MockMvc request builders/post-processors for
-            form login, CSRF and authenticated-session tests.
-            The version is managed by Spring Boot's dependency management
-            (spring-boot-dependencies -> Spring Security ${spring-security.version}).
-        -->
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
+        <finalName>swp391-g1</finalName>
+
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
             </plugin>
         </plugins>
     </build>

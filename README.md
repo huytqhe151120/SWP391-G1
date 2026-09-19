@@ -2,119 +2,66 @@
 
 Common technical skeleton for the SWP391-G1 team project.
 
-The business requirements are still being finalized, so the repository currently focuses on the shared technical foundation and basic authentication.
-
 ## Technology Stack
 
-| Concern     | Technology                                      |
-| ----------- | ------------------------------------------------|
-| Language    | Java 21                                         |
-| Framework   | Spring Boot 3.5.16                              |
-| Web         | Spring MVC                                      |
-| View        | Thymeleaf                                       |
-| Security    | Spring Security 6.5.11 (managed by Spring Boot) |
-| Persistence | Spring Data JPA / Hibernate                     |
-| Database    | Microsoft SQL Server                            |
-| JDBC        | Microsoft JDBC Driver (`mssql-jdbc`)            |
-| Build       | Maven                                           |
-| Testing     | JUnit 5 / Mockito                               |
-
-## Current Foundation (v1.0)
-
-* Session-based authentication
-* Form login at /login
-* BCrypt password encoding
-* CSRF protection
-* Protected /home page
-* Logout via POST /logout
-* Basic 404 and 500 error pages
-* Authentication and error-handling tests
-
-## Temporary Development Account
-
-The current authentication uses one temporary in-memory account configured through app.auth.dev-account.*.
-
-Default development account:
-
-Username: admin
-Password: admin123
-
-This account is for development only and will be replaced when the final business account model is available.
-
-Do not use real credentials in the repository.
-
-## Current Scope Limitations
-
-Business features will be added after the project requirements and database model are finalized.
-
-* Business user/account persistence
-* Roles and authorization
-* Registration
-* Password reset
-* Profile management
-* Business modules and workflows
+| Concern     | Technology                           |
+| ----------- |--------------------------------------|
+| Language    | Java 21                              |
+| Framework   | Jakarta EE Web API                   |
+| Web         | Jakarta Servlet                      |
+| View        | JSP / JSTL                           |
+| Persistence | JDBC                                 |
+| Database    | Microsoft SQL Server                 |
+| JDBC        | Microsoft JDBC Driver (`mssql-jdbc`) |
+| Build       | Maven                                |
+| Testing     | JUnit 5 / Mockito                    |
 
 ## Architecture
 
-Business request flow
+Request flow:
 
 ```text
 Browser
     ↓
-Controller
+Servlet
     ↓
 Service
     ↓
-Repository
-    ↓
-Spring Data JPA
-    ↓
-Hibernate
+DAO
     ↓
 JDBC
     ↓
-Microsoft SQL Server
+SQL Server
 ```
 
-Authentication flow
+View rendering: Servlet → JSP / JSTL → HTML.
 
-```text
-Browser
-    ↓
-Spring Security
-    ↓
-Controller
-    ↓
-Thymeleaf
-```
+* Servlets are the Controller layer (registered with `@WebServlet`).
+* JSP is the View layer and is rendered by the JSP engine provided by Tomcat..
+* Services contain the business logic.
+* DAO classes handle database access.
+* Thymeleaf is not used.
 
-## Database Convention
-
-`src/main/resources/application.properties` keeps
-
-```properties
-spring.jpa.hibernate.ddl-auto=none
-```
-
-Hibernate must not create, update, or drop the database schema. Database schema changes are managed separately by the team.
+JSP views live under `src/main/webapp/WEB-INF/views/`.
 
 ## Team Conventions
 
-* Keep controllers thin.
-* Put business logic in services.
-* Put database access in repositories.
-* Prefer constructor injection.
+* Controllers (Servlets) remain thin.
+* Business logic belongs in services.
+* Database access belongs in DAO classes.
 * Use DTOs only when they provide a meaningful boundary.
 * Do not create business classes before requirements exist.
-* Keep `spring.jpa.hibernate.ddl-auto=none`.
 * Do not add dependencies or technologies without a project requirement and team decision.
 
 ## Run
 
 ```bash
 mvn clean test
+Run the web application using Apache Tomcat 10.1.
 ```
 
 ```bash
-mvn spring-boot:run
+Tomcat
 ```
+
+Open http://localhost:8080/home
