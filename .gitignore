@@ -47,3 +47,4 @@ desktop.ini
 .env.*
 application-local.properties
 application-local.yml
+src/main/resources/ConnectDB.properties
