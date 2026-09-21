@@ -16,7 +16,6 @@ Common technical skeleton for the SWP391-G1 team project.
 | Build              | Maven                                     |
 | Packaging          | WAR                                       |
 | Server / Container | Apache Tomcat 10.1                        |
-| Local Server Tool  | Smart Tomcat                              |
 | Testing            | Not configured yet                        |
 
 ## Architecture
@@ -83,7 +82,7 @@ DBContext
 
 ## Run
 
-The project is a Maven WAR application and runs on an external Apache Tomcat 10.1 server.
+The project is a standard Maven WAR application that runs on an external Apache Tomcat 10.1 server.
 
 ### Build
 
@@ -93,11 +92,11 @@ The generated WAR file is:
 
 target/swp391-g1.war
 
-### Run with Smart Tomcat
+### Deploy
 
-Deploy the WAR file to your local Tomcat instance and start Tomcat.
+Deploy the generated WAR file to your local Apache Tomcat 10.1 instance and start Tomcat.
 
-The repository does not define a project-wide server port or context path. These depend on your local Tomcat or Smart Tomcat configuration.
+The repository does not define a project-wide server port or context path; these depend on your local Tomcat configuration.
 
 Default Tomcat port: 8080
 Default WAR context path: /swp391-g1
@@ -105,7 +104,3 @@ Default WAR context path: /swp391-g1
 The application URL is typically:
 
 http://localhost:8080/swp391-g1/home
-
-If the application is deployed at the root context:
-
-http://localhost:8080/home
