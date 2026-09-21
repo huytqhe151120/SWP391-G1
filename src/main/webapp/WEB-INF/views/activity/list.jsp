@@ -10,9 +10,12 @@
     <tbody>
     <c:forEach var="activity" items="${activities}">
         <tr>
-            <td><c:out value="${activity.id}"/></td><td><c:out value="${activity.code}"/></td>
-            <td><c:out value="${activity.name}"/></td><td><c:out value="${activity.activityType}"/></td>
-            <td><c:out value="${activity.partnerId}"/></td><td><c:out value="${activity.activityStatus}"/></td>
+            <td><c:out value="${activity.id}"/></td>
+            <td><c:out value="${activity.code}"/></td>
+            <td><c:out value="${activity.name}"/></td>
+            <td><c:out value="${activity.activityType}"/></td>
+            <td><c:out value="${activity.partnerId}"/></td>
+            <td><c:out value="${activity.activityStatus}"/></td>
             <td>
                 <a href="${pageContext.request.contextPath}/activities?action=detail&id=${activity.id}">Chi tiết</a>
                 <a href="${pageContext.request.contextPath}/activities?action=edit&id=${activity.id}">Sửa</a>

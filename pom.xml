@@ -64,6 +64,15 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.tomcat.maven</groupId>
+                <artifactId>tomcat10-maven-plugin</artifactId>
+                <version>10.1.39</version>
+                <configuration>
+                    <path>/swp391-g1</path>
+                    <port>8080</port>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
