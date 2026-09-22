@@ -4,26 +4,28 @@ Common technical skeleton for the SWP391-G1 team project.
 
 ## Technology Stack
 
-| Concern     | Technology                           |
-| ----------- |--------------------------------------|
-| Language    | Java 21                              |
-| Framework   | Jakarta EE Web API                   |
-| Web         | Jakarta Servlet                      |
-| View        | JSP / JSTL                           |
-| Persistence | JDBC                                 |
-| Database    | Microsoft SQL Server                 |
-| JDBC        | Microsoft JDBC Driver (`mssql-jdbc`) |
-| Build       | Maven                                |
-| Testing     | JUnit 5 / Mockito                    |
+| Concern            | Technology                                |
+| ------------------ | ----------------------------------------- |
+| Language           | Java 21                                   |
+| Web                | Jakarta Servlet 6.0                       |
+| View               | JSP / JSTL 3.0                            |
+| Architecture       | Layered / Classic MVC (Servlet + JSP)     |
+| Database           | Microsoft SQL Server / Azure SQL          |
+| Database Access    | JDBC                                      |
+| JDBC Driver        | Microsoft JDBC Driver (`mssql-jdbc`)      |
+| Build              | Maven                                     |
+| Packaging          | WAR                                       |
+| Server / Container | Apache Tomcat 10.1                        |
+| Testing            | Not configured yet                        |
 
 ## Architecture
 
-Request flow:
+The project uses a layered MVC architecture:
 
 ```text
 Browser
     ↓
-Servlet
+Servlet / Controller
     ↓
 Service
     ↓
@@ -34,15 +36,40 @@ JDBC
 SQL Server
 ```
 
-View rendering: Servlet → JSP / JSTL → HTML.
+### Current implemented flow (`HomeServlet`)
 
-* Servlets are the Controller layer (registered with `@WebServlet`).
-* JSP is the View layer and is rendered by the JSP engine provided by Tomcat..
-* Services contain the business logic.
-* DAO classes handle database access.
-* Thymeleaf is not used.
+```text
+GET /home
+    ↓
+HomeServlet  (@WebServlet("/home"), com.swp391.g1.controller)
+    ↓
+RequestDispatcher.forward(...)
+    ↓
+/WEB-INF/views/home/home.jsp
+```
 
-JSP views live under `src/main/webapp/WEB-INF/views/`.
+View rendering: Servlet → JSP → HTML.
+
+* Servlets handle HTTP requests and act as Controllers.
+* JSP handles the View layer.
+* Business logic belongs in Services.
+* Database access belongs in DAOs.
+* JDBC is used for database connectivity.
+* JSP views are stored under src/main/webapp/WEB-INF/views/.
+
+## Database Access
+
+```text
+SQL Server / Azure SQL
+    ↓
+Microsoft JDBC Driver (mssql-jdbc)
+    ↓
+JDBC DriverManager
+    ↓
+DBContext
+```
+
+`DBContext` loads the connection settings from `src/main/resources/ConnectDB.properties` and opens connections with `java.sql.DriverManager`. Database credentials are developer-local and must never be committed to the repository or documented in the README.
 
 ## Team Conventions
 
@@ -55,13 +82,25 @@ JSP views live under `src/main/webapp/WEB-INF/views/`.
 
 ## Run
 
-```bash
-mvn clean test
-Run the web application using Apache Tomcat 10.1.
-```
+The project is a standard Maven WAR application that runs on an external Apache Tomcat 10.1 server.
 
-```bash
-Tomcat
-```
+### Build
 
-Open http://localhost:8080/home
+mvn clean package
+
+The generated WAR file is:
+
+target/swp391-g1.war
+
+### Deploy
+
+Deploy the generated WAR file to your local Apache Tomcat 10.1 instance and start Tomcat.
+
+The repository does not define a project-wide server port or context path; these depend on your local Tomcat configuration.
+
+Default Tomcat port: 8080
+Default WAR context path: /swp391-g1
+
+The application URL is typically:
+
+http://localhost:8080/swp391-g1/home
