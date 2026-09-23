@@ -10,7 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DBContext {
-    protected Connection connection;
+    private Connection connection;
+
     public DBContext() {
         try {
             Properties properties = new Properties();

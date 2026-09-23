@@ -1,20 +1,20 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.model.Question;
-import com.swp391.g1.utils.DBContext; // Hoặc package DBContext của nhóm bạn
+import com.swp391.g1.common.DBContext;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QuestionDAO {
+public class QuestionDAO extends DBContext {
 
     // Task 1: Lấy danh sách câu hỏi ĐÃ ĐƯỢC TRẢ LỜI cho Sinh viên xem
     public List<Question> getAnsweredQuestions() {
         List<Question> list = new ArrayList<>();
         String sql = "SELECT * FROM Question WHERE status = 'ANSWERED' ORDER BY created_at DESC";
         
-        try (Connection conn = DBContext.getConnection();
+       try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             
@@ -39,7 +39,7 @@ public class QuestionDAO {
     public boolean insertQuestion(Question q) {
         String sql = "INSERT INTO Question (title, content, is_anonymous, status, student_id, created_at) VALUES (?, ?, ?, 'PENDING', ?, GETDATE())";
         
-        try (Connection conn = DBContext.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             
             ps.setString(1, q.getTitle());
@@ -59,7 +59,7 @@ public class QuestionDAO {
         List<Question> list = new ArrayList<>();
         String sql = "SELECT * FROM Question WHERE status = 'PENDING' ORDER BY created_at ASC";
         
-        try (Connection conn = DBContext.getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             
