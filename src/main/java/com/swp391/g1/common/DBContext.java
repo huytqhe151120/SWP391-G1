@@ -9,7 +9,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DBContext {
+public class DBContext implements AutoCloseable {
     protected Connection connection;
     public DBContext() {
         try {
@@ -32,5 +32,20 @@ public class DBContext {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    /**
+     * Closes the underlying JDBC connection. DAOs use try-with-resources so
+     * every acquired connection is released after the operation.
+     */
+    @Override
+    public void close() {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException ex) {
+                Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 }
