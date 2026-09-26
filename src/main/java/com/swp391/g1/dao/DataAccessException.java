@@ -1,11 +1,8 @@
 package com.swp391.g1.dao;
 
 /**
- * Wraps SQL / connectivity failures raised by the DAO layer so the service
- * layer does not leak java.sql details to the presentation layer.
- *
- * <p>duplicateKey is true when the underlying SQL exception is a
- * unique-constraint violation (e.g. duplicate username).
+ * Wraps SQL failures from the DAO layer. duplicateKey marks a
+ * unique-constraint violation such as a duplicate username.
  */
 public class DataAccessException extends RuntimeException {
 

@@ -12,10 +12,9 @@ import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.model.AccountTypeRole;
 
 /**
- * Account business rules and orchestration. Owns validation, type/role
- * compatibility checks and the password persistence seam. DAO raises
- * DataAccessException; unexpected failures are translated here into
- * AccountServiceException with a user-safe message.
+ * Business rules for accounts: validation, type/role compatibility and the
+ * status whitelist. DAO failures are translated into AccountServiceException
+ * with a user-safe message.
  */
 public class AccountService {
 
@@ -34,7 +33,7 @@ public class AccountService {
         return accountDAO.findByCriteria(search, type, role, status);
     }
 
-    /** Returns the account (without password) or null when it does not exist. */
+    /** Loads the account without its password; null when it does not exist. */
     public Account getAccountById(int id) {
         return accountDAO.findById(id);
     }
@@ -93,10 +92,7 @@ public class AccountService {
         return result;
     }
 
-    /**
-     * Validates and persists an account update. A blank password keeps the
-     * existing stored password; a non-blank password replaces it.
-     */
+    /** A blank password keeps the stored one; a non-blank password replaces it. */
     public AccountOperationResult updateAccount(Account account) {
         AccountOperationResult result = new AccountOperationResult();
         try {
@@ -115,7 +111,10 @@ public class AccountService {
                 String existingPassword = accountDAO.findPasswordById(account.getId());
                 account.setPassword(existingPassword == null ? "" : existingPassword);
             }
-            accountDAO.update(account);
+            if (!accountDAO.update(account)) {
+                result.addFieldError("id", "Account not found.");
+                return result;
+            }
             result.setSuccess(true);
             result.setAccountId(account.getId());
         } catch (DataAccessException e) {
@@ -129,8 +128,8 @@ public class AccountService {
     }
 
     /**
-     * Changes only the status ("ACTIVE" / "INACTIVE" / "BLOCKED").
-     * message carries a redirect code on failure: "notFound" or "invalidStatus".
+     * Updates only the status. On failure message holds a redirect code:
+     * "notFound" or "invalidStatus".
      */
     public AccountOperationResult changeStatus(int id, String status) {
         AccountOperationResult result = new AccountOperationResult();
@@ -144,7 +143,10 @@ public class AccountService {
                 result.setMessage("invalidStatus");
                 return result;
             }
-            accountDAO.updateStatus(id, normalizedStatus);
+            if (!accountDAO.updateStatus(id, normalizedStatus)) {
+                result.setMessage("notFound");
+                return result;
+            }
             result.setSuccess(true);
             result.setAccountId(id);
         } catch (DataAccessException e) {
@@ -153,9 +155,7 @@ public class AccountService {
         return result;
     }
 
-    // ------------------------------------------------------------------
-    // validation
-    // ------------------------------------------------------------------
+    // Validation
 
     private void validateCreate(Account account, AccountOperationResult result) {
         normalizeRequestFields(account);
@@ -235,11 +235,7 @@ public class AccountService {
         validateDomainReferences(username, type, role, account.getId(), result);
     }
 
-    /**
-     * Domain checks executed only when the corresponding base values are
-     * present. excludeId > 0 means "same username on this account is fine"
-     * (update case).
-     */
+    /** excludeId > 0 means the account keeps its own username (update case). */
     private void validateDomainReferences(String username, String type, String role, int excludeId,
             AccountOperationResult result) {
         if (!isBlank(username)
@@ -270,10 +266,8 @@ public class AccountService {
     }
 
     /**
-     * Persistence seam for passwords. The current MVP stores the password as
-     * provided because no hashing mechanism/dependency exists. The future
-     * Authentication feature must replace this seam with secure hashing
-     * without changing the rest of the Account Management flow.
+     * Password storage seam. The MVP persists the password as provided; hashing
+     * belongs to the future Authentication feature.
      */
     private static String preparePasswordForStorage(String rawPassword) {
         return rawPassword;

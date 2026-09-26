@@ -4,11 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Result of an account create/update/status operation.
- *
- * <p>success=true means the operation was persisted. fieldErrors maps a form
- * field name to a user-safe validation message. For status changes, message
- * carries a redirect code: "notFound" or "invalidStatus".
+ * Outcome of a create/update/status operation. fieldErrors maps a form field to
+ * a user-safe message; for status changes message carries a redirect code
+ * ("notFound" / "invalidStatus").
  */
 public class AccountOperationResult {
 

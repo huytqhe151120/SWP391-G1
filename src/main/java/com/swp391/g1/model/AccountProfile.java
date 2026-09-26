@@ -1,12 +1,8 @@
 package com.swp391.g1.model;
 
 /**
- * Lightweight view of a profile row linked to an account through
- * student.account_id / staff.account_id / partner_staff.account_id.
- *
- * <p>Only fields that exist in the profile tables are used. email is only
- * populated for student profiles; position is only populated for
- * partner_staff profiles.
+ * Profile row linked to an account through account_id. email is only set for
+ * student profiles and position only for partner_staff profiles.
  */
 public class AccountProfile {
 

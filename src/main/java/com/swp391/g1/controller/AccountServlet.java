@@ -18,21 +18,10 @@ import com.swp391.g1.service.AccountServiceException;
 import com.swp391.g1.util.ParamUtil;
 
 /**
- * Account Management controller.
- *
- * <p>Routes (relative to the application context path):
- * <pre>
- * GET  /accounts               account list with search/filter
- * GET  /accounts/create        creation form
- * POST /accounts/create        create submit
- * GET  /accounts/{id}          account detail
- * GET  /accounts/{id}/edit     edit form
- * POST /accounts/{id}/edit     update submit
- * POST /accounts/{id}/status   change account status
- * </pre>
- *
- * <p>This feature is intentionally independent from Authentication; no
- * session or authorization logic exists here.
+ * Controller for the Account Management screens.
+ * Routes: GET /accounts, GET|POST /accounts/create, GET /accounts/{id},
+ * GET|POST /accounts/{id}/edit, POST /accounts/{id}/status.
+ * Authentication is out of scope for this feature.
  */
 @WebServlet("/accounts/*")
 public class AccountServlet extends HttpServlet {
@@ -127,7 +116,7 @@ public class AccountServlet extends HttpServlet {
             result = accountService.createAccount(account);
         } catch (AccountServiceException e) {
             request.setAttribute("generalError", e.getMessage());
-            request.setAttribute("account", account);
+            setAccountAttribute(request, account);
             safePrepareFormData(request);
             forward(request, response, "account/create.jsp");
             return;
@@ -137,7 +126,7 @@ public class AccountServlet extends HttpServlet {
             response.sendRedirect(contextPath(request) + "/accounts/" + result.getAccountId() + "?msg=created");
             return;
         }
-        request.setAttribute("account", account);
+        setAccountAttribute(request, account);
         request.setAttribute("fieldErrors", result.getFieldErrors());
         safePrepareFormData(request);
         forward(request, response, "account/create.jsp");
@@ -157,7 +146,7 @@ public class AccountServlet extends HttpServlet {
             result = accountService.updateAccount(account);
         } catch (AccountServiceException e) {
             request.setAttribute("generalError", e.getMessage());
-            request.setAttribute("account", account);
+            setAccountAttribute(request, account);
             safePrepareFormData(request);
             forward(request, response, "account/edit.jsp");
             return;
@@ -167,7 +156,7 @@ public class AccountServlet extends HttpServlet {
             response.sendRedirect(contextPath(request) + "/accounts/" + id + "?msg=updated");
             return;
         }
-        request.setAttribute("account", account);
+        setAccountAttribute(request, account);
         request.setAttribute("fieldErrors", result.getFieldErrors());
         safePrepareFormData(request);
         forward(request, response, "account/edit.jsp");
@@ -250,6 +239,12 @@ public class AccountServlet extends HttpServlet {
         } catch (AccountServiceException e) {
             request.setAttribute("generalError", e.getMessage());
         }
+    }
+
+    /** Clears the password before the account reaches the view. */
+    private static void setAccountAttribute(HttpServletRequest request, Account account) {
+        account.setPassword("");
+        request.setAttribute("account", account);
     }
 
     private static boolean isPath(String path, String regex) {

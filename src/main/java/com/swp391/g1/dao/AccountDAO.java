@@ -16,26 +16,18 @@ import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.model.AccountTypeRole;
 
 /**
- * JDBC data access for the account domain tables.
- *
- * <p>Every statement that contains user input is built with
- * PreparedStatement placeholders. Each DAO method opens its own connection
- * (via the project DBContext convention) and closes it in a finally block.
+ * JDBC access to the account tables. Each method opens its own connection
+ * (try-with-resources) and binds user input with PreparedStatement
+ * placeholders.
  */
 public class AccountDAO {
 
     private static final Logger LOGGER = Logger.getLogger(AccountDAO.class.getName());
 
-    /**
-     * Column projection used for lists and details. The password column is
-     * intentionally NOT included here; see findPasswordById.
-     */
+    /** Projection for list/detail; the password column is deliberately excluded. */
     private static final String ACCOUNT_COLUMNS = "id, username, type, role, status";
 
-    /**
-     * Search accounts with optional filters. Blank filters are ignored and
-     * every dynamic condition uses a parameter placeholder.
-     */
+    /** Search with optional filters; blank filters are ignored. */
     public List<Account> findByCriteria(String search, String type, String role, String status) {
         StringBuilder sql = new StringBuilder("SELECT " + ACCOUNT_COLUMNS + " FROM account WHERE 1 = 1");
         List<String> params = new ArrayList<>();
@@ -74,7 +66,7 @@ public class AccountDAO {
         return accounts;
     }
 
-    /** Loads a single account without the password column. Returns null if absent. */
+    /** Returns null if the account does not exist. */
     public Account findById(int id) {
         String sql = "SELECT " + ACCOUNT_COLUMNS + " FROM account WHERE id = ?";
         try (DBContext ctx = new DBContext()) {
@@ -93,11 +85,7 @@ public class AccountDAO {
         return null;
     }
 
-    /**
-     * Loads only the password column. Used by the service when an update must
-     * preserve an unchanged password, keeping the password out of every
-     * normal list/detail query.
-     */
+    /** Loads the password column only, used when an update keeps the stored password. */
     public String findPasswordById(int id) {
         String sql = "SELECT password FROM account WHERE id = ?";
         try (DBContext ctx = new DBContext()) {
@@ -116,12 +104,11 @@ public class AccountDAO {
         return null;
     }
 
-    /** True when a row with the exact username already exists. */
     public boolean usernameExists(String username) {
         return exists("SELECT 1 FROM account WHERE username = ?", username);
     }
 
-    /** True when a row with the exact username exists and is not the given account id. */
+    /** Ignores the given account id (used when an account keeps its own username). */
     public boolean usernameExistsExcluding(String username, int excludeId) {
         String sql = "SELECT 1 FROM account WHERE username = ? AND id <> ?";
         try (DBContext ctx = new DBContext()) {
@@ -138,7 +125,7 @@ public class AccountDAO {
         }
     }
 
-    /** Inserts an account and returns its generated id. */
+    /** Returns the generated account id. */
     public int create(Account account) {
         String sql = "INSERT INTO account (username, password, type, role, status) VALUES (?, ?, ?, ?, ?)";
         try (DBContext ctx = new DBContext()) {
@@ -162,10 +149,7 @@ public class AccountDAO {
         }
     }
 
-    /**
-     * Updates an account. When the password is empty/null it is left
-     * unchanged; otherwise it is persisted too.
-     */
+    /** Password is left unchanged when it is empty/null. */
     public boolean update(Account account) {
         boolean withPassword = account.getPassword() != null && !account.getPassword().isEmpty();
         String sql;
@@ -193,7 +177,7 @@ public class AccountDAO {
         }
     }
 
-    /** Updates only the status column. Returns false when no row was updated. */
+    /** Returns false when no row was updated. */
     public boolean updateStatus(int id, String status) {
         String sql = "UPDATE account SET status = ? WHERE id = ?";
         try (DBContext ctx = new DBContext()) {
@@ -264,9 +248,8 @@ public class AccountDAO {
     }
 
     /**
-     * Returns rows from any profile table that references the account id.
-     * The schema allows the same account to appear in more than one profile
-     * table, so a list is returned and detail.jsp renders each match.
+     * The schema allows one account to be linked from more than one profile
+     * table, so all matches are returned.
      */
     public List<AccountProfile> findProfilesByAccountId(int accountId) {
         List<AccountProfile> profiles = new ArrayList<>();
@@ -356,9 +339,7 @@ public class AccountDAO {
         return null;
     }
 
-    // ------------------------------------------------------------------
-    // helpers
-    // ------------------------------------------------------------------
+    // Helpers
 
     private List<String> listSingleColumn(String sql) {
         List<String> values = new ArrayList<>();
@@ -419,9 +400,8 @@ public class AccountDAO {
     }
 
     /**
-     * Converts a SQLException into DataAccessException. Unique-constraint
-     * violations (SQL Server error 2601/2627) are flagged so the service can
-     * surface the friendly "Username already exists" message.
+     * Wraps the SQLException. Unique-constraint violations (SQL Server
+     * 2601/2627) are flagged so the service can report a duplicate username.
      */
     private static DataAccessException translate(String operation, SQLException e) {
         int code = e.getErrorCode();

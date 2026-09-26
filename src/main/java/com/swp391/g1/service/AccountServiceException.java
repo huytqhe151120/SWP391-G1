@@ -1,9 +1,8 @@
 package com.swp391.g1.service;
 
 /**
- * Raised for unexpected runtime failures (database errors, invalid state)
- * that must be reported to the user with a safe message. Technical details
- * are logged at the DAO layer and are never exposed to the user.
+ * Wraps unexpected failures with a message that is safe to show to the user;
+ * technical details stay in the DAO log.
  */
 public class AccountServiceException extends RuntimeException {
 

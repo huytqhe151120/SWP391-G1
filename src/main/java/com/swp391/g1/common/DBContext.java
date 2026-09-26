@@ -34,10 +34,7 @@ public class DBContext implements AutoCloseable {
         return connection;
     }
 
-    /**
-     * Closes the underlying JDBC connection. DAOs use try-with-resources so
-     * every acquired connection is released after the operation.
-     */
+    /** Closes the underlying connection (used through try-with-resources). */
     @Override
     public void close() {
         if (connection != null) {

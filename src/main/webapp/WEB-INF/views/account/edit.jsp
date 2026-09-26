@@ -19,6 +19,9 @@
 <c:if test="${not empty generalError}">
     <div class="message error"><c:out value="${generalError}"/></div>
 </c:if>
+<c:if test="${not empty fieldErrors['id']}">
+    <div class="message error"><c:out value="${fieldErrors['id']}"/></div>
+</c:if>
 
 <form id="accountForm" class="account-form" method="post" action="${pageContext.request.contextPath}/accounts/${account.id}/edit">
     <div class="form-group">

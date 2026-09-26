@@ -1,11 +1,8 @@
 package com.swp391.g1.model;
 
 /**
- * Account entity mapped from the [account] table.
- *
- * <p>The password field is intentionally isolated: it is only present in the
- * create/edit form flows and is never rendered by list/detail views. The
- * service layer owns how the password is prepared for storage.
+ * Account row of the account table. The password is only used by the
+ * create/edit flows and never rendered by the list/detail views.
  */
 public class Account {
 
