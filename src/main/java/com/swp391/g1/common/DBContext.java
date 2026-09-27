@@ -30,7 +30,7 @@ public class DBContext {
         }
     }
 
-    public Connection getConnection() {
+    public static Connection getConnection() {
         return connection;
     }
 }

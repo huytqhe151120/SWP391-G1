@@ -1,0 +1,10 @@
+package com.swp391.g1.dao;
+import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.model.Enum;
+import java.util.List;
+
+public interface iExtracurricularActivityDAO extends IGenericDAO {
+    ExtracurricularActivity findByCode(String code);
+    List<ExtracurricularActivity> findByCommonStatus(Enum.CommonStatus status);
+    List<ExtracurricularActivity> findByApprovalStatus(Enum.ApprovalStatus status);
+}
