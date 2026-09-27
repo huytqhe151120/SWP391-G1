@@ -100,7 +100,7 @@
                     <td><c:out value="${a.username}"/></td>
                     <td><c:out value="${a.type}"/></td>
                     <td><c:out value="${a.role}"/></td>
-                    <td><span class="status-badge status-${a.status}"><c:out value="${a.status}"/></span></td>
+                    <td><span class="status-badge status-${fn:escapeXml(a.status)}"><c:out value="${a.status}"/></span></td>
                     <td class="row-actions">
                         <a href="${pageContext.request.contextPath}/accounts/${a.id}">View</a>
                         <a href="${pageContext.request.contextPath}/accounts/${a.id}/edit">Edit</a>

@@ -36,7 +36,7 @@
     <tr><th>Username</th><td><c:out value="${account.username}"/></td></tr>
     <tr><th>Type</th><td><c:out value="${account.type}"/></td></tr>
     <tr><th>Role</th><td><c:out value="${account.role}"/></td></tr>
-    <tr><th>Status</th><td><span class="status-badge status-${account.status}"><c:out value="${account.status}"/></span></td></tr>
+    <tr><th>Status</th><td><span class="status-badge status-${fn:escapeXml(account.status)}"><c:out value="${account.status}"/></span></td></tr>
     </tbody>
 </table>
 

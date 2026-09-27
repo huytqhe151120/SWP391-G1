@@ -1,8 +1,9 @@
 package com.swp391.g1.model;
 
 /**
- * Account row of the account table. The password is only used by the
- * create/edit flows and never rendered by the list/detail views.
+ * Account row of the account table. The password holds the stored PBKDF2 hash:
+ * it is written by the create/update flows, read for credential verification,
+ * and excluded from the list/detail projections.
  */
 public class Account {
 

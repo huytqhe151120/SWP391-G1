@@ -27,6 +27,12 @@ public class AccountDAO {
     /** Projection for list/detail; the password column is deliberately excluded. */
     private static final String ACCOUNT_COLUMNS = "id, username, type, role, status";
 
+    /**
+     * Projection for authentication only. The password stays a transient value
+     * inside the login flow and never reaches a session or a view.
+     */
+    private static final String CREDENTIAL_COLUMNS = "id, username, password, type, role, status";
+
     /** Search with optional filters; blank filters are ignored. */
     public List<Account> findByCriteria(String search, String type, String role, String status) {
         StringBuilder sql = new StringBuilder("SELECT " + ACCOUNT_COLUMNS + " FROM account WHERE 1 = 1");
@@ -81,6 +87,29 @@ public class AccountDAO {
             }
         } catch (SQLException e) {
             throw translate("find account by id", e);
+        }
+        return null;
+    }
+
+    /**
+     * Loads the credential row of a username, including the stored password
+     * hash. Returns null when the username does not exist; only the
+     * authentication flow should call this.
+     */
+    public Account findByUsernameWithCredentials(String username) {
+        String sql = "SELECT " + CREDENTIAL_COLUMNS + " FROM account WHERE username = ?";
+        try (DBContext ctx = new DBContext()) {
+            Connection conn = requireConnection(ctx);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return mapCredentials(rs);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw translate("find account credentials by username", e);
         }
         return null;
     }
@@ -378,6 +407,12 @@ public class AccountDAO {
         account.setType(rs.getString("type"));
         account.setRole(rs.getString("role"));
         account.setStatus(rs.getString("status"));
+        return account;
+    }
+
+    private static Account mapCredentials(ResultSet rs) throws SQLException {
+        Account account = mapAccount(rs);
+        account.setPassword(rs.getString("password"));
         return account;
     }
 

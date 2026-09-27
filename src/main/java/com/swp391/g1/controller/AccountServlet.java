@@ -10,18 +10,22 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Account;
 import com.swp391.g1.model.AccountProfile;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.AccountOperationResult;
 import com.swp391.g1.service.AccountService;
 import com.swp391.g1.service.AccountServiceException;
+import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.util.ParamUtil;
 
 /**
  * Controller for the Account Management screens.
  * Routes: GET /accounts, GET|POST /accounts/create, GET /accounts/{id},
  * GET|POST /accounts/{id}/edit, POST /accounts/{id}/status.
- * Authentication is out of scope for this feature.
+ * Every route requires an authenticated ADMIN account; the single check in
+ * service() keeps the rule in AccessPolicy instead of duplicating it per route.
  */
 @WebServlet("/accounts/*")
 public class AccountServlet extends HttpServlet {
@@ -29,6 +33,25 @@ public class AccountServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private final AccountService accountService = new AccountService();
+
+    /**
+     * Authorization gate for the whole feature. It overrides the method-dispatch
+     * entry point, so every HTTP method is checked before any doXxx handler runs.
+     */
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (currentUser == null) {
+            response.sendRedirect(contextPath(request) + "/login");
+            return;
+        }
+        if (!AccessPolicy.canManageAccounts(currentUser)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+        super.service(request, response);
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

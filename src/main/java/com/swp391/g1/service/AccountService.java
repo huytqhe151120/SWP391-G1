@@ -10,6 +10,7 @@ import com.swp391.g1.dao.DataAccessException;
 import com.swp391.g1.model.Account;
 import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.model.AccountTypeRole;
+import com.swp391.g1.util.PasswordUtil;
 
 /**
  * Business rules for accounts: validation, type/role compatibility and the
@@ -18,8 +19,11 @@ import com.swp391.g1.model.AccountTypeRole;
  */
 public class AccountService {
 
+    /** Only accounts in this status may authenticate. */
+    public static final String STATUS_ACTIVE = "ACTIVE";
+
     /** Database-supported account status values (CHECK CK_account_status). */
-    public static final List<String> ACCOUNT_STATUSES = List.of("ACTIVE", "INACTIVE", "BLOCKED");
+    public static final List<String> ACCOUNT_STATUSES = List.of(STATUS_ACTIVE, "INACTIVE", "BLOCKED");
 
     private static final int USERNAME_MAX_LENGTH = 100;
     private static final int PASSWORD_MAX_LENGTH = 255;
@@ -266,11 +270,11 @@ public class AccountService {
     }
 
     /**
-     * Password storage seam. The MVP persists the password as provided; hashing
-     * belongs to the future Authentication feature.
+     * Password storage seam: the account table never holds the raw password,
+     * only the self-describing PBKDF2 hash produced here.
      */
     private static String preparePasswordForStorage(String rawPassword) {
-        return rawPassword;
+        return PasswordUtil.hash(rawPassword);
     }
 
     private static String normalize(String value) {
