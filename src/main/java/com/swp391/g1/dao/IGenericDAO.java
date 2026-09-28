@@ -1,10 +1,10 @@
 package com.swp391.g1.dao;
 import java.util.List;
 
-public interface IGenericDAO {
-    List<T> findAll(); // Get all records
-    T findById(K id); // Get record with id
-    K insert(T entity); // Create new record, return id
-    boolean update(T entity); // Update record information
-    boolean delete(K id); // Delete record with id
+public interface IGenericDAO<T, K> {
+    List<T> findAll();
+    T findById(K id);
+    K insert(T entity);
+    boolean update(T entity);
+    boolean delete(K id);
 }
