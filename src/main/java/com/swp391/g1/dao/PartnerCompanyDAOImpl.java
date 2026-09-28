@@ -11,18 +11,18 @@ import java.util.List;
 public class PartnerCompanyDAOImpl implements IPartnerCompanyDAO {
 
     private PartnerCompany mapPartnerCompany(ResultSet rs) throws SQLException {
-        PartnerCompany pc = new PartnerCompany();
-        pc.setId(rs.getInt("id"));
-        pc.setCode(rs.getString("code"));
-        pc.setName(rs.getString("name"));
-        pc.setWebsite(rs.getString("website"));
-        pc.setEmail(rs.getString("email"));
-        pc.setPhoneNumber(rs.getString("phone_number"));
-        pc.setAddress(rs.getString("address"));
-        pc.setDescription(rs.getString("description"));
+        PartnerCompany partnerCompany = new PartnerCompany();
+        partnerCompany.setId(rs.getInt("id"));
+        partnerCompany.setCode(rs.getString("code"));
+        partnerCompany.setName(rs.getString("name"));
+        partnerCompany.setWebsite(rs.getString("website"));
+        partnerCompany.setEmail(rs.getString("email"));
+        partnerCompany.setPhoneNumber(rs.getString("phone_number"));
+        partnerCompany.setAddress(rs.getString("address"));
+        partnerCompany.setDescription(rs.getString("description"));
         String status = rs.getString("status");
-        pc.setStatus(status == null ? null : Enum.CommonStatus.valueOf(status));
-        return pc;
+        partnerCompany.setStatus(status == null ? null : Enum.CommonStatus.valueOf(status));
+        return partnerCompany;
     }
 
     @Override
@@ -85,7 +85,7 @@ public class PartnerCompanyDAOImpl implements IPartnerCompanyDAO {
 
     @Override
     public PartnerCompany findById(Integer id) {
-        PartnerCompany pc = null;
+        PartnerCompany partnerCompany = null;
         String sql = "SELECT * FROM partner_company WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
@@ -93,13 +93,13 @@ public class PartnerCompanyDAOImpl implements IPartnerCompanyDAO {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    pc = mapPartnerCompany(rs);
+                    partnerCompany = mapPartnerCompany(rs);
                 }
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to find partner company by ID.", e);
         }
-        return pc;
+        return partnerCompany;
     }
 
     @Override
@@ -117,11 +117,7 @@ public class PartnerCompanyDAOImpl implements IPartnerCompanyDAO {
             ps.setString(5, partnerCompany.getPhoneNumber());
             ps.setString(6, partnerCompany.getAddress());
             ps.setString(7, partnerCompany.getDescription());
-            if (partnerCompany.getStatus() == null) {
-                ps.setNull(8, Types.VARCHAR);
-            } else {
-                ps.setString(8, partnerCompany.getStatus().name());
-            }
+            ps.setString(8, partnerCompany.getStatus() == null ? null : partnerCompany.getStatus().name());
 
             if (ps.executeUpdate() == 0) {
                 return null;

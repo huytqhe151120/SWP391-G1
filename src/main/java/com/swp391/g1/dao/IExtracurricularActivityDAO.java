@@ -5,6 +5,6 @@ import java.util.List;
 
 public interface IExtracurricularActivityDAO extends IGenericDAO<ExtracurricularActivity, Integer> {
     List<ExtracurricularActivity> findByCode(String code);
-    List<ExtracurricularActivity> findByCommonStatus(Enum.CommonStatus status);
+    List<ExtracurricularActivity> findByActivityStatus(Enum.ActivityStatus status);
     List<ExtracurricularActivity> findByApprovalStatus(Enum.ApprovalStatus status);
 }
