@@ -1,6 +1,7 @@
-package com.swp391.g1.dao;
+package com.swp391.g1.dao.impl;
 
 import com.swp391.g1.common.DBContext;
+import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.ExtracurricularActivity;

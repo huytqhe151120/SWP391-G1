@@ -1,6 +1,7 @@
-package com.swp391.g1.dao;
+package com.swp391.g1.dao.impl;
 
 import com.swp391.g1.common.DBContext;
+import com.swp391.g1.dao.IPartnerCompanyDAO;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.PartnerCompany;
 
