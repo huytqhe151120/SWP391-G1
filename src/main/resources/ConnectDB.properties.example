@@ -1,0 +1,14 @@
+# ConnectDB.properties.example
+# ------------------------------------------------------------------
+# Copy this file to src/main/resources/ConnectDB.properties and
+# replace the values below with your LOCAL database settings.
+#
+# ConnectDB.properties is local-only and must NOT be committed.
+# Never put real credentials in this repository.
+#
+# The url MUST be a complete JDBC URL. The code loads this file with
+# java.util.Properties, which does NOT resolve ${...} placeholders.
+
+url=jdbc:sqlserver://YOUR_DB_HOST:1433;databaseName=YOUR_DB_NAME;encrypt=true;trustServerCertificate=true
+userID=YOUR_DB_USERNAME
+password=YOUR_DB_PASSWORD
