@@ -16,7 +16,8 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
         partnerStaff.setCode(rs.getString("code"));
         partnerStaff.setName(rs.getString("name"));
         partnerStaff.setCompanyId(rs.getInt("company_id"));
-        partnerStaff.setDob(rs.getDate("dob"));
+        Date dob = rs.getDate("dob");
+        partnerStaff.setDob(dob == null ? null : dob.toLocalDate());
         partnerStaff.setGender(rs.getBoolean("gender"));
         partnerStaff.setPosition(rs.getString("position"));
         String status = rs.getString("status");
@@ -132,7 +133,7 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
             ps.setInt(1, partnerStaff.getCompanyId());
             ps.setString(2, partnerStaff.getCode());
             ps.setString(3, partnerStaff.getName());
-            ps.setDate(4, partnerStaff.getDob());
+            ps.setDate(4, partnerStaff.getDob() == null ? null : Date.valueOf(partnerStaff.getDob()));
             ps.setBoolean(5, partnerStaff.getGender());
             ps.setString(6, partnerStaff.getPosition());
             ps.setString(7, partnerStaff.getStatus().name());
@@ -159,7 +160,7 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
             ps.setInt(1, entity.getCompanyId());
             ps.setString(2, entity.getCode());
             ps.setString(3, entity.getName());
-            ps.setDate(4, entity.getDob());
+            ps.setDate(4, entity.getDob() == null ? null : Date.valueOf(entity.getDob()));
             ps.setBoolean(5, entity.getGender());
             ps.setString(6, entity.getPosition());
             ps.setString(7, entity.getStatus().name());

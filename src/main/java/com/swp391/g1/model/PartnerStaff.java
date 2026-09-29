@@ -1,5 +1,4 @@
 package com.swp391.g1.model;
-import java.sql.Date;
 import java.time.LocalDate;
 
 public class PartnerStaff {
@@ -50,11 +49,11 @@ public class PartnerStaff {
         this.name = name;
     }
 
-    public Date getDob() {
+    public LocalDate getDob() {
         return dob;
     }
 
-    public void setDob(Date dob) {
+    public void setDob(LocalDate dob) {
         this.dob = dob;
     }
 

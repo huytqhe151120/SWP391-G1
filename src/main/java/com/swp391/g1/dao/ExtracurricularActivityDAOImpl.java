@@ -1,14 +1,16 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.common.DBContext;
+import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.ExtracurricularActivity;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExtracurricularDAOImpl implements IExtracurricularActivityDAO {
+public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityDAO {
 
     private ExtracurricularActivity mapActivity(ResultSet rs) throws SQLException {
         ExtracurricularActivity activity = new ExtracurricularActivity();
@@ -111,6 +113,67 @@ public class ExtracurricularDAOImpl implements IExtracurricularActivityDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to find all extracurricular activities.", e);
+        }
+        return list;
+    }
+
+    @Override
+    public List<ExtracurricularActivityResponseDTO> findAllWithDetails() {
+        List<ExtracurricularActivityResponseDTO> list = new ArrayList<>();
+        String sql = "SELECT a.*, "
+                + "s.code AS semester_code, s.name AS semester_name, "
+                + "t.code AS activity_type_code, t.name AS activity_type_name, "
+                + "d.code AS dept_code, d.name AS dept_name, "
+                + "st.code AS staff_code, st.name AS staff_name, "
+                + "pc.code AS company_code, pc.name AS company_name, "
+                + "ps.code AS partner_staff_code, ps.name AS partner_staff_name "
+                + "FROM extracurricular_activity a "
+                + "JOIN semester s ON a.semester_id = s.id "
+                + "JOIN activity_type t ON a.activity_type_id = t.id "
+                + "JOIN department d ON a.responsible_department_id = d.id "
+                + "JOIN staff st ON a.responsible_staff_id = st.id "
+                + "LEFT JOIN partner_company pc ON a.partner_company_id = pc.id "
+                + "LEFT JOIN partner_staff ps ON a.partner_staff_id = ps.id "
+                + "ORDER BY a.id DESC";
+
+        try (Connection conn = DBContext.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                ExtracurricularActivityResponseDTO dto = new ExtracurricularActivityResponseDTO();
+                dto.setId(rs.getInt("id"));
+                dto.setCode(rs.getString("code"));
+                dto.setName(rs.getString("name"));
+                dto.setBonusPoint(rs.getBigDecimal("bonus_point"));
+                dto.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
+                dto.setAddress(rs.getString("address"));
+                dto.setDescription(rs.getString("description"));
+                dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
+                dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
+
+                Timestamp startTime = rs.getTimestamp("start_time");
+                dto.setStartTime(startTime == null ? null : LocalDateTime.parse(startTime.toLocalDateTime().toString()));
+                Timestamp endTime = rs.getTimestamp("end_time");
+                dto.setEndTime(endTime == null ? null : LocalDateTime.parse(endTime.toLocalDateTime().toString()));
+
+                // Thông tin chi tiết JOIN từ các bảng liên quan
+                dto.setSemesterCode(rs.getString("semester_code"));
+                dto.setSemesterName(rs.getString("semester_name"));
+                dto.setActivityTypeCode(rs.getString("activity_type_code"));
+                dto.setActivityTypeName(rs.getString("activity_type_name"));
+                dto.setResponsibleDepartmentCode(rs.getString("dept_code"));
+                dto.setResponsibleDepartmentName(rs.getString("dept_name"));
+                dto.setResponsibleStaffCode(rs.getString("staff_code"));
+                dto.setResponsibleStaffName(rs.getString("staff_name"));
+                dto.setPartnerCompanyCode(rs.getString("company_code"));
+                dto.setPartnerCompanyName(rs.getString("company_name"));
+                dto.setPartnerStaffCode(rs.getString("partner_staff_code"));
+                dto.setPartnerStaffName(rs.getString("partner_staff_name"));
+
+                list.add(dto);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find all activity details.", e);
         }
         return list;
     }
