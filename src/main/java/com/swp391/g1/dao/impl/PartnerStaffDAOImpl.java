@@ -2,6 +2,7 @@ package com.swp391.g1.dao.impl;
 
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.IPartnerStaffDAO;
+import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.PartnerStaff;
 
@@ -83,6 +84,64 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to find partner staff by company.", e);
+        }
+        return list;
+    }
+
+    @Override
+    public List<PartnerStaffResponseDTO> findAllWithDetails() {
+        List<PartnerStaffResponseDTO> list = new ArrayList<>();
+
+        // Câu SQL JOIN lấy dữ liệu nhân viên và thông tin công ty đối tác
+        String sql = "SELECT ps.*, "
+                + "pc.code AS company_code, "
+                + "pc.name AS company_name "
+                + "FROM partner_staff ps "
+                + "LEFT JOIN partner_company pc ON ps.company_id = pc.id "
+                + "ORDER BY ps.id DESC";
+
+        try (Connection conn = DBContext.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                PartnerStaffResponseDTO dto = new PartnerStaffResponseDTO();
+
+                // 1. Mapping các thuộc tính cơ bản
+                dto.setId(rs.getInt("id"));
+                dto.setCode(rs.getString("code"));
+                dto.setName(rs.getString("name"));
+
+                // 2. Mapping java.sql.Date -> java.time.LocalDate (dob)
+                Date dobSql = rs.getDate("dob");
+                dto.setDob(dobSql != null ? dobSql.toLocalDate() : null);
+
+                // 3. Mapping Boolean (gender - tránh lỗi NullPointerException nếu DB null)
+                if (rs.getObject("gender") != null) {
+                    dto.setGender(rs.getBoolean("gender"));
+                } else {
+                    dto.setGender(null);
+                }
+
+                dto.setPosition(rs.getString("position"));
+                dto.setStatus(rs.getString("status"));
+
+                // 4. Mapping các trường JOIN từ partner_company (Sửa tên setter cho khớp DTO)
+                dto.setCompanyCode(rs.getString("company_code"));
+                dto.setCompanyName(rs.getString("company_name"));
+
+                // 5. Mapping username (nếu trong DB có JOIN với bảng Account/User)
+                try {
+                    dto.setUsername(rs.getString("username"));
+                } catch (SQLException e) {
+                    // Bỏ qua nếu câu SQL chưa SELECT cột username
+                    dto.setUsername(null);
+                }
+
+                list.add(dto);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find partner staff list with details.", e);
         }
         return list;
     }

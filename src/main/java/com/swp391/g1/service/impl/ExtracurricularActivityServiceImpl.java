@@ -43,27 +43,24 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
     public boolean createActivity(ExtracurricularActivityRequestDTO dto) throws Exception {
         // Validate input data (no need to check ID for creation)
         validateRequestDTO(dto, false);
-        // Map từ RequestDTO sang Entity
+        // Map from RequestDTO to Entity
         ExtracurricularActivity entity = mapToEntity(dto);
-        // Gán trạng thái mặc định khi tạo mới
+        // Set default values for ApprovalStatus and ActivityStatus
         entity.setApprovalStatus(ApprovalStatus.DRAFT);
         entity.setActivityStatus(ActivityStatus.UPCOMING);
-
-        // 3. Gọi DAO lưu xuống DB
+        // Call DAO to insert the new activity
         Integer generatedId = activityDAO.insert(entity);
         return generatedId != null && generatedId > 0;
     }
 
     @Override
     public boolean updateActivity(ExtracurricularActivityRequestDTO dto) throws Exception {
-        // 1. Validate dữ liệu đầu vào (cần check ID)
+        // Validate input data (need to check ID)
         validateRequestDTO(dto, true);
-
-        // 2. Map từ RequestDTO sang Entity
+        // Map from RequestDTO to Entity
         ExtracurricularActivity entity = mapToEntity(dto);
         entity.setId(Integer.parseInt(dto.getId()));
-
-        // 3. Gọi DAO cập nhật
+        // Call DAO to update the activity
         return activityDAO.update(entity);
     }
 
@@ -75,42 +72,38 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         return activityDAO.delete(id);
     }
 
-    // =========================================================================
-    // HELPER METHODS: VALIDATION & MAPPING
-    // =========================================================================
-
     private void validateRequestDTO(ExtracurricularActivityRequestDTO dto, boolean isUpdate) throws Exception {
         if (dto == null) {
-            throw new IllegalArgumentException("Dữ liệu không hợp lệ.");
+            throw new IllegalArgumentException("Invalid request data: ExtracurricularActivityRequestDTO is null.");
         }
 
         if (isUpdate && (dto.getId() == null || dto.getId().trim().isEmpty())) {
-            throw new IllegalArgumentException("ID hoạt động không hợp lệ khi cập nhật.");
+            throw new IllegalArgumentException("Invalid activity ID when updating.");
         }
 
         // Validate các trường bắt buộc (Not Null)
         if (isEmpty(dto.getCode())) {
-            throw new IllegalArgumentException("Mã hoạt động không được để trống.");
+            throw new IllegalArgumentException("Activity code is required.");
         }
         if (isEmpty(dto.getName())) {
-            throw new IllegalArgumentException("Tên hoạt động không được để trống.");
+            throw new IllegalArgumentException("Activity name is required.");
         }
         if (isEmpty(dto.getSemesterId())) {
-            throw new IllegalArgumentException("Vui lòng chọn học kỳ.");
+            throw new IllegalArgumentException("Please select a semester.");
         }
         if (isEmpty(dto.getActivityTypeId())) {
-            throw new IllegalArgumentException("Vui lòng chọn loại hoạt động.");
+            throw new IllegalArgumentException("Please select an activity type.");
         }
         if (isEmpty(dto.getResponsibleDepartmentId())) {
-            throw new IllegalArgumentException("Vui lòng chọn phòng ban phụ trách.");
+            throw new IllegalArgumentException("Please select the responsible department.");
         }
         if (isEmpty(dto.getResponsibleStaffId())) {
-            throw new IllegalArgumentException("Vui lòng chọn nhân viên phụ trách.");
+            throw new IllegalArgumentException("Please select the responsible staff.");
         }
 
         // Validate ràng buộc đối tác: Chọn nhân viên đối tác thì BẮT BỘC phải chọn công ty đối tác
         if (!isEmpty(dto.getPartnerStaffId()) && isEmpty(dto.getPartnerCompanyId())) {
-            throw new IllegalArgumentException("Phải chọn công ty đối tác trước khi chọn nhân viên đối tác.");
+            throw new IllegalArgumentException("Please select the partner company before selecting a partner staff.");
         }
 
         // Validate điểm không được âm
@@ -118,10 +111,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             try {
                 BigDecimal bonus = new BigDecimal(dto.getBonusPoint());
                 if (bonus.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Điểm thưởng không được là số âm.");
+                    throw new IllegalArgumentException("Bonus points cannot be negative.");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Điểm thưởng không đúng định dạng số.");
+                throw new IllegalArgumentException("Bonus points are in an invalid format.");
             }
         }
 
@@ -129,10 +122,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             try {
                 BigDecimal penalty = new BigDecimal(dto.getPenaltyPoint());
                 if (penalty.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Điểm phạt không được là số âm.");
+                    throw new IllegalArgumentException("Penalty points cannot be negative.");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Điểm phạt không đúng định dạng số.");
+                throw new IllegalArgumentException("Penalty points are in an invalid format.");
             }
         }
 
@@ -143,10 +136,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 LocalDateTime end = LocalDateTime.parse(dto.getEndTime());
 
                 if (!start.isBefore(end)) {
-                    throw new IllegalArgumentException("Thời gian bắt đầu phải diễn ra trước thời gian kết thúc.");
+                    throw new IllegalArgumentException("The start time must be before the end time.");
                 }
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Định dạng ngày giờ không hợp lệ.");
+                throw new IllegalArgumentException("Invalid date/time format.");
             }
         }
     }

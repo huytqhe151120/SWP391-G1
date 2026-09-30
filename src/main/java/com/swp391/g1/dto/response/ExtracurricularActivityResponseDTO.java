@@ -9,6 +9,12 @@ public class ExtracurricularActivityResponseDTO {
     private int id;
     private String code;
     private String name;
+    private int semesterId;
+    private int activityTypeId;
+    private int responsibleDepartmentId;
+    private int responsibleStaffId;
+    private Integer partnerCompanyId;          // Nullable
+    private Integer partnerStaffId;            // Nullable
 
     // The information has been JOIN/Mapping for display in the user interface.
     private String semesterCode;                  // Join from Semester
@@ -228,5 +234,9 @@ public class ExtracurricularActivityResponseDTO {
 
     public void setPartnerStaffCode(String partnerStaffCode) {
         this.partnerStaffCode = partnerStaffCode;
+    }
+
+    public int getPartnerCompanyId() {
+        return partnerCompanyId != null ? partnerCompanyId : 0;
     }
 }

@@ -12,6 +12,7 @@ public class PartnerStaffResponseDTO {
     private String status;
 
     // The information has been JOIN/Mapping for display in the user interface.
+    private int companyId;
     private String companyCode;
     private String companyName;  // Join from PartnerCompany
     private String username;     // Join from Account (nếu có)
@@ -77,6 +78,14 @@ public class PartnerStaffResponseDTO {
         this.status = status;
     }
 
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
+    }
+
     public String getCompanyCode() {
         return companyCode;
     }
@@ -100,4 +109,6 @@ public class PartnerStaffResponseDTO {
     public void setUsername(String username) {
         this.username = username;
     }
+
+
 }

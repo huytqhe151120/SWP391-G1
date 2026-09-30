@@ -1,7 +1,7 @@
 package com.swp391.g1.dao.impl;
 
 import com.swp391.g1.common.DBContext;
-import com.swp391.g1.dao.IActivityType;
+import com.swp391.g1.dao.IActivityTypeDAO;
 import com.swp391.g1.model.ActivityType;
 import com.swp391.g1.model.Enum;
 
@@ -10,7 +10,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActivityTypeDAOImpl implements IActivityType {
+public class ActivityTypeDAOImpl implements IActivityTypeDAO {
 
     private ActivityType mapActivityType(ResultSet rs) throws SQLException {
         ActivityType activityType = new ActivityType();

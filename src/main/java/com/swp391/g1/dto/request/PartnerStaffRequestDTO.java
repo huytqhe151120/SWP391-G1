@@ -1,6 +1,7 @@
 package com.swp391.g1.dto.request;
 
 public class PartnerStaffRequestDTO {
+    private int id;
     private String companyId; // Receive String from form, then convert to int in the controller
     private String code;
     private String name;
@@ -13,6 +14,14 @@ public class PartnerStaffRequestDTO {
     public PartnerStaffRequestDTO() {}
 
     //Getter and Setter
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getCompanyId() {
         return companyId;
     }
