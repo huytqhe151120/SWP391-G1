@@ -1,0 +1,223 @@
+/* Account Management pages — plain styles, no framework. */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 1rem 2rem;
+    color: #222;
+    background: #fafafa;
+}
+
+.top-nav {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.top-nav a {
+    margin-right: 1rem;
+    color: #1a5fb4;
+    text-decoration: none;
+}
+
+h1 {
+    font-size: 1.6rem;
+}
+
+h2 {
+    font-size: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+a {
+    color: #1a5fb4;
+}
+
+.actions {
+    margin: 1rem 0;
+}
+
+.button,
+.button-secondary {
+    display: inline-block;
+    padding: 0.4rem 0.9rem;
+    text-decoration: none;
+    border-radius: 4px;
+    border: 1px solid #1a5fb4;
+    color: #1a5fb4;
+    background: #fff;
+}
+
+.button {
+    background: #1a5fb4;
+    color: #fff;
+}
+
+button {
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    border: 1px solid #999;
+    background: #eee;
+    cursor: pointer;
+}
+
+.message {
+    padding: 0.6rem 1rem;
+    border-radius: 4px;
+    margin: 0.8rem 0;
+}
+
+.message.success {
+    background: #e6f4ea;
+    border: 1px solid #34a853;
+    color: #137333;
+}
+
+.message.error {
+    background: #fce8e6;
+    border: 1px solid #d93025;
+    color: #c5221f;
+}
+
+.filters form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: flex-end;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    margin-bottom: 1rem;
+}
+
+.filters label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.85rem;
+}
+
+.filters input,
+.filters select {
+    margin-top: 0.2rem;
+    padding: 0.3rem;
+}
+
+.account-table {
+    border-collapse: collapse;
+    width: 100%;
+    background: #fff;
+}
+
+.account-table th,
+.account-table td {
+    border: 1px solid #ddd;
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+}
+
+.account-table th {
+    background: #f1f3f4;
+}
+
+.account-table.detail {
+    width: auto;
+    min-width: 320px;
+}
+
+.account-table.detail th {
+    width: 130px;
+}
+
+.row-actions a {
+    margin-right: 0.6rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.status-ACTIVE {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.status-INACTIVE {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.status-BLOCKED {
+    background: #fce8e6;
+    color: #c5221f;
+}
+
+.empty-state {
+    padding: 1.5rem;
+    border: 1px dashed #bbb;
+    background: #fff;
+    color: #555;
+}
+
+.account-form {
+    max-width: 480px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.account-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.account-form label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.2rem;
+}
+
+.account-form input,
+.account-form select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.4rem;
+}
+
+.account-form .hint {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.2rem;
+}
+
+.field-error {
+    display: block;
+    color: #c5221f;
+    font-size: 0.85rem;
+    margin-top: 0.2rem;
+}
+
+.form-actions {
+    margin-top: 1rem;
+}
+
+.form-actions button,
+.form-actions a {
+    margin-right: 0.6rem;
+}
+
+.inline-form {
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.inline-form select {
+    flex: 1;
+    padding: 0.4rem;
+}

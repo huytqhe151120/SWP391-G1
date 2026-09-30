@@ -1,64 +1,32 @@
 package com.swp391.g1.model;
-
-import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class ExtracurricularActivity {
+    private int id; //[cite: 1]
+    private int semesterId; //[cite: 1]
+    private String code; //[cite: 1]
+    private String name; //[cite: 1]
+    private int responsibleDepartmentId; //[cite: 1]
+    private int responsibleStaffId; //[cite: 1]
+    private Integer partnerCompanyId; // Nullable[cite: 1]
+    private Integer partnerStaffId; // Nullable[cite: 1]
+    private BigDecimal bonusPoint; //[cite: 1]
+    private BigDecimal penaltyPoint; //[cite: 1]
+    private String address; //[cite: 1]
+    private String description; //[cite: 1]
+    private Enum.ActivityStatus activityStatus; //[cite: 1]
+    private Enum.ApprovalStatus approvalStatus; //[cite: 1]
+    private LocalDateTime createdAt; //[cite: 1]
+    private int activityTypeId; //[cite: 1]
+    private LocalDateTime startTime; //[cite: 1]
+    private LocalDateTime endTime;
 
-    private int id;
-    private int semesterId;
-    private String activityType;
-    private String code;
-    private String name;
-    private int responsibleDepartmentId;
-    private int responsibleStaffId;
-    private int partnerId;
-    private int partnerStaffId;
-    private double bonusPoint;
-    private double penaltyPoint;
-    private String address;
-    private String description;
-    private String activityStatus;
-    private String approvalStatus;
-    private Timestamp createdAt;
-
-    // Default constructor (bắt buộc đối với JavaBean)
+    // Constructor with no parameter
     public ExtracurricularActivity() {
     }
 
-    // Constructor đầy đủ tham số
-    public ExtracurricularActivity(int semesterId,
-                                   String activityType,
-                                   String code,
-                                   String name,
-                                   int responsibleDepartmentId,
-                                   int responsibleStaffId,
-                                   int partnerId,
-                                   int partnerStaffId,
-                                   double bonusPoint,
-                                   double penaltyPoint,
-                                   String address,
-                                   String description,
-                                   String activityStatus,
-                                   String approvalStatus,
-                                   Timestamp createdAt) {
-        this.semesterId = semesterId;
-        this.activityType = activityType;
-        this.code = code;
-        this.name = name;
-        this.responsibleDepartmentId = responsibleDepartmentId;
-        this.responsibleStaffId = responsibleStaffId;
-        this.partnerId = partnerId;
-        this.partnerStaffId = partnerStaffId;
-        this.bonusPoint = bonusPoint;
-        this.penaltyPoint = penaltyPoint;
-        this.address = address;
-        this.description = description;
-        this.activityStatus = activityStatus;
-        this.approvalStatus = approvalStatus;
-        this.createdAt = createdAt;
-    }
-
-    // Getters and Setters
+    //Getter and Setter
     public int getId() {
         return id;
     }
@@ -73,14 +41,6 @@ public class ExtracurricularActivity {
 
     public void setSemesterId(int semesterId) {
         this.semesterId = semesterId;
-    }
-
-    public String getActivityType() {
-        return activityType;
-    }
-
-    public void setActivityType(String activityType) {
-        this.activityType = activityType;
     }
 
     public String getCode() {
@@ -115,35 +75,35 @@ public class ExtracurricularActivity {
         this.responsibleStaffId = responsibleStaffId;
     }
 
-    public int getPartnerId() {
-        return partnerId;
+    public Integer getPartnerCompanyId() {
+        return partnerCompanyId;
     }
 
-    public void setPartnerId(int partnerId) {
-        this.partnerId = partnerId;
+    public void setPartnerCompanyId(Integer partnerCompanyId) {
+        this.partnerCompanyId = partnerCompanyId;
     }
 
-    public int getPartnerStaffId() {
+    public Integer getPartnerStaffId() {
         return partnerStaffId;
     }
 
-    public void setPartnerStaffId(int partnerStaffId) {
+    public void setPartnerStaffId(Integer partnerStaffId) {
         this.partnerStaffId = partnerStaffId;
     }
 
-    public double getBonusPoint() {
+    public BigDecimal getBonusPoint() {
         return bonusPoint;
     }
 
-    public void setBonusPoint(double bonusPoint) {
+    public void setBonusPoint(BigDecimal bonusPoint) {
         this.bonusPoint = bonusPoint;
     }
 
-    public double getPenaltyPoint() {
+    public BigDecimal getPenaltyPoint() {
         return penaltyPoint;
     }
 
-    public void setPenaltyPoint(double penaltyPoint) {
+    public void setPenaltyPoint(BigDecimal penaltyPoint) {
         this.penaltyPoint = penaltyPoint;
     }
 
@@ -163,27 +123,51 @@ public class ExtracurricularActivity {
         this.description = description;
     }
 
-    public String getActivityStatus() {
+    public Enum.ActivityStatus getActivityStatus() {
         return activityStatus;
     }
 
-    public void setActivityStatus(String activityStatus) {
+    public void setActivityStatus(Enum.ActivityStatus activityStatus) {
         this.activityStatus = activityStatus;
     }
 
-    public String getApprovalStatus() {
+    public Enum.ApprovalStatus getApprovalStatus() {
         return approvalStatus;
     }
 
-    public void setApprovalStatus(String approvalStatus) {
+    public void setApprovalStatus(Enum.ApprovalStatus approvalStatus) {
         this.approvalStatus = approvalStatus;
     }
 
-    public Timestamp getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getActivityTypeId() {
+        return activityTypeId;
+    }
+
+    public void setActivityTypeId(int activityTypeId) {
+        this.activityTypeId = activityTypeId;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
     }
 }

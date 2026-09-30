@@ -1,51 +1,44 @@
 package com.swp391.g1.model;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
+public class PartnerCompany {
+    private int id; //[cite: 1]
+    private String code; //[cite: 1]
+    private String shortName; //[cite: 1]
+    private String name; //[cite: 1]
+    private String website; //[cite: 1]
+    private String email; //[cite: 1]
+    private String phoneNumber; //[cite: 1]
+    private String address; //[cite: 1]
+    private String description; //[cite: 1]
+    private Enum.CommonStatus status;
 
-public class PartnerCompany implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    // Các trường dữ liệu (Fields)
-    private int id;
-    private String name;        // Mandatory
-    private String email;       // Mandatory
-    private String phone;       // Mandatory
-    private String address;     // Optional
-    private String status;      // Mandatory
-    private Timestamp createdAt; // Mandatory
-
-    // 1. Constructor KHÔNG tham số
+    //Constructor with no parameter
     public PartnerCompany() {
     }
 
-    // 2. Constructor với các tham số BẮT BUỘC
-    public PartnerCompany(String name, String email, String phone, String status, Timestamp createdAt) {
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
-    // 3. Constructor FULL tham số
-    public PartnerCompany(String name, String email, String phone, String address, String status, Timestamp createdAt) {
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.address = address;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
-    // Getter và Setter
+    //Getter and Setter
     public int getId() {
         return id;
     }
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
     }
 
     public String getName() {
@@ -56,6 +49,14 @@ public class PartnerCompany implements Serializable {
         this.name = name;
     }
 
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -64,12 +65,12 @@ public class PartnerCompany implements Serializable {
         this.email = email;
     }
 
-    public String getPhone() {
-        return phone;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getAddress() {
@@ -80,32 +81,19 @@ public class PartnerCompany implements Serializable {
         this.address = address;
     }
 
-    public String getStatus() {
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Enum.CommonStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Enum.CommonStatus status) {
         this.status = status;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @Override
-    public String toString() {
-        return "PartnerCompany{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", address='" + address + '\'' +
-                ", status='" + status + '\'' +
-                ", createdAt=" + createdAt +
-                '}';
     }
 }

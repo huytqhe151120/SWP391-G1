@@ -1,46 +1,25 @@
 package com.swp391.g1.model;
+import java.math.BigDecimal;
 
-import java.io.Serializable;
+public class ActivityType {
+        private int id; //[cite: 1]
+        private String code; //[cite: 1]
+        private String name; //[cite: 1]
+        private String description; //[cite: 1]
+        private BigDecimal bonusPoint; //[cite: 1]
+        private BigDecimal penaltyPoint; //[cite: 1]
+        private Enum.CommonStatus status; //[cite: 1]
 
-public class ActivityType implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private Integer id;
-    private String code;         // Mandatory
-    private String name;         // Mandatory
-    private String description;  // Optional
-    private double plusPoint;    // Mandatory
-    private double penaltyPoint; // Mandatory
-
-    // 1. Constructor KHÔNG tham số (Java Bean Spec)
+    // Constructor with no parameter
     public ActivityType() {
     }
 
-    // 2. Constructor với các tham số BẮT BUỘC (Required-args)
-    public ActivityType(String code, String name, double plusPoint, double penaltyPoint) {
-        this.code = code;
-        this.name = name;
-        this.plusPoint = plusPoint;
-        this.penaltyPoint = penaltyPoint;
-    }
-
-    // 3. Constructor FULL tham số (All-args)
-    public ActivityType(Integer id, String code, String name, String description, double plusPoint, double penaltyPoint) {
-        this.id = id;
-        this.code = code;
-        this.name = name;
-        this.description = description;
-        this.plusPoint = plusPoint;
-        this.penaltyPoint = penaltyPoint;
-    }
-
-    // Getter và Setter
-    public Integer getId() {
+    //Getter and Setter
+    public int getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -68,31 +47,27 @@ public class ActivityType implements Serializable {
         this.description = description;
     }
 
-    public double getPlusPoint() {
-        return plusPoint;
+    public BigDecimal getBonusPoint() {
+        return bonusPoint;
     }
 
-    public void setPlusPoint(double plusPoint) {
-        this.plusPoint = plusPoint;
+    public void setBonusPoint(BigDecimal bonusPoint) {
+        this.bonusPoint = bonusPoint;
     }
 
-    public double getPenaltyPoint() {
+    public BigDecimal getPenaltyPoint() {
         return penaltyPoint;
     }
 
-    public void setPenaltyPoint(double penaltyPoint) {
+    public void setPenaltyPoint(BigDecimal penaltyPoint) {
         this.penaltyPoint = penaltyPoint;
     }
 
-    @Override
-    public String toString() {
-        return "ActivityType{" +
-                "id=" + id +
-                ", code='" + code + '\'' +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", plusPoint=" + plusPoint +
-                ", penaltyPoint=" + penaltyPoint +
-                '}';
+    public Enum.CommonStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(Enum.CommonStatus status) {
+        this.status = status;
     }
 }

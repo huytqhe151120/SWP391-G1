@@ -1,133 +1,114 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ page pageEncoding="UTF-8" %>
+<c:set var="selectedCompany" value="${not empty formData ? formData.companyId : partnerStaff.companyId}"/>
+<c:set var="selectedGender" value="${not empty formData ? formData.gender : (partnerStaff.gender == null ? '' : (partnerStaff.gender ? '1' : '0'))}"/>
+<c:set var="selectedStatus" value="${not empty formData ? formData.status : partnerStaff.status}"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Partner Staff Form</title>
-
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
+    <title><c:choose><c:when test="${isEdit}">Cập nhật nhân viên</c:when><c:otherwise>Thêm nhân viên đối tác</c:otherwise></c:choose> | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
-
 <body>
-
-<c:set var="editing" value="${not empty staff}"/>
-
-<div class="page activity-form-page">
-
-    <!-- ================= HERO ================= -->
-    <div class="page-header activity-hero">
+<main class="page activity-list-page activity-form-page">
+    <header class="activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">PARTNER STAFF MANAGEMENT</span>
-            <h1>
-                <c:choose>
-                    <c:when test="${editing}">Sửa nhân viên đối tác</c:when>
-                    <c:otherwise>Thêm nhân viên đối tác</c:otherwise>
-                </c:choose>
-            </h1>
-            <p>Nhập thông tin liên hệ và công ty của nhân viên đối tác</p>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
+            <h1><c:choose><c:when test="${isEdit}">Cập nhật nhân viên</c:when><c:otherwise>Thêm nhân viên đối tác</c:otherwise></c:choose></h1>
+            <p>Nhập thông tin nhân viên và công ty đối tác liên quan.</p>
         </div>
-    </div>
+        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs">
+            <span aria-hidden="true">←</span>
+            Danh sách nhân viên
+        </a>
+    </header>
 
+    <c:if test="${not empty errorMessage}">
+        <div class="alert alert-error activity-alert"><c:out value="${errorMessage}"/></div>
+    </c:if>
 
-    <!-- ================= FORM CARD ================= -->
-    <form action="${pageContext.request.contextPath}/partner-staff"
-          method="post"
-          class="card activity-form-card">
-
-        <input type="hidden" name="action" value="${editing ? 'update' : 'create'}">
-        <c:if test="${editing}">
-            <input type="hidden" name="id" value="${staff.id}">
-        </c:if>
-
+    <section class="card activity-form-card">
         <div class="activity-table-heading">
             <div>
-                <h2>
-                    <c:choose>
-                        <c:when test="${editing}">Cập nhật nhân viên</c:when>
-                        <c:otherwise>Nhân viên mới</c:otherwise>
-                    </c:choose>
-                </h2>
+                <h2>Thông tin nhân viên</h2>
                 <p>Các trường có dấu <span class="required-mark">*</span> là bắt buộc</p>
             </div>
         </div>
+        <form method="post" action="${pageContext.request.contextPath}/partner-staffs">
+            <input type="hidden" name="action" value="${isEdit ? 'update' : 'create'}">
+            <c:if test="${isEdit}">
+                <input type="hidden" name="id" value="${not empty formData ? formData.id : partnerStaff.id}">
+            </c:if>
 
-        <div class="activity-form-content">
-
-            <!-- ===== Thông tin cá nhân ===== -->
-            <div class="activity-form-section">
-                <h3>Thông tin cá nhân</h3>
-                <p>Họ tên, email và số điện thoại liên hệ</p>
+            <div class="activity-form-content">
+                <div class="activity-form-section">
+                    <h3>Thông tin cơ bản</h3>
+                    <p>Thông tin nhận diện và liên hệ công việc của nhân viên.</p>
+                </div>
+                <div class="form-grid activity-form-grid">
+                    <div class="field">
+                        <label for="code">Mã nhân viên <span class="required-mark">*</span></label>
+                        <input id="code" name="code" type="text" maxlength="50" required
+                               value="<c:out value='${not empty formData ? formData.code : partnerStaff.code}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="name">Họ và tên <span class="required-mark">*</span></label>
+                        <input id="name" name="name" type="text" maxlength="255" required
+                               value="<c:out value='${not empty formData ? formData.name : partnerStaff.name}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="companyId">Công ty đối tác <span class="required-mark">*</span></label>
+                        <select id="companyId" name="companyId" required <c:if test="${isEdit}">disabled</c:if>>
+                            <option value="">-- Chọn công ty --</option>
+                            <c:forEach var="company" items="${partnerCompanies}">
+                                <option value="${company.id}" <c:if test="${selectedCompany == company.id}">selected</c:if>>
+                                    <c:out value="${company.code}"/> - <c:out value="${company.name}"/>
+                                </option>
+                            </c:forEach>
+                        </select>
+                        <c:if test="${isEdit}">
+                            <input type="hidden" name="companyId" value="<c:out value='${selectedCompany}'/>">
+                        </c:if>
+                    </div>
+                    <div class="field">
+                        <label for="position">Chức vụ</label>
+                        <input id="position" name="position" type="text" maxlength="255"
+                               value="<c:out value='${not empty formData ? formData.position : partnerStaff.position}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="dob">Ngày sinh</label>
+                        <input id="dob" name="dob" type="date"
+                               value="<c:out value='${not empty formData ? formData.dob : partnerStaff.dob}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="gender">Giới tính</label>
+                        <select id="gender" name="gender">
+                            <option value="" <c:if test="${empty selectedGender}">selected</c:if>>-- Chưa cập nhật --</option>
+                            <option value="1" <c:if test="${selectedGender == '1' or selectedGender == 'true'}">selected</c:if>>Nam</option>
+                            <option value="0" <c:if test="${selectedGender == '0' or selectedGender == 'false'}">selected</c:if>>Nữ</option>
+                        </select>
+                    </div>
+                    <c:if test="${isEdit}">
+                        <div class="field">
+                            <label for="status">Trạng thái</label>
+                            <select id="status" name="status">
+                                <option value="ACTIVE" <c:if test="${selectedStatus == 'ACTIVE'}">selected</c:if>>Đang hoạt động</option>
+                                <option value="INACTIVE" <c:if test="${selectedStatus == 'INACTIVE'}">selected</c:if>>Ngừng hoạt động</option>
+                            </select>
+                        </div>
+                    </c:if>
+                </div>
             </div>
 
-            <div class="form-grid activity-form-grid">
-
-                <div class="field field-wide">
-                    <label for="fullName">Họ tên <span class="required-mark">*</span></label>
-                    <input id="fullName" name="fullName" required
-                           value="<c:out value='${staff.fullName}'/>">
-                </div>
-
-                <div class="field">
-                    <label for="email">Email <span class="required-mark">*</span></label>
-                    <input id="email" type="email" name="email" required
-                           value="<c:out value='${staff.email}'/>">
-                </div>
-
-                <div class="field">
-                    <label for="phone">Số điện thoại <span class="required-mark">*</span></label>
-                    <input id="phone" name="phone" required
-                           value="<c:out value='${staff.phone}'/>">
-                </div>
-
+            <div class="form-actions activity-form-actions">
+                <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/partner-staffs">Hủy</a>
+                <button class="button button-primary" type="submit">
+                    <c:choose><c:when test="${isEdit}">Lưu thay đổi</c:when><c:otherwise>Thêm nhân viên</c:otherwise></c:choose>
+                </button>
             </div>
-
-
-            <!-- ===== Công việc ===== -->
-            <div class="activity-form-section">
-                <h3>Công việc</h3>
-                <p>Chức vụ, công ty đối tác và trạng thái</p>
-            </div>
-
-            <div class="form-grid activity-form-grid">
-
-                <div class="field">
-                    <label for="position">Chức vụ</label>
-                    <input id="position" name="position"
-                           value="<c:out value='${staff.position}'/>">
-                </div>
-
-                <div class="field">
-                    <label for="partnerId">Partner ID <span class="required-mark">*</span></label>
-                    <input id="partnerId" type="number" name="partnerId" min="1" required
-                           value="<c:out value='${staff.partnerId}'/>">
-                </div>
-
-                <div class="field">
-                    <label for="isActive">Active</label>
-                    <select id="isActive" name="isActive">
-                        <option value="true"  ${staff.isActive != false ? 'selected' : ''}>Có</option>
-                        <option value="false" ${staff.isActive == false ? 'selected' : ''}>Không</option>
-                    </select>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- ================= ACTIONS ================= -->
-        <div class="form-actions activity-form-actions">
-            <a class="button activity-cancel-button"
-               href="${pageContext.request.contextPath}/partner-staff">Hủy</a>
-            <button type="submit" class="button button-primary">Lưu</button>
-        </div>
-
-    </form>
-
-</div>
-
+        </form>
+    </section>
+</main>
 </body>
 </html>

@@ -5,194 +5,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Activity Detail</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
+    <title>Chi tiết hoạt động | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
-
 <body>
-
-<div class="page activity-form-page">
-
-    <!-- ================= HERO ================= -->
-    <div class="page-header activity-hero">
+<main class="page activity-list-page activity-form-page activity-detail-page">
+    <header class="activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">ACTIVITY MANAGEMENT</span>
-            <h1>Chi tiết hoạt động ngoại khóa</h1>
-            <p><c:out value="${activity.code}"/> - <c:out value="${activity.name}"/></p>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
+            <h1>Chi tiết hoạt động</h1>
+            <p><span class="activity-code"><c:out value="${activity.code}"/></span> <c:out value="${activity.name}"/></p>
         </div>
-    </div>
+        <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
+            <span aria-hidden="true">←</span>
+            Danh sách hoạt động
+        </a>
+    </header>
 
-    <!-- ================= DETAIL CARD ================= -->
-    <div class="card activity-detail-card">
-
+    <section class="card activity-form-card activity-detail-card">
         <div class="activity-table-heading">
             <div>
                 <h2>Thông tin hoạt động</h2>
-                <p>Chi tiết đầy đủ của hoạt động</p>
+                <p>Thông tin tổ chức, thời gian và trạng thái hoạt động.</p>
             </div>
-
-            <a class="button"
-               href="${pageContext.request.contextPath}/activity">Quay lại</a>
+            <a class="button button-primary"
+               href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
         </div>
 
         <div class="activity-detail-content">
-
-            <!-- ===== Thông tin chung ===== -->
-            <div class="activity-detail-section">
-                <h3>Thông tin chung</h3>
-
+            <section class="activity-detail-section">
+                <h3>Thông tin cơ bản</h3>
                 <dl class="detail-grid activity-detail-grid">
-                    <div class="detail-item">
-                        <dt>ID</dt>
-                        <dd><c:out value="${activity.id}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Mã hoạt động</dt>
-                        <dd><span class="activity-code"><c:out value="${activity.code}"/></span></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Tên hoạt động</dt>
-                        <dd><strong class="activity-name"><c:out value="${activity.name}"/></strong></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Học kỳ ID</dt>
-                        <dd><c:out value="${activity.semesterId}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Activity Type</dt>
-                        <dd><c:out value="${activity.activityType}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Ngày tạo</dt>
-                        <dd><c:out value="${activity.createdAt}"/></dd>
-                    </div>
+                    <div class="detail-item"><dt>Mã hoạt động</dt><dd><c:out value="${activity.code}" default="—"/></dd></div>
+                    <div class="detail-item"><dt>Tên hoạt động</dt><dd><c:out value="${activity.name}" default="—"/></dd></div>
+                    <div class="detail-item"><dt>Học kỳ</dt><dd><c:out value="${activity.semesterCode}" default="—"/> <c:if test="${not empty activity.semesterName}">- <c:out value="${activity.semesterName}"/></c:if></dd></div>
+                    <div class="detail-item"><dt>Loại hoạt động</dt><dd><c:out value="${activity.activityTypeCode}" default="—"/> <c:if test="${not empty activity.activityTypeName}">- <c:out value="${activity.activityTypeName}"/></c:if></dd></div>
+                    <div class="detail-item"><dt>Trạng thái hoạt động</dt><dd><span class="badge activity-status"><c:out value="${activity.activityStatus}" default="Chưa xác định"/></span></dd></div>
+                    <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><span class="badge activity-status"><c:out value="${activity.approvalStatus}" default="Chưa xác định"/></span></dd></div>
                 </dl>
-            </div>
+            </section>
 
-
-            <!-- ===== Đơn vị phụ trách ===== -->
-            <div class="activity-detail-section">
-                <h3>Đơn vị phụ trách</h3>
-
+            <section class="activity-detail-section">
+                <h3>Phụ trách và đối tác</h3>
                 <dl class="detail-grid activity-detail-grid">
-                    <div class="detail-item">
-                        <dt>Đơn vị phụ trách ID</dt>
-                        <dd><c:out value="${activity.responsibleDepartmentId}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Nhân viên phụ trách ID</dt>
-                        <dd><c:out value="${activity.responsibleStaffId}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Partner Company ID</dt>
-                        <dd>
-                            <c:choose>
-                                <c:when test="${activity.partnerId > 0}">
-                                    <c:out value="${activity.partnerId}"/>
-                                </c:when>
-                                <c:otherwise>--</c:otherwise>
-                            </c:choose>
-                        </dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Partner Staff ID</dt>
-                        <dd>
-                            <c:choose>
-                                <c:when test="${activity.partnerStaffId > 0}">
-                                    <c:out value="${activity.partnerStaffId}"/>
-                                </c:when>
-                                <c:otherwise>--</c:otherwise>
-                            </c:choose>
-                        </dd>
-                    </div>
+                    <div class="detail-item"><dt>Đơn vị phụ trách</dt><dd><c:out value="${activity.responsibleDepartmentCode}" default="—"/> <c:if test="${not empty activity.responsibleDepartmentName}">- <c:out value="${activity.responsibleDepartmentName}"/></c:if></dd></div>
+                    <div class="detail-item"><dt>Nhân viên phụ trách</dt><dd><c:out value="${activity.responsibleStaffCode}" default="—"/> <c:if test="${not empty activity.responsibleStaffName}">- <c:out value="${activity.responsibleStaffName}"/></c:if></dd></div>
+                    <div class="detail-item"><dt>Công ty đối tác</dt><dd><c:out value="${activity.partnerCompanyName}" default="Không có"/></dd></div>
+                    <div class="detail-item"><dt>Nhân viên đối tác</dt><dd><c:out value="${activity.partnerStaffName}" default="Không có"/></dd></div>
                 </dl>
-            </div>
+            </section>
 
-
-            <!-- ===== Điểm & trạng thái ===== -->
-            <div class="activity-detail-section">
-                <h3>Điểm và trạng thái</h3>
-
+            <section class="activity-detail-section">
+                <h3>Thời gian, địa điểm và điểm số</h3>
                 <dl class="detail-grid activity-detail-grid">
-                    <div class="detail-item">
-                        <dt>Điểm cộng</dt>
-                        <dd><c:out value="${activity.bonusPoint}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Điểm trừ</dt>
-                        <dd><c:out value="${activity.penaltyPoint}"/></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Activity Status</dt>
-                        <dd><span class="badge activity-status"><c:out value="${activity.activityStatus}"/></span></dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Approval Status</dt>
-                        <dd><span class="badge"><c:out value="${activity.approvalStatus}"/></span></dd>
-                    </div>
+                    <div class="detail-item"><dt>Bắt đầu</dt><dd><c:out value="${activity.startTime}" default="Chưa xác định"/></dd></div>
+                    <div class="detail-item"><dt>Kết thúc</dt><dd><c:out value="${activity.endTime}" default="Chưa xác định"/></dd></div>
+                    <div class="detail-item"><dt>Điểm thưởng</dt><dd><c:out value="${activity.bonusPoint}" default="—"/></dd></div>
+                    <div class="detail-item"><dt>Điểm phạt</dt><dd><c:out value="${activity.penaltyPoint}" default="—"/></dd></div>
+                    <div class="detail-item field-wide"><dt>Địa điểm</dt><dd><c:out value="${activity.address}" default="Chưa cập nhật"/></dd></div>
+                    <div class="detail-item field-wide"><dt>Mô tả</dt><dd class="activity-detail-description"><c:out value="${activity.description}" default="Chưa có mô tả"/></dd></div>
                 </dl>
-            </div>
-
-
-            <!-- ===== Chi tiết ===== -->
-            <div class="activity-detail-section">
-                <h3>Chi tiết</h3>
-
-                <dl class="detail-grid activity-detail-grid">
-                    <div class="detail-item">
-                        <dt>Địa chỉ</dt>
-                        <dd>
-                            <c:choose>
-                                <c:when test="${not empty activity.address}">
-                                    <c:out value="${activity.address}"/>
-                                </c:when>
-                                <c:otherwise>--</c:otherwise>
-                            </c:choose>
-                        </dd>
-                    </div>
-                    <div class="detail-item">
-                        <dt>Mô tả</dt>
-                        <dd class="activity-detail-description"><c:out value="${activity.description}"/></dd>
-                    </div>
-                </dl>
-            </div>
-
+            </section>
         </div>
-
-
-        <!-- ================= ACTIONS ================= -->
         <div class="detail-actions activity-detail-actions">
-
-            <a class="button"
-               href="${pageContext.request.contextPath}/activity?action=edit&id=${activity.id}">Sửa</a>
-
-            <c:if test="${activity.approvalStatus == 'PENDING'}">
-
-                <form action="${pageContext.request.contextPath}/activity" method="post"
-                      class="approve-form">
-                    <input type="hidden" name="action" value="approve">
-                    <input type="hidden" name="id" value="${activity.id}">
-                    <button type="submit" class="button button-primary">Duyệt hoạt động</button>
-                </form>
-
-                <form action="${pageContext.request.contextPath}/activity" method="post"
-                      class="reject-form" style="display:flex; gap:8px;">
-                    <input type="hidden" name="action" value="reject">
-                    <input type="hidden" name="id" value="${activity.id}">
-                    <input type="text" name="note" class="reject-note"
-                           placeholder="Lý do từ chối" style="width:240px;">
-                    <button type="submit" class="button button-danger">Từ chối</button>
-                </form>
-
-            </c:if>
-
+            <a class="button" href="${pageContext.request.contextPath}/activities">Đóng</a>
         </div>
-
-    </div>
-
-</div>
-
-<script src="${pageContext.request.contextPath}/assets/js/activity.js"></script>
-
+    </section>
+</main>
 </body>
 </html>

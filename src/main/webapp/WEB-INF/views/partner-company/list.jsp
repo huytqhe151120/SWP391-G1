@@ -5,163 +5,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Partner Company List</title>
-
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/partner-company.css">
+    <title>Công ty đối tác | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
-
 <body>
-
-<div class="page activity-list-page">
-
-    <!-- ================= HERO ================= -->
-    <div class="activity-hero page-header">
-
+<main class="page activity-list-page">
+    <header class="activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">PARTNER MANAGEMENT</span>
-            <h1>Danh sách đối tác</h1>
-            <p>Quản lý thông tin các công ty đối tác của hoạt động ngoại khóa</p>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
+            <h1>Công ty đối tác</h1>
+            <p>Quản lý thông tin liên hệ và trạng thái các đơn vị đồng hành.</p>
         </div>
+        <div class="account-hero-actions">
+            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
+            <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies?action=create">
+                <span class="plus-icon" aria-hidden="true">+</span>
+                Thêm công ty
+            </a>
+        </div>
+    </header>
 
-        <a class="button activity-create-button"
-           href="${pageContext.request.contextPath}/partner-company?action=create">
-            <span class="plus-icon" aria-hidden="true">+</span>
-            Thêm partner
-        </a>
+    <c:if test="${not empty sessionScope.successMessage}">
+        <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
+        <c:remove var="successMessage" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.errorMessage}">
+        <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
+        <c:remove var="errorMessage" scope="session"/>
+    </c:if>
 
-    </div>
-
-
-    <!-- ================= TABLE CARD ================= -->
-    <div class="card activity-table-card">
-
+    <section class="card activity-table-card" aria-labelledby="company-table-title">
         <div class="activity-table-heading">
-
             <div>
-                <h2>Partner List</h2>
-                <p>Danh sách công ty đối tác trong hệ thống</p>
+                <h2 id="company-table-title">Danh sách công ty</h2>
+                <p>Thông tin các công ty đối tác đã được ghi nhận</p>
             </div>
-
             <span class="activity-count">
                 <c:choose>
-                    <c:when test="${empty partner}">0 đối tác</c:when>
-                    <c:otherwise><c:out value="${partner.size()}"/> đối tác</c:otherwise>
+                    <c:when test="${empty partnerCompanies}">0 công ty</c:when>
+                    <c:otherwise><c:out value="${partnerCompanies.size()}"/> công ty</c:otherwise>
                 </c:choose>
             </span>
-
         </div>
-
-
         <div class="table-wrap activity-table-wrap">
-
             <table class="partner-company-table">
-
                 <thead>
                 <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Tên</th>
+                    <th scope="col">Mã công ty</th>
+                    <th scope="col">Tên công ty</th>
                     <th scope="col">Email</th>
-                    <th scope="col">Số điện thoại</th>
+                    <th scope="col">Điện thoại</th>
                     <th scope="col">Trạng thái</th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
-
-
                 <tbody>
-
                 <c:choose>
-
-                    <c:when test="${empty partner}">
+                    <c:when test="${empty partnerCompanies}">
                         <tr>
-                            <td class="empty-state" colspan="6">
-                                Chưa có đối tác nào.
+                            <td class="empty-state activity-empty-state" colspan="6">
+                                <span class="empty-state-mark" aria-hidden="true">+</span>
+                                <strong>Chưa có công ty đối tác</strong>
+                                <span>Thêm công ty mới để bắt đầu quản lý danh sách.</span>
+                                <a class="button button-primary" href="${pageContext.request.contextPath}/partner-companies?action=create">Thêm công ty đầu tiên</a>
                             </td>
                         </tr>
                     </c:when>
-
                     <c:otherwise>
-
-                        <c:forEach var="item" items="${partner}">
-
+                        <c:forEach var="company" items="${partnerCompanies}">
                             <tr>
-
-                                <td><c:out value="${item.id}"/></td>
-
+                                <td><span class="activity-code"><c:out value="${company.code}"/></span></td>
+                                <td><strong class="activity-name"><c:out value="${company.name}"/></strong></td>
+                                <td><c:out value="${company.email}" default="—"/></td>
+                                <td><c:out value="${company.phoneNumber}" default="—"/></td>
                                 <td>
-                                    <strong class="activity-name">
-                                        <c:out value="${item.name}"/>
-                                    </strong>
+                                    <span class="badge ${company.status == 'ACTIVE' ? 'partner-company-active' : 'partner-company-inactive'}">
+                                        <c:choose>
+                                            <c:when test="${company.status == 'ACTIVE'}">Đang hoạt động</c:when>
+                                            <c:otherwise>Ngừng hoạt động</c:otherwise>
+                                        </c:choose>
+                                    </span>
                                 </td>
-
-                                <td><c:out value="${item.email}" default="—"/></td>
-
-                                <td><c:out value="${item.phone}" default="—"/></td>
-
                                 <td>
-                                    <c:choose>
-
-                                        <c:when test="${item.status == 'ACTIVE'}">
-                                            <span class="badge partner-company-active">Active</span>
-                                        </c:when>
-
-                                        <c:when test="${item.status == 'INACTIVE'}">
-                                            <span class="badge partner-company-inactive">Inactive</span>
-                                        </c:when>
-
-                                        <c:otherwise>
-                                            <span class="badge">
-                                                <c:out value="${item.status}" default="—"/>
-                                            </span>
-                                        </c:otherwise>
-
-                                    </c:choose>
-                                </td>
-
-                                <!-- ================= ACTIONS ================= -->
-                                <td>
-
                                     <div class="actions activity-actions">
-
-                                        <a class="activity-action-link"
-                                           href="${pageContext.request.contextPath}/partner-company?action=detail&amp;id=${item.id}">Chi tiết</a>
-
-                                        <a class="activity-action-link"
-                                           href="${pageContext.request.contextPath}/partner-company?action=edit&amp;id=${item.id}">Sửa</a>
-
-                                        <!-- Delete (POST) -->
-                                        <form action="${pageContext.request.contextPath}/partner-company"
-                                              method="post"
-                                              style="margin:0;">
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="id" value="${item.id}">
-                                            <a href="#" role="button"
-                                               class="activity-action-link activity-action-delete"
-                                               onclick="if (confirm('Bạn có chắc muốn xóa partner này?')) { this.closest('form').submit(); } return false;">Xóa</a>
-                                        </form>
-
+                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/partner-companies?action=detail&amp;id=${company.id}">Chi tiết</a>
+                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/partner-companies?action=edit&amp;id=${company.id}">Sửa</a>
+                                        <a class="activity-action-link activity-action-delete"
+                                           href="${pageContext.request.contextPath}/partner-companies?action=delete&amp;id=${company.id}"
+                                           onclick="return confirm('Bạn có chắc muốn xóa công ty đối tác này?');">Xóa</a>
                                     </div>
-
                                 </td>
-
                             </tr>
-
                         </c:forEach>
-
                     </c:otherwise>
-
                 </c:choose>
-
                 </tbody>
-
             </table>
-
         </div>
-
-    </div>
-
-</div>
-
+    </section>
+</main>
 </body>
 </html>

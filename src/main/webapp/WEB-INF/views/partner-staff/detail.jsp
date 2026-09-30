@@ -5,112 +5,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Partner Staff Detail</title>
-
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
+    <title>Chi tiết nhân viên đối tác | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
-
 <body>
-
-<div class="page activity-form-page">
-
-    <!-- ================= HERO ================= -->
-    <div class="page-header activity-hero">
+<main class="page activity-list-page activity-form-page">
+    <header class="activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">PARTNER STAFF MANAGEMENT</span>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
             <h1>Chi tiết nhân viên đối tác</h1>
-            <p><c:out value="${staff.fullName}"/></p>
+            <p><span class="activity-code"><c:out value="${partnerStaff.code}"/></span> <c:out value="${partnerStaff.name}"/></p>
         </div>
-    </div>
-
-
-    <!-- ================= DETAIL CARD ================= -->
-    <div class="card activity-detail-card">
-
+        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs">
+            <span aria-hidden="true">←</span>
+            Danh sách nhân viên
+        </a>
+    </header>
+    <section class="card activity-form-card activity-detail-card">
         <div class="activity-table-heading">
             <div>
                 <h2>Thông tin nhân viên</h2>
-                <p>Chi tiết đầy đủ của nhân viên đối tác</p>
+                <p>Thông tin cá nhân và công ty đối tác liên quan.</p>
             </div>
-
-            <a class="button"
-               href="${pageContext.request.contextPath}/partner-staff">Quay lại</a>
+            <a class="button button-primary" href="${pageContext.request.contextPath}/partner-staffs?action=edit&amp;id=${partnerStaff.id}">Chỉnh sửa</a>
         </div>
-
         <div class="activity-detail-content">
-
-            <div class="activity-detail-section">
-                <h3>Thông tin chung</h3>
-
+            <section class="activity-detail-section">
+                <h3>Thông tin cơ bản</h3>
                 <dl class="detail-grid activity-detail-grid">
-
-                    <div class="detail-item">
-                        <dt>ID</dt>
-                        <dd><c:out value="${staff.id}"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Họ tên</dt>
-                        <dd><strong class="activity-name"><c:out value="${staff.fullName}"/></strong></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Email</dt>
-                        <dd><c:out value="${staff.email}" default="—"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Số điện thoại</dt>
-                        <dd><c:out value="${staff.phone}" default="—"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Chức vụ</dt>
-                        <dd><c:out value="${staff.position}" default="—"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Partner ID</dt>
-                        <dd><span class="activity-code"><c:out value="${staff.partnerId}"/></span></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Active</dt>
-                        <dd>
+                    <div class="detail-item"><dt>Mã nhân viên</dt><dd><c:out value="${partnerStaff.code}" default="—"/></dd></div>
+                    <div class="detail-item"><dt>Họ và tên</dt><dd><c:out value="${partnerStaff.name}" default="—"/></dd></div>
+                    <div class="detail-item"><dt>Ngày sinh</dt><dd><c:out value="${partnerStaff.dob}" default="Chưa cập nhật"/></dd></div>
+                    <div class="detail-item"><dt>Giới tính</dt><dd>
+                        <c:choose>
+                            <c:when test="${partnerStaff.gender == null}">Chưa cập nhật</c:when>
+                            <c:when test="${partnerStaff.gender}">Nam</c:when>
+                            <c:otherwise>Nữ</c:otherwise>
+                        </c:choose>
+                    </dd></div>
+                    <div class="detail-item"><dt>Chức vụ</dt><dd><c:out value="${partnerStaff.position}" default="Chưa cập nhật"/></dd></div>
+                    <div class="detail-item"><dt>Trạng thái</dt><dd>
+                        <span class="badge ${partnerStaff.status == 'ACTIVE' ? 'partner-company-active' : 'partner-company-inactive'}">
                             <c:choose>
-                                <c:when test="${staff.isActive}">
-                                    <span class="badge"
-                                          style="border:1px solid #d1ead9; background:#edf8f0; color:#287143;">Active</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="badge"
-                                          style="border:1px solid #e4e7ed; background:#f2f4f7; color:#687386;">Inactive</span>
-                                </c:otherwise>
+                                <c:when test="${partnerStaff.status == 'ACTIVE'}">Đang hoạt động</c:when>
+                                <c:otherwise>Ngừng hoạt động</c:otherwise>
                             </c:choose>
-                        </dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Ngày tạo</dt>
-                        <dd><c:out value="${staff.createdAt}" default="—"/></dd>
-                    </div>
-
+                        </span>
+                    </dd></div>
                 </dl>
-            </div>
-
+            </section>
+            <section class="activity-detail-section">
+                <h3>Công ty chủ quản</h3>
+                <dl class="detail-grid activity-detail-grid">
+                    <div class="detail-item"><dt>Mã công ty</dt><dd><c:out value="${partnerStaff.companyCode}" default="—"/></dd></div>
+                    <div class="detail-item"><dt>Tên công ty</dt><dd><c:out value="${partnerStaff.companyName}" default="—"/></dd></div>
+                </dl>
+            </section>
         </div>
-
-
-        <!-- ================= ACTIONS ================= -->
         <div class="detail-actions activity-detail-actions">
-            <a class="button"
-               href="${pageContext.request.contextPath}/partner-staff?action=edit&amp;id=${staff.id}">Sửa</a>
+            <a class="button" href="${pageContext.request.contextPath}/partner-staffs">Đóng</a>
         </div>
-
-    </div>
-
-</div>
-
+    </section>
+</main>
 </body>
 </html>

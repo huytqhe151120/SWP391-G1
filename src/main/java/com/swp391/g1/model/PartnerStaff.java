@@ -1,79 +1,68 @@
 package com.swp391.g1.model;
+import java.time.LocalDate;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
+public class PartnerStaff {
+    private int id; //[cite: 1]
+    private int companyId; //[cite: 1]
+    private String code; //[cite: 1]
+    private String name; //[cite: 1]
+    private LocalDate dob; //[cite: 1]
+    private Boolean gender; // Nullable[cite: 1]
+    private String position; //[cite: 1]
+    private Enum.CommonStatus status; //[cite: 1]
+    private Integer accountId;
 
-public class PartnerStaff implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    // Các trường dữ liệu (Fields)
-    private Integer id;
-    private String fullName;    // Mandatory
-    private String email;       // Mandatory
-    private String phone;       // Mandatory
-    private String position;    // Optional
-    private Boolean isActive;   // Mandatory
-    private Integer partnerId;   // Mandatory (Khóa ngoại trỏ sang PartnerCompany)
-    private Timestamp createdAt; // Mandatory
-
-    // 1. Constructor KHÔNG tham số
+    // Constructor with no parameter
     public PartnerStaff() {
     }
 
-    // 2. Constructor với các tham số BẮT BUỘC
-    public PartnerStaff(String fullName, String email, String phone, Boolean isActive, Integer partnerId, Timestamp createdAt) {
-        this.fullName = fullName;
-        this.email = email;
-        this.phone = phone;
-        this.isActive = isActive;
-        this.partnerId = partnerId;
-        this.createdAt = createdAt;
-    }
-
-    // 3. Constructor FULL tham số
-    public PartnerStaff(Integer id, String fullName, String email, String phone, String position, Boolean isActive, Integer partnerId, Timestamp createdAt) {
-        this.id = id;
-        this.fullName = fullName;
-        this.email = email;
-        this.phone = phone;
-        this.position = position;
-        this.isActive = isActive;
-        this.partnerId = partnerId;
-        this.createdAt = createdAt;
-    }
-
-    // Getter và Setter
-    public Integer getId() {
+    //Getter and Setter
+    public int getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(int id) {
         this.id = id;
     }
 
-    public String getFullName() {
-        return fullName;
+    public int getCompanyId() {
+        return companyId;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
     }
 
-    public String getEmail() {
-        return email;
+    public String getCode() {
+        return code;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setCode(String code) {
+        this.code = code;
     }
 
-    public String getPhone() {
-        return phone;
+    public String getName() {
+        return name;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public LocalDate getDob() {
+        return dob;
+    }
+
+    public void setDob(LocalDate dob) {
+        this.dob = dob;
+    }
+
+    public Boolean getGender() {
+        return gender;
+    }
+
+    public void setGender(Boolean gender) {
+        this.gender = gender;
     }
 
     public String getPosition() {
@@ -84,41 +73,19 @@ public class PartnerStaff implements Serializable {
         this.position = position;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public Enum.CommonStatus getStatus() {
+        return status;
     }
 
-    public void setIsActive(Boolean active) {
-        isActive = active;
+    public void setStatus(Enum.CommonStatus status) {
+        this.status = status;
     }
 
-    public Integer getPartnerId() {
-        return partnerId;
+    public Integer getAccountId() {
+        return accountId;
     }
 
-    public void setPartnerId(Integer partnerId) {
-        this.partnerId = partnerId;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @Override
-    public String toString() {
-        return "PartnerStaff{" +
-                "id=" + id +
-                ", fullName='" + fullName + '\'' +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", position='" + position + '\'' +
-                ", isActive=" + isActive +
-                ", partnerId=" + partnerId +
-                ", createdAt=" + createdAt +
-                '}';
+    public void setAccountId(Integer accountId) {
+        this.accountId = accountId;
     }
 }

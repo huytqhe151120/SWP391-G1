@@ -1,124 +1,103 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ page pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Partner Company Form</title>
-
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/partner-company.css">
+    <title><c:choose><c:when test="${isEdit}">Cập nhật công ty đối tác</c:when><c:otherwise>Thêm công ty đối tác</c:otherwise></c:choose> | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
-
 <body>
-
-<c:set var="editing" value="${not empty partner}"/>
-
-<div class="page activity-form-page">
-
-    <!-- ================= HERO ================= -->
-    <div class="page-header activity-hero">
+<main class="page activity-list-page activity-form-page">
+    <header class="activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">PARTNER MANAGEMENT</span>
-            <h1>
-                <c:choose>
-                    <c:when test="${editing}">Sửa đối tác</c:when>
-                    <c:otherwise>Thêm đối tác</c:otherwise>
-                </c:choose>
-            </h1>
-            <p>Nhập thông tin liên hệ của công ty đối tác</p>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
+            <h1><c:choose><c:when test="${isEdit}">Cập nhật công ty</c:when><c:otherwise>Thêm công ty đối tác</c:otherwise></c:choose></h1>
+            <p>Nhập thông tin liên hệ và thông tin quản lý của công ty.</p>
         </div>
-    </div>
+        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies">
+            <span aria-hidden="true">←</span>
+            Danh sách công ty
+        </a>
+    </header>
 
+    <c:if test="${not empty errorMessage}">
+        <div class="alert alert-error activity-alert"><c:out value="${errorMessage}"/></div>
+    </c:if>
 
-    <!-- ================= FORM CARD ================= -->
-    <form action="${pageContext.request.contextPath}/partner-company"
-          method="post"
-          class="card activity-form-card">
-
-        <input type="hidden" name="action" value="${editing ? 'update' : 'create'}">
-        <c:if test="${editing}">
-            <input type="hidden" name="id" value="${partner.id}">
-        </c:if>
-
+    <section class="card activity-form-card">
         <div class="activity-table-heading">
             <div>
-                <h2>
-                    <c:choose>
-                        <c:when test="${editing}">Cập nhật đối tác</c:when>
-                        <c:otherwise>Đối tác mới</c:otherwise>
-                    </c:choose>
-                </h2>
+                <h2>Thông tin công ty</h2>
                 <p>Các trường có dấu <span class="required-mark">*</span> là bắt buộc</p>
             </div>
         </div>
+        <form method="post" action="${pageContext.request.contextPath}/partner-companies">
+            <input type="hidden" name="action" value="${isEdit ? 'update' : 'create'}">
+            <c:if test="${isEdit}">
+                <input type="hidden" name="id" value="${partnerCompany.id}">
+            </c:if>
 
-        <div class="activity-form-content">
-
-            <div class="activity-form-section">
-                <h3>Thông tin đối tác</h3>
-                <p>Tên, email và số điện thoại liên hệ</p>
+            <div class="activity-form-content">
+                <div class="activity-form-section">
+                    <h3>Thông tin cơ bản</h3>
+                    <p>Thông tin nhận diện và liên hệ của công ty.</p>
+                </div>
+                <div class="form-grid activity-form-grid">
+                    <div class="field">
+                        <label for="code">Mã công ty <span class="required-mark">*</span></label>
+                        <input id="code" name="code" type="text" maxlength="50" required
+                               value="<c:out value='${partnerCompany.code}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="name">Tên công ty <span class="required-mark">*</span></label>
+                        <input id="name" name="name" type="text" maxlength="255" required
+                               value="<c:out value='${partnerCompany.name}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="email">Email</label>
+                        <input id="email" name="email" type="email" maxlength="255"
+                               value="<c:out value='${partnerCompany.email}'/>">
+                    </div>
+                    <div class="field">
+                        <label for="phone">Số điện thoại</label>
+                        <input id="phone" name="phone" type="tel" maxlength="11" inputmode="numeric"
+                               value="<c:out value='${partnerCompany.phoneNumber}'/>">
+                    </div>
+                    <div class="field field-wide">
+                        <label for="website">Website</label>
+                        <input id="website" name="website" type="url" maxlength="500" placeholder="https://example.com"
+                               value="<c:out value='${partnerCompany.website}'/>">
+                    </div>
+                    <div class="field field-wide">
+                        <label for="address">Địa chỉ</label>
+                        <input id="address" name="address" type="text" maxlength="500"
+                               value="<c:out value='${partnerCompany.address}'/>">
+                    </div>
+                    <div class="field field-wide">
+                        <label for="description">Mô tả</label>
+                        <textarea id="description" name="description"><c:out value="${partnerCompany.description}"/></textarea>
+                    </div>
+                    <c:if test="${isEdit}">
+                        <div class="field">
+                            <label for="status">Trạng thái</label>
+                            <select id="status" name="status">
+                                <option value="ACTIVE" <c:if test="${partnerCompany.status == 'ACTIVE'}">selected</c:if>>Đang hoạt động</option>
+                                <option value="INACTIVE" <c:if test="${partnerCompany.status == 'INACTIVE'}">selected</c:if>>Ngừng hoạt động</option>
+                            </select>
+                        </div>
+                    </c:if>
+                </div>
             </div>
 
-            <div class="form-grid activity-form-grid">
-
-                <div class="field field-wide">
-                    <label for="name">Tên <span class="required-mark">*</span></label>
-                    <input id="name" name="name" required
-                           value="<c:out value='${partner.name}'/>">
-                </div>
-
-                <div class="field">
-                    <label for="email">Email <span class="required-mark">*</span></label>
-                    <input id="email" type="email" name="email" required
-                           value="<c:out value='${partner.email}'/>">
-                </div>
-
-                <div class="field">
-                    <label for="phone">Số điện thoại <span class="required-mark">*</span></label>
-                    <input id="phone" name="phone" required
-                           value="<c:out value='${partner.phone}'/>">
-                </div>
-
-                <div class="field field-wide">
-                    <label for="address">Địa chỉ</label>
-                    <input id="address" name="address"
-                           value="<c:out value='${partner.address}'/>">
-                </div>
-
+            <div class="form-actions activity-form-actions">
+                <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/partner-companies">Hủy</a>
+                <button class="button button-primary" type="submit">
+                    <c:choose><c:when test="${isEdit}">Lưu thay đổi</c:when><c:otherwise>Thêm công ty</c:otherwise></c:choose>
+                </button>
             </div>
-
-
-            <div class="activity-form-section">
-                <h3>Trạng thái</h3>
-                <p>Trạng thái hoạt động của đối tác</p>
-            </div>
-
-            <div class="form-grid activity-form-grid">
-
-                <div class="field">
-                    <label for="status">Trạng thái <span class="required-mark">*</span></label>
-                    <input id="status" name="status" required
-                           placeholder="ACTIVE hoặc INACTIVE"
-                           value="<c:out value='${partner.status}'/>">
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- ================= ACTIONS ================= -->
-        <div class="form-actions activity-form-actions">
-            <a class="button activity-cancel-button"
-               href="${pageContext.request.contextPath}/partner-company">Hủy</a>
-            <button type="submit" class="button button-primary">Lưu</button>
-        </div>
-
-    </form>
-
-</div>
-
+        </form>
+    </section>
+</main>
 </body>
 </html>

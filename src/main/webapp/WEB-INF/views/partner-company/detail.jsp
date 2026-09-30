@@ -5,108 +5,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Partner Company Detail</title>
-
-    <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/partner-company.css">
+    <title>Chi tiết công ty đối tác | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
-
 <body>
-
-<div class="page activity-form-page">
-
-    <!-- ================= HERO ================= -->
-    <div class="page-header activity-hero">
+<main class="page activity-list-page activity-form-page">
+    <header class="activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">PARTNER MANAGEMENT</span>
-            <h1>Chi tiết đối tác</h1>
-            <p><c:out value="${partner.name}"/></p>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
+            <h1>Chi tiết công ty đối tác</h1>
+            <p>Thông tin liên hệ và trạng thái của công ty.</p>
         </div>
-    </div>
-
-
-    <!-- ================= DETAIL CARD ================= -->
-    <div class="card activity-detail-card">
-
-        <div class="activity-table-heading">
-            <div>
-                <h2>Thông tin đối tác</h2>
-                <p>Chi tiết đầy đủ của công ty đối tác</p>
-            </div>
-
-            <a class="button"
-               href="${pageContext.request.contextPath}/partner-company">Quay lại</a>
+        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies">Danh sách công ty</a>
+    </header>
+    <section class="card">
+        <dl class="detail-grid">
+            <div class="detail-item"><dt>Mã công ty</dt><dd><c:out value="${partnerCompany.code}" default="—"/></dd></div>
+            <div class="detail-item"><dt>Tên công ty</dt><dd><c:out value="${partnerCompany.name}" default="—"/></dd></div>
+            <div class="detail-item"><dt>Email</dt><dd><c:out value="${partnerCompany.email}" default="—"/></dd></div>
+            <div class="detail-item"><dt>Số điện thoại</dt><dd><c:out value="${partnerCompany.phoneNumber}" default="—"/></dd></div>
+            <div class="detail-item"><dt>Website</dt><dd><c:out value="${partnerCompany.website}" default="—"/></dd></div>
+            <div class="detail-item"><dt>Trạng thái</dt><dd>
+                <c:choose>
+                    <c:when test="${partnerCompany.status == 'ACTIVE'}">Đang hoạt động</c:when>
+                    <c:otherwise>Ngừng hoạt động</c:otherwise>
+                </c:choose>
+            </dd></div>
+            <div class="detail-item field-wide"><dt>Địa chỉ</dt><dd><c:out value="${partnerCompany.address}" default="—"/></dd></div>
+            <div class="detail-item field-wide"><dt>Mô tả</dt><dd><c:out value="${partnerCompany.description}" default="—"/></dd></div>
+        </dl>
+        <div class="detail-actions">
+            <a class="button button-primary" href="${pageContext.request.contextPath}/partner-companies?action=edit&amp;id=${partnerCompany.id}">Sửa thông tin</a>
+            <a class="button" href="${pageContext.request.contextPath}/partner-companies">Quay lại danh sách</a>
         </div>
-
-        <div class="activity-detail-content">
-
-            <div class="activity-detail-section">
-                <h3>Thông tin chung</h3>
-
-                <dl class="detail-grid activity-detail-grid">
-
-                    <div class="detail-item">
-                        <dt>ID</dt>
-                        <dd><c:out value="${partner.id}"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Tên</dt>
-                        <dd><strong class="activity-name"><c:out value="${partner.name}"/></strong></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Email</dt>
-                        <dd><c:out value="${partner.email}" default="—"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Số điện thoại</dt>
-                        <dd><c:out value="${partner.phone}" default="—"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Địa chỉ</dt>
-                        <dd><c:out value="${partner.address}" default="—"/></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Trạng thái</dt>
-                        <dd>
-                            <c:choose>
-                                <c:when test="${partner.status == 'ACTIVE'}">
-                                    <span class="badge partner-company-active">Active</span>
-                                </c:when>
-                                <c:when test="${partner.status == 'INACTIVE'}">
-                                    <span class="badge partner-company-inactive">Inactive</span>
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="badge"><c:out value="${partner.status}" default="—"/></span>
-                                </c:otherwise>
-                            </c:choose>
-                        </dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Ngày tạo</dt>
-                        <dd><c:out value="${partner.createdAt}" default="—"/></dd>
-                    </div>
-
-                </dl>
-            </div>
-
-        </div>
-
-
-        <!-- ================= ACTIONS ================= -->
-        <div class="detail-actions activity-detail-actions">
-            <a class="button"
-               href="${pageContext.request.contextPath}/partner-company?action=edit&amp;id=${partner.id}">Sửa</a>
-        </div>
-
-    </div>
-
-</div>
-
+    </section>
+</main>
 </body>
 </html>
