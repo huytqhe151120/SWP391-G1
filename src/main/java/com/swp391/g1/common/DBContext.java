@@ -9,6 +9,7 @@ import java.util.Properties;
 
 public final class DBContext {
     private static final String CONFIG_FILE = "ConnectDB.properties";
+    private static final String JDBC_DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 
     private DBContext() {
     }
@@ -27,6 +28,12 @@ public final class DBContext {
         String url = getRequiredProperty(properties, "url");
         String user = getRequiredProperty(properties, "userID");
         String password = getRequiredProperty(properties, "password");
+
+        try {
+            Class.forName(JDBC_DRIVER, true, DBContext.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("SQL Server JDBC driver is missing from the application runtime.", e);
+        }
 
         return DriverManager.getConnection(url, user, password);
     }

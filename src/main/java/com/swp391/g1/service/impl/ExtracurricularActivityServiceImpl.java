@@ -85,6 +85,13 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (isEmpty(dto.getCode())) {
             throw new IllegalArgumentException("Activity code is required.");
         }
+        String code = dto.getCode().trim();
+        int excludedActivityId = isUpdate ? Integer.parseInt(dto.getId()) : 0;
+        boolean duplicateCode = activityDAO.findByCode(code).stream()
+                .anyMatch(activity -> activity.getId() != excludedActivityId);
+        if (duplicateCode) {
+            throw new IllegalArgumentException("Extracurricular activity with the same code already exists.");
+        }
         if (isEmpty(dto.getName())) {
             throw new IllegalArgumentException("Activity name is required.");
         }

@@ -70,8 +70,9 @@ public class ExtracurricularActivityController extends HttpServlet {
                     break;
             }
         } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
-            request.getRequestDispatcher("/views/common/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 
@@ -97,8 +98,9 @@ public class ExtracurricularActivityController extends HttpServlet {
                     break;
             }
         } catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             request.setAttribute("errorMessage", "Lỗi xử lý dữ liệu: " + e.getMessage());
-            request.getRequestDispatcher("/views/common/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 
@@ -110,13 +112,13 @@ public class ExtracurricularActivityController extends HttpServlet {
             throws ServletException, IOException {
         List<ExtracurricularActivityResponseDTO> list = activityService.getAllActivities();
         request.setAttribute("activities", list);
-        request.getRequestDispatcher("/views/activity/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/activity/list.jsp").forward(request, response);
     }
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         loadDropdownData(request);
-        request.getRequestDispatcher("/views/activity/create.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/activity/create.jsp").forward(request, response);
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
@@ -135,7 +137,7 @@ public class ExtracurricularActivityController extends HttpServlet {
                     request.setAttribute("partnerStaffs", staffs);
                 }
 
-                request.getRequestDispatcher("/views/activity/edit.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/activity/edit.jsp").forward(request, response);
                 return;
             }
         }
@@ -150,7 +152,7 @@ public class ExtracurricularActivityController extends HttpServlet {
             ExtracurricularActivityResponseDTO activity = activityService.getActivityById(id);
             if (activity != null) {
                 request.setAttribute("activity", activity);
-                request.getRequestDispatcher("/views/activity/detail.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
             }
         }
@@ -246,12 +248,12 @@ public class ExtracurricularActivityController extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/activities");
             } else {
                 request.setAttribute("errorMessage", "Cập nhật không thành công. Vui lòng kiểm tra lại.");
-                request.setAttribute("activity", dto);
+                request.setAttribute("formData", dto);
                 showEditForm(request, response);
             }
         } catch (Exception e) {
             request.setAttribute("errorMessage", e.getMessage());
-            request.setAttribute("activity", dto);
+            request.setAttribute("formData", dto);
             showEditForm(request, response);
         }
     }

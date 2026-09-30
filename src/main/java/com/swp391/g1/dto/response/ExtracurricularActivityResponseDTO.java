@@ -68,6 +68,46 @@ public class ExtracurricularActivityResponseDTO {
         this.name = name;
     }
 
+    public int getSemesterId() {
+        return semesterId;
+    }
+
+    public void setSemesterId(int semesterId) {
+        this.semesterId = semesterId;
+    }
+
+    public int getActivityTypeId() {
+        return activityTypeId;
+    }
+
+    public void setActivityTypeId(int activityTypeId) {
+        this.activityTypeId = activityTypeId;
+    }
+
+    public int getResponsibleDepartmentId() {
+        return responsibleDepartmentId;
+    }
+
+    public void setResponsibleDepartmentId(int responsibleDepartmentId) {
+        this.responsibleDepartmentId = responsibleDepartmentId;
+    }
+
+    public int getResponsibleStaffId() {
+        return responsibleStaffId;
+    }
+
+    public void setResponsibleStaffId(int responsibleStaffId) {
+        this.responsibleStaffId = responsibleStaffId;
+    }
+
+    public Integer getPartnerStaffId() {
+        return partnerStaffId;
+    }
+
+    public void setPartnerStaffId(Integer partnerStaffId) {
+        this.partnerStaffId = partnerStaffId;
+    }
+
     public String getSemesterName() {
         return semesterName;
     }
@@ -238,5 +278,9 @@ public class ExtracurricularActivityResponseDTO {
 
     public int getPartnerCompanyId() {
         return partnerCompanyId != null ? partnerCompanyId : 0;
+    }
+
+    public void setPartnerCompanyId(Integer partnerCompanyId) {
+        this.partnerCompanyId = partnerCompanyId;
     }
 }

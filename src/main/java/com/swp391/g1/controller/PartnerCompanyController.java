@@ -53,7 +53,7 @@ public class PartnerCompanyController extends HttpServlet {
             }
         } catch (Exception e) {
             request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
-            request.getRequestDispatcher("/views/common/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 
@@ -80,7 +80,7 @@ public class PartnerCompanyController extends HttpServlet {
             }
         } catch (Exception e) {
             request.setAttribute("errorMessage", "Lỗi xử lý dữ liệu: " + e.getMessage());
-            request.getRequestDispatcher("/views/common/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 
@@ -92,25 +92,28 @@ public class PartnerCompanyController extends HttpServlet {
             throws ServletException, IOException {
         List<PartnerCompany> list = partnerCompanyService.getAllPartnerCompanies();
         request.setAttribute("partnerCompanies", list);
-        request.getRequestDispatcher("/views/partner-company/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/partner-company/list.jsp").forward(request, response);
     }
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/views/partner-company/create.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/partner-company/create.jsp").forward(request, response);
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String idStr = request.getParameter("id");
-        if (idStr != null && !idStr.trim().isEmpty()) {
-            int id = Integer.parseInt(idStr);
-            PartnerCompany company = partnerCompanyService.getPartnerCompanyById(id);
-            if (company != null) {
-                request.setAttribute("partnerCompany", company);
-                request.getRequestDispatcher("/views/partner-company/edit.jsp").forward(request, response);
-                return;
+        PartnerCompany company = (PartnerCompany) request.getAttribute("partnerCompany");
+        if (company == null) {
+            String idStr = request.getParameter("id");
+            if (idStr != null && !idStr.trim().isEmpty()) {
+                int id = Integer.parseInt(idStr);
+                company = partnerCompanyService.getPartnerCompanyById(id);
             }
+        }
+        if (company != null) {
+            request.setAttribute("partnerCompany", company);
+            request.getRequestDispatcher("/WEB-INF/views/partner-company/edit.jsp").forward(request, response);
+            return;
         }
         response.sendRedirect(request.getContextPath() + "/partner-companies");
     }
@@ -123,7 +126,7 @@ public class PartnerCompanyController extends HttpServlet {
             PartnerCompany company = partnerCompanyService.getPartnerCompanyById(id);
             if (company != null) {
                 request.setAttribute("partnerCompany", company);
-                request.getRequestDispatcher("/views/partner-company/detail.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/partner-company/detail.jsp").forward(request, response);
                 return;
             }
         }
@@ -218,6 +221,7 @@ public class PartnerCompanyController extends HttpServlet {
         PartnerCompany company = new PartnerCompany();
         company.setCode(request.getParameter("code"));
         company.setName(request.getParameter("name"));
+        company.setWebsite(request.getParameter("website"));
         company.setEmail(request.getParameter("email"));
         company.setPhoneNumber(request.getParameter("phone"));
         company.setAddress(request.getParameter("address"));

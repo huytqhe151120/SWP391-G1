@@ -10,8 +10,11 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityDAO {
+    private static final Logger LOGGER = Logger.getLogger(ExtracurricularActivityDAOImpl.class.getName());
 
     private ExtracurricularActivity mapActivity(ResultSet rs) throws SQLException {
         ExtracurricularActivity activity = new ExtracurricularActivity();
@@ -121,21 +124,24 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     @Override
     public List<ExtracurricularActivityResponseDTO> findAllWithDetails() {
         List<ExtracurricularActivityResponseDTO> list = new ArrayList<>();
-        String sql = "SELECT a.*, "
-                + "s.code AS semester_code, s.name AS semester_name, "
-                + "t.code AS activity_type_code, t.name AS activity_type_name, "
-                + "d.code AS dept_code, d.name AS dept_name, "
-                + "st.code AS staff_code, st.name AS staff_name, "
-                + "pc.code AS company_code, pc.name AS company_name, "
-                + "ps.code AS partner_staff_code, ps.name AS partner_staff_name "
-                + "FROM extracurricular_activity a "
-                + "JOIN semester s ON a.semester_id = s.id "
-                + "JOIN activity_type t ON a.activity_type_id = t.id "
-                + "JOIN department d ON a.responsible_department_id = d.id "
-                + "JOIN staff st ON a.responsible_staff_id = st.id "
-                + "LEFT JOIN partner_company pc ON a.partner_company_id = pc.id "
-                + "LEFT JOIN partner_staff ps ON a.partner_staff_id = ps.id "
-                + "ORDER BY a.id DESC";
+        String sql = """
+    SELECT
+        a.*,
+        s.code AS semester_code, s.name AS semester_name,
+        t.code AS activity_type_code, t.name AS activity_type_name,
+        d.code AS dept_code, d.name AS dept_name,
+        st.code AS staff_code, st.name AS staff_name,
+        pc.code AS company_code, pc.name AS company_name,
+        ps.code AS partner_staff_code, ps.name AS partner_staff_name
+    FROM extracurricular_activity a
+    LEFT JOIN semester s ON a.semester_id = s.id
+    LEFT JOIN activity_type t ON a.activity_type_id = t.id
+    LEFT JOIN department d ON a.responsible_department_id = d.id
+    LEFT JOIN staff st ON a.responsible_staff_id = st.id
+    LEFT JOIN partner_company pc ON a.partner_company_id = pc.id
+    LEFT JOIN partner_staff ps ON a.partner_staff_id = ps.id
+    ORDER BY a.id DESC
+    """;
 
         try (Connection conn = DBContext.getConnection();
              Statement stmt = conn.createStatement();
@@ -145,6 +151,12 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 dto.setId(rs.getInt("id"));
                 dto.setCode(rs.getString("code"));
                 dto.setName(rs.getString("name"));
+                dto.setSemesterId(rs.getInt("semester_id"));
+                dto.setActivityTypeId(rs.getInt("activity_type_id"));
+                dto.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
+                dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
+                dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
+                dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
                 dto.setBonusPoint(rs.getBigDecimal("bonus_point"));
                 dto.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
                 dto.setAddress(rs.getString("address"));
@@ -174,6 +186,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 list.add(dto);
             }
         } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Failed to query extracurricular activity list.", e);
             throw new IllegalStateException("Failed to find all activity details.", e);
         }
         return list;
@@ -212,6 +225,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 return keys.next() ? keys.getInt(1) : null;
             }
         } catch (SQLException e) {
+            if (isDuplicateCodeError(e)) {
+                throw new IllegalArgumentException("Extracurricular activity with the same code already exists.", e);
+            }
             throw new IllegalStateException("Failed to insert extracurricular activity.", e);
         }
     }
@@ -225,17 +241,49 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, bonus_point = ?, penalty_point = ?, "
-                + "address = ?, description = ?, activity_status = ?, approval_status = ?, activity_type_id = ?, "
-                + "start_time = ?, end_time = ? WHERE id = ?";
+                + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ? WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            bindActivity(ps, activity);
-            ps.setInt(17, activity.getId());
+            ps.setInt(1, activity.getSemesterId());
+            ps.setString(2, activity.getCode());
+            ps.setString(3, activity.getName());
+            ps.setInt(4, activity.getResponsibleDepartmentId());
+            ps.setInt(5, activity.getResponsibleStaffId());
+            if (activity.getPartnerCompanyId() == null) {
+                ps.setNull(6, Types.INTEGER);
+            } else {
+                ps.setInt(6, activity.getPartnerCompanyId());
+            }
+            if (activity.getPartnerStaffId() == null) {
+                ps.setNull(7, Types.INTEGER);
+            } else {
+                ps.setInt(7, activity.getPartnerStaffId());
+            }
+            ps.setBigDecimal(8, activity.getBonusPoint());
+            ps.setBigDecimal(9, activity.getPenaltyPoint());
+            ps.setString(10, activity.getAddress());
+            ps.setString(11, activity.getDescription());
+            ps.setInt(12, activity.getActivityTypeId());
+            ps.setTimestamp(13, activity.getStartTime() == null ? null : Timestamp.valueOf(activity.getStartTime()));
+            ps.setTimestamp(14, activity.getEndTime() == null ? null : Timestamp.valueOf(activity.getEndTime()));
+            ps.setInt(15, activity.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
+            if (isDuplicateCodeError(e)) {
+                throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
+            }
             throw new IllegalStateException("Failed to update extracurricular activity.", e);
         }
+    }
+
+    private boolean isDuplicateCodeError(SQLException exception) {
+        for (SQLException current = exception; current != null; current = current.getNextException()) {
+            if (current.getErrorCode() == 2601 || current.getErrorCode() == 2627) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void bindActivity(PreparedStatement ps, ExtracurricularActivity activity) throws SQLException {
