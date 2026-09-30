@@ -2,115 +2,158 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Accounts</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý tài khoản | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
 </head>
 <body>
-<nav class="top-nav">
-    <a href="${pageContext.request.contextPath}/home">Home</a>
-    <a href="${pageContext.request.contextPath}/accounts">Accounts</a>
-</nav>
+<main class="page activity-list-page account-page">
+    <header class="activity-hero">
+        <div class="activity-hero-copy">
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN TRỊ HỆ THỐNG</span>
+            <h1>Quản lý tài khoản</h1>
+            <p>Theo dõi tài khoản, phân quyền và trạng thái truy cập hệ thống.</p>
+        </div>
+        <div class="account-hero-actions">
+            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
+            <a class="button activity-create-button" href="${pageContext.request.contextPath}/accounts/create">
+                <span class="plus-icon" aria-hidden="true">+</span>
+                Tạo tài khoản
+            </a>
+        </div>
+    </header>
 
-<h1>Account Management</h1>
+    <c:if test="${not empty generalError}">
+        <div class="alert alert-error activity-alert" role="alert"><c:out value="${generalError}"/></div>
+    </c:if>
+    <c:if test="${not empty param.error}">
+        <div class="alert alert-error activity-alert" role="alert">
+            <c:choose>
+                <c:when test="${param.error == 'notFound'}">Không tìm thấy tài khoản.</c:when>
+                <c:when test="${param.error == 'invalidStatus'}">Trạng thái không hợp lệ. Các giá trị cho phép: ACTIVE, INACTIVE, BLOCKED.</c:when>
+                <c:otherwise>Không thể thực hiện thao tác. Vui lòng thử lại.</c:otherwise>
+            </c:choose>
+        </div>
+    </c:if>
+    <c:if test="${not empty param.msg}">
+        <div class="alert alert-success activity-alert" role="status">
+            <c:choose>
+                <c:when test="${param.msg == 'created'}">Tạo tài khoản thành công.</c:when>
+                <c:when test="${param.msg == 'updated'}">Cập nhật tài khoản thành công.</c:when>
+                <c:when test="${param.msg == 'statusChanged'}">Cập nhật trạng thái tài khoản thành công.</c:when>
+                <c:otherwise>Thao tác đã hoàn tất.</c:otherwise>
+            </c:choose>
+        </div>
+    </c:if>
 
-<c:if test="${not empty generalError}">
-    <div class="message error"><c:out value="${generalError}"/></div>
-</c:if>
-<c:if test="${not empty param.error}">
-    <div class="message error">
-        <c:choose>
-            <c:when test="${param.error == 'notFound'}">Account not found.</c:when>
-            <c:when test="${param.error == 'invalidStatus'}">Invalid status. Allowed values: ACTIVE, INACTIVE, BLOCKED.</c:when>
-            <c:otherwise>Operation failed. Please try again.</c:otherwise>
-        </c:choose>
-    </div>
-</c:if>
-<c:if test="${not empty param.msg}">
-    <div class="message success">
-        <c:choose>
-            <c:when test="${param.msg == 'created'}">Account created successfully.</c:when>
-            <c:when test="${param.msg == 'updated'}">Account updated successfully.</c:when>
-            <c:when test="${param.msg == 'statusChanged'}">Account status changed successfully.</c:when>
-            <c:otherwise>Operation completed successfully.</c:otherwise>
-        </c:choose>
-    </div>
-</c:if>
+    <section class="card account-filter-card">
+        <div class="activity-table-heading">
+            <div>
+                <h2>Bộ lọc tài khoản</h2>
+                <p>Tìm kiếm theo tên đăng nhập, loại, vai trò hoặc trạng thái.</p>
+            </div>
+        </div>
+        <form class="account-filters" method="get" action="${pageContext.request.contextPath}/accounts">
+            <div class="field">
+                <label for="search">Tìm kiếm</label>
+                <input id="search" type="search" name="search" value="<c:out value='${search}'/>" placeholder="Tên đăng nhập">
+            </div>
+            <div class="field">
+                <label for="type">Loại tài khoản</label>
+                <select id="type" name="type">
+                    <option value="">Tất cả</option>
+                    <c:forEach items="${accountTypes}" var="t">
+                        <option value="${fn:escapeXml(t)}" <c:if test="${t == filterType}">selected</c:if>><c:out value="${t}"/></option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="field">
+                <label for="role">Vai trò</label>
+                <select id="role" name="role">
+                    <option value="">Tất cả</option>
+                    <c:forEach items="${accountRoles}" var="r">
+                        <option value="${fn:escapeXml(r)}" <c:if test="${r == filterRole}">selected</c:if>><c:out value="${r}"/></option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="field">
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status">
+                    <option value="">Tất cả</option>
+                    <c:forEach items="${accountStatuses}" var="s">
+                        <option value="${fn:escapeXml(s)}" <c:if test="${s == filterStatus}">selected</c:if>><c:out value="${s}"/></option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="account-filter-actions">
+                <button class="button button-primary" type="submit">Lọc danh sách</button>
+                <a class="button" href="${pageContext.request.contextPath}/accounts">Đặt lại</a>
+            </div>
+        </form>
+    </section>
 
-<div class="actions">
-    <a class="button" href="${pageContext.request.contextPath}/accounts/create">Create New Account</a>
-</div>
-
-<div class="filters">
-    <form method="get" action="${pageContext.request.contextPath}/accounts">
-        <label>Search
-            <input type="text" name="search" value="${fn:escapeXml(search)}" placeholder="Username">
-        </label>
-        <label>Type
-            <select name="type">
-                <option value="">All</option>
-                <c:forEach items="${accountTypes}" var="t">
-                    <option value="${fn:escapeXml(t)}" ${t == filterType ? 'selected' : ''}><c:out value="${t}"/></option>
-                </c:forEach>
-            </select>
-        </label>
-        <label>Role
-            <select name="role">
-                <option value="">All</option>
-                <c:forEach items="${accountRoles}" var="r">
-                    <option value="${fn:escapeXml(r)}" ${r == filterRole ? 'selected' : ''}><c:out value="${r}"/></option>
-                </c:forEach>
-            </select>
-        </label>
-        <label>Status
-            <select name="status">
-                <option value="">All</option>
-                <c:forEach items="${accountStatuses}" var="s">
-                    <option value="${fn:escapeXml(s)}" ${s == filterStatus ? 'selected' : ''}><c:out value="${s}"/></option>
-                </c:forEach>
-            </select>
-        </label>
-        <button type="submit">Filter</button>
-        <a class="button-secondary" href="${pageContext.request.contextPath}/accounts">Reset</a>
-    </form>
-</div>
-
-<c:choose>
-    <c:when test="${empty accounts}">
-        <p class="empty-state">No accounts found matching your criteria.</p>
-    </c:when>
-    <c:otherwise>
-        <table class="account-table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Type</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach items="${accounts}" var="a">
+    <section class="card activity-table-card account-table-card" aria-labelledby="account-table-title">
+        <div class="activity-table-heading">
+            <div>
+                <h2 id="account-table-title">Danh sách tài khoản</h2>
+                <p>Các tài khoản phù hợp với tiêu chí đã chọn</p>
+            </div>
+            <span class="activity-count">
+                <c:choose>
+                    <c:when test="${empty accounts}">0 tài khoản</c:when>
+                    <c:otherwise><c:out value="${accounts.size()}"/> tài khoản</c:otherwise>
+                </c:choose>
+            </span>
+        </div>
+        <div class="table-wrap activity-table-wrap">
+            <table class="account-table">
+                <thead>
                 <tr>
-                    <td>${a.id}</td>
-                    <td><c:out value="${a.username}"/></td>
-                    <td><c:out value="${a.type}"/></td>
-                    <td><c:out value="${a.role}"/></td>
-                    <td><span class="status-badge status-${fn:escapeXml(a.status)}"><c:out value="${a.status}"/></span></td>
-                    <td class="row-actions">
-                        <a href="${pageContext.request.contextPath}/accounts/${a.id}">View</a>
-                        <a href="${pageContext.request.contextPath}/accounts/${a.id}/edit">Edit</a>
-                    </td>
+                    <th scope="col">ID</th>
+                    <th scope="col">Tên đăng nhập</th>
+                    <th scope="col">Loại</th>
+                    <th scope="col">Vai trò</th>
+                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Thao tác</th>
                 </tr>
-            </c:forEach>
-            </tbody>
-        </table>
-    </c:otherwise>
-</c:choose>
-
+                </thead>
+                <tbody>
+                <c:choose>
+                    <c:when test="${empty accounts}">
+                        <tr>
+                            <td class="empty-state activity-empty-state" colspan="6">
+                                <span class="empty-state-mark" aria-hidden="true">+</span>
+                                <strong>Không tìm thấy tài khoản</strong>
+                                <span>Thử thay đổi bộ lọc hoặc tạo tài khoản mới.</span>
+                                <a class="button button-primary" href="${pageContext.request.contextPath}/accounts/create">Tạo tài khoản</a>
+                            </td>
+                        </tr>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach items="${accounts}" var="a">
+                            <tr>
+                                <td><span class="activity-code"><c:out value="${a.id}"/></span></td>
+                                <td><strong class="activity-name"><c:out value="${a.username}"/></strong></td>
+                                <td><c:out value="${a.type}"/></td>
+                                <td><c:out value="${a.role}"/></td>
+                                <td><span class="badge account-status account-status-${fn:escapeXml(a.status)}"><c:out value="${a.status}"/></span></td>
+                                <td>
+                                    <div class="actions activity-actions">
+                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}">Chi tiết</a>
+                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}/edit">Sửa</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </c:otherwise>
+                </c:choose>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
 </body>
 </html>
