@@ -1,0 +1,259 @@
+/* =========================
+   STUDENT CSS
+   Khớp class với student-list.jsp
+   ========================= */
+
+:root {
+    color-scheme: light;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #172033;
+    background: #f3f6fb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: #f3f6fb;
+}
+
+/* ===== PAGE ===== */
+.student-list-page {
+    width: min(1440px, calc(100% - 64px));
+    margin: 38px auto;
+}
+
+/* ===== HERO ===== */
+.student-hero {
+    position: relative;
+    display: flex;
+    min-height: 180px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    padding: 32px 38px;
+    border-radius: 18px;
+    background: linear-gradient(115deg, #132b4f 0%, #1e477b 58%, #2862a2 100%);
+    box-shadow: 0 16px 36px rgb(26 61 107 / 18%);
+    color: #fff;
+}
+
+.student-hero .hero-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: .9rem;
+    letter-spacing: .04em;
+}
+
+.student-hero h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.student-hero p {
+    margin: 8px 0 0;
+    color: #d3e0f1;
+}
+
+/* ===== TOOLBAR (nằm ngoài card) ===== */
+.student-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.student-search-wrapper {
+    flex: 0 1 420px;
+    min-width: 240px;
+}
+
+.student-search,
+.student-filter {
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1px solid #e2e8f2;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgb(28 45 80 / 4%);
+    color: #172033;
+    font: inherit;
+}
+
+.student-search { width: 100%; }
+
+.student-search:focus,
+.student-filter:focus {
+    border-color: #5880da;
+    outline: 3px solid rgb(36 87 197 / 12%);
+}
+
+/* ===== CARD ===== */
+.student-table-card {
+    overflow: hidden;
+    border: 1px solid #e2e8f2;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(28 45 80 / 5%);
+}
+
+.student-table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 23px 26px 19px;
+}
+
+.student-table-heading h2 {
+    margin: 0;
+    color: #172b49;
+    font-size: 1.13rem;
+}
+
+.student-table-heading p {
+    margin: 5px 0 0;
+    color: #77849a;
+    font-size: .88rem;
+}
+
+.student-count {
+    padding: 7px 14px;
+    border: 1px solid #e4eaf3;
+    border-radius: 999px;
+    background: #f3f6fb;
+    color: #4d5f7c;
+    font-size: .82rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+/* ===== TABLE ===== */
+.student-table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid #edf0f5;
+}
+
+.student-table-wrap table {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: collapse;
+}
+
+.student-table-wrap th,
+.student-table-wrap td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #edf0f5;
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.student-table-wrap th:first-child,
+.student-table-wrap td:first-child {
+    width: 70px;
+    padding-left: 26px;
+}
+
+.student-table-wrap th:last-child,
+.student-table-wrap td:last-child { padding-right: 26px; }
+
+.student-table-wrap th {
+    background: #f7f9fc;
+    color: #687991;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .065em;
+    text-transform: uppercase;
+}
+
+.student-table-wrap td {
+    color: #536177;
+    font-size: .88rem;
+}
+
+.student-table-wrap td strong {
+    color: #233752;
+    font-weight: 650;
+}
+
+.student-table-wrap tbody tr:last-child td { border-bottom: 0; }
+.student-table-wrap tbody tr:hover { background: #f8faff; }
+
+/* ===== CODE / CLASS ===== */
+.student-code,
+.student-class {
+    display: inline-block;
+    padding: 5px 8px;
+    border: 1px solid #e4eaf3;
+    border-radius: 6px;
+    background: #f7f9fc;
+    color: #405777 !important;
+    font-size: .79rem;
+    font-weight: 650;
+}
+
+/* ===== BADGES ===== */
+.gender-badge,
+.status-badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #eef1f6;
+    color: #536177;
+    font-size: .78rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.gender-badge.male,
+.gender-badge.female {
+    background: #eef4ff;
+    color: #315d9d;
+}
+
+.status-badge.active {
+    background: #eaf7ef;
+    color: #21633a;
+}
+
+.status-badge.inactive {
+    background: #fff0f0;
+    color: #9b2626;
+}
+
+.empty-value { color: #a3adbd; }
+
+/* ===== EMPTY STATE ===== */
+.student-empty-state {
+    padding: 45px 20px;
+    color: #66728a;
+    text-align: center;
+}
+
+.student-empty-state h3 {
+    margin: 0 0 6px;
+    color: #233752;
+}
+
+.student-empty-state p { margin: 0; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 760px) {
+    .student-list-page {
+        width: min(100% - 28px, 1440px);
+        margin: 20px auto;
+    }
+    .student-hero {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 25px 23px;
+    }
+    .student-table-heading { padding: 19px 18px; }
+    .student-search-wrapper { flex: 1 1 100%; }
+}

@@ -1,0 +1,238 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Student List</title>
+
+    <link rel="stylesheet"
+          href="${pageContext.request.contextPath}/assets/css/student.css">
+</head>
+
+<body>
+
+<div class="page student-list-page">
+
+    <!-- ================= HEADER ================= -->
+    <div class="page-header student-hero">
+
+        <div>
+            <span class="hero-label">STUDENT MANAGEMENT</span>
+
+            <h1>Danh sách sinh viên</h1>
+
+            <p>
+                Quản lý và tra cứu thông tin sinh viên
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- ================= SEARCH + FILTER ================= -->
+    <div class="student-toolbar">
+
+        <!-- Search -->
+        <div class="student-search-wrapper">
+
+            <input
+                    type="text"
+                    id="studentSearch"
+                    class="student-search"
+                    placeholder="Tìm theo mã, họ tên, email..."
+            >
+
+        </div>
+
+
+        <!-- Filter -->
+        <select
+                id="studentStatusFilter"
+                class="student-filter"
+        >
+            <option value="">Tất cả trạng thái</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+        </select>
+
+    </div>
+
+
+    <!-- ================= TABLE CARD ================= -->
+    <div class="card student-table-card">
+
+        <div class="student-table-heading">
+
+            <div>
+                <h2>Student List</h2>
+                <p>Danh sách sinh viên trong hệ thống</p>
+            </div>
+
+            <span class="student-count">
+                <c:out value="${students.size()}"/> sinh viên
+            </span>
+
+        </div>
+
+
+        <div class="student-table-wrap">
+
+            <table>
+
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Mã sinh viên</th>
+                    <th>Họ và tên</th>
+                    <th>Lớp</th>
+                    <th>Ngày sinh</th>
+                    <th>Giới tính</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Trạng thái</th>
+                </tr>
+                </thead>
+
+
+                <tbody>
+
+                <c:forEach var="student" items="${students}">
+
+                    <!-- ================= ROW ================= -->
+                    <tr
+                            class="student-row"
+                            data-status="${student.status}"
+                    >
+
+                        <td>
+                            <c:out value="${student.id}"/>
+                        </td>
+
+                        <td>
+                            <strong class="student-code">
+                                <c:out value="${student.code}"/>
+                            </strong>
+                        </td>
+
+                        <td>
+                            <strong>
+                                <c:out value="${student.name}"/>
+                            </strong>
+                        </td>
+
+                        <td>
+                            <c:choose>
+
+                                <c:when test="${not empty student.mainClassCode}">
+                                    <span class="student-class">
+                                        <c:out value="${student.mainClassCode}"/>
+                                    </span>
+                                </c:when>
+
+                                <c:otherwise>
+                                    <span class="empty-value">--</span>
+                                </c:otherwise>
+
+                            </c:choose>
+                        </td>
+
+                        <td>
+                            <c:out value="${student.dob}"/>
+                        </td>
+
+                        <td>
+
+                            <c:choose>
+
+                                <c:when test="${student.gender == true}">
+                                    <span class="gender-badge male">
+                                        Nam
+                                    </span>
+                                </c:when>
+
+                                <c:when test="${student.gender == false}">
+                                    <span class="gender-badge female">
+                                        Nữ
+                                    </span>
+                                </c:when>
+
+                                <c:otherwise>
+                                    <span class="empty-value">
+                                        --
+                                    </span>
+                                </c:otherwise>
+
+                            </c:choose>
+
+                        </td>
+
+                        <td>
+                            <c:out value="${student.email}"/>
+                        </td>
+
+                        <td>
+                            <c:out value="${student.phoneNumber}"/>
+                        </td>
+
+                        <td>
+
+                            <c:choose>
+
+                                <c:when test="${student.status == 'ACTIVE'}">
+                                    <span class="status-badge active">
+                                        Active
+                                    </span>
+                                </c:when>
+
+                                <c:when test="${student.status == 'INACTIVE'}">
+                                    <span class="status-badge inactive">
+                                        Inactive
+                                    </span>
+                                </c:when>
+
+                                <c:otherwise>
+                                    <span class="status-badge">
+                                        <c:out value="${student.status}"/>
+                                    </span>
+                                </c:otherwise>
+
+                            </c:choose>
+
+                        </td>
+
+                    </tr>
+
+                </c:forEach>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- Hiển thị khi Search / Filter không có kết quả -->
+        <div
+                id="studentEmptyState"
+                class="student-empty-state"
+                style="display: none;"
+        >
+            <h3>Không tìm thấy sinh viên</h3>
+
+            <p>
+                Không có sinh viên nào phù hợp với điều kiện tìm kiếm.
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+<script src="${pageContext.request.contextPath}/assets/js/student.js"></script>
+
+</body>
+</html>
