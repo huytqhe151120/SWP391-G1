@@ -57,7 +57,7 @@ public class PartnerStaffController extends HttpServlet {
             }
         } catch (Exception e) {
             request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
-            request.getRequestDispatcher("/views/common/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 
@@ -84,7 +84,7 @@ public class PartnerStaffController extends HttpServlet {
             }
         } catch (Exception e) {
             request.setAttribute("errorMessage", "Lỗi xử lý dữ liệu: " + e.getMessage());
-            request.getRequestDispatcher("/views/common/error.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 
@@ -108,27 +108,30 @@ public class PartnerStaffController extends HttpServlet {
 
         request.setAttribute("partnerStaffs", list);
         request.setAttribute("partnerCompanies", partnerCompanyService.getAllPartnerCompanies());
-        request.getRequestDispatcher("/views/partner-staff/list.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/partner-staff/list.jsp").forward(request, response);
     }
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         loadDropdownData(request);
-        request.getRequestDispatcher("/views/partner-staff/create.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/partner-staff/create.jsp").forward(request, response);
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String idStr = request.getParameter("id");
-        if (idStr != null && !idStr.trim().isEmpty()) {
-            int id = Integer.parseInt(idStr);
-            PartnerStaffResponseDTO staff = partnerStaffService.getPartnerStaffById(id);
-            if (staff != null) {
-                request.setAttribute("partnerStaff", staff);
-                loadDropdownData(request);
-                request.getRequestDispatcher("/views/partner-staff/edit.jsp").forward(request, response);
-                return;
+        PartnerStaffResponseDTO staff = (PartnerStaffResponseDTO) request.getAttribute("partnerStaff");
+        if (staff == null) {
+            String idStr = request.getParameter("id");
+            if (idStr != null && !idStr.trim().isEmpty()) {
+                int id = Integer.parseInt(idStr);
+                staff = partnerStaffService.getPartnerStaffById(id);
             }
+        }
+        if (staff != null) {
+            request.setAttribute("partnerStaff", staff);
+            loadDropdownData(request);
+            request.getRequestDispatcher("/WEB-INF/views/partner-staff/edit.jsp").forward(request, response);
+            return;
         }
         response.sendRedirect(request.getContextPath() + "/partner-staffs");
     }
@@ -141,7 +144,7 @@ public class PartnerStaffController extends HttpServlet {
             PartnerStaffResponseDTO staff = partnerStaffService.getPartnerStaffById(id);
             if (staff != null) {
                 request.setAttribute("partnerStaff", staff);
-                request.getRequestDispatcher("/views/partner-staff/detail.jsp").forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/partner-staff/detail.jsp").forward(request, response);
                 return;
             }
         }
@@ -220,8 +223,7 @@ public class PartnerStaffController extends HttpServlet {
     // =========================================================================
 
     private void loadDropdownData(HttpServletRequest request) {
-        // Nạp danh sách các công ty ACTIVE để chọn khi tạo/sửa nhân viên
-        request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
+        request.setAttribute("partnerCompanies", partnerCompanyService.getAllPartnerCompanies());
     }
 
     private PartnerStaffRequestDTO buildRequestDTO(HttpServletRequest request) {

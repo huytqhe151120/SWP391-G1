@@ -20,11 +20,12 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
         partnerStaff.setCompanyId(rs.getInt("company_id"));
         Date dob = rs.getDate("dob");
         partnerStaff.setDob(dob == null ? null : dob.toLocalDate());
-        partnerStaff.setGender(rs.getBoolean("gender"));
+        partnerStaff.setGender(rs.getObject("gender") == null ? null : rs.getBoolean("gender"));
         partnerStaff.setPosition(rs.getString("position"));
         String status = rs.getString("status");
         partnerStaff.setStatus(status == null ? null : Enum.CommonStatus.valueOf(status));
-        partnerStaff.setAccountId(rs.getInt("account_id"));
+        Object accountId = rs.getObject("account_id");
+        partnerStaff.setAccountId(accountId == null ? null : ((Number) accountId).intValue());
         return partnerStaff;
     }
 
@@ -111,6 +112,7 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
                 dto.setId(rs.getInt("id"));
                 dto.setCode(rs.getString("code"));
                 dto.setName(rs.getString("name"));
+                dto.setCompanyId(rs.getInt("company_id"));
 
                 // 2. Mapping java.sql.Date -> java.time.LocalDate (dob)
                 Date dobSql = rs.getDate("dob");
@@ -194,10 +196,18 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
             ps.setString(2, partnerStaff.getCode());
             ps.setString(3, partnerStaff.getName());
             ps.setDate(4, partnerStaff.getDob() == null ? null : Date.valueOf(partnerStaff.getDob()));
-            ps.setBoolean(5, partnerStaff.getGender());
+            if (partnerStaff.getGender() == null) {
+                ps.setNull(5, Types.BIT);
+            } else {
+                ps.setBoolean(5, partnerStaff.getGender());
+            }
             ps.setString(6, partnerStaff.getPosition());
             ps.setString(7, partnerStaff.getStatus().name());
-            ps.setInt(8, partnerStaff.getAccountId());
+            if (partnerStaff.getAccountId() == null) {
+                ps.setNull(8, Types.INTEGER);
+            } else {
+                ps.setInt(8, partnerStaff.getAccountId());
+            }
 
             if (ps.executeUpdate() == 0) {
                 return null;
@@ -213,7 +223,7 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
     @Override
     public boolean update(PartnerStaff entity) {
         String sql = "UPDATE partner_staff SET company_id = ?, code = ?, name = ?, "
-                + "dob = ?, gender = ?, position = ?, status = ?, account_id = ? WHERE id = ?";
+                + "dob = ?, gender = ?, position = ?, status = ? WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -221,11 +231,14 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
             ps.setString(2, entity.getCode());
             ps.setString(3, entity.getName());
             ps.setDate(4, entity.getDob() == null ? null : Date.valueOf(entity.getDob()));
-            ps.setBoolean(5, entity.getGender());
+            if (entity.getGender() == null) {
+                ps.setNull(5, Types.BIT);
+            } else {
+                ps.setBoolean(5, entity.getGender());
+            }
             ps.setString(6, entity.getPosition());
             ps.setString(7, entity.getStatus().name());
-            ps.setInt(8, entity.getAccountId());
-            ps.setInt(9, entity.getId());
+            ps.setInt(8, entity.getId());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

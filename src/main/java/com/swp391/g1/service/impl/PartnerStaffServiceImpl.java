@@ -8,6 +8,7 @@ import com.swp391.g1.model.Enum.CommonStatus;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.IPartnerStaffService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -122,6 +123,28 @@ public class PartnerStaffServiceImpl implements IPartnerStaffService {
         if (isEmpty(dto.getName())) {
             throw new IllegalArgumentException("Tên nhân viên đối tác không được để trống.");
         }
+
+        if (!isEmpty(dto.getDob())) {
+            try {
+                LocalDate.parse(dto.getDob());
+            } catch (java.time.format.DateTimeParseException e) {
+                throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
+            }
+        }
+
+        if (!isEmpty(dto.getGender())
+                && !dto.getGender().equals("1")
+                && !dto.getGender().equals("0")
+                && !dto.getGender().equalsIgnoreCase("true")
+                && !dto.getGender().equalsIgnoreCase("false")) {
+            throw new IllegalArgumentException("Giới tính không hợp lệ.");
+        }
+
+        if (!isEmpty(dto.getStatus())
+                && !dto.getStatus().equalsIgnoreCase(CommonStatus.ACTIVE.name())
+                && !dto.getStatus().equalsIgnoreCase(CommonStatus.INACTIVE.name())) {
+            throw new IllegalArgumentException("Trạng thái nhân viên không hợp lệ.");
+        }
     }
 
     private PartnerStaff mapToEntity(PartnerStaffRequestDTO dto) {
@@ -129,6 +152,9 @@ public class PartnerStaffServiceImpl implements IPartnerStaffService {
         entity.setCompanyId(Integer.parseInt(dto.getCompanyId()));
         entity.setCode(dto.getCode().trim());
         entity.setName(dto.getName().trim());
+        entity.setDob(isEmpty(dto.getDob()) ? null : LocalDate.parse(dto.getDob()));
+        entity.setGender(isEmpty(dto.getGender()) ? null
+                : dto.getGender().equals("1") || dto.getGender().equalsIgnoreCase("true"));
         entity.setPosition(isEmpty(dto.getPosition()) ? null : dto.getPosition().trim());
         return entity;
     }

@@ -14,6 +14,7 @@
             <p class="subtitle">Hệ thống quản lý hoạt động ngoại khóa</p>
             <p><a class="button button-primary" href="${pageContext.request.contextPath}/activities">Quản lý hoạt động</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-companies">Quản lý công ty đối tác</a></p>
+            <p><a class="button" href="${pageContext.request.contextPath}/partner-staffs">Quản lý nhân viên đối tác</a></p>
         </section>
     </main>
 </body>
