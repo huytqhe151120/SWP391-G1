@@ -107,7 +107,7 @@ public class PartnerStaffServlet extends HttpServlet {
             throws SQLException, ServletException, IOException {
         PartnerStaff staff = staffService.getById(parseId(request.getParameter("id")));
         if (staff == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Partner staff not found.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "PartnerCompany staff not found.");
             return;
         }
         request.setAttribute("staff", staff);
@@ -146,7 +146,7 @@ public class PartnerStaffServlet extends HttpServlet {
     private void delete(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
         if (!staffService.delete(parseId(request.getParameter("id")))) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Partner staff not found.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "PartnerCompany staff not found.");
             return;
         }
         redirectToList(request, response);

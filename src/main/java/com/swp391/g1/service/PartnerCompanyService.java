@@ -1,28 +1,28 @@
 package com.swp391.g1.service;
 
-import com.swp391.g1.dao.PartnerDAO;
-import com.swp391.g1.model.Partner;
+import com.swp391.g1.dao.PartnerCompanyDAO;
+import com.swp391.g1.model.PartnerCompany;
 
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class PartnerService {
+public class PartnerCompanyService {
 
-    private PartnerDAO partnerDAO;
+    private PartnerCompanyDAO partnerDAO;
     private boolean sampleMode;
-    private final List<Partner> samplePartners = new java.util.ArrayList<>();
+    private final List<PartnerCompany> samplePartners = new java.util.ArrayList<>();
 
-    public PartnerService() {
+    public PartnerCompanyService() {
         try {
-            partnerDAO = new PartnerDAO();
+            partnerDAO = new PartnerCompanyDAO();
         } catch (IllegalStateException exception) {
             sampleMode = true;
             samplePartners.addAll(createSamplePartners());
         }
     }
 
-    public List<Partner> getAll() throws SQLException {
+    public List<PartnerCompany> getAll() throws SQLException {
         if (sampleMode) {
             return samplePartners;
         }
@@ -34,7 +34,7 @@ public class PartnerService {
         }
     }
 
-    public Partner getById(int id) throws SQLException {
+    public PartnerCompany getById(int id) throws SQLException {
         if (id <= 0) {
             return null;
         }
@@ -49,7 +49,7 @@ public class PartnerService {
         }
     }
 
-    public boolean create(Partner partner) throws SQLException {
+    public boolean create(PartnerCompany partner) throws SQLException {
         if (!isValid(partner)) {
             return false;
         }
@@ -69,7 +69,7 @@ public class PartnerService {
         }
     }
 
-    public boolean update(Partner partner) throws SQLException {
+    public boolean update(PartnerCompany partner) throws SQLException {
         if (partner == null || partner.getId() <= 0 || !isValid(partner)) {
             return false;
         }
@@ -106,13 +106,13 @@ public class PartnerService {
         }
     }
 
-    private List<Partner> createSamplePartners() {
-        List<Partner> partners = new java.util.ArrayList<>();
+    private List<PartnerCompany> createSamplePartners() {
+        List<PartnerCompany> partners = new java.util.ArrayList<>();
         Timestamp now = new Timestamp(System.currentTimeMillis());
-        Partner first = new Partner("FPT Software", "contact@fpt.com", "0900000001",
+        PartnerCompany first = new PartnerCompany("FPT Software", "contact@fpt.com", "0900000001",
                 "Da Nang", "ACTIVE", now);
         first.setId(1);
-        Partner second = new Partner("VNG Corporation", "contact@vng.com", "0900000002",
+        PartnerCompany second = new PartnerCompany("VNG Corporation", "contact@vng.com", "0900000002",
                 "Ho Chi Minh City", "ACTIVE", now);
         second.setId(2);
         partners.add(first);
@@ -120,16 +120,16 @@ public class PartnerService {
         return partners;
     }
 
-    private Partner findSamplePartner(int id) {
+    private PartnerCompany findSamplePartner(int id) {
         return samplePartners.stream().filter(partner -> partner.getId() == id).findFirst().orElse(null);
     }
 
-    private void addSamplePartner(Partner partner) {
-        partner.setId(samplePartners.stream().mapToInt(Partner::getId).max().orElse(0) + 1);
+    private void addSamplePartner(PartnerCompany partner) {
+        partner.setId(samplePartners.stream().mapToInt(PartnerCompany::getId).max().orElse(0) + 1);
         samplePartners.add(partner);
     }
 
-    private boolean replaceSamplePartner(Partner partner) {
+    private boolean replaceSamplePartner(PartnerCompany partner) {
         for (int index = 0; index < samplePartners.size(); index++) {
             if (samplePartners.get(index).getId() == partner.getId()) {
                 samplePartners.set(index, partner);
@@ -143,7 +143,7 @@ public class PartnerService {
         return samplePartners.removeIf(partner -> partner.getId() == id);
     }
 
-    private boolean isValid(Partner partner) {
+    private boolean isValid(PartnerCompany partner) {
         return partner != null
                 && hasText(partner.getName())
                 && hasText(partner.getEmail())

@@ -1,7 +1,7 @@
 package com.swp391.g1.controller;
 
-import com.swp391.g1.model.Partner;
-import com.swp391.g1.service.PartnerService;
+import com.swp391.g1.model.PartnerCompany;
+import com.swp391.g1.service.PartnerCompanyService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,10 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-@WebServlet("/partners")
-public class PartnerServlet extends HttpServlet {
+@WebServlet("/partner-company")
+public class PartnerCompanyServlet extends HttpServlet {
 
-    private final PartnerService partnerService = new PartnerService();
+    private final PartnerCompanyService partnerService = new PartnerCompanyService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -59,30 +59,30 @@ public class PartnerServlet extends HttpServlet {
 
     private void showList(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        request.setAttribute("partners", partnerService.getAll());
-        request.getRequestDispatcher("/WEB-INF/views/partner/list.jsp").forward(request, response);
+        request.setAttribute("partner", partnerService.getAll());
+        request.getRequestDispatcher("/WEB-INF/views/partner-company/list.jsp").forward(request, response);
     }
 
     private void showDetail(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        Partner partner = partnerService.getById(parseId(request.getParameter("id")));
+        PartnerCompany partner = partnerService.getById(parseId(request.getParameter("id")));
         if (partner == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Partner not found.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "PartnerCompany not found.");
             return;
         }
         request.setAttribute("partner", partner);
-        request.getRequestDispatcher("/WEB-INF/views/partner/detail.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/partner-company/detail.jsp").forward(request, response);
     }
 
-    private void showForm(HttpServletRequest request, HttpServletResponse response, Partner partner)
+    private void showForm(HttpServletRequest request, HttpServletResponse response, PartnerCompany partner)
             throws ServletException, IOException {
         request.setAttribute("partner", partner);
-        request.getRequestDispatcher("/WEB-INF/views/partner/form.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/partner-company/form.jsp").forward(request, response);
     }
 
     private void create(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
-        Partner partner = readPartner(request);
+        PartnerCompany partner = readPartner(request);
         if (!partnerService.create(partner)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid partner data.");
             return;
@@ -92,7 +92,7 @@ public class PartnerServlet extends HttpServlet {
 
     private void update(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
-        Partner partner = readPartner(request);
+        PartnerCompany partner = readPartner(request);
         partner.setId(parseId(request.getParameter("id")));
         if (!partnerService.update(partner)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid partner data.");
@@ -104,14 +104,14 @@ public class PartnerServlet extends HttpServlet {
     private void delete(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
         if (!partnerService.delete(parseId(request.getParameter("id")))) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Partner not found.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "PartnerCompany not found.");
             return;
         }
         redirectToList(request, response);
     }
 
-    private Partner readPartner(HttpServletRequest request) {
-        return new Partner(
+    private PartnerCompany readPartner(HttpServletRequest request) {
+        return new PartnerCompany(
                 request.getParameter("name"),
                 request.getParameter("email"),
                 request.getParameter("phone"),
@@ -138,6 +138,6 @@ public class PartnerServlet extends HttpServlet {
 
     private void redirectToList(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        response.sendRedirect(request.getContextPath() + "/partners");
+        response.sendRedirect(request.getContextPath() + "/partner-company");
     }
 }

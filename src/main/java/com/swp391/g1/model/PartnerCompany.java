@@ -3,7 +3,7 @@ package com.swp391.g1.model;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class Partner implements Serializable {
+public class PartnerCompany implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -17,11 +17,11 @@ public class Partner implements Serializable {
     private Timestamp createdAt; // Mandatory
 
     // 1. Constructor KHÔNG tham số
-    public Partner() {
+    public PartnerCompany() {
     }
 
     // 2. Constructor với các tham số BẮT BUỘC
-    public Partner(String name, String email, String phone, String status, Timestamp createdAt) {
+    public PartnerCompany(String name, String email, String phone, String status, Timestamp createdAt) {
         this.name = name;
         this.email = email;
         this.phone = phone;
@@ -30,7 +30,7 @@ public class Partner implements Serializable {
     }
 
     // 3. Constructor FULL tham số
-    public Partner(String name, String email, String phone, String address, String status, Timestamp createdAt) {
+    public PartnerCompany(String name, String email, String phone, String address, String status, Timestamp createdAt) {
         this.name = name;
         this.email = email;
         this.phone = phone;
@@ -98,7 +98,7 @@ public class Partner implements Serializable {
 
     @Override
     public String toString() {
-        return "Partner{" +
+        return "PartnerCompany{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +

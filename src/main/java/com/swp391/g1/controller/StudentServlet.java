@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-@WebServlet("/students")
+@WebServlet("/student")
 public class StudentServlet extends HttpServlet {
 
     private final StudentService studentService = new StudentService();
@@ -21,7 +21,7 @@ public class StudentServlet extends HttpServlet {
 
         try {
             request.setAttribute("students", studentService.getAll());
-            request.getRequestDispatcher("/WEB-INF/views/student/list-students.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/student/list-student.jsp")
                     .forward(request, response);
         } catch (SQLException exception) {
             response.sendError(

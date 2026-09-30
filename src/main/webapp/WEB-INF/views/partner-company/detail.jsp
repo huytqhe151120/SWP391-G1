@@ -5,10 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Partner Staff Detail</title>
+    <title>Partner Company Detail</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
+          href="${pageContext.request.contextPath}/assets/css/partner-company.css">
 </head>
 
 <body>
@@ -18,9 +18,9 @@
     <!-- ================= HERO ================= -->
     <div class="page-header activity-hero">
         <div class="activity-hero-copy">
-            <span class="eyebrow">PARTNER STAFF MANAGEMENT</span>
-            <h1>Chi tiết nhân viên đối tác</h1>
-            <p><c:out value="${staff.fullName}"/></p>
+            <span class="eyebrow">PARTNER MANAGEMENT</span>
+            <h1>Chi tiết đối tác</h1>
+            <p><c:out value="${partner.name}"/></p>
         </div>
     </div>
 
@@ -30,12 +30,12 @@
 
         <div class="activity-table-heading">
             <div>
-                <h2>Thông tin nhân viên</h2>
-                <p>Chi tiết đầy đủ của nhân viên đối tác</p>
+                <h2>Thông tin đối tác</h2>
+                <p>Chi tiết đầy đủ của công ty đối tác</p>
             </div>
 
             <a class="button"
-               href="${pageContext.request.contextPath}/partner-staff">Quay lại</a>
+               href="${pageContext.request.contextPath}/partner-company">Quay lại</a>
         </div>
 
         <div class="activity-detail-content">
@@ -47,45 +47,41 @@
 
                     <div class="detail-item">
                         <dt>ID</dt>
-                        <dd><c:out value="${staff.id}"/></dd>
+                        <dd><c:out value="${partner.id}"/></dd>
                     </div>
 
                     <div class="detail-item">
-                        <dt>Họ tên</dt>
-                        <dd><strong class="activity-name"><c:out value="${staff.fullName}"/></strong></dd>
+                        <dt>Tên</dt>
+                        <dd><strong class="activity-name"><c:out value="${partner.name}"/></strong></dd>
                     </div>
 
                     <div class="detail-item">
                         <dt>Email</dt>
-                        <dd><c:out value="${staff.email}" default="—"/></dd>
+                        <dd><c:out value="${partner.email}" default="—"/></dd>
                     </div>
 
                     <div class="detail-item">
                         <dt>Số điện thoại</dt>
-                        <dd><c:out value="${staff.phone}" default="—"/></dd>
+                        <dd><c:out value="${partner.phone}" default="—"/></dd>
                     </div>
 
                     <div class="detail-item">
-                        <dt>Chức vụ</dt>
-                        <dd><c:out value="${staff.position}" default="—"/></dd>
+                        <dt>Địa chỉ</dt>
+                        <dd><c:out value="${partner.address}" default="—"/></dd>
                     </div>
 
                     <div class="detail-item">
-                        <dt>Partner ID</dt>
-                        <dd><span class="activity-code"><c:out value="${staff.partnerId}"/></span></dd>
-                    </div>
-
-                    <div class="detail-item">
-                        <dt>Active</dt>
+                        <dt>Trạng thái</dt>
                         <dd>
                             <c:choose>
-                                <c:when test="${staff.isActive}">
-                                    <span class="badge"
-                                          style="border:1px solid #d1ead9; background:#edf8f0; color:#287143;">Active</span>
+                                <c:when test="${partner.status == 'ACTIVE'}">
+                                    <span class="badge partner-company-active">Active</span>
+                                </c:when>
+                                <c:when test="${partner.status == 'INACTIVE'}">
+                                    <span class="badge partner-company-inactive">Inactive</span>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="badge"
-                                          style="border:1px solid #e4e7ed; background:#f2f4f7; color:#687386;">Inactive</span>
+                                    <span class="badge"><c:out value="${partner.status}" default="—"/></span>
                                 </c:otherwise>
                             </c:choose>
                         </dd>
@@ -93,7 +89,7 @@
 
                     <div class="detail-item">
                         <dt>Ngày tạo</dt>
-                        <dd><c:out value="${staff.createdAt}" default="—"/></dd>
+                        <dd><c:out value="${partner.createdAt}" default="—"/></dd>
                     </div>
 
                 </dl>
@@ -105,7 +101,7 @@
         <!-- ================= ACTIONS ================= -->
         <div class="detail-actions activity-detail-actions">
             <a class="button"
-               href="${pageContext.request.contextPath}/partner-staff?action=edit&amp;id=${staff.id}">Sửa</a>
+               href="${pageContext.request.contextPath}/partner-company?action=edit&amp;id=${partner.id}">Sửa</a>
         </div>
 
     </div>

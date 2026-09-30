@@ -14,7 +14,7 @@ public class PartnerStaff implements Serializable {
     private String phone;       // Mandatory
     private String position;    // Optional
     private Boolean isActive;   // Mandatory
-    private Integer partnerId;   // Mandatory (Khóa ngoại trỏ sang Partner)
+    private Integer partnerId;   // Mandatory (Khóa ngoại trỏ sang PartnerCompany)
     private Timestamp createdAt; // Mandatory
 
     // 1. Constructor KHÔNG tham số

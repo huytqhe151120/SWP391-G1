@@ -1,7 +1,7 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.common.DBContext;
-import com.swp391.g1.model.Partner;
+import com.swp391.g1.model.PartnerCompany;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,13 +10,13 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PartnerDAO extends DBContext {
+public class PartnerCompanyDAO extends DBContext {
 
     private static final String SELECT_COLUMNS = "id, name, email, phone, address, status, createdAt";
 
-    public List<Partner> getAll() throws SQLException {
+    public List<PartnerCompany> getAll() throws SQLException {
         String sql = "SELECT " + SELECT_COLUMNS + " FROM Partner ORDER BY createdAt DESC";
-        List<Partner> partners = new ArrayList<>();
+        List<PartnerCompany> partners = new ArrayList<>();
 
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
@@ -27,7 +27,7 @@ public class PartnerDAO extends DBContext {
         return partners;
     }
 
-    public Partner getById(int id) throws SQLException {
+    public PartnerCompany getById(int id) throws SQLException {
         String sql = "SELECT " + SELECT_COLUMNS + " FROM Partner WHERE id = ?";
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -38,7 +38,7 @@ public class PartnerDAO extends DBContext {
         }
     }
 
-    public boolean insert(Partner partner) throws SQLException {
+    public boolean insert(PartnerCompany partner) throws SQLException {
         String sql = "INSERT INTO Partner (name, email, phone, address, status, createdAt) "
                 + "VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -57,7 +57,7 @@ public class PartnerDAO extends DBContext {
         }
     }
 
-    public boolean update(Partner partner) throws SQLException {
+    public boolean update(PartnerCompany partner) throws SQLException {
         String sql = "UPDATE Partner SET name = ?, email = ?, phone = ?, address = ?, "
                 + "status = ?, createdAt = ? WHERE id = ?";
 
@@ -76,7 +76,7 @@ public class PartnerDAO extends DBContext {
         }
     }
 
-    private void setPartnerParameters(PreparedStatement statement, Partner partner,
+    private void setPartnerParameters(PreparedStatement statement, PartnerCompany partner,
                                       boolean includeId) throws SQLException {
         int index = 1;
         statement.setString(index++, partner.getName());
@@ -90,8 +90,8 @@ public class PartnerDAO extends DBContext {
         }
     }
 
-    private Partner mapRow(ResultSet resultSet) throws SQLException {
-        Partner partner = new Partner();
+    private PartnerCompany mapRow(ResultSet resultSet) throws SQLException {
+        PartnerCompany partner = new PartnerCompany();
         partner.setId(resultSet.getInt("id"));
         partner.setName(resultSet.getString("name"));
         partner.setEmail(resultSet.getString("email"));

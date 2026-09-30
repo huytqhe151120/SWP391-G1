@@ -21,7 +21,7 @@ public class StaffServlet extends HttpServlet {
 
         try {
             request.setAttribute("staffList", staffService.getAll());
-            request.getRequestDispatcher("/WEB-INF/views/staff/list-staffs.jsp")
+            request.getRequestDispatcher("/WEB-INF/views/staff/list-staff.jsp")
                     .forward(request, response);
         } catch (SQLException exception) {
             response.sendError(

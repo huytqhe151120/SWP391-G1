@@ -1,7 +1,7 @@
 package com.swp391.g1.controller;
 
 import com.swp391.g1.model.ExtracurricularActivity;
-import com.swp391.g1.service.PartnerService;
+import com.swp391.g1.service.PartnerCompanyService;
 import com.swp391.g1.service.PartnerStaffService;
 import com.swp391.g1.service.ExtracurricularActivityService;
 import jakarta.servlet.ServletException;
@@ -13,11 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 
-@WebServlet("/activities")
+@WebServlet("/activity")
 public class ExtracurricularActivityServlet extends HttpServlet {
 
     private final ExtracurricularActivityService activityService = new ExtracurricularActivityService();
-    private final PartnerService partnerService = new PartnerService();
+    private final PartnerCompanyService partnerService = new PartnerCompanyService();
     private final PartnerStaffService partnerStaffService = new PartnerStaffService();
 
     @Override
@@ -65,7 +65,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
     private void showList(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, ServletException, IOException {
-        request.setAttribute("activities", activityService.getAll());
+        request.setAttribute("activity", activityService.getAll());
         request.getRequestDispatcher("/WEB-INF/views/activity/list.jsp").forward(request, response);
     }
 
@@ -216,6 +216,6 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
     private void redirectToList(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
-        response.sendRedirect(request.getContextPath() + "/activities");
+        response.sendRedirect(request.getContextPath() + "/activity");
     }
 }

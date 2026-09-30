@@ -131,7 +131,7 @@ public class PartnerStaffService {
         PartnerStaff second = new PartnerStaff("Tran Thi Binh", "binh@vng.com", "0910000002",
                 true, 2, now);
         second.setId(2);
-        second.setPosition("Partner Representative");
+        second.setPosition("PartnerCompany Representative");
         staffList.add(first);
         staffList.add(second);
         return staffList;
