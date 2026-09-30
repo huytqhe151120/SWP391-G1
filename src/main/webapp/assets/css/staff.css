@@ -1,268 +1,240 @@
-/* =========================
-   STAFF CSS
-   Khớp class với staff-list.jsp
-   ========================= */
-
-:root {
-    color-scheme: light;
-    font-family: "Segoe UI", Arial, sans-serif;
-    color: #172033;
-    background: #f3f6fb;
-}
-
+/* ===== GLOBAL ===== */
 * { box-sizing: border-box; }
 
 body {
     margin: 0;
-    min-height: 100vh;
-    background: #f3f6fb;
-}
-
-/* ===== PAGE ===== */
-.staff-list-page {
-    width: min(1440px, calc(100% - 64px));
-    margin: 38px auto;
+    padding: 2rem 3rem;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    color: #1f2937;
+    background: #f5f7fb;
 }
 
 /* ===== HERO ===== */
 .staff-hero {
     position: relative;
+    overflow: hidden;
     display: flex;
-    min-height: 180px;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    overflow: hidden;
-    margin-bottom: 24px;
-    padding: 32px 38px;
-    border-radius: 18px;
-    background: linear-gradient(115deg, #132b4f 0%, #1e477b 58%, #2862a2 100%);
-    box-shadow: 0 16px 36px rgb(26 61 107 / 18%);
+    gap: 1rem;
+    padding: 2.2rem 3rem;
+    margin-bottom: 1.5rem;
+    border-radius: 22px;
     color: #fff;
+    background: linear-gradient(135deg, #12305c 0%, #1e4277 55%, #2563a8 100%);
+    box-shadow: 0 12px 30px rgba(18, 48, 92, 0.25);
 }
+
+/* vòng tròn trang trí bên phải */
+.staff-hero::before,
+.staff-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    pointer-events: none;
+}
+.staff-hero::before { width: 420px; height: 420px; right: 60px; top: -120px; }
+.staff-hero::after  { width: 260px; height: 260px; right: 140px; top: -40px; }
+
+.staff-hero > * { position: relative; z-index: 1; }
 
 .staff-hero .hero-label {
     display: block;
-    margin-bottom: 6px;
-    font-size: .9rem;
-    letter-spacing: .04em;
+    margin-bottom: 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #b9cdf0;
 }
 
 .staff-hero h1 {
     margin: 0;
-    color: #fff;
-    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.1;
 }
 
 .staff-hero p {
-    margin: 8px 0 0;
-    color: #d3e0f1;
+    margin: 0.8rem 0 0;
+    color: #dbe6fb;
 }
 
-/* ===== TOOLBAR (nằm ngoài card) ===== */
+/* ===== NÚT TRANG CHỦ (ghost button) ===== */
+.staff-hero-actions {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.staff-home-button {
+    display: inline-block;
+    padding: 0.75rem 1.4rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.staff-home-button:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ===== TOOLBAR ===== */
 .staff-toolbar {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 14px;
-    margin-bottom: 24px;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.staff-search-wrapper {
-    flex: 0 1 420px;
-    min-width: 240px;
-}
+.staff-search-wrapper { flex: 1; min-width: 260px; }
 
 .staff-search,
 .staff-filter {
-    min-height: 44px;
-    padding: 8px 16px;
-    border: 1px solid #e2e8f2;
-    border-radius: 10px;
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid #e3e8f0;
+    border-radius: 12px;
     background: #fff;
-    box-shadow: 0 4px 14px rgb(28 45 80 / 4%);
-    color: #172033;
-    font: inherit;
+    font-size: 1rem;
+    font-family: inherit;
+    color: #1f2937;
+    outline: none;
 }
 
-.staff-search { width: 100%; }
+.staff-filter { width: auto; min-width: 220px; }
 
 .staff-search:focus,
 .staff-filter:focus {
-    border-color: #5880da;
-    outline: 3px solid rgb(36 87 197 / 12%);
+    border-color: #2563a8;
+    box-shadow: 0 0 0 3px rgba(37, 99, 168, 0.15);
 }
 
-/* ===== CARD ===== */
+/* ===== TABLE CARD ===== */
 .staff-table-card {
-    overflow: hidden;
-    border: 1px solid #e2e8f2;
-    border-radius: 14px;
     background: #fff;
-    box-shadow: 0 8px 24px rgb(28 45 80 / 5%);
+    border: 1px solid #e8edf5;
+    border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
 }
 
 .staff-table-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 23px 26px 19px;
+    gap: 1rem;
+    padding: 1.6rem 2rem 1.2rem;
 }
 
 .staff-table-heading h2 {
     margin: 0;
-    color: #172b49;
-    font-size: 1.13rem;
+    font-size: 1.3rem;
+    font-weight: 700;
 }
 
 .staff-table-heading p {
-    margin: 5px 0 0;
-    color: #77849a;
-    font-size: .88rem;
+    margin: 0.3rem 0 0;
+    color: #6b7280;
+    font-size: 0.95rem;
 }
 
 .staff-count {
-    padding: 7px 14px;
-    border: 1px solid #e4eaf3;
+    padding: 0.4rem 1rem;
     border-radius: 999px;
-    background: #f3f6fb;
-    color: #4d5f7c;
-    font-size: .82rem;
-    font-weight: 650;
+    border: 1px solid #e3e8f0;
+    background: #f5f7fb;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
     white-space: nowrap;
 }
 
 /* ===== TABLE ===== */
-.staff-table-wrap {
-    overflow-x: auto;
-    border-top: 1px solid #edf0f5;
-}
+.staff-table-wrap { width: 100%; overflow-x: auto; }
 
 .staff-table-wrap table {
     width: 100%;
-    min-width: 1100px;
     border-collapse: collapse;
 }
 
-.staff-table-wrap th,
-.staff-table-wrap td {
-    padding: 16px 20px;
-    border-bottom: 1px solid #edf0f5;
-    text-align: left;
-    vertical-align: middle;
-    white-space: nowrap;
-}
-
-.staff-table-wrap th:first-child,
-.staff-table-wrap td:first-child {
-    width: 70px;
-    padding-left: 26px;
-}
-
-.staff-table-wrap th:last-child,
-.staff-table-wrap td:last-child { padding-right: 26px; }
-
 .staff-table-wrap th {
+    padding: 1rem 1.3rem;
+    text-align: left;
     background: #f7f9fc;
-    color: #687991;
-    font-size: .72rem;
+    border-top: 1px solid #e8edf5;
+    border-bottom: 1px solid #e8edf5;
+    color: #4b5d78;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: .065em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
 .staff-table-wrap td {
-    color: #536177;
-    font-size: .88rem;
+    padding: 1.1rem 1.3rem;
+    border-bottom: 1px solid #eef1f6;
+    border-left: none;
+    border-right: none;
+    vertical-align: middle;
 }
 
-.staff-table-wrap td strong {
-    color: #233752;
-    font-weight: 650;
-}
-
-.staff-table-wrap tbody tr:last-child td { border-bottom: 0; }
-.staff-table-wrap tbody tr:hover { background: #f8faff; }
-
-/* ===== CODE / CLASS ===== */
-.staff-code,
-.staff-class {
-    display: inline-block;
-    padding: 5px 8px;
-    border: 1px solid #e4eaf3;
-    border-radius: 6px;
-    background: #f7f9fc;
-    color: #405777 !important;
-    font-size: .79rem;
-    font-weight: 650;
-}
+.staff-table-wrap tbody tr:last-child td { border-bottom: none; }
+.staff-table-wrap tbody tr:hover { background: #fafcff; }
 
 /* ===== BADGES ===== */
+.staff-code {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #e3e8f0;
+    background: #f5f7fb;
+    color: #1e3a5f;
+    font-size: 0.9rem;
+}
+
 .gender-badge,
 .status-badge {
     display: inline-block;
-    padding: 4px 9px;
+    padding: 0.3rem 0.85rem;
     border-radius: 999px;
-    background: #eef1f6;
-    color: #536177;
-    font-size: .78rem;
-    font-weight: 650;
-    white-space: nowrap;
+    font-size: 0.85rem;
+    font-weight: 700;
 }
 
-.gender-badge.male,
-.gender-badge.female {
-    background: #eef4ff;
-    color: #315d9d;
-}
+.gender-badge.male   { background: #e8f0fe; color: #1e4fa3; }
+.gender-badge.female { background: #e8f0fe; color: #1e4fa3; }
 
-.status-badge.active {
-    background: #eaf7ef;
-    color: #21633a;
-}
+.status-badge          { background: #f1f3f4; color: #5f6368; }
+.status-badge.active   { background: #e6f4ea; color: #137333; }
+.status-badge.inactive { background: #f1f3f4; color: #5f6368; }
 
-.status-badge.inactive {
-    background: #fff0f0;
-    color: #9b2626;
-}
-
-.empty-value { color: #a3adbd; }
+.empty-value { color: #9ca3af; }
 
 /* ===== EMPTY STATE ===== */
 .staff-empty-state {
-    padding: 45px 20px;
-    color: #66728a;
+    margin: 1.5rem 2rem 2rem;
+    padding: 2rem;
+    border: 1px dashed #c7d0de;
+    border-radius: 14px;
+    background: #fafcff;
+    color: #6b7280;
     text-align: center;
 }
-
-.staff-empty-state h3 {
-    margin: 0 0 6px;
-    color: #233752;
-}
-
-.staff-empty-state p { margin: 0; }
+.staff-empty-state h3 { margin: 0 0 0.4rem; color: #1f2937; }
+.staff-empty-state p  { margin: 0; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 760px) {
-    .staff-list-page {
-        width: min(100% - 28px, 1440px);
-        margin: 20px auto;
-    }
-    .staff-hero {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 25px 23px;
-    }
-    .staff-table-heading { padding: 19px 18px; }
-    .staff-search-wrapper { flex: 1 1 100%; }
-}
-
-/* ===== DEPARTMENT ===== */
-.department-badge {
-    display: inline-block;
-    min-width: 240px;
-    color: #536782;
-    line-height: 1.45;
-    white-space: normal;
+    body { padding: 1rem; }
+    .staff-hero { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+    .staff-hero h1 { font-size: 1.8rem; }
+    .staff-toolbar { flex-direction: column; }
+    .staff-filter { width: 100%; }
+    .staff-table-heading { flex-direction: column; align-items: flex-start; }
 }

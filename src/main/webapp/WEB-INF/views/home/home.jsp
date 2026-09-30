@@ -17,6 +17,7 @@
             <p><a class="button" href="${pageContext.request.contextPath}/partner-companies">Quản lý công ty đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-staffs">Quản lý nhân viên đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/student">Quản lý sinh viên</a></p>
+            <p><a class="button" href="${pageContext.request.contextPath}/staff">Quản lý nhân viên</a></p>
             <c:if test="${canManageQuestions}">
                 <p><a class="button" href="${pageContext.request.contextPath}/qa-management?filter=pending">Trả lời câu hỏi</a></p>
                 <p><a class="button" href="${pageContext.request.contextPath}/qa-management">Quản lý Hỏi &amp; Đáp</a></p>

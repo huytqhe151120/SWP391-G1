@@ -1,307 +1,258 @@
-iên · CSS
-    /* =========================
-       STUDENT CSS
-       Khớp class với student-list.jsp
-       ========================= */
-
-:root {
-    color-scheme: light;
-    font-family: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
-    color: #172033;
-    background: #f3f6fb;
-}
+/* =========================
+   STUDENT CSS
+   Đồng bộ giao diện với Staff
+   ========================= */
 
 * { box-sizing: border-box; }
 
 body {
     margin: 0;
-    min-height: 100vh;
-    background: #f3f6fb;
+    padding: 2rem 3rem;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    color: #1f2937;
+    background: #f5f7fb;
 }
 
 /* ===== PAGE ===== */
-.student-list-page {
-    width: min(1440px, calc(100% - 64px));
-    margin: 38px auto;
-}
+.student-list-page { width: 100%; }
 
 /* ===== HERO ===== */
 .student-hero {
     position: relative;
+    overflow: hidden;
     display: flex;
-    min-height: 180px;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    overflow: hidden;
-    margin-bottom: 24px;
-    padding: 32px 38px;
-    border-radius: 18px;
-    background: linear-gradient(115deg, #132b4f 0%, #1e477b 58%, #2862a2 100%);
-    box-shadow: 0 16px 36px rgb(26 61 107 / 18%);
+    gap: 1rem;
+    padding: 2.2rem 3rem;
+    margin-bottom: 1.5rem;
+    border-radius: 22px;
     color: #fff;
+    background: linear-gradient(135deg, #12305c 0%, #1e4277 55%, #2563a8 100%);
+    box-shadow: 0 12px 30px rgba(18, 48, 92, 0.25);
 }
+
+/* vòng tròn trang trí bên phải */
+.student-hero::before,
+.student-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    pointer-events: none;
+}
+.student-hero::before { width: 420px; height: 420px; right: 60px;  top: -120px; }
+.student-hero::after  { width: 260px; height: 260px; right: 140px; top: -40px; }
+
+.student-hero > * { position: relative; z-index: 1; }
 
 .student-hero .hero-label {
     display: block;
-    margin-bottom: 8px;
-    color: #cfe0f6;
-    font-size: .75rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: .14em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
+    color: #b9cdf0;
 }
 
 .student-hero h1 {
     margin: 0;
-    color: #fff;
-    font-size: clamp(2rem, 3.4vw, 2.7rem);
+    font-size: 2.6rem;
     font-weight: 800;
-    letter-spacing: -.02em;
-    line-height: 1.15;
+    line-height: 1.1;
+    color: #fff;
 }
 
 .student-hero p {
-    margin: 8px 0 0;
-    color: #d3e0f1;
+    margin: 0.8rem 0 0;
+    color: #dbe6fb;
 }
 
-/* ===== HERO ACTIONS (nút Trang chủ giống trang quản lý tài khoản) ===== */
-.student-hero .student-hero-actions {
-    position: relative;
-    z-index: 1;
+/* ===== NÚT TRANG CHỦ ===== */
+.student-hero-actions {
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    gap: 10px;
+    gap: 0.8rem;
 }
 
 .student-hero .student-hero-actions a.student-home-button,
 .student-hero .student-hero-actions a.student-home-button:visited {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 10px 22px;
-    border: 1px solid rgb(255 255 255 / 28%);
+    display: inline-block;
+    padding: 0.75rem 1.4rem;
     border-radius: 10px;
-    background: rgb(255 255 255 / 10%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
     color: #fff;
-    font: inherit;
-    font-weight: 650;
+    font-weight: 600;
     text-decoration: none;
-    cursor: pointer;
-    transition: background .2s ease, border-color .2s ease;
+    transition: background 0.2s;
 }
 
 .student-hero .student-hero-actions a.student-home-button:hover {
-    border-color: rgb(255 255 255 / 45%);
-    background: rgb(255 255 255 / 20%);
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
 }
 
-/* ===== TOOLBAR (nằm ngoài card) ===== */
+/* ===== TOOLBAR ===== */
 .student-toolbar {
     display: flex;
-    align-items: center;
     flex-wrap: wrap;
-    gap: 14px;
-    margin-bottom: 24px;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
 
-.student-search-wrapper {
-    flex: 0 1 420px;
-    min-width: 240px;
-}
+.student-search-wrapper { flex: 1; min-width: 260px; }
 
 .student-search,
 .student-filter {
-    min-height: 44px;
-    padding: 8px 16px;
-    border: 1px solid #e2e8f2;
-    border-radius: 10px;
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid #e3e8f0;
+    border-radius: 12px;
     background: #fff;
-    box-shadow: 0 4px 14px rgb(28 45 80 / 4%);
-    color: #172033;
-    font: inherit;
+    font-size: 1rem;
+    font-family: inherit;
+    color: #1f2937;
+    outline: none;
 }
 
-.student-search { width: 100%; }
+.student-filter { width: auto; min-width: 220px; }
 
 .student-search:focus,
 .student-filter:focus {
-    border-color: #5880da;
-    outline: 3px solid rgb(36 87 197 / 12%);
+    border-color: #2563a8;
+    box-shadow: 0 0 0 3px rgba(37, 99, 168, 0.15);
 }
 
-/* ===== CARD ===== */
+/* ===== TABLE CARD ===== */
 .student-table-card {
-    overflow: hidden;
-    border: 1px solid #e2e8f2;
-    border-radius: 14px;
     background: #fff;
-    box-shadow: 0 8px 24px rgb(28 45 80 / 5%);
+    border: 1px solid #e8edf5;
+    border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
 }
 
 .student-table-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 23px 26px 19px;
+    gap: 1rem;
+    padding: 1.6rem 2rem 1.2rem;
 }
 
 .student-table-heading h2 {
     margin: 0;
-    color: #172b49;
-    font-size: 1.13rem;
+    font-size: 1.3rem;
+    font-weight: 700;
 }
 
 .student-table-heading p {
-    margin: 5px 0 0;
-    color: #77849a;
-    font-size: .88rem;
+    margin: 0.3rem 0 0;
+    color: #6b7280;
+    font-size: 0.95rem;
 }
 
 .student-count {
-    padding: 7px 14px;
-    border: 1px solid #e4eaf3;
+    padding: 0.4rem 1rem;
     border-radius: 999px;
-    background: #f3f6fb;
-    color: #4d5f7c;
-    font-size: .82rem;
-    font-weight: 650;
+    border: 1px solid #e3e8f0;
+    background: #f5f7fb;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
     white-space: nowrap;
 }
 
 /* ===== TABLE ===== */
-.student-table-wrap {
-    overflow-x: auto;
-    border-top: 1px solid #edf0f5;
-}
+.student-table-wrap { width: 100%; overflow-x: auto; }
 
 .student-table-wrap table {
     width: 100%;
-    min-width: 1100px;
     border-collapse: collapse;
 }
 
-.student-table-wrap th,
-.student-table-wrap td {
-    padding: 16px 20px;
-    border-bottom: 1px solid #edf0f5;
+.student-table-wrap th {
+    padding: 1rem 1.3rem;
     text-align: left;
-    vertical-align: middle;
+    background: #f7f9fc;
+    border-top: 1px solid #e8edf5;
+    border-bottom: 1px solid #e8edf5;
+    color: #4b5d78;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     white-space: nowrap;
 }
 
-.student-table-wrap th:first-child,
-.student-table-wrap td:first-child {
-    width: 70px;
-    padding-left: 26px;
-}
-
-.student-table-wrap th:last-child,
-.student-table-wrap td:last-child { padding-right: 26px; }
-
-.student-table-wrap th {
-    background: #f7f9fc;
-    color: #687991;
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .065em;
-    text-transform: uppercase;
-}
-
 .student-table-wrap td {
-    color: #536177;
-    font-size: .88rem;
+    padding: 1.1rem 1.3rem;
+    border-bottom: 1px solid #eef1f6;
+    vertical-align: middle;
+    color: #374151;
+    white-space: nowrap;
 }
 
-.student-table-wrap td strong {
-    color: #233752;
-    font-weight: 650;
-}
+.student-table-wrap td strong { color: #1f2937; font-weight: 700; }
 
-.student-table-wrap tbody tr:last-child td { border-bottom: 0; }
-.student-table-wrap tbody tr:hover { background: #f8faff; }
+.student-table-wrap tbody tr:last-child td { border-bottom: none; }
+.student-table-wrap tbody tr:hover { background: #fafcff; }
 
 /* ===== CODE / CLASS ===== */
 .student-code,
 .student-class {
     display: inline-block;
-    padding: 5px 8px;
-    border: 1px solid #e4eaf3;
-    border-radius: 6px;
-    background: #f7f9fc;
-    color: #405777 !important;
-    font-size: .79rem;
-    font-weight: 650;
+    padding: 0.3rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #e3e8f0;
+    background: #f5f7fb;
+    color: #1e3a5f !important;
+    font-size: 0.9rem;
+    font-weight: 700;
 }
 
 /* ===== BADGES ===== */
 .gender-badge,
 .status-badge {
     display: inline-block;
-    padding: 4px 9px;
+    padding: 0.3rem 0.85rem;
     border-radius: 999px;
-    background: #eef1f6;
-    color: #536177;
-    font-size: .78rem;
-    font-weight: 650;
+    font-size: 0.85rem;
+    font-weight: 700;
     white-space: nowrap;
 }
 
 .gender-badge.male,
-.gender-badge.female {
-    background: #eef4ff;
-    color: #315d9d;
-}
+.gender-badge.female { background: #e8f0fe; color: #1e4fa3; }
 
-.status-badge.active {
-    background: #eaf7ef;
-    color: #21633a;
-}
+.status-badge          { background: #f1f3f4; color: #5f6368; }
+.status-badge.active   { background: #e6f4ea; color: #137333; }
+.status-badge.inactive { background: #f1f3f4; color: #5f6368; }
 
-.status-badge.inactive {
-    background: #fff0f0;
-    color: #9b2626;
-}
-
-.empty-value { color: #a3adbd; }
+.empty-value { color: #9ca3af; }
 
 /* ===== EMPTY STATE ===== */
 .student-empty-state {
-    padding: 45px 20px;
-    color: #66728a;
+    margin: 1.5rem 2rem 2rem;
+    padding: 2rem;
+    border: 1px dashed #c7d0de;
+    border-radius: 14px;
+    background: #fafcff;
+    color: #6b7280;
     text-align: center;
 }
-
-.student-empty-state h3 {
-    margin: 0 0 6px;
-    color: #233752;
-}
-
-.student-empty-state p { margin: 0; }
+.student-empty-state h3 { margin: 0 0 0.4rem; color: #1f2937; }
+.student-empty-state p  { margin: 0; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 760px) {
-    .student-list-page {
-        width: min(100% - 28px, 1440px);
-        margin: 20px auto;
-    }
-
-    .student-hero {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 25px 23px;
-    }
-
-    .student-hero .student-hero-actions {
-        width: 100%;
-        align-items: stretch;
-        flex-direction: column;
-    }
-
-    .student-table-heading { padding: 19px 18px; }
-    .student-search-wrapper { flex: 1 1 100%; }
+    body { padding: 1rem; }
+    .student-hero { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+    .student-hero h1 { font-size: 1.8rem; }
+    .student-toolbar { flex-direction: column; }
+    .student-filter { width: 100%; }
+    .student-table-heading { flex-direction: column; align-items: flex-start; }
 }
