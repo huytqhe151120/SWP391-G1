@@ -2,12 +2,13 @@ package com.swp391.g1.controller;
 
 import com.swp391.g1.dao.AnswerDAO;
 import com.swp391.g1.dao.QuestionDAO;
-import com.swp391.g1.dao.StudentDAO;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Answer;
 import com.swp391.g1.model.Question;
 import com.swp391.g1.model.Student;
 import com.swp391.g1.service.AccessPolicy;
+import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.ServletException;
@@ -29,7 +30,7 @@ public class StudentQuestionServlet extends HttpServlet {
 
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final AnswerDAO answerDAO = new AnswerDAO();
-    private final StudentDAO studentDAO = new StudentDAO();
+    private final IStudentService studentService = new StudentServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -80,7 +81,7 @@ public class StudentQuestionServlet extends HttpServlet {
                     "Chỉ sinh viên được truy cập trang Hỏi & Đáp này.");
             return null;
         }
-        Student student = studentDAO.getByAccountId(user.getId());
+        Student student = studentService.getStudentByAccountId(user.getId());
         if (student == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
                     "Không tìm thấy hồ sơ sinh viên của tài khoản.");

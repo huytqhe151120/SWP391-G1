@@ -1,13 +1,15 @@
 package com.swp391.g1.controller;
 
 import com.swp391.g1.dao.MessageDAO;
-import com.swp391.g1.dao.StudentDAO;
 import com.swp391.g1.dto.CurrentUser;
-import com.swp391.g1.dao.StaffDAO;
 import com.swp391.g1.model.Message;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.model.Student;
 import com.swp391.g1.service.AccessPolicy;
+import com.swp391.g1.service.IStaffService;
+import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.impl.StaffServiceImpl;
+import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.RequestDispatcher;
@@ -33,8 +35,8 @@ import java.util.List;
 public class OrganizerInboxServlet extends HttpServlet {
 
     private final MessageDAO messageDAO = new MessageDAO();
-    private final StudentDAO studentDAO = new StudentDAO();
-    private final StaffDAO staffDAO = new StaffDAO();
+    private final IStudentService studentService = new StudentServiceImpl();
+    private final IStaffService staffService = new StaffServiceImpl();
 
     /** Lấy staff_id từ session. Trả về -1 nếu không hợp lệ. */
     private int resolveStaffId(HttpServletRequest request, HttpServletResponse response)
@@ -51,10 +53,10 @@ public class OrganizerInboxServlet extends HttpServlet {
                     "Chỉ ADMIN/STAFF được truy cập hộp thư hỗ trợ.");
             return -1;
         }
-        Staff staff = staffDAO.getByAccountId(user.getId());
+        Staff staff = staffService.getStaffByAccountId(user.getId());
         // ADMIN có thể không có record trong bảng staff -> dùng staff đầu tiên làm fallback
         if (staff == null && "ADMIN".equals(user.getType())) {
-            staff = staffDAO.getFirst();
+            staff = staffService.getFirstStaff();
         }
         if (staff == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -81,7 +83,7 @@ public class OrganizerInboxServlet extends HttpServlet {
                 return;
             }
             int studentId = Integer.parseInt(studentIdParam);
-            Student student = studentDAO.getById(studentId);
+            Student student = studentService.getStudentById(studentId);
             List<Message> messages = messageDAO.getConversation(studentId, staffId);
 
             // Mark student's messages as read

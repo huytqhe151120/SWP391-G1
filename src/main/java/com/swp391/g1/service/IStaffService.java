@@ -11,6 +11,10 @@ public interface IStaffService {
 
     Staff getStaffById(int id);
 
+    Staff getStaffByAccountId(int accountId);
+
+    Staff getFirstStaff();
+
     boolean createStaff(Staff staff) throws Exception;
 
     boolean updateStaff(Staff staff) throws Exception;

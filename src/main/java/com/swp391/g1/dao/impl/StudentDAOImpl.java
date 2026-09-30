@@ -16,7 +16,7 @@ import java.util.List;
 public class StudentDAOImpl implements IStudentDAO {
 
     private static final String SELECT_BASE = """
-            SELECT s.id, s.main_class_id, mc.code AS mainClassCode,
+            SELECT s.id, s.main_class_id, s.account_id, mc.code AS mainClassCode,
                    s.code, s.name, s.dob, s.gender, s.email,
                    s.phone_number, s.status
             FROM student s
@@ -26,16 +26,18 @@ public class StudentDAOImpl implements IStudentDAO {
     private Student mapStudent(ResultSet rs) throws SQLException {
         Student student = new Student();
         student.setId(rs.getInt("id"));
-        student.setMainClassId((Integer) rs.getObject("main_class_id"));
+        int mainClassId = rs.getInt("main_class_id");
+        student.setMainClassId(rs.wasNull() ? 0 : mainClassId);
+        student.setAccountId(rs.getInt("account_id"));
         student.setMainClassCode(rs.getString("mainClassCode"));
         student.setCode(rs.getString("code"));
         student.setName(rs.getString("name"));
 
         Date dob = rs.getDate("dob");
-        student.setDob(dob == null ? null : dob.toLocalDate());
+        student.setDob(dob == null ? null : dob.toString());
 
         boolean gender = rs.getBoolean("gender");
-        student.setGender(rs.wasNull() ? null : gender);
+        student.setGender(rs.wasNull() ? null : Boolean.toString(gender));
 
         student.setEmail(rs.getString("email"));
         student.setPhoneNumber(rs.getString("phone_number"));
@@ -72,6 +74,24 @@ public class StudentDAOImpl implements IStudentDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to find student by ID.", e);
+        }
+    }
+
+    @Override
+    public Student findByAccountId(int accountId) {
+        if (accountId <= 0) {
+            return null;
+        }
+        String sql = SELECT_BASE + " WHERE s.account_id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapStudent(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find student by account ID.", e);
         }
     }
 

@@ -3,6 +3,7 @@ package com.swp391.g1.model;
 public class Student {
     private int id;
     private int mainClassId;
+    private String mainClassCode;
     private String code;
     private String name;
     private String dob;
@@ -19,6 +20,9 @@ public class Student {
 
     public int getMainClassId() { return mainClassId; }
     public void setMainClassId(int mainClassId) { this.mainClassId = mainClassId; }
+
+    public String getMainClassCode() { return mainClassCode; }
+    public void setMainClassCode(String mainClassCode) { this.mainClassCode = mainClassCode; }
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }

@@ -2,12 +2,13 @@ package com.swp391.g1.controller;
 
 import com.swp391.g1.dao.AnswerDAO;
 import com.swp391.g1.dao.QuestionDAO;
-import com.swp391.g1.dao.StaffDAO;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Answer;
 import com.swp391.g1.model.Question;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.AccessPolicy;
+import com.swp391.g1.service.IStaffService;
+import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.RequestDispatcher;
@@ -37,7 +38,7 @@ public class AnswerQuestionServlet extends HttpServlet {
 
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final AnswerDAO answerDAO = new AnswerDAO();
-    private final StaffDAO staffDAO = new StaffDAO();
+    private final IStaffService staffService = new StaffServiceImpl();
 
     /** Resolve the staff identity used by Answer's staff_id foreign key. */
     private int resolveStaffId(HttpServletRequest request, HttpServletResponse response)
@@ -53,12 +54,12 @@ public class AnswerQuestionServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chi ADMIN/STAFF moi duoc truy cap trang nay.");
             return -1;
         }
-        Staff staff = staffDAO.getByAccountId(user.getId());
+        Staff staff = staffService.getStaffByAccountId(user.getId());
         // Database policy only permits STAFF accounts in dbo.staff. ADMIN is an
         // organizer account, so use the configured organizer/staff identity in
         // the same way as OrganizerInboxServlet.
         if (staff == null && "ADMIN".equals(user.getType())) {
-            staff = staffDAO.getFirst();
+            staff = staffService.getFirstStaff();
         }
         if (staff == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,

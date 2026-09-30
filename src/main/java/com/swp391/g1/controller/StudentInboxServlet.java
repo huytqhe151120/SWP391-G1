@@ -1,12 +1,14 @@
 package com.swp391.g1.controller;
 
 import com.swp391.g1.dao.MessageDAO;
-import com.swp391.g1.dao.StaffDAO;
-import com.swp391.g1.dao.StudentDAO;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Message;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.model.Student;
+import com.swp391.g1.service.IStaffService;
+import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.impl.StaffServiceImpl;
+import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.RequestDispatcher;
@@ -32,8 +34,8 @@ import java.util.List;
 public class StudentInboxServlet extends HttpServlet {
 
     private final MessageDAO messageDAO = new MessageDAO();
-    private final StaffDAO staffDAO = new StaffDAO();
-    private final StudentDAO studentDAO = new StudentDAO();
+    private final IStaffService staffService = new StaffServiceImpl();
+    private final IStudentService studentService = new StudentServiceImpl();
 
     /** Lấy student_id từ session. Trả về -1 nếu không hợp lệ. */
     private int resolveStudentId(HttpServletRequest request, HttpServletResponse response)
@@ -47,7 +49,7 @@ public class StudentInboxServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chi student moi duoc truy cap trang nay.");
             return -1;
         }
-        Student student = studentDAO.getByAccountId(user.getId());
+        Student student = studentService.getStudentByAccountId(user.getId());
         if (student == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Khong tim thay thong tin student.");
             return -1;
@@ -64,7 +66,7 @@ public class StudentInboxServlet extends HttpServlet {
 
         // The inbox is a master-detail screen: the recipient list remains
         // visible even when a conversation is selected on the right.
-        request.setAttribute("staffList", staffDAO.getAll());
+        request.setAttribute("staffList", staffService.getAllStaffs());
         request.setAttribute("recentMessages", messageDAO.getStudentMessages(studentId));
         request.setAttribute("currentStudentId", studentId);
 
@@ -84,7 +86,7 @@ public class StudentInboxServlet extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã nhân viên không hợp lệ.");
                 return;
             }
-            Staff staff = staffDAO.getById(staffId);
+            Staff staff = staffService.getStaffById(staffId);
             if (staff == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy nhân viên.");
                 return;
@@ -116,7 +118,7 @@ public class StudentInboxServlet extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã nhân viên không hợp lệ.");
                 return;
             }
-            Staff staff = staffDAO.getById(staffId);
+            Staff staff = staffService.getStaffById(staffId);
             if (staff == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy nhân viên.");
                 return;

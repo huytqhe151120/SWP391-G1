@@ -19,4 +19,14 @@ public class StudentServiceImpl implements IStudentService {
     public List<Student> getAllStudents() {
         return studentDAO.findAll();
     }
+
+    @Override
+    public Student getStudentById(int id) {
+        return id <= 0 ? null : studentDAO.findById(id);
+    }
+
+    @Override
+    public Student getStudentByAccountId(int accountId) {
+        return accountId <= 0 ? null : studentDAO.findByAccountId(accountId);
+    }
 }

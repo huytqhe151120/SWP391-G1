@@ -6,4 +6,8 @@ import java.util.List;
 
 public interface IStudentService {
     List<Student> getAllStudents();
+
+    Student getStudentById(int id);
+
+    Student getStudentByAccountId(int accountId);
 }

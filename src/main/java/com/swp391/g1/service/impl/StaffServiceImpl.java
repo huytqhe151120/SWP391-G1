@@ -34,6 +34,16 @@ public class StaffServiceImpl implements IStaffService {
     }
 
     @Override
+    public Staff getStaffByAccountId(int accountId) {
+        return accountId <= 0 ? null : staffDAO.findByAccountId(accountId);
+    }
+
+    @Override
+    public Staff getFirstStaff() {
+        return staffDAO.findFirst();
+    }
+
+    @Override
     public boolean createStaff(Staff staff) throws Exception {
         validateStaff(staff, false);
         staff.setStatus("ACTIVE");

@@ -17,6 +17,13 @@
             <p><a class="button" href="${pageContext.request.contextPath}/partner-companies">Quản lý công ty đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-staffs">Quản lý nhân viên đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/student">Quản lý sinh viên</a></p>
+            <c:if test="${canManageQuestions}">
+                <p><a class="button" href="${pageContext.request.contextPath}/qa-management?filter=pending">Trả lời câu hỏi</a></p>
+                <p><a class="button" href="${pageContext.request.contextPath}/qa-management">Quản lý Hỏi &amp; Đáp</a></p>
+            </c:if>
+            <c:if test="${canUseStudentQuestions}">
+                <p><a class="button" href="${pageContext.request.contextPath}/student-qa">Hỏi &amp; Đáp sinh viên</a></p>
+            </c:if>
             <%-- UI hint only: AccountServlet still enforces the ADMIN rule server-side. --%>
             <c:if test="${canManageAccounts}">
                 <p><a class="button" href="${pageContext.request.contextPath}/accounts">Quản lý tài khoản</a></p>
