@@ -16,6 +16,7 @@
             <p><a class="button button-primary" href="${pageContext.request.contextPath}/activities">Quản lý hoạt động</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-companies">Quản lý công ty đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-staffs">Quản lý nhân viên đối tác</a></p>
+            <p><a class="button" href="${pageContext.request.contextPath}/student">Quản lý sinh viên</a></p>
             <%-- UI hint only: AccountServlet still enforces the ADMIN rule server-side. --%>
             <c:if test="${canManageAccounts}">
                 <p><a class="button" href="${pageContext.request.contextPath}/accounts">Quản lý tài khoản</a></p>

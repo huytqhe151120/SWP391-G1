@@ -1,6 +1,7 @@
 package com.swp391.g1.controller;
 
-import com.swp391.g1.service.StudentService;
+import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.impl.StudentServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,22 +9,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.SQLException;
 
 @WebServlet("/student")
-public class StudentServlet extends HttpServlet {
+public class StudentController extends HttpServlet {
 
-    private final StudentService studentService = new StudentService();
+    private final IStudentService studentService = new StudentServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         try {
-            request.setAttribute("students", studentService.getAll());
+            request.setAttribute("students", studentService.getAllStudents());
             request.getRequestDispatcher("/WEB-INF/views/student/list-student.jsp")
                     .forward(request, response);
-        } catch (SQLException exception) {
+        } catch (IllegalStateException exception) {
             response.sendError(
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Unable to access student data."

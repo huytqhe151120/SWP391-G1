@@ -69,6 +69,19 @@
         </div>
         <div class="detail-actions activity-detail-actions">
             <a class="button" href="${pageContext.request.contextPath}/activities">Đóng</a>
+            <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
+                <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
+                    <input type="hidden" name="id" value="${activity.id}">
+                    <button type="submit" name="action" value="submit" class="button button-primary">Gửi duyệt</button>
+                </form>
+            </c:if>
+            <c:if test="${activity.approvalStatus == 'PENDING'}">
+                <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
+                    <input type="hidden" name="id" value="${activity.id}">
+                    <button type="submit" name="action" value="approve" class="button button-primary">Duyệt</button>
+                    <button type="submit" name="action" value="reject" class="button">Từ chối</button>
+                </form>
+            </c:if>
         </div>
     </section>
 </main>

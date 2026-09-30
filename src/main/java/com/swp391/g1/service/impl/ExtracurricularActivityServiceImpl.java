@@ -12,6 +12,7 @@ import com.swp391.g1.service.IExtracurricularActivityService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
 
 public class ExtracurricularActivityServiceImpl implements IExtracurricularActivityService {
@@ -186,5 +187,41 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     private boolean isEmpty(String str) {
         return str == null || str.trim().isEmpty();
+    }
+
+    @Override
+    public boolean submitForApproval(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.PENDING,
+                "Only draft or rejected activities can be submitted for approval.",
+                ApprovalStatus.DRAFT, ApprovalStatus.REJECTED);
+    }
+
+    @Override
+    public boolean approveActivity(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.APPROVED,
+                "Only activities pending approval can be approved.",
+                ApprovalStatus.PENDING);
+    }
+
+    @Override
+    public boolean rejectActivity(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.REJECTED,
+                "Only activities pending approval can be rejected.",
+                ApprovalStatus.PENDING);
+    }
+
+    private boolean changeApprovalStatus(int id, ApprovalStatus target,
+                                         String errorMessage, ApprovalStatus... allowedFrom) {
+        if (id <= 0) {
+            return false;
+        }
+        ExtracurricularActivity activity = activityDAO.findById(id);
+        if (activity == null) {
+            return false;
+        }
+        if (!Arrays.asList(allowedFrom).contains(activity.getApprovalStatus())) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return activityDAO.updateApprovalStatus(id, target);
     }
 }

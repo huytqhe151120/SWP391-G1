@@ -100,6 +100,19 @@
                                         <a class="activity-action-link activity-action-delete"
                                            href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
                                            onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                        <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="submit" class="activity-action-link">Gửi duyệt</button>
+                                            </form>
+                                        </c:if>
+                                        <c:if test="${activity.approvalStatus == 'PENDING'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="approve" class="activity-action-link">Duyệt</button>
+                                                <button type="submit" name="action" value="reject" class="activity-action-link activity-action-delete">Từ chối</button>
+                                            </form>
+                                        </c:if>
                                     </div>
                                 </td>
                             </tr>
