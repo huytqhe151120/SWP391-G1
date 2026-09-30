@@ -329,4 +329,18 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             throw new IllegalStateException("Failed to delete extracurricular activity.", e);
         }
     }
+
+    @Override
+    public boolean updateApprovalStatus(int id, Enum.ApprovalStatus status) {
+        String sql = "UPDATE extracurricular_activity SET approval_status = ? WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status.name());
+            ps.setInt(2, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to update approval status.", e);
+        }
+    }
 }

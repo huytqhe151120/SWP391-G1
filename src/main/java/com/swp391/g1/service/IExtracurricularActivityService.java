@@ -11,4 +11,7 @@ public interface IExtracurricularActivityService {
     boolean createActivity(ExtracurricularActivityRequestDTO requestDTO) throws Exception;
     boolean updateActivity(ExtracurricularActivityRequestDTO requestDTO) throws Exception;
     boolean deleteActivity(int id);
+    boolean submitForApproval(int id);
+    boolean approveActivity(int id);
+    boolean rejectActivity(int id);
 }

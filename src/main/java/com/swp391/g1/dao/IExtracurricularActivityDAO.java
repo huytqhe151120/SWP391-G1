@@ -10,4 +10,5 @@ public interface IExtracurricularActivityDAO extends IGenericDAO<Extracurricular
     List<ExtracurricularActivity> findByApprovalStatus(Enum.ApprovalStatus status);
 
     public List<ExtracurricularActivityResponseDTO> findAllWithDetails();
+    boolean updateApprovalStatus(int id, Enum.ApprovalStatus status);
 }
