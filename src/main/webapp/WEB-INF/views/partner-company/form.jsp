@@ -16,7 +16,7 @@
             <p>Nhập thông tin liên hệ và thông tin quản lý của công ty.</p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách công ty
         </a>
     </header>

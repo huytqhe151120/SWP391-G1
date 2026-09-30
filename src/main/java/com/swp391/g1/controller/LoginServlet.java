@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.swp391.g1.dto.CurrentUser;
-import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.AuthenticationException;
 import com.swp391.g1.service.AuthenticationResult;
 import com.swp391.g1.service.AuthenticationService;
@@ -92,9 +91,9 @@ public class LoginServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    /** ADMIN reaches Account Management; every other type reaches the home page. */
+    /** Every role reaches the role-aware home menu after login. */
     private static String landingPage(CurrentUser user) {
-        return AccessPolicy.canManageAccounts(user) ? "/accounts" : "/home";
+        return "/home";
     }
 
     private static String contextPath(HttpServletRequest request) {

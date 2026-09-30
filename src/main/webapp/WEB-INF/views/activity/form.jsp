@@ -22,7 +22,7 @@
             <p>Điền thông tin để quản lý và theo dõi hoạt động ngoại khóa.</p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách hoạt động
         </a>
     </header>

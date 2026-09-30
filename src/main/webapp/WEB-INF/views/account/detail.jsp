@@ -18,7 +18,7 @@
             <p><span class="activity-code"><c:out value="${account.username}"/></span></p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/accounts">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách tài khoản
         </a>
     </header>

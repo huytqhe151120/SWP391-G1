@@ -18,9 +18,22 @@ public class HomeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // UI hint only: AccountServlet still enforces the ADMIN rule server-side.
-        request.setAttribute("canManageAccounts",
-                AccessPolicy.canManageAccounts(AuthContext.getCurrentUser(request)));
+        var currentUser = AuthContext.getCurrentUser(request);
+
+        // UI hints — server-side enforcement is still in each servlet
+        request.setAttribute("canManageAccounts", AccessPolicy.canManageAccounts(currentUser));
+        request.setAttribute("canManageQuestions", AccessPolicy.canManageQuestions(currentUser));
+        request.setAttribute("canUseStudentQuestions", AccessPolicy.canUseStudentQuestions(currentUser));
+        request.setAttribute("canUseSupportInbox", AccessPolicy.canUseSupportInbox(currentUser));
+
+        String type = currentUser != null ? currentUser.getType() : "";
+        // ADMIN = Organizer: có QA management + Organizer inbox
+        request.setAttribute("isOrganizer", "ADMIN".equals(type));
+        // STAFF: có một số tính năng riêng
+        request.setAttribute("isStaff", "STAFF".equals(type));
+        // STUDENT: có Student inbox
+        request.setAttribute("isStudent", "STUDENT".equals(type));
+
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/home/home.jsp");
         dispatcher.forward(request, response);
     }
