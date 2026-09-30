@@ -57,7 +57,8 @@
                     <th scope="col">Loại hoạt động</th>
                     <th scope="col">Đơn vị phụ trách</th>
                     <th scope="col">Thời gian</th>
-                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Trạng thái hoạt động</th>
+                    <th scope="col">Trạng thái duyệt</th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
@@ -65,7 +66,7 @@
                 <c:choose>
                     <c:when test="${empty activities}">
                     <tr>
-                        <td class="empty-state activity-empty-state" colspan="8">
+                        <td class="empty-state activity-empty-state" colspan="9">
                             <span class="empty-state-mark" aria-hidden="true">+</span>
                             <strong>Chưa có hoạt động nào</strong>
                             <span>Tạo hoạt động mới để bắt đầu quản lý danh sách.</span>
@@ -93,6 +94,7 @@
                                     </c:choose>
                                 </td>
                                 <td><span class="badge activity-status"><c:out value="${activity.activityStatus}" default="Chưa xác định"/></span></td>
+                                <td><span class="badge activity-status"><c:out value="${activity.approvalStatus}" default="Chưa xác định"/></span></td>
                                 <td>
                                     <div class="actions activity-actions">
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>

@@ -146,12 +146,12 @@
             <div class="form-grid activity-form-grid">
                 <div class="field">
                     <label for="startTime">Thời gian bắt đầu</label>
-                    <input id="startTime" name="startTime" type="datetime-local" step="1"
+                    <input id="startTime" name="startTime" type="datetime-local" lang="en-GB" step="1"
                            value="<c:out value='${not empty formData ? formData.startTime : activity.startTime}'/>">
                 </div>
                 <div class="field">
                     <label for="endTime">Thời gian kết thúc</label>
-                    <input id="endTime" name="endTime" type="datetime-local" step="1"
+                    <input id="endTime" name="endTime" type="datetime-local" lang="en-GB" step="1"
                            value="<c:out value='${not empty formData ? formData.endTime : activity.endTime}'/>">
                 </div>
                 <div class="field field-wide">
