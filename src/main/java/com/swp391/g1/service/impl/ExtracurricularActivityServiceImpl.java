@@ -210,6 +210,32 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 ApprovalStatus.PENDING);
     }
 
+    @Override
+    public boolean revokeApproval(int id) {
+        if (id <= 0) {
+            return false;
+        }
+        ExtracurricularActivity activity = activityDAO.findById(id);
+        if (activity == null) {
+            return false;
+        }
+        if (activity.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            throw new IllegalArgumentException("Chỉ có thể hủy duyệt hoạt động đã được duyệt.");
+        }
+        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+            throw new IllegalArgumentException(
+                    "Không thể hủy duyệt vì hoạt động đã diễn ra, đã kết thúc hoặc đã bị hủy.");
+        }
+        return activityDAO.updateApprovalStatus(id, ApprovalStatus.PENDING);
+    }
+
+    @Override
+    public boolean revokeRejection(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.PENDING,
+                "Chỉ có thể hủy từ chối hoạt động đang ở trạng thái bị từ chối.",
+                ApprovalStatus.REJECTED);
+    }
+
     private boolean changeApprovalStatus(int id, ApprovalStatus target,
                                          String errorMessage, ApprovalStatus... allowedFrom) {
         if (id <= 0) {

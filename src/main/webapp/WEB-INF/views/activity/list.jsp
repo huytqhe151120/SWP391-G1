@@ -115,6 +115,22 @@
                                                 <button type="submit" name="action" value="reject" class="activity-action-link activity-action-delete">Từ chối</button>
                                             </form>
                                         </c:if>
+                                        <c:if test="${activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="revokeApproval"
+                                                        class="activity-action-link activity-action-delete"
+                                                        onclick="return confirm('Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?');">Hủy duyệt</button>
+                                            </form>
+                                        </c:if>
+                                        <c:if test="${activity.approvalStatus == 'REJECTED'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="revokeRejection"
+                                                        class="activity-action-link"
+                                                        onclick="return confirm('Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?');">Hủy từ chối</button>
+                                            </form>
+                                        </c:if>
                                     </div>
                                 </td>
                             </tr>
