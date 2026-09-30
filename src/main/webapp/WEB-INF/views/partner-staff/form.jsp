@@ -1,7 +1,16 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="selectedCompany" value="${not empty formData ? formData.companyId : partnerStaff.companyId}"/>
 <c:set var="selectedGender" value="${not empty formData ? formData.gender : (partnerStaff.gender == null ? '' : (partnerStaff.gender ? '1' : '0'))}"/>
 <c:set var="selectedStatus" value="${not empty formData ? formData.status : partnerStaff.status}"/>
+<c:choose>
+    <c:when test="${not empty formData.dob}">
+        <c:set var="dobValue" value="${formData.dob}"/>
+    </c:when>
+    <c:when test="${not empty partnerStaff.dob}">
+        <c:set var="dobValue" value="${fn:substring(partnerStaff.dob, 8, 10)}-${fn:substring(partnerStaff.dob, 5, 7)}-${fn:substring(partnerStaff.dob, 0, 4)}"/>
+    </c:when>
+</c:choose>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -78,8 +87,10 @@
                     </div>
                     <div class="field">
                         <label for="dob">Ngày sinh</label>
-                        <input id="dob" name="dob" type="date"
-                               value="<c:out value='${not empty formData ? formData.dob : partnerStaff.dob}'/>">
+                        <input id="dob" name="dob" type="text" inputmode="numeric" maxlength="10"
+                               pattern="(?:0[1-9]|[12][0-9]|3[01])-(?:0[1-9]|1[0-2])-[0-9]{4}"
+                               placeholder="dd-mm-yyyy" title="Nhập ngày theo định dạng dd-mm-yyyy"
+                               value="<c:out value='${dobValue}'/>">
                     </div>
                     <div class="field">
                         <label for="gender">Giới tính</label>

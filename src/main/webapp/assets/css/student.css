@@ -1,11 +1,12 @@
-/* =========================
-   STUDENT CSS
-   Khớp class với student-list.jsp
-   ========================= */
+iên · CSS
+    /* =========================
+       STUDENT CSS
+       Khớp class với student-list.jsp
+       ========================= */
 
 :root {
     color-scheme: light;
-    font-family: "Segoe UI", Arial, sans-serif;
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
     color: #172033;
     background: #f3f6fb;
 }
@@ -43,20 +44,59 @@ body {
 
 .student-hero .hero-label {
     display: block;
-    margin-bottom: 6px;
-    font-size: .9rem;
-    letter-spacing: .04em;
+    margin-bottom: 8px;
+    color: #cfe0f6;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
 }
 
 .student-hero h1 {
     margin: 0;
     color: #fff;
-    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-size: clamp(2rem, 3.4vw, 2.7rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.15;
 }
 
 .student-hero p {
     margin: 8px 0 0;
     color: #d3e0f1;
+}
+
+/* ===== HERO ACTIONS (nút Trang chủ giống trang quản lý tài khoản) ===== */
+.student-hero .student-hero-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 10px;
+}
+
+.student-hero .student-hero-actions a.student-home-button,
+.student-hero .student-hero-actions a.student-home-button:visited {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 22px;
+    border: 1px solid rgb(255 255 255 / 28%);
+    border-radius: 10px;
+    background: rgb(255 255 255 / 10%);
+    color: #fff;
+    font: inherit;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.student-hero .student-hero-actions a.student-home-button:hover {
+    border-color: rgb(255 255 255 / 45%);
+    background: rgb(255 255 255 / 20%);
 }
 
 /* ===== TOOLBAR (nằm ngoài card) ===== */
@@ -249,11 +289,19 @@ body {
         width: min(100% - 28px, 1440px);
         margin: 20px auto;
     }
+
     .student-hero {
         align-items: flex-start;
         flex-direction: column;
         padding: 25px 23px;
     }
+
+    .student-hero .student-hero-actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
     .student-table-heading { padding: 19px 18px; }
     .student-search-wrapper { flex: 1 1 100%; }
 }

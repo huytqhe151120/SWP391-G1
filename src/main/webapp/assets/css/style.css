@@ -1209,4 +1209,29 @@ textarea:focus {
         align-items: stretch;
         flex-direction: column;
     }
+
+    /* Nút Gửi duyệt / Duyệt / Từ chối trong bảng hoạt động */
+    .activity-actions form {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 0;
+    }
+
+    button.activity-action-link {
+        background: none;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.875rem;
+        font-weight: 700;
+        transition: opacity 0.15s ease;
+    }
+
+    button.activity-action-link:hover,
+    button.activity-action-link:focus-visible {
+        text-decoration: underline;
+        opacity: 0.75;
+    }
 }

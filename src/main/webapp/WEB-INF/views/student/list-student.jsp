@@ -5,21 +5,25 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student List</title>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/student.css">
+          href="${pageContext.request.contextPath}/assets/css/student.css?v=3">
 </head>
 
 <body>
 
-<div class="page student-list-page">
+<div class="student-list-page">
 
     <!-- ================= HEADER ================= -->
-    <div class="page-header student-hero">
+    <header class="student-hero">
 
         <div>
-            <span class="hero-label">STUDENT MANAGEMENT</span>
+            <span class="hero-label">SWP391-G1 / Quản lý sinh viên</span>
 
             <h1>Danh sách sinh viên</h1>
 
@@ -28,7 +32,12 @@
             </p>
         </div>
 
-    </div>
+        <div class="student-hero-actions">
+            <a class="student-home-button"
+               href="${pageContext.request.contextPath}/home">Trang chủ</a>
+        </div>
+
+    </header>
 
 
     <!-- ================= SEARCH + FILTER ================= -->
@@ -36,16 +45,13 @@
 
         <!-- Search -->
         <div class="student-search-wrapper">
-
             <input
                     type="text"
                     id="studentSearch"
                     class="student-search"
                     placeholder="Tìm theo mã, họ tên, email..."
             >
-
         </div>
-
 
         <!-- Filter -->
         <select
@@ -61,7 +67,7 @@
 
 
     <!-- ================= TABLE CARD ================= -->
-    <div class="card student-table-card">
+    <div class="student-table-card">
 
         <div class="student-table-heading">
 
@@ -95,16 +101,12 @@
                 </tr>
                 </thead>
 
-
                 <tbody>
 
                 <c:forEach var="student" items="${students}">
 
                     <!-- ================= ROW ================= -->
-                    <tr
-                            class="student-row"
-                            data-status="${student.status}"
-                    >
+                    <tr class="student-row" data-status="${student.status}">
 
                         <td>
                             <c:out value="${student.id}"/>
@@ -124,17 +126,14 @@
 
                         <td>
                             <c:choose>
-
                                 <c:when test="${not empty student.mainClassCode}">
                                     <span class="student-class">
                                         <c:out value="${student.mainClassCode}"/>
                                     </span>
                                 </c:when>
-
                                 <c:otherwise>
                                     <span class="empty-value">--</span>
                                 </c:otherwise>
-
                             </c:choose>
                         </td>
 
@@ -143,29 +142,17 @@
                         </td>
 
                         <td>
-
                             <c:choose>
-
                                 <c:when test="${student.gender == true}">
-                                    <span class="gender-badge male">
-                                        Nam
-                                    </span>
+                                    <span class="gender-badge male">Nam</span>
                                 </c:when>
-
                                 <c:when test="${student.gender == false}">
-                                    <span class="gender-badge female">
-                                        Nữ
-                                    </span>
+                                    <span class="gender-badge female">Nữ</span>
                                 </c:when>
-
                                 <c:otherwise>
-                                    <span class="empty-value">
-                                        --
-                                    </span>
+                                    <span class="empty-value">--</span>
                                 </c:otherwise>
-
                             </c:choose>
-
                         </td>
 
                         <td>
@@ -177,29 +164,19 @@
                         </td>
 
                         <td>
-
                             <c:choose>
-
                                 <c:when test="${student.status == 'ACTIVE'}">
-                                    <span class="status-badge active">
-                                        Active
-                                    </span>
+                                    <span class="status-badge active">Active</span>
                                 </c:when>
-
                                 <c:when test="${student.status == 'INACTIVE'}">
-                                    <span class="status-badge inactive">
-                                        Inactive
-                                    </span>
+                                    <span class="status-badge inactive">Inactive</span>
                                 </c:when>
-
                                 <c:otherwise>
                                     <span class="status-badge">
                                         <c:out value="${student.status}"/>
                                     </span>
                                 </c:otherwise>
-
                             </c:choose>
-
                         </td>
 
                     </tr>
