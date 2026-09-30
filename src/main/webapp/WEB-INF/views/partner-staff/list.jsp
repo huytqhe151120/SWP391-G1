@@ -16,10 +16,13 @@
             <h1>Nhân viên đối tác</h1>
             <p>Quản lý thông tin và công ty của các nhân viên đối tác.</p>
         </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs?action=create">
-            <span class="plus-icon" aria-hidden="true">+</span>
-            Thêm nhân viên
-        </a>
+        <div class="account-hero-actions">
+            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
+            <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs?action=create">
+                <span class="plus-icon" aria-hidden="true">+</span>
+                Thêm nhân viên
+            </a>
+        </div>
     </header>
 
     <c:if test="${not empty sessionScope.successMessage}">

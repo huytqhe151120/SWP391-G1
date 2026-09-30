@@ -16,10 +16,13 @@
             <h1>Hoạt động ngoại khóa</h1>
             <p>Theo dõi và quản lý các hoạt động ngoại khóa của trường tại một nơi.</p>
         </div>
-        <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
-            <span class="plus-icon" aria-hidden="true">+</span>
-            Tạo hoạt động
-        </a>
+        <div class="account-hero-actions">
+            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
+            <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
+                <span class="plus-icon" aria-hidden="true">+</span>
+                Tạo hoạt động
+            </a>
+        </div>
     </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
