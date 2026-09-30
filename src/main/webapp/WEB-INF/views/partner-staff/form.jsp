@@ -19,7 +19,7 @@
             <p>Nhập thông tin nhân viên và công ty đối tác liên quan.</p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách nhân viên
         </a>
     </header>

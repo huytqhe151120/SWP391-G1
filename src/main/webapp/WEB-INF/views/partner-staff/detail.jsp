@@ -17,7 +17,7 @@
             <p><span class="activity-code"><c:out value="${partnerStaff.code}"/></span> <c:out value="${partnerStaff.name}"/></p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách nhân viên
         </a>
     </header>

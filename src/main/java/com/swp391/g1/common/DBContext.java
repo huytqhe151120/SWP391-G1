@@ -30,19 +30,27 @@ public class DBContext implements AutoCloseable {
     }
 
     private static Connection openConnection() throws SQLException {
-        Properties properties = new Properties();
-        try (InputStream input = DBContext.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
-            if (input == null) {
-                throw new SQLException("Database configuration file not found: " + CONFIG_FILE);
+        // Docker / CI: check environment variables first
+        String url  = System.getenv("DB_URL");
+        String user = System.getenv("DB_USER");
+        String password = System.getenv("DB_PASSWORD");
+
+        // Local dev fallback: read from ConnectDB.properties
+        if (url == null || url.isBlank()) {
+            Properties properties = new Properties();
+            try (InputStream input = DBContext.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+                if (input == null) {
+                    throw new SQLException("Database configuration file not found: " + CONFIG_FILE);
+                }
+                properties.load(input);
+            } catch (IOException e) {
+                throw new SQLException("Unable to read database configuration file: " + CONFIG_FILE, e);
             }
-            properties.load(input);
-        } catch (IOException e) {
-            throw new SQLException("Unable to read database configuration file: " + CONFIG_FILE, e);
+            url      = getRequiredProperty(properties, "url");
+            user     = getRequiredProperty(properties, "userID");
+            password = getRequiredProperty(properties, "password");
         }
 
-        String url = getRequiredProperty(properties, "url");
-        String user = getRequiredProperty(properties, "userID");
-        String password = getRequiredProperty(properties, "password");
         try {
             Class.forName(JDBC_DRIVER, true, DBContext.class.getClassLoader());
         } catch (ClassNotFoundException e) {

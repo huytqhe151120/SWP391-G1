@@ -16,6 +16,23 @@
             <p><a class="button button-primary" href="${pageContext.request.contextPath}/activities">Quản lý hoạt động</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-companies">Quản lý công ty đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-staffs">Quản lý nhân viên đối tác</a></p>
+
+            <%-- ADMIN và STAFF: hộp thư hỗ trợ 1-1 với sinh viên --%>
+            <c:if test="${canUseSupportInbox}">
+                <p><a class="button" href="${pageContext.request.contextPath}/organizer-inbox">Hộp thư hỗ trợ</a></p>
+            </c:if>
+
+            <%-- ADMIN và STAFF quản lý Q&A --%>
+            <c:if test="${canManageQuestions}">
+                <p><a class="button" href="${pageContext.request.contextPath}/qa-management">Quản lý câu hỏi Q&amp;A</a></p>
+            </c:if>
+
+            <%-- STUDENT: tạo và xem câu hỏi --%>
+            <c:if test="${isStudent}">
+                <p><a class="button" href="${pageContext.request.contextPath}/student-qa">Hỏi &amp; Đáp</a></p>
+                <p><a class="button" href="${pageContext.request.contextPath}/student-inbox">Hộp thư của tôi</a></p>
+            </c:if>
+
             <%-- UI hint only: AccountServlet still enforces the ADMIN rule server-side. --%>
             <c:if test="${canManageAccounts}">
                 <p><a class="button" href="${pageContext.request.contextPath}/accounts">Quản lý tài khoản</a></p>

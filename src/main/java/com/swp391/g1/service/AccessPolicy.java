@@ -19,6 +19,21 @@ public final class AccessPolicy {
         return hasType(user, ADMIN_TYPE);
     }
 
+    /** ADMIN and STAFF own the Q&A moderation workflow. */
+    public static boolean canManageQuestions(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
+    /** Only students can submit questions and use the student Q&A page. */
+    public static boolean canUseStudentQuestions(CurrentUser user) {
+        return hasType(user, "STUDENT");
+    }
+
+    /** ADMIN organizers and STAFF can access their resolved 1-to-1 inbox. */
+    public static boolean canUseSupportInbox(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
     private static boolean hasType(CurrentUser user, String type) {
         return user != null && type.equals(user.getType());
     }

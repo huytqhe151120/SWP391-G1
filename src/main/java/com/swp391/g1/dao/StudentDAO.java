@@ -3,60 +3,66 @@ package com.swp391.g1.dao;
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.model.Student;
 
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class StudentDAO extends DBContext {
 
-    public List<Student> getAll() throws SQLException {
-        String sql = """
-                SELECT s.id, s.main_class_id, mc.code AS mainClassCode,
-                       s.code, s.name, s.dob, s.gender, s.email,
-                       s.phone_number, s.status
-                FROM student s
-                LEFT JOIN main_class mc ON mc.id = s.main_class_id
-                ORDER BY s.code
-                """;
-
-        List<Student> students = new ArrayList<>();
-
-        try (PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                students.add(mapRow(resultSet));
-            }
-        }
-
-        return students;
+    private Student mapRow(ResultSet rs) throws SQLException {
+        Student s = new Student();
+        s.setId(rs.getInt("id"));
+        s.setMainClassId(rs.getInt("main_class_id"));
+        s.setCode(rs.getString("code"));
+        s.setName(rs.getString("name"));
+        s.setGender(rs.getString("gender"));
+        s.setEmail(rs.getString("email"));
+        s.setStatus(rs.getString("status"));
+        s.setAccountId(rs.getInt("account_id"));
+        try {
+            s.setPhoneNumber(rs.getString("phone_number"));
+        } catch (SQLException ignored) {}
+        Timestamp dob = rs.getTimestamp("dob");
+        if (dob != null) s.setDob(dob.toString().substring(0, 10));
+        return s;
     }
 
-    private Student mapRow(ResultSet resultSet) throws SQLException {
-        Student student = new Student();
+    public Student getById(int id) {
+        String sql = "SELECT * FROM [dbo].[student] WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-        student.setId(resultSet.getInt("id"));
+    public List<Student> getAll() {
+        List<Student> list = new ArrayList<>();
+        String sql = "SELECT * FROM [dbo].[student] WHERE status = 'ACTIVE' ORDER BY name";
+        try (PreparedStatement ps = connection.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(mapRow(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
-        int mainClassId = resultSet.getInt("main_class_id");
-        student.setMainClassId(resultSet.wasNull() ? null : mainClassId);
-
-        student.setMainClassCode(resultSet.getString("mainClassCode"));
-        student.setCode(resultSet.getString("code"));
-        student.setName(resultSet.getString("name"));
-
-        Date dob = resultSet.getDate("dob");
-        student.setDob(dob == null ? null : dob.toLocalDate());
-
-        boolean gender = resultSet.getBoolean("gender");
-        student.setGender(resultSet.wasNull() ? null : gender);
-
-        student.setEmail(resultSet.getString("email"));
-        student.setPhoneNumber(resultSet.getString("phone_number"));
-        student.setStatus(resultSet.getString("status"));
-
-        return student;
+    /** Get student by account_id */
+    public Student getByAccountId(int accountId) {
+        String sql = "SELECT * FROM [dbo].[student] WHERE account_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
