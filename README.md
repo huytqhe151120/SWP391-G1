@@ -39,9 +39,17 @@ SQL Server
 ### Current implemented flow (`HomeServlet`)
 
 ```text
+GET /
+    ↓
+HomeServlet  (@WebServlet(urlPatterns = {"/", "/home"}), com.swp391.g1.controller)
+    ↓
+RequestDispatcher.forward(...)
+    ↓
+/WEB-INF/views/home/home.jsp
+
 GET /home
     ↓
-HomeServlet  (@WebServlet("/home"), com.swp391.g1.controller)
+HomeServlet  (@WebServlet(urlPatterns = {"/", "/home"}), com.swp391.g1.controller)
     ↓
 RequestDispatcher.forward(...)
     ↓
@@ -70,6 +78,8 @@ DBContext
 ```
 
 `DBContext` loads the connection settings from `src/main/resources/ConnectDB.properties` and opens connections with `java.sql.DriverManager`. Database credentials are developer-local and must never be committed to the repository or documented in the README.
+
+Before opening the Q&A pages, copy `src/main/resources/ConnectDB.properties.example` to `src/main/resources/ConnectDB.properties`, then fill in the SQL Server JDBC URL, `userID`, and `password`. The local properties file is ignored by Git; restart the application after creating or changing it.
 
 ## Team Conventions
 
@@ -101,6 +111,7 @@ The repository does not define a project-wide server port or context path; these
 Default Tomcat port: 8080
 Default WAR context path: /swp391-g1
 
-The application URL is typically:
+The application URLs are typically:
 
+http://localhost:8080/swp391-g1/
 http://localhost:8080/swp391-g1/home

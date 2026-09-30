@@ -4,17 +4,17 @@ import com.swp391.g1.model.Question;
 import com.swp391.g1.common.DBContext;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 public class QuestionDAO extends DBContext {
 
     // Task 1: Lấy danh sách câu hỏi ĐÃ ĐƯỢC TRẢ LỜI cho Sinh viên xem
-    public List<Question> getAnsweredQuestions() {
+    public List<Question> getAnsweredQuestions() throws SQLException {
         List<Question> list = new ArrayList<>();
         String sql = "SELECT * FROM Question WHERE status = 'ANSWERED' ORDER BY created_at DESC";
         
-       try (Connection conn = getConnection();
+        try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             
@@ -29,14 +29,12 @@ public class QuestionDAO extends DBContext {
                 q.setCreatedAt(rs.getTimestamp("created_at"));
                 list.add(q);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return list;
     }
 
     // Task 2: Sinh viên gửi câu hỏi mới
-    public boolean insertQuestion(Question q) {
+    public boolean insertQuestion(Question q) throws SQLException {
         String sql = "INSERT INTO Question (title, content, is_anonymous, status, student_id, created_at) VALUES (?, ?, ?, 'PENDING', ?, GETDATE())";
         
         try (Connection conn = getConnection();
@@ -48,14 +46,11 @@ public class QuestionDAO extends DBContext {
             ps.setInt(4, q.getStudentId());
             
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return false;
     }
 
     // Task 3: Ban tổ chức xem danh sách câu hỏi ĐANG CHỜ DUYỆT (PENDING)
-    public List<Question> getPendingQuestions() {
+    public List<Question> getPendingQuestions() throws SQLException {
         List<Question> list = new ArrayList<>();
         String sql = "SELECT * FROM Question WHERE status = 'PENDING' ORDER BY created_at ASC";
         
@@ -74,8 +69,6 @@ public class QuestionDAO extends DBContext {
                 q.setCreatedAt(rs.getTimestamp("created_at"));
                 list.add(q);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return list;
     }

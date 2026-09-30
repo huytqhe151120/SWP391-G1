@@ -40,6 +40,10 @@ public class Question {
     public int getStudentId() { return studentId; }
     public void setStudentId(int studentId) { this.studentId = studentId; }
 
+    public Integer getDisplayStudentId() {
+        return isAnonymous ? null : studentId;
+    }
+
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 }

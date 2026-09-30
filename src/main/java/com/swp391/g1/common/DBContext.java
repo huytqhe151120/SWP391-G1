@@ -6,32 +6,41 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DBContext {
-    private Connection connection;
-
-    public DBContext() {
-        try {
-            Properties properties = new Properties();
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("ConnectDB.properties");
-            try {
-                properties.load(inputStream);
-            } catch (IOException ex) {
-                Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
+    public Connection getConnection() throws SQLException {
+        Properties properties = new Properties();
+        try (InputStream inputStream = getClass().getClassLoader()
+                .getResourceAsStream("ConnectDB.properties")) {
+            if (inputStream == null) {
+                throw new IllegalStateException(
+                        "Missing src/main/resources/ConnectDB.properties. Copy ConnectDB.properties.example "
+                                + "to ConnectDB.properties and configure the SQL Server connection.");
             }
-            String user = properties.getProperty("userID");
-            String pass = properties.getProperty("password");
-            String url = properties.getProperty("url");
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            connection = DriverManager.getConnection(url, user, pass);
-        } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
+            properties.load(inputStream);
+        } catch (IOException ex) {
+            throw new IllegalStateException("Could not read ConnectDB.properties.", ex);
         }
+
+        String url = properties.getProperty("url");
+        String user = properties.getProperty("userID");
+        String password = properties.getProperty("password");
+        if (isMissing(url) || isMissing(user) || isMissing(password)
+                || url.contains("YOUR_DB_") || user.contains("YOUR_DB_")
+                || password.contains("YOUR_DB_")) {
+            throw new IllegalStateException(
+                    "ConnectDB.properties must contain a real SQL Server URL, userID, and password.");
+        }
+
+        try {
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException("SQL Server JDBC driver is not available.", ex);
+        }
+        return DriverManager.getConnection(url, user, password);
     }
 
-    public Connection getConnection() {
-        return connection;
+    private boolean isMissing(String value) {
+        return value == null || value.isBlank();
     }
 }
