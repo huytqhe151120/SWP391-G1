@@ -9,69 +9,67 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Opens the JDBC connection described by the developer-local
- * ConnectDB.properties. A missing resource or missing property is logged and
- * leaves {@link #getConnection()} null instead of throwing, so the DAO layer
- * reports its usual user-safe error.
- */
 public class DBContext implements AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger(DBContext.class.getName());
-
-    private static final String CONFIG_RESOURCE = "ConnectDB.properties";
+    private static final String CONFIG_FILE = "ConnectDB.properties";
+    private static final String JDBC_DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
 
     protected Connection connection;
 
     public DBContext() {
-        Properties properties = loadProperties();
-        String url = properties.getProperty("url");
-        String user = properties.getProperty("userID");
-        String pass = properties.getProperty("password");
-        if (isBlank(url) || isBlank(user) || isBlank(pass)) {
-            // Property values are never echoed: they contain credentials.
-            LOGGER.log(Level.SEVERE, CONFIG_RESOURCE + " is missing one of url, userID or password.");
-            return;
-        }
         try {
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            connection = DriverManager.getConnection(url, user, pass);
-        } catch (ClassNotFoundException | SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Database connection could not be established.", ex);
+            connection = openConnection();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Database connection could not be established.", e);
         }
     }
 
-    /** Returns empty properties when the local configuration file is absent. */
-    private static Properties loadProperties() {
+    public static Connection getConnection() throws SQLException {
+        return openConnection();
+    }
+
+    private static Connection openConnection() throws SQLException {
         Properties properties = new Properties();
-        try (InputStream inputStream = DBContext.class.getClassLoader().getResourceAsStream(CONFIG_RESOURCE)) {
-            if (inputStream == null) {
-                LOGGER.log(Level.SEVERE, CONFIG_RESOURCE + " was not found on the classpath.");
-                return properties;
+        try (InputStream input = DBContext.class.getClassLoader().getResourceAsStream(CONFIG_FILE)) {
+            if (input == null) {
+                throw new SQLException("Database configuration file not found: " + CONFIG_FILE);
             }
-            properties.load(inputStream);
-        } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, CONFIG_RESOURCE + " could not be read.", ex);
+            properties.load(input);
+        } catch (IOException e) {
+            throw new SQLException("Unable to read database configuration file: " + CONFIG_FILE, e);
         }
-        return properties;
+
+        String url = getRequiredProperty(properties, "url");
+        String user = getRequiredProperty(properties, "userID");
+        String password = getRequiredProperty(properties, "password");
+        try {
+            Class.forName(JDBC_DRIVER, true, DBContext.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("SQL Server JDBC driver is missing from the application runtime.", e);
+        }
+        return DriverManager.getConnection(url, user, password);
     }
 
-    private static boolean isBlank(String value) {
-        return value == null || value.trim().isEmpty();
+    private static String getRequiredProperty(Properties properties, String key) throws SQLException {
+        String value = properties.getProperty(key);
+        if (value == null || value.isBlank()) {
+            throw new SQLException("Missing required database property: " + key);
+        }
+        return value.trim();
     }
 
-    public Connection getConnection() {
+    public Connection connection() {
         return connection;
     }
 
-    /** Closes the underlying connection (used through try-with-resources). */
     @Override
     public void close() {
         if (connection != null) {
             try {
                 connection.close();
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Closing the database connection failed.", ex);
+            } catch (SQLException e) {
+                LOGGER.log(Level.SEVERE, "Closing the database connection failed.", e);
             }
         }
     }

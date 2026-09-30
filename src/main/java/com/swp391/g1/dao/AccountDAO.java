@@ -417,7 +417,7 @@ public class AccountDAO {
     }
 
     private static Connection requireConnection(DBContext ctx) {
-        Connection conn = ctx.getConnection();
+        Connection conn = ctx.connection();
         if (conn == null) {
             throw new DataAccessException("Database connection unavailable.");
         }
