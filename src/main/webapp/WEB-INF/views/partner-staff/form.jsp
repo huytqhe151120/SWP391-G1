@@ -59,7 +59,7 @@
                     </div>
                     <div class="field">
                         <label for="companyId">Công ty đối tác <span class="required-mark">*</span></label>
-                        <select id="companyId" name="companyId" required>
+                        <select id="companyId" name="companyId" required <c:if test="${isEdit}">disabled</c:if>>
                             <option value="">-- Chọn công ty --</option>
                             <c:forEach var="company" items="${partnerCompanies}">
                                 <option value="${company.id}" <c:if test="${selectedCompany == company.id}">selected</c:if>>
@@ -67,6 +67,9 @@
                                 </option>
                             </c:forEach>
                         </select>
+                        <c:if test="${isEdit}">
+                            <input type="hidden" name="companyId" value="<c:out value='${selectedCompany}'/>">
+                        </c:if>
                     </div>
                     <div class="field">
                         <label for="position">Chức vụ</label>

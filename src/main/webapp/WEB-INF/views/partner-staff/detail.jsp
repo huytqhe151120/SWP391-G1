@@ -55,7 +55,7 @@
                 </dl>
             </section>
             <section class="activity-detail-section">
-                <h3>Công ty đối tác</h3>
+                <h3>Công ty chủ quản</h3>
                 <dl class="detail-grid activity-detail-grid">
                     <div class="detail-item"><dt>Mã công ty</dt><dd><c:out value="${partnerStaff.companyCode}" default="—"/></dd></div>
                     <div class="detail-item"><dt>Tên công ty</dt><dd><c:out value="${partnerStaff.companyName}" default="—"/></dd></div>
