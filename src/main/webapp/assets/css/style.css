@@ -103,6 +103,14 @@ h1 {
     color: #a32626;
 }
 
+.button-sm {
+    min-height: 30px;
+    padding: 5px 11px;
+    font-size: .78rem;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
 .table-wrap {
     overflow-x: auto;
 }
@@ -404,7 +412,6 @@ textarea:focus {
 
 .activity-table-wrap table {
     min-width: 1050px;
-    white-space: normal;
 }
 
 .activity-table-wrap th {
@@ -413,6 +420,7 @@ textarea:focus {
     color: #687991;
     font-size: .72rem;
     letter-spacing: .065em;
+    white-space: nowrap;
 }
 
 .activity-table-wrap td {
@@ -421,6 +429,7 @@ textarea:focus {
     font-size: .88rem;
     line-height: 1.45;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .activity-table-wrap tbody tr:last-child td {
@@ -429,6 +438,39 @@ textarea:focus {
 
 .activity-table-wrap tbody tr:hover {
     background: #f8faff;
+}
+
+.activity-table-wrap th:nth-child(9),
+.activity-table-wrap td:nth-child(9) {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    background: #fff;
+    white-space: nowrap;
+}
+
+.activity-table-wrap th:nth-child(8),
+.activity-table-wrap td:nth-child(8) {
+    position: sticky;
+    right: var(--activity-actions-col-width, 0px);
+    z-index: 2;
+    background: #fff;
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+
+.activity-table-wrap th:nth-child(8),
+.activity-table-wrap th:nth-child(9) {
+    background: #f7f9fc;
+    z-index: 3;
+}
+
+.activity-table-wrap tbody tr:hover td:nth-child(8),
+.activity-table-wrap tbody tr:hover td:nth-child(9) {
+    background: #f8faff;
+}
+
+.activity-table-wrap .activity-actions {
+    flex-wrap: nowrap;
 }
 
 .activity-code {
@@ -476,6 +518,13 @@ textarea:focus {
 }
 
 .activity-actions {
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.activity-actions form {
+    display: inline-flex;
     align-items: center;
     gap: 6px;
 }
