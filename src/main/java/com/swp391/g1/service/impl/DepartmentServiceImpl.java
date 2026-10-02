@@ -55,19 +55,19 @@ public class DepartmentServiceImpl implements IDepartmentService {
 
     private void validateDepartment(Department department, boolean isUpdate) {
         if (department == null) {
-            throw new IllegalArgumentException("Department cannot be null.");
+            throw new IllegalArgumentException("Phòng ban không được để trống.");
         }
         if (isUpdate && department.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid department ID when updating.");
+            throw new IllegalArgumentException("ID phòng ban không hợp lệ khi cập nhật.");
         }
         if (isEmpty(department.getCode())) {
-            throw new IllegalArgumentException("Department code cannot be empty.");
+            throw new IllegalArgumentException("Mã phòng ban không được để trống.");
         }
         if (isEmpty(department.getName())) {
-            throw new IllegalArgumentException("Department name cannot be empty.");
+            throw new IllegalArgumentException("Tên phòng ban không được để trống.");
         }
         if (isUpdate && department.getStatus() == null) {
-            throw new IllegalArgumentException("Department status cannot be empty when updating.");
+            throw new IllegalArgumentException("Trạng thái phòng ban không được để trống khi cập nhật.");
         }
     }
 

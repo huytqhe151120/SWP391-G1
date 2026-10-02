@@ -64,22 +64,22 @@ public class StaffServiceImpl implements IStaffService {
 
     private void validateStaff(Staff staff, boolean isUpdate) {
         if (staff == null) {
-            throw new IllegalArgumentException("Staff cannot be null.");
+            throw new IllegalArgumentException("Nhân viên không được để trống.");
         }
         if (isUpdate && staff.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid staff ID when updating.");
+            throw new IllegalArgumentException("ID nhân viên không hợp lệ khi cập nhật.");
         }
         if (isEmpty(staff.getCode())) {
-            throw new IllegalArgumentException("Staff code cannot be empty.");
+            throw new IllegalArgumentException("Mã nhân viên không được để trống.");
         }
         if (isEmpty(staff.getName())) {
-            throw new IllegalArgumentException("Staff name cannot be empty.");
+            throw new IllegalArgumentException("Tên nhân viên không được để trống.");
         }
         if (!isEmpty(staff.getDob())) {
             try {
                 java.time.LocalDate.parse(staff.getDob());
             } catch (java.time.format.DateTimeParseException e) {
-                throw new IllegalArgumentException("Staff date of birth must use yyyy-MM-dd format.", e);
+                throw new IllegalArgumentException("Ngày sinh nhân viên phải theo định dạng yyyy-MM-dd.", e);
             }
         }
         if (!isEmpty(staff.getGender())
@@ -87,15 +87,15 @@ public class StaffServiceImpl implements IStaffService {
                 && !"false".equalsIgnoreCase(staff.getGender())
                 && !"1".equals(staff.getGender())
                 && !"0".equals(staff.getGender())) {
-            throw new IllegalArgumentException("Staff gender must be true, false, 1, or 0.");
+            throw new IllegalArgumentException("Giới tính nhân viên phải là true, false, 1 hoặc 0.");
         }
         if (isUpdate && isEmpty(staff.getStatus())) {
-            throw new IllegalArgumentException("Staff status cannot be empty when updating.");
+            throw new IllegalArgumentException("Trạng thái nhân viên không được để trống khi cập nhật.");
         }
         if (!isEmpty(staff.getStatus())
                 && !"ACTIVE".equals(staff.getStatus())
                 && !"INACTIVE".equals(staff.getStatus())) {
-            throw new IllegalArgumentException("Staff status must be ACTIVE or INACTIVE.");
+            throw new IllegalArgumentException("Trạng thái nhân viên phải là ACTIVE hoặc INACTIVE.");
         }
     }
 

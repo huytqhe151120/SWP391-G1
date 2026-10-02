@@ -46,12 +46,12 @@ public class StudentInboxServlet extends HttpServlet {
             return -1;
         }
         if (!"STUDENT".equals(user.getType())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chi student moi duoc truy cap trang nay.");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ sinh viên mới được truy cập trang này.");
             return -1;
         }
         Student student = studentService.getStudentByAccountId(user.getId());
         if (student == null) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Khong tim thay thong tin student.");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Không tìm thấy thông tin sinh viên.");
             return -1;
         }
         return student.getId();

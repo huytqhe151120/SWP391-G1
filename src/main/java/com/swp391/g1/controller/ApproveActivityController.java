@@ -28,7 +28,7 @@ public class ApproveActivityController extends HttpServlet {
             String action = request.getParameter("action");
 
             if (action == null) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid action.");
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hành động không hợp lệ.");
                 return;
             }
 
@@ -57,25 +57,25 @@ public class ApproveActivityController extends HttpServlet {
                     message = "Đã hủy từ chối, hoạt động quay về trạng thái chờ duyệt.";
                     break;
                 default:
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid action.");
+                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hành động không hợp lệ.");
                     return;
             }
 
             if (!success) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Activity not found.");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy hoạt động.");
                 return;
             }
 
             request.getSession().setAttribute("successMessage", message);
             response.sendRedirect(request.getContextPath() + "/activities");
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid activity ID.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID hoạt động không hợp lệ.");
         } catch (IllegalArgumentException e) {
             request.getSession().setAttribute("errorMessage", e.getMessage());
             response.sendRedirect(request.getContextPath() + "/activities");
         } catch (IllegalStateException e) {
            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Unable to update approval status.");
+                    "Không thể cập nhật trạng thái duyệt.");
 //            LOGGER.log(Level.SEVERE, "Approval action failed.", e);
 //            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 //                    "Unable to update approval status.");

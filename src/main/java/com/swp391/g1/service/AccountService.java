@@ -76,7 +76,7 @@ public class AccountService {
         try {
             validateCreate(account, result);
         } catch (DataAccessException e) {
-            throw new AccountServiceException("Database error. Please try again later.", e);
+            throw new AccountServiceException("Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.", e);
         }
         if (result.hasFieldErrors()) {
             return result;
@@ -88,10 +88,10 @@ public class AccountService {
             result.setAccountId(newId);
         } catch (DataAccessException e) {
             if (e.isDuplicateKey()) {
-                result.addFieldError("username", "Username already exists.");
+                result.addFieldError("username", "Tên đăng nhập đã tồn tại.");
                 return result;
             }
-            throw new AccountServiceException("Database error. Please try again later.", e);
+            throw new AccountServiceException("Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.", e);
         }
         return result;
     }
@@ -102,7 +102,7 @@ public class AccountService {
         try {
             validateUpdate(account, result);
         } catch (DataAccessException e) {
-            throw new AccountServiceException("Database error. Please try again later.", e);
+            throw new AccountServiceException("Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.", e);
         }
         if (result.hasFieldErrors()) {
             return result;
@@ -116,17 +116,17 @@ public class AccountService {
                 account.setPassword(existingPassword == null ? "" : existingPassword);
             }
             if (!accountDAO.update(account)) {
-                result.addFieldError("id", "Account not found.");
+                result.addFieldError("id", "Không tìm thấy tài khoản.");
                 return result;
             }
             result.setSuccess(true);
             result.setAccountId(account.getId());
         } catch (DataAccessException e) {
             if (e.isDuplicateKey()) {
-                result.addFieldError("username", "Username already exists.");
+                result.addFieldError("username", "Tên đăng nhập đã tồn tại.");
                 return result;
             }
-            throw new AccountServiceException("Database error. Please try again later.", e);
+            throw new AccountServiceException("Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.", e);
         }
         return result;
     }
@@ -154,7 +154,7 @@ public class AccountService {
             result.setSuccess(true);
             result.setAccountId(id);
         } catch (DataAccessException e) {
-            throw new AccountServiceException("Database error. Please try again later.", e);
+            throw new AccountServiceException("Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.", e);
         }
         return result;
     }
@@ -171,27 +171,27 @@ public class AccountService {
         String status = account.getStatus();
 
         if (isBlank(username)) {
-            result.addFieldError("username", "Username is required.");
+            result.addFieldError("username", "Tên đăng nhập là bắt buộc.");
         } else if (username.length() > USERNAME_MAX_LENGTH) {
-            result.addFieldError("username", "Username must be at most " + USERNAME_MAX_LENGTH + " characters.");
+            result.addFieldError("username", "Tên đăng nhập tối đa " + USERNAME_MAX_LENGTH + " ký tự.");
         }
         if (isBlank(password)) {
-            result.addFieldError("password", "Password is required.");
+            result.addFieldError("password", "Mật khẩu là bắt buộc.");
         } else if (password.length() > PASSWORD_MAX_LENGTH) {
-            result.addFieldError("password", "Password must be at most " + PASSWORD_MAX_LENGTH + " characters.");
+            result.addFieldError("password", "Mật khẩu tối đa " + PASSWORD_MAX_LENGTH + " ký tự.");
         }
         if (isBlank(type)) {
-            result.addFieldError("type", "Type is required.");
+            result.addFieldError("type", "Loại tài khoản là bắt buộc.");
         } else if (type.length() > TYPE_MAX_LENGTH) {
-            result.addFieldError("type", "Type is invalid.");
+            result.addFieldError("type", "Loại tài khoản không hợp lệ.");
         }
         if (isBlank(role)) {
-            result.addFieldError("role", "Role is required.");
+            result.addFieldError("role", "Vai trò là bắt buộc.");
         } else if (role.length() > ROLE_MAX_LENGTH) {
-            result.addFieldError("role", "Role is invalid.");
+            result.addFieldError("role", "Vai trò không hợp lệ.");
         }
         if (isBlank(status) || !ACCOUNT_STATUSES.contains(status)) {
-            result.addFieldError("status", "Invalid status. Allowed values: ACTIVE, INACTIVE, BLOCKED.");
+            result.addFieldError("status", "Trạng thái không hợp lệ. Các giá trị cho phép: ACTIVE, INACTIVE, BLOCKED.");
         }
 
         validateDomainReferences(username, type, role, -1, result);
@@ -199,11 +199,11 @@ public class AccountService {
 
     private void validateUpdate(Account account, AccountOperationResult result) {
         if (account == null || account.getId() <= 0) {
-            result.addFieldError("id", "Account not found.");
+            result.addFieldError("id", "Không tìm thấy tài khoản.");
             return;
         }
         if (accountDAO.findById(account.getId()) == null) {
-            result.addFieldError("id", "Account not found.");
+            result.addFieldError("id", "Không tìm thấy tài khoản.");
             return;
         }
         normalizeRequestFields(account);
@@ -215,25 +215,25 @@ public class AccountService {
         String status = account.getStatus();
 
         if (isBlank(username)) {
-            result.addFieldError("username", "Username is required.");
+            result.addFieldError("username", "Tên đăng nhập là bắt buộc.");
         } else if (username.length() > USERNAME_MAX_LENGTH) {
-            result.addFieldError("username", "Username must be at most " + USERNAME_MAX_LENGTH + " characters.");
+            result.addFieldError("username", "Tên đăng nhập tối đa " + USERNAME_MAX_LENGTH + " ký tự.");
         }
         if (password != null && password.length() > PASSWORD_MAX_LENGTH) {
-            result.addFieldError("password", "Password must be at most " + PASSWORD_MAX_LENGTH + " characters.");
+            result.addFieldError("password", "Mật khẩu tối đa " + PASSWORD_MAX_LENGTH + " ký tự.");
         }
         if (isBlank(type)) {
-            result.addFieldError("type", "Type is required.");
+            result.addFieldError("type", "Loại tài khoản là bắt buộc.");
         } else if (type.length() > TYPE_MAX_LENGTH) {
-            result.addFieldError("type", "Type is invalid.");
+            result.addFieldError("type", "Loại tài khoản không hợp lệ.");
         }
         if (isBlank(role)) {
-            result.addFieldError("role", "Role is required.");
+            result.addFieldError("role", "Vai trò là bắt buộc.");
         } else if (role.length() > ROLE_MAX_LENGTH) {
-            result.addFieldError("role", "Role is invalid.");
+            result.addFieldError("role", "Vai trò không hợp lệ.");
         }
         if (isBlank(status) || !ACCOUNT_STATUSES.contains(status)) {
-            result.addFieldError("status", "Invalid status. Allowed values: ACTIVE, INACTIVE, BLOCKED.");
+            result.addFieldError("status", "Trạng thái không hợp lệ. Các giá trị cho phép: ACTIVE, INACTIVE, BLOCKED.");
         }
 
         validateDomainReferences(username, type, role, account.getId(), result);
@@ -246,18 +246,18 @@ public class AccountService {
                 && (excludeId > 0
                         ? accountDAO.usernameExistsExcluding(username, excludeId)
                         : accountDAO.usernameExists(username))) {
-            result.addFieldError("username", "Username already exists.");
+            result.addFieldError("username", "Tên đăng nhập đã tồn tại.");
         }
         if (!isBlank(type) && type.length() <= TYPE_MAX_LENGTH && !accountDAO.accountTypeExists(type)) {
-            result.addFieldError("type", "Invalid type.");
+            result.addFieldError("type", "Loại tài khoản không hợp lệ.");
         }
         if (!isBlank(role) && role.length() <= ROLE_MAX_LENGTH && !accountDAO.accountRoleExists(role)) {
-            result.addFieldError("role", "Invalid role.");
+            result.addFieldError("role", "Vai trò không hợp lệ.");
         }
         if (!isBlank(type) && !isBlank(role)
                 && type.length() <= TYPE_MAX_LENGTH && role.length() <= ROLE_MAX_LENGTH
                 && !accountDAO.accountTypeRoleExists(type, role)) {
-            result.addFieldError("role", "Invalid type/role combination.");
+            result.addFieldError("role", "Tổ hợp loại tài khoản/vai trò không hợp lệ.");
         }
     }
 

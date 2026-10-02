@@ -38,7 +38,7 @@ public class StaffController extends HttpServlet {
 
         } catch (Exception e) {
             throw new ServletException(
-                    "Unable to load staff list.",
+                    "Không thể tải danh sách nhân viên.",
                     e
             );
         }

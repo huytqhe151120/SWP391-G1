@@ -122,6 +122,7 @@ dto/response/        Data prepared for a view or client
 * Keep layers moving in one direction: Servlet → Service interface → DAO interface → database. Implementations may depend on lower-layer interfaces; DAOs must not call services or controllers.
 * Use constants or enums for shared fixed values instead of repeating string literals. Avoid magic numbers and duplicate validation/business rules.
 * Handle errors consistently: do not silently swallow exceptions, and do not expose SQL details or stack traces to end users.
+* Write all user-facing success and error messages in Vietnamese, including validation feedback, operation results, and messages shown in views or returned by endpoints. Keep technical logs and exception details intended only for developers in the language and format appropriate for debugging.
 * Add or update tests when adding business rules or changing behavior; keep changes scoped to the feature.
 * Do not add dependencies or technologies without a project requirement and team decision.
 
