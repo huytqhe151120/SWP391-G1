@@ -28,8 +28,10 @@
                 <h2>Thông tin hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và trạng thái hoạt động.</p>
             </div>
-            <a class="button button-primary"
-               href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+            <c:if test="${canManageActivities}">
+                <a class="button button-primary"
+                   href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+            </c:if>
         </div>
 
         <div class="activity-detail-content">

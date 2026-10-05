@@ -1,10 +1,12 @@
 package com.swp391.g1.controller;
 
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
 import com.swp391.g1.service.*;
 import com.swp391.g1.service.impl.*;
+import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -37,6 +39,29 @@ public class ExtracurricularActivityController extends HttpServlet {
         this.semesterService = new SemesterServiceImpl();
         this.departmentService = new DepartmentServiceImpl();
         this.staffService = new StaffServiceImpl();
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String action = request.getParameter("action");
+        action = action == null ? "" : action.trim();
+
+        boolean isGetRequest = "GET".equalsIgnoreCase(request.getMethod())
+                || "HEAD".equalsIgnoreCase(request.getMethod());
+        boolean requiresManagementPermission =
+                (isGetRequest
+                        && ("create".equals(action) || "edit".equals(action) || "delete".equals(action)))
+                || ("POST".equalsIgnoreCase(request.getMethod())
+                        && ("create".equals(action) || "update".equals(action)));
+        if (requiresManagementPermission
+                && !AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Chỉ tài khoản STAFF hoặc ADMIN mới được thêm, sửa, xóa hoạt động.");
+            return;
+        }
+
+        super.service(request, response);
     }
 
     @Override
@@ -112,6 +137,7 @@ public class ExtracurricularActivityController extends HttpServlet {
             throws ServletException, IOException {
         List<ExtracurricularActivityResponseDTO> list = activityService.getAllActivities();
         request.setAttribute("activities", list);
+        setActivityManagementPermission(request);
         request.getRequestDispatcher("/WEB-INF/views/activity/list.jsp").forward(request, response);
     }
 
@@ -152,6 +178,7 @@ public class ExtracurricularActivityController extends HttpServlet {
             ExtracurricularActivityResponseDTO activity = activityService.getActivityById(id);
             if (activity != null) {
                 request.setAttribute("activity", activity);
+                setActivityManagementPermission(request);
                 request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
             }
@@ -268,6 +295,12 @@ public class ExtracurricularActivityController extends HttpServlet {
         request.setAttribute("departments", departmentService.getAllDepartments());
         request.setAttribute("staffs", staffService.getAllStaffs());
         request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
+    }
+
+    private void setActivityManagementPermission(HttpServletRequest request) {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        request.setAttribute("canManageActivities",
+                AccessPolicy.canManageActivities(currentUser));
     }
 
     private ExtracurricularActivityRequestDTO buildRequestDTO(HttpServletRequest request) {

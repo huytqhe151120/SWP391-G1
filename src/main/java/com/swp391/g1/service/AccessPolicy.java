@@ -19,6 +19,11 @@ public final class AccessPolicy {
         return hasType(user, ADMIN_TYPE);
     }
 
+    /** ADMIN and STAFF can create, edit, and delete extracurricular activities. */
+    public static boolean canManageActivities(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
     /** ADMIN and STAFF own the Q&A moderation workflow. */
     public static boolean canManageQuestions(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");

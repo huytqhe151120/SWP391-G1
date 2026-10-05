@@ -18,10 +18,12 @@
         </div>
         <div class="account-hero-actions">
             <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
-            <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
-                <span class="plus-icon" aria-hidden="true">+</span>
-                Tạo hoạt động
-            </a>
+            <c:if test="${canManageActivities}">
+                <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
+                    <span class="plus-icon" aria-hidden="true">+</span>
+                    Tạo hoạt động
+                </a>
+            </c:if>
         </div>
     </header>
 
@@ -69,8 +71,15 @@
                         <td class="empty-state activity-empty-state" colspan="9">
                             <span class="empty-state-mark" aria-hidden="true">+</span>
                             <strong>Chưa có hoạt động nào</strong>
-                            <span>Tạo hoạt động mới để bắt đầu quản lý danh sách.</span>
-                            <a class="button button-primary" href="${pageContext.request.contextPath}/activities?action=create">Tạo hoạt động đầu tiên</a>
+                            <c:choose>
+                                <c:when test="${canManageActivities}">
+                                    <span>Tạo hoạt động mới để bắt đầu quản lý danh sách.</span>
+                                    <a class="button button-primary" href="${pageContext.request.contextPath}/activities?action=create">Tạo hoạt động đầu tiên</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span>Hiện chưa có hoạt động nào được ghi nhận.</span>
+                                </c:otherwise>
+                            </c:choose>
                         </td>
                     </tr>
                     </c:when>
@@ -98,10 +107,12 @@
                                 <td>
                                     <div class="actions activity-actions">
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
-                                        <a class="activity-action-link activity-action-delete"
-                                           href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
-                                           onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                        <c:if test="${canManageActivities}">
+                                            <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
+                                            <a class="activity-action-link activity-action-delete"
+                                               href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
+                                               onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                        </c:if>
                                         <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
                                             <form action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
