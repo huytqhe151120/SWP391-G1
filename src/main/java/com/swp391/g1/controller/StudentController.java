@@ -26,7 +26,7 @@ public class StudentController extends HttpServlet {
         } catch (IllegalStateException exception) {
             response.sendError(
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Unable to access student data."
+                    "Không thể truy cập dữ liệu sinh viên."
             );
         }
     }

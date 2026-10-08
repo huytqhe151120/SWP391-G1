@@ -51,7 +51,7 @@ public class AnswerQuestionServlet extends HttpServlet {
         // Chỉ STAFF mới được truy cập QA management
         // ADMIN (= Organizer) và STAFF đều có thể trả lời câu hỏi
         if (!AccessPolicy.canManageQuestions(user)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chi ADMIN/STAFF moi duoc truy cap trang nay.");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Chỉ ADMIN/STAFF mới được truy cập trang này.");
             return -1;
         }
         Staff staff = staffService.getStaffByAccountId(user.getId());
@@ -63,7 +63,7 @@ public class AnswerQuestionServlet extends HttpServlet {
         }
         if (staff == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                    "Tai khoan STAFF chua duoc lien ket voi ho so nhan vien.");
+                    "Tài khoản STAFF chưa được liên kết với hồ sơ nhân viên.");
             return -1;
         }
         return staff.getId();

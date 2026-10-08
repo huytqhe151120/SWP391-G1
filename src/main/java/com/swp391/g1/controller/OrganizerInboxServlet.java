@@ -60,7 +60,7 @@ public class OrganizerInboxServlet extends HttpServlet {
         }
         if (staff == null) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                    "Tai khoan nay chua duoc lien ket voi nhan vien. Vui long lien he admin.");
+                    "Tài khoản này chưa được liên kết với nhân viên. Vui lòng liên hệ admin.");
             return -1;
         }
         return staff.getId();

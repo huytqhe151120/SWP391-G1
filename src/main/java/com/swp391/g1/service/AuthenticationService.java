@@ -19,7 +19,7 @@ public class AuthenticationService {
      * One message for unknown username, wrong password and non-active account so
      * that login cannot be used to enumerate accounts.
      */
-    private static final String GENERIC_FAILURE = "Invalid username or password.";
+    private static final String GENERIC_FAILURE = "Tên đăng nhập hoặc mật khẩu không đúng.";
 
     /**
      * Throwaway credential verified when the username does not exist, so that
@@ -43,7 +43,7 @@ public class AuthenticationService {
         try {
             credentials = accountDAO.findByUsernameWithCredentials(normalizedUsername);
         } catch (DataAccessException e) {
-            throw new AuthenticationException("Login is temporarily unavailable. Please try again later.", e);
+            throw new AuthenticationException("Đăng nhập tạm thời không khả dụng. Vui lòng thử lại sau.", e);
         }
         if (credentials == null) {
             PasswordUtil.verify(rawPassword, DUMMY_CREDENTIAL);
