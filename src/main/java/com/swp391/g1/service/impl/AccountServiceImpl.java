@@ -1,15 +1,19 @@
-package com.swp391.g1.service;
+package com.swp391.g1.service.impl;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.swp391.g1.dao.AccountDAO;
 import com.swp391.g1.dao.DataAccessException;
+import com.swp391.g1.dao.IAccountDAO;
+import com.swp391.g1.dao.impl.AccountDAOImpl;
 import com.swp391.g1.model.Account;
 import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.model.AccountTypeRole;
+import com.swp391.g1.service.AccountOperationResult;
+import com.swp391.g1.service.AccountServiceException;
+import com.swp391.g1.service.IAccountService;
 import com.swp391.g1.util.PasswordUtil;
 
 /**
@@ -17,13 +21,7 @@ import com.swp391.g1.util.PasswordUtil;
  * status whitelist. DAO failures are translated into AccountServiceException
  * with a user-safe message.
  */
-public class AccountService {
-
-    /** Only accounts in this status may authenticate. */
-    public static final String STATUS_ACTIVE = "ACTIVE";
-
-    /** Database-supported account status values (CHECK CK_account_status). */
-    public static final List<String> ACCOUNT_STATUSES = List.of(STATUS_ACTIVE, "INACTIVE", "BLOCKED");
+public class AccountServiceImpl implements IAccountService {
 
     private static final int USERNAME_MAX_LENGTH = 100;
     private static final int PASSWORD_MAX_LENGTH = 255;
@@ -31,34 +29,41 @@ public class AccountService {
     private static final int ROLE_MAX_LENGTH = 50;
     private static final int STATUS_MAX_LENGTH = 20;
 
-    private final AccountDAO accountDAO = new AccountDAO();
+    private final IAccountDAO accountDAO = new AccountDAOImpl();
 
+    @Override
     public List<Account> searchAccounts(String search, String type, String role, String status) {
         return accountDAO.findByCriteria(search, type, role, status);
     }
 
     /** Loads the account without its password; null when it does not exist. */
+    @Override
     public Account getAccountById(int id) {
         return accountDAO.findById(id);
     }
 
+    @Override
     public List<AccountProfile> findProfiles(int accountId) {
         return accountDAO.findProfilesByAccountId(accountId);
     }
 
+    @Override
     public List<String> getAccountTypes() {
         return accountDAO.listAccountTypes();
     }
 
+    @Override
     public List<String> getAccountRoles() {
         return accountDAO.listAccountRoles();
     }
 
+    @Override
     public List<AccountTypeRole> getAccountTypeRoles() {
         return accountDAO.listAccountTypeRoles();
     }
 
     /** Maps every allowed type to the list of roles valid for it. */
+    @Override
     public Map<String, List<String>> getRolesByType() {
         Map<String, List<String>> rolesByType = new LinkedHashMap<>();
         for (AccountTypeRole combo : accountDAO.listAccountTypeRoles()) {
@@ -71,6 +76,7 @@ public class AccountService {
      * Validates and persists a new account. On success accountId holds the
      * generated id; otherwise fieldErrors contains user-safe messages.
      */
+    @Override
     public AccountOperationResult createAccount(Account account) {
         AccountOperationResult result = new AccountOperationResult();
         try {
@@ -97,6 +103,7 @@ public class AccountService {
     }
 
     /** A blank password keeps the stored one; a non-blank password replaces it. */
+    @Override
     public AccountOperationResult updateAccount(Account account) {
         AccountOperationResult result = new AccountOperationResult();
         try {
@@ -135,6 +142,7 @@ public class AccountService {
      * Updates only the status. On failure message holds a redirect code:
      * "notFound" or "invalidStatus".
      */
+    @Override
     public AccountOperationResult changeStatus(int id, String status) {
         AccountOperationResult result = new AccountOperationResult();
         try {
@@ -190,7 +198,7 @@ public class AccountService {
         } else if (role.length() > ROLE_MAX_LENGTH) {
             result.addFieldError("role", "Vai trò không hợp lệ.");
         }
-        if (isBlank(status) || !ACCOUNT_STATUSES.contains(status)) {
+        if (isBlank(status) || !IAccountService.ACCOUNT_STATUSES.contains(status)) {
             result.addFieldError("status", "Trạng thái không hợp lệ. Các giá trị cho phép: ACTIVE, INACTIVE, BLOCKED.");
         }
 
@@ -232,7 +240,7 @@ public class AccountService {
         } else if (role.length() > ROLE_MAX_LENGTH) {
             result.addFieldError("role", "Vai trò không hợp lệ.");
         }
-        if (isBlank(status) || !ACCOUNT_STATUSES.contains(status)) {
+        if (isBlank(status) || !IAccountService.ACCOUNT_STATUSES.contains(status)) {
             result.addFieldError("status", "Trạng thái không hợp lệ. Các giá trị cho phép: ACTIVE, INACTIVE, BLOCKED.");
         }
 

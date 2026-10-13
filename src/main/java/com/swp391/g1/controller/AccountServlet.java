@@ -15,8 +15,9 @@ import com.swp391.g1.model.Account;
 import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.AccountOperationResult;
-import com.swp391.g1.service.AccountService;
 import com.swp391.g1.service.AccountServiceException;
+import com.swp391.g1.service.IAccountService;
+import com.swp391.g1.service.impl.AccountServiceImpl;
 import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.util.ParamUtil;
 
@@ -32,7 +33,7 @@ public class AccountServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    private final AccountService accountService = new AccountService();
+    private final IAccountService accountService = new AccountServiceImpl();
 
     /**
      * Authorization gate for the whole feature. It overrides the method-dispatch
@@ -108,7 +109,7 @@ public class AccountServlet extends HttpServlet {
         request.setAttribute("filterType", type);
         request.setAttribute("filterRole", role);
         request.setAttribute("filterStatus", status);
-        request.setAttribute("accountStatuses", AccountService.ACCOUNT_STATUSES);
+        request.setAttribute("accountStatuses", IAccountService.ACCOUNT_STATUSES);
         forward(request, response, "account/list.jsp");
     }
 
@@ -225,7 +226,7 @@ public class AccountServlet extends HttpServlet {
         }
         request.setAttribute("account", account);
         request.setAttribute("profiles", profiles);
-        request.setAttribute("accountStatuses", AccountService.ACCOUNT_STATUSES);
+        request.setAttribute("accountStatuses", IAccountService.ACCOUNT_STATUSES);
         forward(request, response, "account/detail.jsp");
     }
 
@@ -252,7 +253,7 @@ public class AccountServlet extends HttpServlet {
         request.setAttribute("accountTypes", accountService.getAccountTypes());
         request.setAttribute("accountRoles", accountService.getAccountRoles());
         request.setAttribute("rolesByType", accountService.getRolesByType());
-        request.setAttribute("accountStatuses", AccountService.ACCOUNT_STATUSES);
+        request.setAttribute("accountStatuses", IAccountService.ACCOUNT_STATUSES);
     }
 
     /** Domain data for POST error re-renders; degrades gracefully on DB failure. */

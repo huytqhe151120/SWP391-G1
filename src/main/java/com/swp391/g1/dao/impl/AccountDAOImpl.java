@@ -1,4 +1,4 @@
-package com.swp391.g1.dao;
+package com.swp391.g1.dao.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +11,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.swp391.g1.common.DBContext;
+import com.swp391.g1.dao.DataAccessException;
+import com.swp391.g1.dao.IAccountDAO;
 import com.swp391.g1.model.Account;
 import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.model.AccountTypeRole;
@@ -20,9 +22,9 @@ import com.swp391.g1.model.AccountTypeRole;
  * (try-with-resources) and binds user input with PreparedStatement
  * placeholders.
  */
-public class AccountDAO {
+public class AccountDAOImpl implements IAccountDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(AccountDAO.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AccountDAOImpl.class.getName());
 
     /** Projection for list/detail; the password column is deliberately excluded. */
     private static final String ACCOUNT_COLUMNS = "id, username, type, role, status";
@@ -34,6 +36,7 @@ public class AccountDAO {
     private static final String CREDENTIAL_COLUMNS = "id, username, password, type, role, status";
 
     /** Search with optional filters; blank filters are ignored. */
+    @Override
     public List<Account> findByCriteria(String search, String type, String role, String status) {
         StringBuilder sql = new StringBuilder("SELECT " + ACCOUNT_COLUMNS + " FROM account WHERE 1 = 1");
         List<String> params = new ArrayList<>();
@@ -73,6 +76,7 @@ public class AccountDAO {
     }
 
     /** Returns null if the account does not exist. */
+    @Override
     public Account findById(int id) {
         String sql = "SELECT " + ACCOUNT_COLUMNS + " FROM account WHERE id = ?";
         try (DBContext ctx = new DBContext()) {
@@ -96,6 +100,7 @@ public class AccountDAO {
      * hash. Returns null when the username does not exist; only the
      * authentication flow should call this.
      */
+    @Override
     public Account findByUsernameWithCredentials(String username) {
         String sql = "SELECT " + CREDENTIAL_COLUMNS + " FROM account WHERE username = ?";
         try (DBContext ctx = new DBContext()) {
@@ -115,6 +120,7 @@ public class AccountDAO {
     }
 
     /** Loads the password column only, used when an update keeps the stored password. */
+    @Override
     public String findPasswordById(int id) {
         String sql = "SELECT password FROM account WHERE id = ?";
         try (DBContext ctx = new DBContext()) {
@@ -133,11 +139,13 @@ public class AccountDAO {
         return null;
     }
 
+    @Override
     public boolean usernameExists(String username) {
         return exists("SELECT 1 FROM account WHERE username = ?", username);
     }
 
     /** Ignores the given account id (used when an account keeps its own username). */
+    @Override
     public boolean usernameExistsExcluding(String username, int excludeId) {
         String sql = "SELECT 1 FROM account WHERE username = ? AND id <> ?";
         try (DBContext ctx = new DBContext()) {
@@ -155,6 +163,7 @@ public class AccountDAO {
     }
 
     /** Returns the generated account id. */
+    @Override
     public int create(Account account) {
         String sql = "INSERT INTO account (username, password, type, role, status) VALUES (?, ?, ?, ?, ?)";
         try (DBContext ctx = new DBContext()) {
@@ -179,6 +188,7 @@ public class AccountDAO {
     }
 
     /** Password is left unchanged when it is empty/null. */
+    @Override
     public boolean update(Account account) {
         boolean withPassword = account.getPassword() != null && !account.getPassword().isEmpty();
         String sql;
@@ -207,6 +217,7 @@ public class AccountDAO {
     }
 
     /** Returns false when no row was updated. */
+    @Override
     public boolean updateStatus(int id, String status) {
         String sql = "UPDATE account SET status = ? WHERE id = ?";
         try (DBContext ctx = new DBContext()) {
@@ -222,16 +233,19 @@ public class AccountDAO {
     }
 
     /** All codes from account_type_domain. */
+    @Override
     public List<String> listAccountTypes() {
         return listSingleColumn("SELECT code FROM account_type_domain ORDER BY code");
     }
 
     /** All codes from account_role_domain. */
+    @Override
     public List<String> listAccountRoles() {
         return listSingleColumn("SELECT code FROM account_role_domain ORDER BY code");
     }
 
     /** All valid (type, role) pairs from account_type_role_domain. */
+    @Override
     public List<AccountTypeRole> listAccountTypeRoles() {
         String sql = "SELECT account_type, account_role FROM account_type_role_domain ORDER BY account_type, account_role";
         List<AccountTypeRole> combos = new ArrayList<>();
@@ -250,16 +264,19 @@ public class AccountDAO {
     }
 
     /** True when the code exists in account_type_domain. */
+    @Override
     public boolean accountTypeExists(String type) {
         return exists("SELECT 1 FROM account_type_domain WHERE code = ?", type);
     }
 
     /** True when the code exists in account_role_domain. */
+    @Override
     public boolean accountRoleExists(String role) {
         return exists("SELECT 1 FROM account_role_domain WHERE code = ?", role);
     }
 
     /** True when the (type, role) pair exists in account_type_role_domain. */
+    @Override
     public boolean accountTypeRoleExists(String type, String role) {
         String sql = "SELECT 1 FROM account_type_role_domain WHERE account_type = ? AND account_role = ?";
         try (DBContext ctx = new DBContext()) {
@@ -280,6 +297,7 @@ public class AccountDAO {
      * The schema allows one account to be linked from more than one profile
      * table, so all matches are returned.
      */
+    @Override
     public List<AccountProfile> findProfilesByAccountId(int accountId) {
         List<AccountProfile> profiles = new ArrayList<>();
         AccountProfile student = findStudentProfile(accountId);

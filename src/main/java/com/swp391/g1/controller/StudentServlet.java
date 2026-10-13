@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @WebServlet("/student")
-public class StudentController extends HttpServlet {
+public class StudentServlet extends HttpServlet {
 
     private final IStudentService studentService = new StudentServiceImpl();
 

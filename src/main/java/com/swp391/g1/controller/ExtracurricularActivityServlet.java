@@ -19,19 +19,18 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-@WebServlet(name = "ExtracurricularActivityController", urlPatterns = {"/activities"})
-public class ExtracurricularActivityController extends HttpServlet {
+@WebServlet(name = "ExtracurricularActivityServlet", urlPatterns = {"/activities"})
+public class ExtracurricularActivityServlet extends HttpServlet {
 
     private final IExtracurricularActivityService activityService;
     private final IActivityTypeService activityTypeService;
     private final IPartnerCompanyService partnerCompanyService;
     private final IPartnerStaffService partnerStaffService;
-    // Bổ sung Service cho Semester, Department, Staff nếu hệ thống đã có
     private final ISemesterService semesterService;
     private final IDepartmentService departmentService;
     private final IStaffService staffService;
 
-    public ExtracurricularActivityController() {
+    public ExtracurricularActivityServlet() {
         this.activityService = new ExtracurricularActivityServiceImpl();
         this.activityTypeService = new ActivityTypeServiceImpl();
         this.partnerCompanyService = new PartnerCompanyServiceImpl();

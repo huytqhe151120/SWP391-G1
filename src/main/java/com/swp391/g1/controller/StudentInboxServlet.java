@@ -1,6 +1,7 @@
 package com.swp391.g1.controller;
 
-import com.swp391.g1.dao.MessageDAO;
+import com.swp391.g1.dao.IMessageDAO;
+import com.swp391.g1.dao.impl.MessageDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Message;
 import com.swp391.g1.model.Staff;
@@ -33,7 +34,7 @@ import java.util.List;
 @WebServlet("/student-inbox")
 public class StudentInboxServlet extends HttpServlet {
 
-    private final MessageDAO messageDAO = new MessageDAO();
+    private final IMessageDAO messageDAO = new MessageDAOImpl();
     private final IStaffService staffService = new StaffServiceImpl();
     private final IStudentService studentService = new StudentServiceImpl();
 

@@ -17,13 +17,13 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "PartnerStaffController", urlPatterns = {"/partner-staffs"})
-public class PartnerStaffController extends HttpServlet {
+@WebServlet(name = "PartnerStaffServlet", urlPatterns = {"/partner-staffs"})
+public class PartnerStaffServlet extends HttpServlet {
 
     private final IPartnerStaffService partnerStaffService;
     private final IPartnerCompanyService partnerCompanyService;
 
-    public PartnerStaffController() {
+    public PartnerStaffServlet() {
         this.partnerStaffService = new PartnerStaffServiceImpl();
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
     }

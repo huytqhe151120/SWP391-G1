@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.List;
 
 @WebServlet("/staff")
-public class StaffController extends HttpServlet {
+public class StaffServlet extends HttpServlet {
 
     private final IStaffService staffService =
             new StaffServiceImpl();

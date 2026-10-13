@@ -15,12 +15,12 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "PartnerCompanyController", urlPatterns = {"/partner-companies"})
-public class PartnerCompanyController extends HttpServlet {
+@WebServlet(name = "PartnerCompanyServlet", urlPatterns = {"/partner-companies"})
+public class PartnerCompanyServlet extends HttpServlet {
 
     private final IPartnerCompanyService partnerCompanyService;
 
-    public PartnerCompanyController() {
+    public PartnerCompanyServlet() {
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
     }
 

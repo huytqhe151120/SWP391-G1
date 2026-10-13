@@ -1,11 +1,16 @@
-package com.swp391.g1.service;
+package com.swp391.g1.service.impl;
 
 import java.time.Instant;
 
-import com.swp391.g1.dao.AccountDAO;
 import com.swp391.g1.dao.DataAccessException;
+import com.swp391.g1.dao.IAccountDAO;
+import com.swp391.g1.dao.impl.AccountDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Account;
+import com.swp391.g1.service.AuthenticationException;
+import com.swp391.g1.service.AuthenticationResult;
+import com.swp391.g1.service.IAccountService;
+import com.swp391.g1.service.IAuthenticationService;
 import com.swp391.g1.util.PasswordUtil;
 
 /**
@@ -13,7 +18,7 @@ import com.swp391.g1.util.PasswordUtil;
  * decision (password and status) and the user-safe failure contract, and never
  * returns the account row, the password or the stored hash to its caller.
  */
-public class AuthenticationService {
+public class AuthenticationServiceImpl implements IAuthenticationService {
 
     /**
      * One message for unknown username, wrong password and non-active account so
@@ -30,8 +35,9 @@ public class AuthenticationService {
      */
     private static final String DUMMY_CREDENTIAL = PasswordUtil.hash("timing-equalizer-not-a-password");
 
-    private final AccountDAO accountDAO = new AccountDAO();
+    private final IAccountDAO accountDAO = new AccountDAOImpl();
 
+    @Override
     public AuthenticationResult authenticate(String username, String password) {
         String normalizedUsername = normalize(username);
         String rawPassword = password == null ? "" : password;
@@ -54,7 +60,7 @@ public class AuthenticationService {
         if (!PasswordUtil.verify(rawPassword, credentials.getPassword())) {
             return AuthenticationResult.failure(GENERIC_FAILURE);
         }
-        if (!AccountService.STATUS_ACTIVE.equals(credentials.getStatus())) {
+        if (!IAccountService.STATUS_ACTIVE.equals(credentials.getStatus())) {
             return AuthenticationResult.failure(GENERIC_FAILURE);
         }
 
