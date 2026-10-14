@@ -44,6 +44,14 @@ public class StaffServiceImpl implements IStaffService {
     }
 
     @Override
+    public List<Staff> getStaffsByDepartmentId(int departmentId) {
+        if (departmentId <= 0) {
+            return List.of();
+        }
+        return staffDAO.findByDepartmentId(departmentId);
+    }
+
+    @Override
     public boolean createStaff(Staff staff) throws Exception {
         validateStaff(staff, false);
         staff.setStatus("ACTIVE");

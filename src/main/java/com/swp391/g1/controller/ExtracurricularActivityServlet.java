@@ -29,8 +29,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final ISemesterService semesterService;
     private final IDepartmentService departmentService;
     private final IStaffService staffService;
+    private final IActivityStaffService activityStaffService;
+    private final IActivityPartnerStaffService activityPartnerStaffService;
 
     public ExtracurricularActivityServlet() {
+        this.activityPartnerStaffService = new ActivityPartnerStaffServiceImpl();
         this.activityService = new ExtracurricularActivityServiceImpl();
         this.activityTypeService = new ActivityTypeServiceImpl();
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
@@ -38,6 +41,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         this.semesterService = new SemesterServiceImpl();
         this.departmentService = new DepartmentServiceImpl();
         this.staffService = new StaffServiceImpl();
+        this.activityStaffService = new ActivityStaffServiceImpl();
     }
 
     @Override
@@ -117,6 +121,18 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 case "update":
                     updateActivity(request, response);
                     break;
+                case "assignStaff":
+                    assignStaff(request, response);
+                    break;
+                case "unassignStaff":
+                    unassignStaff(request, response);
+                    break;
+                case "assignPartnerStaff":
+                    assignPartnerStaff(request, response);
+                    break;
+                case "unassignPartnerStaff":
+                    unassignPartnerStaff(request, response);
+                    break;
                 default:
                     response.sendRedirect(request.getContextPath() + "/activities");
                     break;
@@ -178,7 +194,24 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             if (activity != null) {
                 request.setAttribute("activity", activity);
                 setActivityManagementPermission(request);
-                request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
+
+                CurrentUser currentUser = AuthContext.getCurrentUser(request);
+                boolean canAddStaff = activityStaffService.canAssignStaff(id, currentUser);
+                boolean canRemoveStaff = canAddStaff;
+                request.setAttribute("canAddStaff", canAddStaff);
+                request.setAttribute("canRemoveStaff", canRemoveStaff);
+                request.setAttribute("assignedStaffs", activityStaffService.getStaffsByActivityId(id));
+                if (canAddStaff) {
+                    request.setAttribute("availableStaffs", activityStaffService.getAvailableStaffsForActivity(id));
+                }
+
+                boolean canManagePartnerStaff = activityPartnerStaffService.canAssignPartnerStaff(id, currentUser);
+                request.setAttribute("canManagePartnerStaff", canManagePartnerStaff);
+                request.setAttribute("assignedPartnerStaffs", activityPartnerStaffService.getPartnerStaffsByActivityId(id));
+                if (canManagePartnerStaff) {
+                    request.setAttribute("availablePartnerStaffs",
+                            activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id));
+                }.forward(request, response);
                 return;
             }
         }
@@ -281,6 +314,121 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             request.setAttribute("errorMessage", e.getMessage());
             request.setAttribute("formData", dto);
             showEditForm(request, response);
+        }
+    }
+
+    private void assignStaff(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        HttpSession session = request.getSession();
+        int activityId = 0;
+        try {
+            activityId = Integer.parseInt(request.getParameter("activityId"));
+            if (!activityStaffService.canAssignStaff(activityId, currentUser)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Bạn không có quyền thêm nhân sự vào hoạt động này.");
+                return;
+            }
+            int staffId = Integer.parseInt(request.getParameter("staffId"));
+            boolean success = activityStaffService.assignStaff(activityId, staffId, currentUser);
+            if (success) {
+                session.setAttribute("successMessage", "Phân công nhân sự thành công!");
+            } else {
+                session.setAttribute("errorMessage", "Không thể phân công nhân sự.");
+            }
+        } catch (NumberFormatException e) {
+            session.setAttribute("errorMessage", "Dữ liệu phân công không hợp lệ.");
+        } catch (IllegalArgumentException e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", "Đã xảy ra lỗi khi phân công nhân sự: " + e.getMessage());
+        }
+
+        if (activityId > 0) {
+            response.sendRedirect(request.getContextPath() + "/activities?action=detail&id=" + activityId + "#tab-staff");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/activities");
+        }
+    }
+
+    private void unassignStaff(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        HttpSession session = request.getSession();
+        int activityId = 0;
+        try {
+            activityId = Integer.parseInt(request.getParameter("activityId"));
+            if (!activityStaffService.canAssignStaff(activityId, currentUser)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Bạn không có quyền hủy phân công nhân sự khỏi hoạt động này.");
+                return;
+            }
+            int staffId = Integer.parseInt(request.getParameter("staffId"));
+            boolean success = activityStaffService.removeStaff(activityId, staffId, currentUser);
+            if (success) {
+                session.setAttribute("successMessage", "Đã hủy phân công nhân sự khỏi hoạt động.");
+            } else {
+                session.setAttribute("errorMessage", "Không thể hủy phân công nhân sự.");
+            }
+        } catch (NumberFormatException e) {
+            session.setAttribute("errorMessage", "Dữ liệu không hợp lệ.");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", "Đã xảy ra lỗi khi hủy phân công: " + e.getMessage());
+        }
+
+        if (activityId > 0) {
+            response.sendRedirect(request.getContextPath() + "/activities?action=detail&id=" + activityId + "#tab-staff");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/activities");
+        }
+    }
+
+    private void assignPartnerStaff(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        handlePartnerStaffChange(request, response, true);
+    }
+
+    private void unassignPartnerStaff(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        handlePartnerStaffChange(request, response, false);
+    }
+
+    private void handlePartnerStaffChange(HttpServletRequest request, HttpServletResponse response, boolean assign)
+            throws IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        HttpSession session = request.getSession();
+        int activityId = 0;
+        try {
+            activityId = Integer.parseInt(request.getParameter("activityId"));
+            if (!activityPartnerStaffService.canAssignPartnerStaff(activityId, currentUser)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Bạn không có quyền quản lý nhân sự đối tác của hoạt động này.");
+                return;
+            }
+            int partnerStaffId = Integer.parseInt(request.getParameter("partnerStaffId"));
+            boolean success = assign
+                    ? activityPartnerStaffService.assignPartnerStaff(activityId, partnerStaffId, currentUser)
+                    : activityPartnerStaffService.removePartnerStaff(activityId, partnerStaffId, currentUser);
+            if (success) {
+                session.setAttribute("successMessage", assign
+                        ? "Phân công nhân sự đối tác thành công!"
+                        : "Đã gỡ nhân sự đối tác khỏi hoạt động.");
+            } else {
+                session.setAttribute("errorMessage", "Không thể thực hiện thao tác với nhân sự đối tác.");
+            }
+        } catch (NumberFormatException e) {
+            session.setAttribute("errorMessage", "Dữ liệu không hợp lệ.");
+        } catch (IllegalArgumentException e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", "Đã xảy ra lỗi: " + e.getMessage());
+        }
+
+        if (activityId > 0) {
+            response.sendRedirect(request.getContextPath()
+                    + "/activities?action=detail&id=" + activityId + "#tab-partner");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/activities");
         }
     }
 
