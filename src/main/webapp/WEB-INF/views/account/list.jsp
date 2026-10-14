@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -139,7 +140,7 @@
                                 <td><strong class="activity-name"><c:out value="${a.username}"/></strong></td>
                                 <td><c:out value="${a.type}"/></td>
                                 <td><c:out value="${a.role}"/></td>
-                                <td><span class="badge account-status account-status-${fn:escapeXml(a.status)}"><c:out value="${a.status}"/></span></td>
+                                <td><span class="badge account-status account-status-${fn:escapeXml(a.status)}">${st:label(a.status)}</span></td>
                                 <td>
                                     <div class="actions activity-actions">
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}">Chi tiết</a>

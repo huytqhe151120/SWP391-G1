@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -150,7 +151,7 @@
                         </div>
                         <div class="bubble ${isMe ? 'me' : 'other'}">
                             <c:out value="${msg.content}"/>
-                            <div class="bubble-time"><c:out value="${msg.sentAt}"/></div>
+                            <div class="bubble-time">${dt:format(msg.sentAt)}</div>
                         </div>
                     </div>
                 </c:forEach>

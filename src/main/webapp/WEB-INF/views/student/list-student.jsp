@@ -166,10 +166,10 @@
                         <td>
                             <c:choose>
                                 <c:when test="${student.status == 'ACTIVE'}">
-                                    <span class="status-badge active">Active</span>
+                                    <span class="status-badge active">Đang hoạt động</span>
                                 </c:when>
                                 <c:when test="${student.status == 'INACTIVE'}">
-                                    <span class="status-badge inactive">Inactive</span>
+                                    <span class="status-badge inactive">Không hoạt động</span>
                                 </c:when>
                                 <c:otherwise>
                                     <span class="status-badge">

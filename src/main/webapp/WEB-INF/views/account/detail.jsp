@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -53,7 +54,7 @@
                     <div class="detail-item"><dt>Tên đăng nhập</dt><dd><c:out value="${account.username}"/></dd></div>
                     <div class="detail-item"><dt>Loại tài khoản</dt><dd><c:out value="${account.type}"/></dd></div>
                     <div class="detail-item"><dt>Vai trò</dt><dd><c:out value="${account.role}"/></dd></div>
-                    <div class="detail-item"><dt>Trạng thái</dt><dd><span class="badge account-status account-status-${fn:escapeXml(account.status)}"><c:out value="${account.status}"/></span></dd></div>
+                    <div class="detail-item"><dt>Trạng thái</dt><dd><span class="badge account-status account-status-${fn:escapeXml(account.status)}">${st:label(account.status)}</span></dd></div>
                 </dl>
             </section>
 

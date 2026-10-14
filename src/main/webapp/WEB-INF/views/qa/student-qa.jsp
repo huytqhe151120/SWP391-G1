@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -93,7 +94,7 @@
                                             <span class="status pending">Đang chờ</span>
                                         </c:otherwise>
                                     </c:choose>
-                                    <time><c:out value="${q.createdAt}"/></time>
+                                    <time>${dt:format(q.createdAt)}</time>
                                 </div>
                                 <h3><c:out value="${q.title}"/></h3>
                                 <p class="question-content"><c:out value="${q.content}"/></p>
@@ -108,7 +109,7 @@
                                     <div class="answer">
                                         <span class="answer-label">PHẢN HỒI TỪ STAFF</span>
                                         <p><c:out value="${answer.content}"/></p>
-                                        <small><c:out value="${answer.staffName}"/> · <c:out value="${answer.publishedAt}"/></small>
+                                        <small><c:out value="${answer.staffName}"/> · ${dt:format(answer.publishedAt)}</small>
                                     </div>
                                 </c:forEach>
                             </article>

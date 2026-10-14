@@ -12,8 +12,10 @@ import com.swp391.g1.service.IExtracurricularActivityService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class ExtracurricularActivityServiceImpl implements IExtracurricularActivityService {
 
@@ -61,8 +63,48 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         // Map from RequestDTO to Entity
         ExtracurricularActivity entity = mapToEntity(dto);
         entity.setId(Integer.parseInt(dto.getId()));
-        // Call DAO to update the activity
-        return activityDAO.update(entity);
+        ExtracurricularActivity existing = activityDAO.findById(entity.getId());
+        if (existing != null && !hasContentChanged(existing, entity)) {
+            return true;
+        }
+        // Editing an approved activity invalidates the approval: it goes back to draft atomically.
+        boolean wasApproved = existing != null && existing.getApprovalStatus() == ApprovalStatus.APPROVED;
+        return activityDAO.update(entity, wasApproved ? ApprovalStatus.DRAFT : null);
+    }
+
+    private boolean hasContentChanged(ExtracurricularActivity a, ExtracurricularActivity b) {
+        return a.getSemesterId() != b.getSemesterId()
+                || a.getActivityTypeId() != b.getActivityTypeId()
+                || a.getResponsibleDepartmentId() != b.getResponsibleDepartmentId()
+                || a.getResponsibleStaffId() != b.getResponsibleStaffId()
+                || !Objects.equals(a.getPartnerCompanyId(), b.getPartnerCompanyId())
+                || !Objects.equals(a.getPartnerStaffId(), b.getPartnerStaffId())
+                || a.isRegistrationFormRequired() != b.isRegistrationFormRequired()
+                || !sameText(a.getCode(), b.getCode())
+                || !sameText(a.getCode(), b.getCode())
+                || !sameText(a.getName(), b.getName())
+                || !sameText(a.getAddress(), b.getAddress())
+                || !sameText(a.getDescription(), b.getDescription())
+                || !sameNumber(a.getBonusPoint(), b.getBonusPoint())
+                || !sameNumber(a.getPenaltyPoint(), b.getPenaltyPoint())
+                || !sameMinute(a.getStartTime(), b.getStartTime())
+                || !sameMinute(a.getEndTime(), b.getEndTime());
+    }
+
+    private boolean sameText(String x, String y) {
+        return Objects.equals(x == null ? null : x.trim(), y == null ? null : y.trim());
+    }
+
+    private boolean sameNumber(BigDecimal x, BigDecimal y) {
+        BigDecimal left = x == null ? BigDecimal.ZERO : x;
+        BigDecimal right = y == null ? BigDecimal.ZERO : y;
+        return left.compareTo(right) == 0;
+    }
+
+    private boolean sameMinute(LocalDateTime x, LocalDateTime y) {
+        return Objects.equals(
+                x == null ? null : x.truncatedTo(ChronoUnit.MINUTES),
+                y == null ? null : y.truncatedTo(ChronoUnit.MINUTES));
     }
 
     @Override
@@ -137,18 +179,22 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             }
         }
 
-        // Validate khoảng thời gian: StartTime phải trước EndTime
-        if (!isEmpty(dto.getStartTime()) && !isEmpty(dto.getEndTime())) {
-            try {
-                LocalDateTime start = LocalDateTime.parse(dto.getStartTime());
-                LocalDateTime end = LocalDateTime.parse(dto.getEndTime());
+        // Validate khoảng thời gian: bắt buộc nhập, StartTime phải trước EndTime
+        if (isEmpty(dto.getStartTime())) {
+            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống.");
+        }
+        if (isEmpty(dto.getEndTime())) {
+            throw new IllegalArgumentException("Thời gian kết thúc không được để trống.");
+        }
+        try {
+            LocalDateTime start = LocalDateTime.parse(dto.getStartTime().trim());
+            LocalDateTime end = LocalDateTime.parse(dto.getEndTime().trim());
 
-                if (!start.isBefore(end)) {
-                    throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
-                }
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");
+            if (!start.isBefore(end)) {
+                throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
             }
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");
         }
     }
 
@@ -176,11 +222,12 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
         // Convert Thời gian (<input type="datetime-local"> trả về định dạng yyyy-MM-ddTHH:mm)[cite: 1]
         if (!isEmpty(dto.getStartTime())) {
-            entity.setStartTime(LocalDateTime.parse(dto.getStartTime()));
+            entity.setStartTime(LocalDateTime.parse(dto.getStartTime().trim()));
         }
         if (!isEmpty(dto.getEndTime())) {
-            entity.setEndTime(LocalDateTime.parse(dto.getEndTime()));
+            entity.setEndTime(LocalDateTime.parse(dto.getEndTime().trim()));
         }
+        entity.setRegistrationFormRequired("true".equalsIgnoreCase(dto.getRegistrationFormRequired()));
 
         return entity;
     }

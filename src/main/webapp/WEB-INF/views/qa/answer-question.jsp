@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -279,7 +280,7 @@
                     <div class="meta-item"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#user"/></svg> <c:out value="${question.studentName}"/> · <c:out value="${question.studentCode}"/></div>
                 </c:otherwise>
             </c:choose>
-            <div class="meta-item"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${question.createdAt}</div>
+            <div class="meta-item"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${dt:format(question.createdAt)}</div>
         </div>
     </div>
 
@@ -330,8 +331,8 @@
                     </div>
                     <div class="answer-content"><c:out value="${ans.content}"/></div>
                     <div class="answer-date">
-                        Viết lúc: ${ans.createdAt}
-                        <c:if test="${ans.publishedAt != null}"> · Đăng lúc: ${ans.publishedAt}</c:if>
+                        Viết lúc: ${dt:format(ans.createdAt)}
+                        <c:if test="${ans.publishedAt != null}"> · Đăng lúc: ${dt:format(ans.publishedAt)}</c:if>
                     </div>
                 </div>
             </c:forEach>

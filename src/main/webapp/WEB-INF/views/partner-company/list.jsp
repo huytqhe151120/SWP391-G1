@@ -82,7 +82,7 @@
                                     <span class="badge ${company.status == 'ACTIVE' ? 'partner-company-active' : 'partner-company-inactive'}">
                                         <c:choose>
                                             <c:when test="${company.status == 'ACTIVE'}">Đang hoạt động</c:when>
-                                            <c:otherwise>Ngừng hoạt động</c:otherwise>
+                                            <c:otherwise>Không hoạt động</c:otherwise>
                                         </c:choose>
                                     </span>
                                 </td>

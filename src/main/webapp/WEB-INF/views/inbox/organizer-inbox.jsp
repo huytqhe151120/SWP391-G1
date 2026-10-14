@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -182,7 +183,7 @@
                             </div>
                         </div>
                         <div class="conv-right">
-                            <span class="conv-time"><c:out value="${conv.sentAt}"/></span>
+                            <span class="conv-time">${dt:format(conv.sentAt)}</span>
                             <c:if test="${not conv.read and conv.senderType == 'STUDENT'}">
                                 <span class="unread-badge">Mới</span>
                             </c:if>

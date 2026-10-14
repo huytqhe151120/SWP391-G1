@@ -28,7 +28,7 @@
             <div class="detail-item"><dt>Trạng thái</dt><dd>
                 <c:choose>
                     <c:when test="${partnerCompany.status == 'ACTIVE'}">Đang hoạt động</c:when>
-                    <c:otherwise>Ngừng hoạt động</c:otherwise>
+                    <c:otherwise>Không hoạt động</c:otherwise>
                 </c:choose>
             </dd></div>
             <div class="detail-item field-wide"><dt>Địa chỉ</dt><dd><c:out value="${partnerCompany.address}" default="—"/></dd></div>

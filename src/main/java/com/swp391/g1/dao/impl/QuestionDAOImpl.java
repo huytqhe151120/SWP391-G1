@@ -128,7 +128,7 @@ public class QuestionDAOImpl implements IQuestionDAO {
     public boolean insert(Question question) {
         String sql = "INSERT INTO [dbo].[Question] " +
                      "(title, content, is_anonymous, status, student_id, created_at) " +
-                     "VALUES (?, ?, ?, 'PENDING', ?, GETDATE())";
+                     "VALUES (?, ?, ?, 'PENDING', ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, question.getTitle());

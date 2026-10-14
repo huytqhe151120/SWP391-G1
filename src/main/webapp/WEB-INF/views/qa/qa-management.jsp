@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="vi">
@@ -333,7 +334,7 @@
                                     <span class="q-author"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#user"/></svg> <c:out value="${q.studentName}"/> (<c:out value="${q.studentCode}"/>)</span>
                                 </c:otherwise>
                             </c:choose>
-                            <span class="q-date"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${q.createdAt}</span>
+                            <span class="q-date"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${dt:format(q.createdAt)}</span>
                         </div>
                     </a>
                 </c:forEach>

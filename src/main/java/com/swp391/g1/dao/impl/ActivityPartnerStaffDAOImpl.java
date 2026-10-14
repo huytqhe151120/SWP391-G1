@@ -54,7 +54,7 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
     @Override
     public boolean insert(int activityId, int partnerStaffId) {
         String sql = "INSERT INTO activity_partner_staff (activity_id, partner_staff_id, assigned_on) "
-                + "VALUES (?, ?, CURRENT_TIMESTAMP)";
+                + "VALUES (?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

@@ -235,7 +235,7 @@
                                 <c:when test="${staff.status == 'ACTIVE'}">
 
                                     <span class="status-badge active">
-                                        Active
+                                        Đang hoạt động
                                     </span>
 
                                 </c:when>
@@ -243,7 +243,7 @@
                                 <c:when test="${staff.status == 'INACTIVE'}">
 
                                     <span class="status-badge inactive">
-                                        Inactive
+                                        Không hoạt động
                                     </span>
 
                                 </c:when>

@@ -105,7 +105,7 @@
                             <label for="status">Trạng thái</label>
                             <select id="status" name="status">
                                 <option value="ACTIVE" <c:if test="${selectedStatus == 'ACTIVE'}">selected</c:if>>Đang hoạt động</option>
-                                <option value="INACTIVE" <c:if test="${selectedStatus == 'INACTIVE'}">selected</c:if>>Ngừng hoạt động</option>
+                                <option value="INACTIVE" <c:if test="${selectedStatus == 'INACTIVE'}">selected</c:if>>Không hoạt động</option>
                             </select>
                         </div>
                     </c:if>

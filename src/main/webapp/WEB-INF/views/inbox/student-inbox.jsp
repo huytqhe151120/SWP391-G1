@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -90,7 +91,7 @@
                                             <div class="chat-row ${isMine ? 'mine' : 'theirs'}">
                                                 <div class="chat-bubble ${isMine ? 'mine' : 'theirs'}">
                                                     <c:out value="${msg.content}"/>
-                                                    <time><c:out value="${msg.sentAt}"/></time>
+                                                    <time>${dt:format(msg.sentAt)}</time>
                                                 </div>
                                             </div>
                                         </c:forEach>
@@ -133,7 +134,7 @@
                                                 <span class="msg-to">Gửi tới <strong><c:out value="${msg.staffName}"/></strong> · <c:out value="${msg.staffCode}"/></span>
                                                 <span class="msg-content"><c:out value="${msg.content}"/></span>
                                             </span>
-                                            <time class="msg-date"><c:out value="${msg.sentAt}"/></time>
+                                            <time class="msg-date">${dt:format(msg.sentAt)}</time>
                                         </a>
                                     </c:forEach>
                                 </div>
