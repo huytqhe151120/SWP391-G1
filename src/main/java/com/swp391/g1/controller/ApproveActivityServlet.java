@@ -7,15 +7,10 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-
-
 import java.io.IOException;
 
 @WebServlet("/activity/approval")
-public class ApproveActivityController extends HttpServlet {
+public class ApproveActivityServlet extends HttpServlet {
 
     private final IExtracurricularActivityService activityService =
             new ExtracurricularActivityServiceImpl();
@@ -74,11 +69,8 @@ public class ApproveActivityController extends HttpServlet {
             request.getSession().setAttribute("errorMessage", e.getMessage());
             response.sendRedirect(request.getContextPath() + "/activities");
         } catch (IllegalStateException e) {
-           response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Không thể cập nhật trạng thái duyệt.");
-//            LOGGER.log(Level.SEVERE, "Approval action failed.", e);
-//            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-//                    "Unable to update approval status.");
         }
     }
 }

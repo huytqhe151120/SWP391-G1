@@ -1,7 +1,9 @@
 package com.swp391.g1.controller;
 
-import com.swp391.g1.dao.AnswerDAO;
-import com.swp391.g1.dao.QuestionDAO;
+import com.swp391.g1.dao.IAnswerDAO;
+import com.swp391.g1.dao.IQuestionDAO;
+import com.swp391.g1.dao.impl.AnswerDAOImpl;
+import com.swp391.g1.dao.impl.QuestionDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Answer;
 import com.swp391.g1.model.Question;
@@ -36,8 +38,8 @@ import java.util.List;
 @WebServlet("/qa-management")
 public class AnswerQuestionServlet extends HttpServlet {
 
-    private final QuestionDAO questionDAO = new QuestionDAO();
-    private final AnswerDAO answerDAO = new AnswerDAO();
+    private final IQuestionDAO questionDAO = new QuestionDAOImpl();
+    private final IAnswerDAO answerDAO = new AnswerDAOImpl();
     private final IStaffService staffService = new StaffServiceImpl();
 
     /** Resolve the staff identity used by Answer's staff_id foreign key. */

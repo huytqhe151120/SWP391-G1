@@ -3,9 +3,8 @@ package com.swp391.g1.service;
 import com.swp391.g1.dto.CurrentUser;
 
 /**
- * Central authorization policy: feature rules live here only, so callers never
- * duplicate type/role checks. The role list is not final yet, therefore only
- * rules confirmed by the business are implemented.
+ * Central authorization policy: feature rules live here so callers never
+ * duplicate type/role checks.
  */
 public final class AccessPolicy {
 
@@ -22,6 +21,28 @@ public final class AccessPolicy {
     /** ADMIN and STAFF can create, edit, and delete extracurricular activities. */
     public static boolean canManageActivities(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
+    /** ADMIN and selected STAFF roles can assign or remove staff from an activity. */
+    public static boolean canAssignStaffToActivity(CurrentUser user) {
+        if (hasType(user, ADMIN_TYPE)) {
+            return true;
+        }
+        if (!hasType(user, "STAFF") || user.getRole() == null) {
+            return false;
+        }
+        return switch (user.getRole()) {
+            case "UNIT_DEPUTY_HEAD", "UNIT_HEAD", "UNIT_SECRETARY" -> true;
+            default -> false;
+        };
+    }
+
+    /** PARTNER_STAFF accounts with leader or secretary role can manage partner staff of an activity. */
+    public static boolean canAssignPartnerStaffToActivity(CurrentUser user) {
+        if (user == null || user.getRole() == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
+            return false;
+        }
+        return "PARTNER_LEADER".equals(user.getRole()) || "PARTNER_SECRETARY".equals(user.getRole());
     }
 
     /** ADMIN and STAFF own the Q&A moderation workflow. */

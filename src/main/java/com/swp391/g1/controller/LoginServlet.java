@@ -12,19 +12,20 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.service.AuthenticationException;
 import com.swp391.g1.service.AuthenticationResult;
-import com.swp391.g1.service.AuthenticationService;
 import com.swp391.g1.util.AuthContext;
+import com.swp391.g1.service.IAuthenticationService;
+import com.swp391.g1.service.impl.AuthenticationServiceImpl;
 
 /**
  * Login controller. It only orchestrates request/response: credential checks
- * belong to AuthenticationService and session handling to AuthContext.
+ * belong to the authentication service and session handling to AuthContext.
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
-    private final AuthenticationService authenticationService = new AuthenticationService();
+    private final IAuthenticationService authenticationService = new AuthenticationServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

@@ -95,6 +95,31 @@ public class StaffDAOImpl implements IStaffDAO {
     }
 
     @Override
+    public List<Staff> findByDepartmentId(int departmentId) {
+        List<Staff> staffs = new ArrayList<>();
+        String sql = """
+                SELECT s.*
+                FROM staff s
+                JOIN staff_assignment sa ON s.id = sa.staff_id
+                WHERE sa.department_id = ? AND s.status = 'ACTIVE'
+                ORDER BY s.name ASC
+                """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, departmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    staffs.add(mapStaff(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find staff by department ID.", e);
+        }
+        return staffs;
+    }
+
+    @Override
     public Integer insert(Staff staff) {
         String sql = "INSERT INTO staff (code, name, dob, gender, status, account_id) VALUES (?, ?, ?, ?, ?, ?)";
 
