@@ -1,28 +1,34 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261014">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
 </head>
 <body>
-<main class="page activity-list-page activity-form-page activity-detail-page">
-    <header class="activity-hero">
-        <div class="activity-hero-copy">
-            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
-            <h1>Chi tiết hoạt động</h1>
-            <p><span class="activity-code"><c:out value="${activity.code}"/></span> <c:out value="${activity.name}"/></p>
-        </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
-            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
-            Danh sách hoạt động
-        </a>
-    </header>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <main class="page activity-list-page activity-form-page activity-detail-page">
+            <header class="activity-hero">
+                <div class="activity-hero-copy">
+                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
+                    <h1>Chi tiết hoạt động</h1>
+                    <p><span class="activity-code"><c:out value="${activity.code}"/></span> <c:out value="${activity.name}"/></p>
+                </div>
+                <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
+                    <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
+                    Danh sách hoạt động
+                </a>
+            </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
         <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
@@ -354,7 +360,9 @@
             </c:if>
         </div>
     </section>
-</main>
+        </main>
+    </div>
+</div>
 <script>
     (function () {
         var tabBtns = document.querySelectorAll('.activity-tab-btn');

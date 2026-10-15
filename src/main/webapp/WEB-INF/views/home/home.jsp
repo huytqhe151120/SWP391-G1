@@ -1,14 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="activeNav" value="home" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base.css">
 </head>
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
     <main class="page">
         <section class="card">
             <h1>SWP391-G1</h1>
@@ -34,5 +40,7 @@
             </form>
         </section>
     </main>
+    </div>
+</div>
 </body>
 </html>

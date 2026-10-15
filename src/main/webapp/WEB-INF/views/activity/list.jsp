@@ -1,33 +1,38 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hoạt động ngoại khóa | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261014">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
 </head>
 <body>
-<main class="page activity-list-page">
-    <header class="activity-hero">
-        <div class="activity-hero-copy">
-            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
-            <h1>Hoạt động ngoại khóa</h1>
-            <p>Theo dõi và quản lý các hoạt động ngoại khóa của trường tại một nơi.</p>
-        </div>
-        <div class="account-hero-actions">
-            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
-            <c:if test="${canManageActivities}">
-                <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
-                    <span class="plus-icon" aria-hidden="true">+</span>
-                    Tạo hoạt động
-                </a>
-            </c:if>
-        </div>
-    </header>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <main class="page activity-list-page">
+            <header class="activity-hero">
+                <div class="activity-hero-copy">
+                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
+                    <h1>Hoạt động ngoại khóa</h1>
+                    <p>Theo dõi và quản lý các hoạt động ngoại khóa của trường tại một nơi.</p>
+                </div>
+                <div class="account-hero-actions">
+                    <c:if test="${canManageActivities}">
+                        <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
+                            <span class="plus-icon" aria-hidden="true">+</span>
+                            Tạo hoạt động
+                        </a>
+                    </c:if>
+                </div>
+            </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
         <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
@@ -154,7 +159,9 @@
             </table>
         </div>
     </section>
-</main>
+        </main>
+    </div>
+</div>
 <script>
     (function () {
         function syncActionsColumnWidth() {

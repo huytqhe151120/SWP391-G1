@@ -1,9 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
+<c:set var="activeNav" value="students" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student List</title>
@@ -16,6 +18,10 @@
 </head>
 
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
 <div class="student-list-page">
 
@@ -211,5 +217,7 @@
 <!-- ================= JAVASCRIPT ================= -->
 <script src="${pageContext.request.contextPath}/assets/js/student.js"></script>
 
+    </div>
+</div>
 </body>
 </html>

@@ -1,4 +1,7 @@
 <%@ page pageEncoding="UTF-8" %>
+<%--@elvariable id="formData" type="com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO"--%>
+<%--@elvariable id="activity" type="com.swp391.g1.model.ExtracurricularActivity"--%>
+<c:set var="activeNav" value="activities" scope="request"/>
 <c:set var="semesterValue" value="${not empty formData ? formData.semesterId : activity.semesterId}"/>
 <c:set var="typeValue" value="${not empty formData ? formData.activityTypeId : activity.activityTypeId}"/>
 <c:set var="departmentValue" value="${not empty formData ? formData.responsibleDepartmentId : activity.responsibleDepartmentId}"/>
@@ -12,21 +15,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${isEdit}">Cập nhật hoạt động</c:when><c:otherwise>Tạo hoạt động</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261014">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
 </head>
 <body>
-<main class="page activity-list-page activity-form-page">
-    <header class="activity-hero">
-        <div class="activity-hero-copy">
-            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
-            <h1><c:choose><c:when test="${isEdit}">Cập nhật hoạt động</c:when><c:otherwise>Tạo hoạt động mới</c:otherwise></c:choose></h1>
-            <p>Điền thông tin để quản lý và theo dõi hoạt động ngoại khóa.</p>
-        </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
-            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
-            Danh sách hoạt động
-        </a>
-    </header>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <main class="page activity-list-page activity-form-page">
+            <header class="activity-hero">
+                <div class="activity-hero-copy">
+                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
+                    <h1><c:choose><c:when test="${isEdit}">Cập nhật hoạt động</c:when><c:otherwise>Tạo hoạt động mới</c:otherwise></c:choose></h1>
+                    <p>Điền thông tin để quản lý và theo dõi hoạt động ngoại khóa.</p>
+                </div>
+                <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
+                    <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
+                    Danh sách hoạt động
+                </a>
+            </header>
 
     <c:if test="${not empty errorMessage}">
         <div class="alert alert-error activity-alert"><c:out value="${errorMessage}"/></div>
@@ -202,7 +210,9 @@
             </div>
         </form>
     </section>
-</main>
+        </main>
+    </div>
+</div>
 <script>
     (() => {
         const companySelect = document.getElementById("partnerCompanyId");

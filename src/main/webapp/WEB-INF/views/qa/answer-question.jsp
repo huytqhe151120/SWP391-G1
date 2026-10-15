@@ -1,9 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trả lời câu hỏi - SWP391 G1</title>
@@ -232,6 +234,10 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css">
 </head>
 <body class="support-page answer-question-page">
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
 <header class="header">
     <div class="logo">
@@ -375,5 +381,7 @@
     }
 </script>
 
+    </div>
+</div>
 </body>
 </html>

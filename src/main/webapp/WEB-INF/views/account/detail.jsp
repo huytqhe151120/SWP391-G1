@@ -1,7 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<c:set var="activeNav" value="accounts" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -11,6 +12,10 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css">
 </head>
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 <main class="page activity-list-page activity-form-page account-page">
     <header class="activity-hero">
         <div class="activity-hero-copy">
@@ -103,5 +108,7 @@
         </div>
     </section>
 </main>
+    </div>
+</div>
 </body>
 </html>
