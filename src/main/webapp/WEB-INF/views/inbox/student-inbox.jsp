@@ -1,14 +1,22 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hộp thư của tôi | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-inbox.css">
 </head>
 <body class="support-page student-inbox-page">
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <a class="skip-link" href="#inbox-content">Đi đến nội dung chính</a>
 <main class="inbox-page" id="inbox-content">
     <header class="inbox-hero">
@@ -90,7 +98,7 @@
                                             <div class="chat-row ${isMine ? 'mine' : 'theirs'}">
                                                 <div class="chat-bubble ${isMine ? 'mine' : 'theirs'}">
                                                     <c:out value="${msg.content}"/>
-                                                    <time><c:out value="${msg.sentAt}"/></time>
+                                                    <time>${dt:format(msg.sentAt)}</time>
                                                 </div>
                                             </div>
                                         </c:forEach>
@@ -133,7 +141,7 @@
                                                 <span class="msg-to">Gửi tới <strong><c:out value="${msg.staffName}"/></strong> · <c:out value="${msg.staffCode}"/></span>
                                                 <span class="msg-content"><c:out value="${msg.content}"/></span>
                                             </span>
-                                            <time class="msg-date"><c:out value="${msg.sentAt}"/></time>
+                                            <time class="msg-date">${dt:format(msg.sentAt)}</time>
                                         </a>
                                     </c:forEach>
                                 </div>
@@ -156,5 +164,8 @@
         }
     }
 </script>
+        </div>
+    </div>
+</div>
 </body>
 </html>

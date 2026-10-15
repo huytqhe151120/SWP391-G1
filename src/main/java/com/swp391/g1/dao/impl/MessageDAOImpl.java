@@ -109,7 +109,7 @@ public class MessageDAOImpl implements IMessageDAO {
     @Override
     public boolean send(Message msg) {
         String sql = "INSERT INTO [dbo].[Message] (student_id, staff_id, sender_type, content, sent_at, is_read) " +
-                     "VALUES (?, ?, ?, ?, GETDATE(), 0)";
+                     "VALUES (?, ?, ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2), 0)";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, msg.getStudentId());

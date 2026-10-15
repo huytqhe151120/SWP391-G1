@@ -1,6 +1,8 @@
 package com.swp391.g1.controller;
 
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
+import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.service.impl.ExtracurricularActivityServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -24,6 +26,14 @@ public class ApproveActivityServlet extends HttpServlet {
 
             if (action == null) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hành động không hợp lệ.");
+                return;
+            }
+
+            boolean decisionAction = "approve".equals(action) || "reject".equals(action)
+                    || "revokeApproval".equals(action) || "revokeRejection".equals(action);
+            if (decisionAction && !AccessPolicy.canReviewActivities(AuthContext.getCurrentUser(request))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Chỉ tài khoản ADMIN mới được duyệt, từ chối hoặc hủy duyệt hoạt động.");
                 return;
             }
 
