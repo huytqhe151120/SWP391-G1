@@ -23,7 +23,6 @@
             <p>Quản lý thông tin liên hệ và trạng thái các đơn vị đồng hành.</p>
         </div>
         <div class="account-hero-actions">
-            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
             <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies?action=create">
                 <span class="plus-icon" aria-hidden="true">+</span>
                 Thêm công ty

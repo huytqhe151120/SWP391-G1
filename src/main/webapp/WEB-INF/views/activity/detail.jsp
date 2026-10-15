@@ -25,7 +25,7 @@
                     <p><span class="activity-code"><c:out value="${activity.code}"/></span> <c:out value="${activity.name}"/></p>
                 </div>
                 <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
-                    <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
+                    <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"></use></svg>
                     Danh sách hoạt động
                 </a>
             </header>

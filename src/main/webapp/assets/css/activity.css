@@ -278,6 +278,7 @@
     pointer-events: none;
 }
 
+.activity-hero > *,
 .activity-hero-copy,
 .activity-create-button {
     position: relative;
@@ -408,8 +409,12 @@
     background: #f8faff;
 }
 
-.activity-table-wrap th:nth-child(9),
-.activity-table-wrap td:nth-child(9) {
+.activity-list-page .activity-table-wrap table {
+    width: 100%;
+}
+
+.activity-list-page .activity-table-wrap th:nth-child(9),
+.activity-list-page .activity-table-wrap td:nth-child(9) {
     position: sticky;
     right: 0;
     z-index: 2;
@@ -417,8 +422,8 @@
     white-space: nowrap;
 }
 
-.activity-table-wrap th:nth-child(8),
-.activity-table-wrap td:nth-child(8) {
+.activity-list-page .activity-table-wrap th:nth-child(8),
+.activity-list-page .activity-table-wrap td:nth-child(8) {
     position: sticky;
     right: var(--activity-actions-col-width, 0px);
     z-index: 2;
@@ -426,19 +431,60 @@
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
-.activity-table-wrap th:nth-child(8),
-.activity-table-wrap th:nth-child(9) {
+.activity-list-page .activity-table-wrap th:nth-child(7),
+.activity-list-page .activity-table-wrap td:nth-child(7) {
+    position: sticky;
+    right: calc(var(--activity-approval-col-width, 0px) + var(--activity-actions-col-width, 0px));
+    z-index: 2;
+    background: #fff;
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+
+.activity-list-page .activity-table-wrap th:nth-child(7),
+.activity-list-page .activity-table-wrap th:nth-child(8),
+.activity-list-page .activity-table-wrap th:nth-child(9) {
     background: #f7f9fc;
     z-index: 3;
 }
 
-.activity-table-wrap tbody tr:hover td:nth-child(8),
-.activity-table-wrap tbody tr:hover td:nth-child(9) {
+.activity-list-page .activity-table-wrap th:nth-child(7),
+.activity-list-page .activity-table-wrap th:nth-child(8) {
+    width: 120px;
+    max-width: 120px;
+    white-space: normal;
+}
+
+.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(7),
+.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(8),
+.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(9) {
     background: #f8faff;
 }
 
-.activity-table-wrap .activity-actions {
+.activity-list-page .activity-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+}
+
+.activity-list-page .activity-action-links,
+.activity-list-page .activity-actions form.activity-review-actions {
+    display: inline-flex;
+    width: max-content;
+    max-width: 100%;
+    align-items: center;
+    flex-direction: row;
     flex-wrap: nowrap;
+    gap: 6px;
+}
+
+.activity-list-page .activity-actions form.activity-review-actions {
+    margin: 0;
+}
+
+.activity-list-page .activity-actions .button,
+.activity-list-page .activity-action-links a {
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 .activity-code {
@@ -462,7 +508,7 @@
     font-weight: 550;
 }
 
-.activity-time {
+.activity-list-page .activity-time {
     min-width: 156px;
     color: #536782;
     font-variant-numeric: tabular-nums;

@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hoạt động ngoại khóa | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015-3">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -20,7 +20,7 @@
         <main class="page activity-list-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
-                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
+                    <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
                     <h1>Hoạt động ngoại khóa</h1>
                     <p>Theo dõi và quản lý các hoạt động ngoại khóa của trường tại một nơi.</p>
                 </div>
@@ -67,7 +67,7 @@
                     <th scope="col">Đơn vị phụ trách</th>
                     <th scope="col">Thời gian</th>
                     <th scope="col">Trạng thái hoạt động</th>
-                    <th scope="col">Trạng thái duyệt</th>
+                    <th scope="col">Trạng thái duyệt HĐ</th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
@@ -113,28 +113,30 @@
                                 <td><span class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span></td>
                                 <td>
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
-                                        <c:if test="${canManageActivities}">
-                                            <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
-                                            <a class="activity-action-link activity-action-delete"
-                                               href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
-                                               onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
-                                        </c:if>
+                                        <div class="activity-action-links">
+                                            <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
+                                            <c:if test="${canManageActivities}">
+                                                <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
+                                                <a class="activity-action-link activity-action-delete"
+                                                   href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
+                                                   onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                            </c:if>
+                                        </div>
                                         <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
-                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                            <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="submit" class="button button-primary button-sm">Gửi duyệt</button>
                                             </form>
                                         </c:if>
                                         <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
-                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                            <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="approve" class="button button-primary button-sm">Duyệt</button>
                                                 <button type="submit" name="action" value="reject" class="button button-sm">Từ chối</button>
                                             </form>
                                         </c:if>
                                         <c:if test="${canApproveActivities && activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
-                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                            <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeApproval"
                                                         class="button button-sm"
@@ -142,7 +144,7 @@
                                             </form>
                                         </c:if>
                                         <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
-                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                            <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeRejection"
                                                         class="button button-sm"
@@ -164,22 +166,28 @@
 </div>
 <script>
     (function () {
-        function syncActionsColumnWidth() {
-            var table = document.querySelector('.activity-table-wrap table');
+        function syncStickyColumnWidths() {
+            var table = document.querySelector('.activity-list-page .activity-table-wrap table');
             if (!table) {
                 return;
             }
-            var cells = table.querySelectorAll('tr td:nth-child(9), tr th:nth-child(9)');
-            var maxWidth = 0;
-            cells.forEach(function (cell) {
-                maxWidth = Math.max(maxWidth, cell.getBoundingClientRect().width);
+            var actionsCells = table.querySelectorAll('tr td:nth-child(9), tr th:nth-child(9)');
+            var approvalCells = table.querySelectorAll('tr td:nth-child(8), tr th:nth-child(8)');
+            var actionsWidth = 0;
+            var approvalWidth = 0;
+            actionsCells.forEach(function (cell) {
+                actionsWidth = Math.max(actionsWidth, cell.getBoundingClientRect().width);
             });
-            if (maxWidth > 0) {
-                table.style.setProperty('--activity-actions-col-width', maxWidth + 'px');
+            approvalCells.forEach(function (cell) {
+                approvalWidth = Math.max(approvalWidth, cell.getBoundingClientRect().width);
+            });
+            if (actionsWidth > 0 && approvalWidth > 0) {
+                table.style.setProperty('--activity-actions-col-width', actionsWidth + 'px');
+                table.style.setProperty('--activity-approval-col-width', approvalWidth + 'px');
             }
         }
-        window.addEventListener('load', syncActionsColumnWidth);
-        window.addEventListener('resize', syncActionsColumnWidth);
+        window.addEventListener('load', syncStickyColumnWidths);
+        window.addEventListener('resize', syncStickyColumnWidths);
     })();
 </script>
 </body>

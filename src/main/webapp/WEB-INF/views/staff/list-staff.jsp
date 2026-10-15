@@ -24,12 +24,12 @@
 <div class="page staff-list-page">
 
     <!-- ================= HEADER ================= -->
-    <div class="staff-hero">
+    <div class="activity-hero staff-hero">
 
         <div>
 
-            <span class="hero-label">
-                SWP391-G1 / STAFF MANAGEMENT
+            <span class="eyebrow">
+                SWP391-G1 <span aria-hidden="true">/</span> STAFF MANAGEMENT
             </span>
 
             <h1>
