@@ -211,7 +211,8 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 if (canManagePartnerStaff) {
                     request.setAttribute("availablePartnerStaffs",
                             activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id));
-                }.forward(request, response);
+                }
+                request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
             }
         }
