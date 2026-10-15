@@ -1,8 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trả lời câu hỏi - SWP391 G1</title>
@@ -231,6 +234,11 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css">
 </head>
 <body class="support-page answer-question-page">
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 
 <header class="header">
     <div class="logo">
@@ -279,7 +287,7 @@
                     <div class="meta-item"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#user"/></svg> <c:out value="${question.studentName}"/> · <c:out value="${question.studentCode}"/></div>
                 </c:otherwise>
             </c:choose>
-            <div class="meta-item"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${question.createdAt}</div>
+            <div class="meta-item"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${dt:format(question.createdAt)}</div>
         </div>
     </div>
 
@@ -330,8 +338,8 @@
                     </div>
                     <div class="answer-content"><c:out value="${ans.content}"/></div>
                     <div class="answer-date">
-                        Viết lúc: ${ans.createdAt}
-                        <c:if test="${ans.publishedAt != null}"> · Đăng lúc: ${ans.publishedAt}</c:if>
+                        Viết lúc: ${dt:format(ans.createdAt)}
+                        <c:if test="${ans.publishedAt != null}"> · Đăng lúc: ${dt:format(ans.publishedAt)}</c:if>
                     </div>
                 </div>
             </c:forEach>
@@ -374,5 +382,8 @@
     }
 </script>
 
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -38,6 +38,15 @@ public class ExtracurricularActivityResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private boolean registrationFormRequired;
+
+    public boolean isRegistrationFormRequired() {
+        return registrationFormRequired;
+    }
+
+    public void setRegistrationFormRequired(boolean registrationFormRequired) {
+        this.registrationFormRequired = registrationFormRequired;
+    }
 
     // Constructor with no parameter
     public ExtracurricularActivityResponseDTO() {

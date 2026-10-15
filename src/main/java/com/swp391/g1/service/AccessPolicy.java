@@ -23,6 +23,11 @@ public final class AccessPolicy {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
     }
 
+    /** Only ADMIN can approve, reject, or revoke the approval decision of an activity. */
+    public static boolean canReviewActivities(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE);
+    }
+
     /** ADMIN and selected STAFF roles can assign or remove staff from an activity. */
     public static boolean canAssignStaffToActivity(CurrentUser user) {
         if (hasType(user, ADMIN_TYPE)) {
@@ -39,10 +44,13 @@ public final class AccessPolicy {
 
     /** PARTNER_STAFF accounts with leader or secretary role can manage partner staff of an activity. */
     public static boolean canAssignPartnerStaffToActivity(CurrentUser user) {
-        if (user == null || user.getRole() == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
+        if (user == null || user.getRole() == null || !hasType(user, "PARTNER_STAFF")) {
             return false;
         }
-        return "PARTNER_LEADER".equals(user.getRole()) || "PARTNER_SECRETARY".equals(user.getRole());
+        return switch (user.getRole()) {
+            case "PARTNER_LEADER", "PARTNER_SECRETARY" -> true;
+            default -> false;
+        };
     }
 
     /** ADMIN and STAFF own the Q&A moderation workflow. */

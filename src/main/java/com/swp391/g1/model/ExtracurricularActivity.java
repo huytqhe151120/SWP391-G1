@@ -21,6 +21,15 @@ public class ExtracurricularActivity {
     private int activityTypeId; //[cite: 1]
     private LocalDateTime startTime; //[cite: 1]
     private LocalDateTime endTime;
+    private boolean registrationFormRequired;
+
+    public boolean isRegistrationFormRequired() {
+        return registrationFormRequired;
+    }
+
+    public void setRegistrationFormRequired(boolean registrationFormRequired) {
+        this.registrationFormRequired = registrationFormRequired;
+    }
 
     // Constructor with no parameter
     public ExtracurricularActivity() {

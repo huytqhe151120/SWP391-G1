@@ -3,7 +3,7 @@
 
 body {
     margin: 0;
-    padding: 2rem 3rem;
+    padding: 0;
     font-family: "Segoe UI", Arial, Helvetica, sans-serif;
     color: #1f2937;
     background: #f5f7fb;
@@ -231,7 +231,6 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 760px) {
-    body { padding: 1rem; }
     .staff-hero { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
     .staff-hero h1 { font-size: 1.8rem; }
     .staff-toolbar { flex-direction: column; }
