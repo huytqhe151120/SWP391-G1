@@ -1,10 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
+<c:set var="activeNav" value="staff" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <title>Staff List</title>
 
@@ -13,6 +15,10 @@
 </head>
 
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
 <div class="page staff-list-page">
 
@@ -235,7 +241,7 @@
                                 <c:when test="${staff.status == 'ACTIVE'}">
 
                                     <span class="status-badge active">
-                                        Active
+                                        Đang hoạt động
                                     </span>
 
                                 </c:when>
@@ -243,7 +249,7 @@
                                 <c:when test="${staff.status == 'INACTIVE'}">
 
                                     <span class="status-badge inactive">
-                                        Inactive
+                                        Không hoạt động
                                     </span>
 
                                 </c:when>
@@ -296,6 +302,8 @@
 <!-- ================= JAVASCRIPT ================= -->
 <script src="${pageContext.request.contextPath}/assets/js/staff.js"></script>
 
+    </div>
+</div>
 </body>
 
 </html>

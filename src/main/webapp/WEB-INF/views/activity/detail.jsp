@@ -1,26 +1,34 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="st" uri="http://swp391.g1/status" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
 </head>
 <body>
-<main class="page activity-list-page activity-form-page activity-detail-page">
-    <header class="activity-hero">
-        <div class="activity-hero-copy">
-            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
-            <h1>Chi tiết hoạt động</h1>
-            <p><span class="activity-code"><c:out value="${activity.code}"/></span> <c:out value="${activity.name}"/></p>
-        </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
-            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
-            Danh sách hoạt động
-        </a>
-    </header>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <main class="page activity-list-page activity-form-page activity-detail-page">
+            <header class="activity-hero">
+                <div class="activity-hero-copy">
+                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
+                    <h1>Chi tiết hoạt động</h1>
+                    <p><span class="activity-code"><c:out value="${activity.code}"/></span> <c:out value="${activity.name}"/></p>
+                </div>
+                <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
+                    <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
+                    Danh sách hoạt động
+                </a>
+            </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
         <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
@@ -71,8 +79,8 @@
                         <div class="detail-item"><dt>Tên hoạt động</dt><dd><c:out value="${activity.name}" default="—"/></dd></div>
                         <div class="detail-item"><dt>Học kỳ</dt><dd><c:out value="${activity.semesterCode}" default="—"/> <c:if test="${not empty activity.semesterName}">- <c:out value="${activity.semesterName}"/></c:if></dd></div>
                         <div class="detail-item"><dt>Loại hoạt động</dt><dd><c:out value="${activity.activityTypeCode}" default="—"/> <c:if test="${not empty activity.activityTypeName}">- <c:out value="${activity.activityTypeName}"/></c:if></dd></div>
-                        <div class="detail-item"><dt>Trạng thái hoạt động</dt><dd><span class="badge activity-status"><c:out value="${activity.activityStatus}" default="Chưa xác định"/></span></dd></div>
-                        <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><span class="badge activity-status"><c:out value="${activity.approvalStatus}" default="Chưa xác định"/></span></dd></div>
+                        <div class="detail-item"><dt>Trạng thái hoạt động</dt><dd><span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span></dd></div>
+                        <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><span class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span></dd></div>
                     </dl>
                 </section>
 
@@ -89,8 +97,9 @@
                 <section class="activity-detail-section">
                     <h3>Thời gian, địa điểm và điểm số</h3>
                     <dl class="detail-grid activity-detail-grid">
-                        <div class="detail-item"><dt>Bắt đầu</dt><dd><c:out value="${activity.startTime}" default="Chưa xác định"/></dd></div>
-                        <div class="detail-item"><dt>Kết thúc</dt><dd><c:out value="${activity.endTime}" default="Chưa xác định"/></dd></div>
+                        <div class="detail-item"><dt>Bắt đầu</dt>                        <dd><c:out value="${dt:format(activity.startTime)}" default="Chưa xác định"/></dd></div>
+                                                <div class="detail-item"><dt>Kết thúc</dt><dd><c:out value="${dt:format(activity.endTime)}" default="Chưa xác định"/></dd></div>
+                                                <div class="detail-item"><dt>Bắt buộc điền form</dt><dd><c:out value="${activity.registrationFormRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Điểm thưởng</dt><dd><c:out value="${activity.bonusPoint}" default="—"/></dd></div>
                         <div class="detail-item"><dt>Điểm phạt</dt><dd><c:out value="${activity.penaltyPoint}" default="—"/></dd></div>
                         <div class="detail-item field-wide"><dt>Địa điểm</dt><dd><c:out value="${activity.address}" default="Chưa cập nhật"/></dd></div>
@@ -147,7 +156,7 @@
                                             <td>${loop.index + 1}</td>
                                             <td><strong><c:out value="${ast.staffCode}"/></strong></td>
                                             <td><c:out value="${ast.staffName}"/></td>
-                                            <td><c:out value="${ast.staffStatus}" default="—"/></td>
+                                            <td><span class="badge status-pill ${st:css(ast.staffStatus)}">${st:label(ast.staffStatus)}</span></td>
                                             <td><c:out value="${ast.position}" default="Nhân viên"/></td>
                                             <td><c:out value="${ast.formattedAssignedOn}"/></td>
                                             <c:if test="${canRemoveStaff}">
@@ -255,7 +264,7 @@
                                             <td><c:out value="${aps.partnerStaffName}"/></td>
                                             <td><c:out value="${aps.companyName}" default="—"/></td>
                                             <td><c:out value="${aps.position}" default="—"/></td>
-                                            <td><c:out value="${aps.status}" default="—"/></td>
+                                            <td><span class="badge status-pill ${st:css(aps.status)}">${st:label(aps.status)}</span></td>
                                             <td><c:out value="${aps.formattedAssignedOn}"/></td>
                                             <c:if test="${canManagePartnerStaff}">
                                                 <td style="text-align: right;">
@@ -324,7 +333,7 @@
             </c:if>
 
             <%-- PENDING: duyệt / từ chối --%>
-            <c:if test="${activity.approvalStatus == 'PENDING'}">
+            <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="approve" class="button button-primary">Duyệt</button>
@@ -333,7 +342,7 @@
             </c:if>
 
             <%-- APPROVED (chỉ khi hoạt động chưa diễn ra): hủy duyệt --%>
-            <c:if test="${activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
+            <c:if test="${canApproveActivities && activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="revokeApproval" class="button"
@@ -342,7 +351,7 @@
             </c:if>
 
             <%-- REJECTED: hủy từ chối --%>
-            <c:if test="${activity.approvalStatus == 'REJECTED'}">
+            <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="revokeRejection" class="button"
@@ -351,7 +360,9 @@
             </c:if>
         </div>
     </section>
-</main>
+        </main>
+    </div>
+</div>
 <script>
     (function () {
         var tabBtns = document.querySelectorAll('.activity-tab-btn');

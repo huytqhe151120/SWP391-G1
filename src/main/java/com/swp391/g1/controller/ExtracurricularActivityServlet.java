@@ -196,22 +196,21 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 setActivityManagementPermission(request);
 
                 CurrentUser currentUser = AuthContext.getCurrentUser(request);
-                boolean canAddStaff = activityStaffService.canAssignStaff(id, currentUser);
-                boolean canRemoveStaff = canAddStaff;
-                request.setAttribute("canAddStaff", canAddStaff);
-                request.setAttribute("canRemoveStaff", canRemoveStaff);
+                boolean canAssignStaff = activityStaffService.canAssignStaff(id, currentUser);
+                request.setAttribute("canAddStaff", canAssignStaff);
+                request.setAttribute("canRemoveStaff", canAssignStaff);
                 request.setAttribute("assignedStaffs", activityStaffService.getStaffsByActivityId(id));
-                if (canAddStaff) {
+                if (canAssignStaff) {
                     request.setAttribute("availableStaffs", activityStaffService.getAvailableStaffsForActivity(id));
                 }
-
                 boolean canManagePartnerStaff = activityPartnerStaffService.canAssignPartnerStaff(id, currentUser);
                 request.setAttribute("canManagePartnerStaff", canManagePartnerStaff);
                 request.setAttribute("assignedPartnerStaffs", activityPartnerStaffService.getPartnerStaffsByActivityId(id));
                 if (canManagePartnerStaff) {
                     request.setAttribute("availablePartnerStaffs",
                             activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id));
-                }.forward(request, response);
+                }
+                request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
             }
         }
@@ -303,7 +302,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         try {
             boolean success = activityService.updateActivity(dto);
             if (success) {
-                session.setAttribute("successMessage", "Cập nhật hoạt động thành công!");
+                session.setAttribute("successMessage", "Cập nhật hoạt động thành công! Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần gửi duyệt lại.");
                 response.sendRedirect(request.getContextPath() + "/activities");
             } else {
                 request.setAttribute("errorMessage", "Cập nhật không thành công. Vui lòng kiểm tra lại.");
@@ -448,6 +447,8 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
         request.setAttribute("canManageActivities",
                 AccessPolicy.canManageActivities(currentUser));
+        request.setAttribute("canApproveActivities",
+                AccessPolicy.canReviewActivities(currentUser));
     }
 
     private ExtracurricularActivityRequestDTO buildRequestDTO(HttpServletRequest request) {
@@ -466,6 +467,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         dto.setStartTime(request.getParameter("startTime"));         // Đổi startDateTime -> startTime
         dto.setEndTime(request.getParameter("endTime"));             // Đổi endDateTime -> endTime
         dto.setDescription(request.getParameter("description"));
+        dto.setRegistrationFormRequired(request.getParameter("registrationFormRequired") != null ? "true" : "false");
         return dto;
     }
 

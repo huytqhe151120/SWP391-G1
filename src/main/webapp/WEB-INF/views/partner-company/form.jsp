@@ -1,4 +1,6 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="activeNav" value="partner-companies" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,6 +10,10 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-company.css">
 </head>
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 <main class="page activity-list-page activity-form-page">
     <header class="activity-hero">
         <div class="activity-hero-copy">
@@ -83,7 +89,7 @@
                             <label for="status">Trạng thái</label>
                             <select id="status" name="status">
                                 <option value="ACTIVE" <c:if test="${partnerCompany.status == 'ACTIVE'}">selected</c:if>>Đang hoạt động</option>
-                                <option value="INACTIVE" <c:if test="${partnerCompany.status == 'INACTIVE'}">selected</c:if>>Ngừng hoạt động</option>
+                                <option value="INACTIVE" <c:if test="${partnerCompany.status == 'INACTIVE'}">selected</c:if>>Không hoạt động</option>
                             </select>
                         </div>
                     </c:if>
@@ -99,5 +105,7 @@
         </form>
     </section>
 </main>
+    </div>
+</div>
 </body>
 </html>

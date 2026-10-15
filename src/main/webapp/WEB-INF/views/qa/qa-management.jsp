@@ -1,9 +1,12 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<c:set var="activeNav" value="" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Q&A - SWP391 G1</title>
@@ -227,6 +230,10 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css">
 </head>
 <body class="support-page qa-management-page">
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
 <header class="header">
     <div class="logo">
@@ -333,7 +340,7 @@
                                     <span class="q-author"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#user"/></svg> <c:out value="${q.studentName}"/> (<c:out value="${q.studentCode}"/>)</span>
                                 </c:otherwise>
                             </c:choose>
-                            <span class="q-date"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${q.createdAt}</span>
+                            <span class="q-date"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#clock"/></svg> ${dt:format(q.createdAt)}</span>
                         </div>
                     </a>
                 </c:forEach>
@@ -342,5 +349,7 @@
     </div>
 </main>
 
+    </div>
+</div>
 </body>
 </html>

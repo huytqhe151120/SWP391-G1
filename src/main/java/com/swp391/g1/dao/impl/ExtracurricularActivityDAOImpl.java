@@ -44,6 +44,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setStartTime(startTime == null ? null : startTime.toLocalDateTime());
         Timestamp endTime = rs.getTimestamp("end_time");
         activity.setEndTime(endTime == null ? null : endTime.toLocalDateTime());
+        activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
         return activity;
     }
 
@@ -168,6 +169,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 dto.setStartTime(startTime == null ? null : LocalDateTime.parse(startTime.toLocalDateTime().toString()));
                 Timestamp endTime = rs.getTimestamp("end_time");
                 dto.setEndTime(endTime == null ? null : LocalDateTime.parse(endTime.toLocalDateTime().toString()));
+                dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
 
                 // Thông tin chi tiết JOIN từ các bảng liên quan
                 dto.setSemesterCode(rs.getString("semester_code"));
@@ -212,8 +214,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
                 + "partner_company_id, partner_staff_id, bonus_point, penalty_point, address, description, "
-                + "activity_status, approval_status, activity_type_id, start_time, end_time) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -234,6 +236,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
     @Override
     public boolean update(ExtracurricularActivity activity) {
+        return update(activity, null);
+    }
+
+    @Override
+    public boolean update(ExtracurricularActivity activity, Enum.ApprovalStatus newApprovalStatus) {
         if (activity == null || activity.getId() <= 0) {
             return false;
         }
@@ -241,7 +248,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, bonus_point = ?, penalty_point = ?, "
-                + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ? WHERE id = ?";
+                + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
+                + "registration_form_required = ?"
+                + (newApprovalStatus == null ? "" : ", approval_status = ?") + " WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -267,13 +276,18 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setInt(12, activity.getActivityTypeId());
             ps.setTimestamp(13, activity.getStartTime() == null ? null : Timestamp.valueOf(activity.getStartTime()));
             ps.setTimestamp(14, activity.getEndTime() == null ? null : Timestamp.valueOf(activity.getEndTime()));
-            ps.setInt(15, activity.getId());
+            ps.setBoolean(15, activity.isRegistrationFormRequired());
+            int next = 16;
+            if (newApprovalStatus != null) {
+                ps.setString(next++, newApprovalStatus.name());
+            }
+            ps.setInt(next, activity.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             if (isDuplicateCodeError(e)) {
                 throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
             }
-            throw new IllegalStateException("Failed to update extracurricular activity.", e);
+            throw new IllegalStateException("Failed to update extracurricular activity: " + e.getMessage(), e);
         }
     }
 
@@ -311,6 +325,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         ps.setInt(14, activity.getActivityTypeId());
         ps.setTimestamp(15, activity.getStartTime() == null ? null : Timestamp.valueOf(activity.getStartTime()));
         ps.setTimestamp(16, activity.getEndTime() == null ? null : Timestamp.valueOf(activity.getEndTime()));
+        ps.setBoolean(17, activity.isRegistrationFormRequired());
     }
 
     @Override
@@ -340,7 +355,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setInt(2, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to update approval status.", e);
+            throw new IllegalStateException("Failed to update approval status: " + e.getMessage(), e);
         }
     }
 }

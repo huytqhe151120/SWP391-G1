@@ -72,7 +72,7 @@ public class AnswerDAOImpl implements IAnswerDAO {
     @Override
     public boolean insert(Answer answer) {
         String sql = "INSERT INTO [dbo].[Answer] (question_id, staff_id, content, approval_status, created_at) " +
-                     "VALUES (?, ?, ?, 'DRAFT', GETDATE())";
+                     "VALUES (?, ?, ?, 'DRAFT', CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, answer.getQuestionId());
@@ -87,7 +87,7 @@ public class AnswerDAOImpl implements IAnswerDAO {
     /** Approve/publish an answer */
     @Override
     public boolean publish(int answerId) {
-        String sql = "UPDATE [dbo].[Answer] SET approval_status = 'PUBLISHED', published_at = GETDATE() WHERE id = ?";
+        String sql = "UPDATE [dbo].[Answer] SET approval_status = 'PUBLISHED', published_at = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2) WHERE id = ?";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, answerId);
