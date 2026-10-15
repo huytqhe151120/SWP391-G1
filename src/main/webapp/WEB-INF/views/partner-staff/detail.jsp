@@ -14,6 +14,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
     <div class="activity-app-layout">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <main class="page activity-list-page activity-form-page">
     <header class="activity-hero">
         <div class="activity-hero-copy">
@@ -72,6 +73,7 @@
         </div>
     </section>
 </main>
+        </div>
     </div>
 </div>
 </body>

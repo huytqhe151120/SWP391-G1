@@ -16,6 +16,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
     <div class="activity-app-layout">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <a class="skip-link" href="#inbox-content">Đi đến nội dung chính</a>
 <main class="inbox-page" id="inbox-content">
     <header class="inbox-hero">
@@ -163,6 +164,7 @@
         }
     }
 </script>
+        </div>
     </div>
 </div>
 </body>
