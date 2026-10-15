@@ -64,6 +64,62 @@ public class StaffDAOImpl implements IStaffDAO {
     }
 
     @Override
+    public Staff findByAccountId(int accountId) {
+        if (accountId <= 0) {
+            return null;
+        }
+        String sql = "SELECT * FROM staff WHERE account_id = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapStaff(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find staff by account ID.", e);
+        }
+    }
+
+    @Override
+    public Staff findFirst() {
+        String sql = "SELECT TOP 1 * FROM staff ORDER BY id";
+
+        try (Connection conn = DBContext.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            return rs.next() ? mapStaff(rs) : null;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find a staff record.", e);
+        }
+    }
+
+    @Override
+    public List<Staff> findByDepartmentId(int departmentId) {
+        List<Staff> staffs = new ArrayList<>();
+        String sql = """
+                SELECT s.*
+                FROM staff s
+                JOIN staff_assignment sa ON s.id = sa.staff_id
+                WHERE sa.department_id = ? AND s.status = 'ACTIVE'
+                ORDER BY s.name ASC
+                """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, departmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    staffs.add(mapStaff(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find staff by department ID.", e);
+        }
+        return staffs;
+    }
+
+    @Override
     public Integer insert(Staff staff) {
         String sql = "INSERT INTO staff (code, name, dob, gender, status, account_id) VALUES (?, ?, ?, ?, ?, ?)";
 

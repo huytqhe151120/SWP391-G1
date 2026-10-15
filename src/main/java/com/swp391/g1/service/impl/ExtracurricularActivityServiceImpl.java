@@ -12,7 +12,10 @@ import com.swp391.g1.service.IExtracurricularActivityService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class ExtracurricularActivityServiceImpl implements IExtracurricularActivityService {
 
@@ -60,8 +63,48 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         // Map from RequestDTO to Entity
         ExtracurricularActivity entity = mapToEntity(dto);
         entity.setId(Integer.parseInt(dto.getId()));
-        // Call DAO to update the activity
-        return activityDAO.update(entity);
+        ExtracurricularActivity existing = activityDAO.findById(entity.getId());
+        if (existing != null && !hasContentChanged(existing, entity)) {
+            return true;
+        }
+        // Editing an approved activity invalidates the approval: it goes back to draft atomically.
+        boolean wasApproved = existing != null && existing.getApprovalStatus() == ApprovalStatus.APPROVED;
+        return activityDAO.update(entity, wasApproved ? ApprovalStatus.DRAFT : null);
+    }
+
+    private boolean hasContentChanged(ExtracurricularActivity a, ExtracurricularActivity b) {
+        return a.getSemesterId() != b.getSemesterId()
+                || a.getActivityTypeId() != b.getActivityTypeId()
+                || a.getResponsibleDepartmentId() != b.getResponsibleDepartmentId()
+                || a.getResponsibleStaffId() != b.getResponsibleStaffId()
+                || !Objects.equals(a.getPartnerCompanyId(), b.getPartnerCompanyId())
+                || !Objects.equals(a.getPartnerStaffId(), b.getPartnerStaffId())
+                || a.isRegistrationFormRequired() != b.isRegistrationFormRequired()
+                || !sameText(a.getCode(), b.getCode())
+                || !sameText(a.getCode(), b.getCode())
+                || !sameText(a.getName(), b.getName())
+                || !sameText(a.getAddress(), b.getAddress())
+                || !sameText(a.getDescription(), b.getDescription())
+                || !sameNumber(a.getBonusPoint(), b.getBonusPoint())
+                || !sameNumber(a.getPenaltyPoint(), b.getPenaltyPoint())
+                || !sameMinute(a.getStartTime(), b.getStartTime())
+                || !sameMinute(a.getEndTime(), b.getEndTime());
+    }
+
+    private boolean sameText(String x, String y) {
+        return Objects.equals(x == null ? null : x.trim(), y == null ? null : y.trim());
+    }
+
+    private boolean sameNumber(BigDecimal x, BigDecimal y) {
+        BigDecimal left = x == null ? BigDecimal.ZERO : x;
+        BigDecimal right = y == null ? BigDecimal.ZERO : y;
+        return left.compareTo(right) == 0;
+    }
+
+    private boolean sameMinute(LocalDateTime x, LocalDateTime y) {
+        return Objects.equals(
+                x == null ? null : x.truncatedTo(ChronoUnit.MINUTES),
+                y == null ? null : y.truncatedTo(ChronoUnit.MINUTES));
     }
 
     @Override
@@ -74,43 +117,43 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     private void validateRequestDTO(ExtracurricularActivityRequestDTO dto, boolean isUpdate) throws Exception {
         if (dto == null) {
-            throw new IllegalArgumentException("Invalid request data: ExtracurricularActivityRequestDTO is null.");
+            throw new IllegalArgumentException("Dữ liệu yêu cầu không hợp lệ: ExtracurricularActivityRequestDTO rỗng.");
         }
 
         if (isUpdate && (dto.getId() == null || dto.getId().trim().isEmpty())) {
-            throw new IllegalArgumentException("Invalid activity ID when updating.");
+            throw new IllegalArgumentException("ID hoạt động không hợp lệ khi cập nhật.");
         }
 
         // Validate các trường bắt buộc (Not Null)
         if (isEmpty(dto.getCode())) {
-            throw new IllegalArgumentException("Activity code is required.");
+            throw new IllegalArgumentException("Mã hoạt động không được để trống.");
         }
         String code = dto.getCode().trim();
         int excludedActivityId = isUpdate ? Integer.parseInt(dto.getId()) : 0;
         boolean duplicateCode = activityDAO.findByCode(code).stream()
                 .anyMatch(activity -> activity.getId() != excludedActivityId);
         if (duplicateCode) {
-            throw new IllegalArgumentException("Extracurricular activity with the same code already exists.");
+            throw new IllegalArgumentException("Đã tồn tại hoạt động ngoại khóa với mã này.");
         }
         if (isEmpty(dto.getName())) {
-            throw new IllegalArgumentException("Activity name is required.");
+            throw new IllegalArgumentException("Tên hoạt động không được để trống.");
         }
         if (isEmpty(dto.getSemesterId())) {
-            throw new IllegalArgumentException("Please select a semester.");
+            throw new IllegalArgumentException("Vui lòng chọn học kỳ.");
         }
         if (isEmpty(dto.getActivityTypeId())) {
-            throw new IllegalArgumentException("Please select an activity type.");
+            throw new IllegalArgumentException("Vui lòng chọn loại hoạt động.");
         }
         if (isEmpty(dto.getResponsibleDepartmentId())) {
-            throw new IllegalArgumentException("Please select the responsible department.");
+            throw new IllegalArgumentException("Vui lòng chọn phòng ban phụ trách.");
         }
         if (isEmpty(dto.getResponsibleStaffId())) {
-            throw new IllegalArgumentException("Please select the responsible staff.");
+            throw new IllegalArgumentException("Vui lòng chọn nhân viên phụ trách.");
         }
 
         // Validate ràng buộc đối tác: Chọn nhân viên đối tác thì BẮT BỘC phải chọn công ty đối tác
         if (!isEmpty(dto.getPartnerStaffId()) && isEmpty(dto.getPartnerCompanyId())) {
-            throw new IllegalArgumentException("Please select the partner company before selecting a partner staff.");
+            throw new IllegalArgumentException("Vui lòng chọn công ty đối tác trước khi chọn nhân viên đối tác.");
         }
 
         // Validate điểm không được âm
@@ -118,10 +161,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             try {
                 BigDecimal bonus = new BigDecimal(dto.getBonusPoint());
                 if (bonus.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Bonus points cannot be negative.");
+                    throw new IllegalArgumentException("Điểm thưởng không được âm.");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Bonus points are in an invalid format.");
+                throw new IllegalArgumentException("Điểm thưởng có định dạng không hợp lệ.");
             }
         }
 
@@ -129,25 +172,29 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             try {
                 BigDecimal penalty = new BigDecimal(dto.getPenaltyPoint());
                 if (penalty.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Penalty points cannot be negative.");
+                    throw new IllegalArgumentException("Điểm phạt không được âm.");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Penalty points are in an invalid format.");
+                throw new IllegalArgumentException("Điểm phạt có định dạng không hợp lệ.");
             }
         }
 
-        // Validate khoảng thời gian: StartTime phải trước EndTime
-        if (!isEmpty(dto.getStartTime()) && !isEmpty(dto.getEndTime())) {
-            try {
-                LocalDateTime start = LocalDateTime.parse(dto.getStartTime());
-                LocalDateTime end = LocalDateTime.parse(dto.getEndTime());
+        // Validate khoảng thời gian: bắt buộc nhập, StartTime phải trước EndTime
+        if (isEmpty(dto.getStartTime())) {
+            throw new IllegalArgumentException("Thời gian bắt đầu không được để trống.");
+        }
+        if (isEmpty(dto.getEndTime())) {
+            throw new IllegalArgumentException("Thời gian kết thúc không được để trống.");
+        }
+        try {
+            LocalDateTime start = LocalDateTime.parse(dto.getStartTime().trim());
+            LocalDateTime end = LocalDateTime.parse(dto.getEndTime().trim());
 
-                if (!start.isBefore(end)) {
-                    throw new IllegalArgumentException("The start time must be before the end time.");
-                }
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException("Invalid date/time format.");
+            if (!start.isBefore(end)) {
+                throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
             }
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");
         }
     }
 
@@ -175,16 +222,79 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
         // Convert Thời gian (<input type="datetime-local"> trả về định dạng yyyy-MM-ddTHH:mm)[cite: 1]
         if (!isEmpty(dto.getStartTime())) {
-            entity.setStartTime(LocalDateTime.parse(dto.getStartTime()));
+            entity.setStartTime(LocalDateTime.parse(dto.getStartTime().trim()));
         }
         if (!isEmpty(dto.getEndTime())) {
-            entity.setEndTime(LocalDateTime.parse(dto.getEndTime()));
+            entity.setEndTime(LocalDateTime.parse(dto.getEndTime().trim()));
         }
+        entity.setRegistrationFormRequired("true".equalsIgnoreCase(dto.getRegistrationFormRequired()));
 
         return entity;
     }
 
     private boolean isEmpty(String str) {
         return str == null || str.trim().isEmpty();
+    }
+
+    @Override
+    public boolean submitForApproval(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.PENDING,
+                "Only draft or rejected activities can be submitted for approval.",
+                ApprovalStatus.DRAFT, ApprovalStatus.REJECTED);
+    }
+
+    @Override
+    public boolean approveActivity(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.APPROVED,
+                "Only activities pending approval can be approved.",
+                ApprovalStatus.PENDING);
+    }
+
+    @Override
+    public boolean rejectActivity(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.REJECTED,
+                "Only activities pending approval can be rejected.",
+                ApprovalStatus.PENDING);
+    }
+
+    @Override
+    public boolean revokeApproval(int id) {
+        if (id <= 0) {
+            return false;
+        }
+        ExtracurricularActivity activity = activityDAO.findById(id);
+        if (activity == null) {
+            return false;
+        }
+        if (activity.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            throw new IllegalArgumentException("Chỉ có thể hủy duyệt hoạt động đã được duyệt.");
+        }
+        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+            throw new IllegalArgumentException(
+                    "Không thể hủy duyệt vì hoạt động đã diễn ra, đã kết thúc hoặc đã bị hủy.");
+        }
+        return activityDAO.updateApprovalStatus(id, ApprovalStatus.PENDING);
+    }
+
+    @Override
+    public boolean revokeRejection(int id) {
+        return changeApprovalStatus(id, ApprovalStatus.PENDING,
+                "Chỉ có thể hủy từ chối hoạt động đang ở trạng thái bị từ chối.",
+                ApprovalStatus.REJECTED);
+    }
+
+    private boolean changeApprovalStatus(int id, ApprovalStatus target,
+                                         String errorMessage, ApprovalStatus... allowedFrom) {
+        if (id <= 0) {
+            return false;
+        }
+        ExtracurricularActivity activity = activityDAO.findById(id);
+        if (activity == null) {
+            return false;
+        }
+        if (!Arrays.asList(allowedFrom).contains(activity.getApprovalStatus())) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return activityDAO.updateApprovalStatus(id, target);
     }
 }

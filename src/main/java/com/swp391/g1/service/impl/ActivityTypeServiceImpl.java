@@ -72,27 +72,27 @@ public class ActivityTypeServiceImpl implements IActivityTypeService {
     // Validate the business logic of ActivityType entity
     private void validateActivityType(ActivityType entity, boolean isUpdate) throws Exception {
         if (entity == null) {
-            throw new IllegalArgumentException("Activity type cannot be null.");
+            throw new IllegalArgumentException("Loại hoạt động không được để trống.");
         }
 
         if (isUpdate && entity.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid activity type ID when updating.");
+            throw new IllegalArgumentException("ID loại hoạt động không hợp lệ khi cập nhật.");
         }
 
         if (entity.getCode() == null || entity.getCode().trim().isEmpty()) {
-            throw new IllegalArgumentException("Activity type code cannot be empty.");
+            throw new IllegalArgumentException("Mã loại hoạt động không được để trống.");
         }
 
         if (entity.getName() == null || entity.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Activity type name cannot be empty.");
+            throw new IllegalArgumentException("Tên loại hoạt động không được để trống.");
         }
 
         if (entity.getBonusPoint() != null && entity.getBonusPoint().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Activity type bonus point cannot be negative.");
+            throw new IllegalArgumentException("Điểm thưởng của loại hoạt động không được âm.");
         }
 
         if (entity.getPenaltyPoint() != null && entity.getPenaltyPoint().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Activity type penalty point cannot be negative.");
+            throw new IllegalArgumentException("Điểm phạt của loại hoạt động không được âm.");
         }
     }
 }

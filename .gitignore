@@ -48,3 +48,11 @@ desktop.ini
 application-local.properties
 application-local.yml
 src/main/resources/ConnectDB.properties
+
+# ------------------------------------------------------------------
+# NetBeans
+# ------------------------------------------------------------------
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/

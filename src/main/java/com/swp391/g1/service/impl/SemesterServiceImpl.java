@@ -55,25 +55,25 @@ public class SemesterServiceImpl implements ISemesterService {
 
     private void validateSemester(Semester semester, boolean isUpdate) {
         if (semester == null) {
-            throw new IllegalArgumentException("Semester cannot be null.");
+            throw new IllegalArgumentException("Học kỳ không được để trống.");
         }
         if (isUpdate && semester.getId() <= 0) {
-            throw new IllegalArgumentException("Invalid semester ID when updating.");
+            throw new IllegalArgumentException("ID học kỳ không hợp lệ khi cập nhật.");
         }
         if (isEmpty(semester.getCode())) {
-            throw new IllegalArgumentException("Semester code cannot be empty.");
+            throw new IllegalArgumentException("Mã học kỳ không được để trống.");
         }
         if (isEmpty(semester.getName())) {
-            throw new IllegalArgumentException("Semester name cannot be empty.");
+            throw new IllegalArgumentException("Tên học kỳ không được để trống.");
         }
         if ((semester.getTimeStart() == null) != (semester.getTimeEnd() == null)) {
-            throw new IllegalArgumentException("Semester start and end times must both be provided or both be empty.");
+            throw new IllegalArgumentException("Thời gian bắt đầu và kết thúc học kỳ phải cùng được cung cấp hoặc cùng để trống.");
         }
         if (semester.getTimeStart() != null && !semester.getTimeStart().isBefore(semester.getTimeEnd())) {
-            throw new IllegalArgumentException("Semester start time must be before end time.");
+            throw new IllegalArgumentException("Thời gian bắt đầu học kỳ phải trước thời gian kết thúc.");
         }
         if (isUpdate && semester.getStatus() == null) {
-            throw new IllegalArgumentException("Semester status cannot be empty when updating.");
+            throw new IllegalArgumentException("Trạng thái học kỳ không được để trống khi cập nhật.");
         }
     }
 

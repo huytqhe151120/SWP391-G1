@@ -1,14 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="activeNav" value="partner-staff" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nhân viên đối tác | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
 </head>
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <main class="page activity-list-page">
     <header class="activity-hero">
         <div class="activity-hero-copy">
@@ -16,10 +22,13 @@
             <h1>Nhân viên đối tác</h1>
             <p>Quản lý thông tin và công ty của các nhân viên đối tác.</p>
         </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs?action=create">
-            <span class="plus-icon" aria-hidden="true">+</span>
-            Thêm nhân viên
-        </a>
+        <div class="account-hero-actions">
+            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
+            <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs?action=create">
+                <span class="plus-icon" aria-hidden="true">+</span>
+                Thêm nhân viên
+            </a>
+        </div>
     </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
@@ -94,7 +103,7 @@
                                     <span class="badge ${staff.status == 'ACTIVE' ? 'partner-company-active' : 'partner-company-inactive'}">
                                         <c:choose>
                                             <c:when test="${staff.status == 'ACTIVE'}">Đang hoạt động</c:when>
-                                            <c:otherwise>Ngừng hoạt động</c:otherwise>
+                                            <c:otherwise>Không hoạt động</c:otherwise>
                                         </c:choose>
                                     </span>
                                 </td>
@@ -116,5 +125,8 @@
         </div>
     </section>
 </main>
+        </div>
+    </div>
+</div>
 </body>
 </html>

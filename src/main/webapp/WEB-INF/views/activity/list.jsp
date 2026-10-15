@@ -1,26 +1,38 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="st" uri="http://swp391.g1/status" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hoạt động ngoại khóa | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
 </head>
 <body>
-<main class="page activity-list-page">
-    <header class="activity-hero">
-        <div class="activity-hero-copy">
-            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
-            <h1>Hoạt động ngoại khóa</h1>
-            <p>Theo dõi và quản lý các hoạt động ngoại khóa của trường tại một nơi.</p>
-        </div>
-        <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
-            <span class="plus-icon" aria-hidden="true">+</span>
-            Tạo hoạt động
-        </a>
-    </header>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <main class="page activity-list-page">
+            <header class="activity-hero">
+                <div class="activity-hero-copy">
+                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
+                    <h1>Hoạt động ngoại khóa</h1>
+                    <p>Theo dõi và quản lý các hoạt động ngoại khóa của trường tại một nơi.</p>
+                </div>
+                <div class="account-hero-actions">
+                    <c:if test="${canManageActivities}">
+                        <a class="button button-primary activity-create-button" href="${pageContext.request.contextPath}/activities?action=create">
+                            <span class="plus-icon" aria-hidden="true">+</span>
+                            Tạo hoạt động
+                        </a>
+                    </c:if>
+                </div>
+            </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
         <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
@@ -54,7 +66,8 @@
                     <th scope="col">Loại hoạt động</th>
                     <th scope="col">Đơn vị phụ trách</th>
                     <th scope="col">Thời gian</th>
-                    <th scope="col">Trạng thái</th>
+                    <th scope="col">Trạng thái hoạt động</th>
+                    <th scope="col">Trạng thái duyệt</th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
@@ -62,11 +75,18 @@
                 <c:choose>
                     <c:when test="${empty activities}">
                     <tr>
-                        <td class="empty-state activity-empty-state" colspan="8">
+                        <td class="empty-state activity-empty-state" colspan="9">
                             <span class="empty-state-mark" aria-hidden="true">+</span>
                             <strong>Chưa có hoạt động nào</strong>
-                            <span>Tạo hoạt động mới để bắt đầu quản lý danh sách.</span>
-                            <a class="button button-primary" href="${pageContext.request.contextPath}/activities?action=create">Tạo hoạt động đầu tiên</a>
+                            <c:choose>
+                                <c:when test="${canManageActivities}">
+                                    <span>Tạo hoạt động mới để bắt đầu quản lý danh sách.</span>
+                                    <a class="button button-primary" href="${pageContext.request.contextPath}/activities?action=create">Tạo hoạt động đầu tiên</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <span>Hiện chưa có hoạt động nào được ghi nhận.</span>
+                                </c:otherwise>
+                            </c:choose>
                         </td>
                     </tr>
                     </c:when>
@@ -83,20 +103,52 @@
                                 <td class="activity-time">
                                     <c:choose>
                                         <c:when test="${not empty activity.startTime}">
-                                            <c:out value="${activity.startTime}"/>
-                                            <c:if test="${not empty activity.endTime}"><span>đến</span><c:out value="${activity.endTime}"/></c:if>
+                                            ${dt:format(activity.startTime)}
+                                            <c:if test="${not empty activity.endTime}"><span>đến</span>${dt:format(activity.endTime)}</c:if>
                                         </c:when>
                                         <c:otherwise>Chưa xác định</c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td><span class="badge activity-status"><c:out value="${activity.activityStatus}" default="Chưa xác định"/></span></td>
+                                <td><span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span></td>
+                                <td><span class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span></td>
                                 <td>
                                     <div class="actions activity-actions">
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
-                                        <a class="activity-action-link activity-action-delete"
-                                           href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
-                                           onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                        <c:if test="${canManageActivities}">
+                                            <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
+                                            <a class="activity-action-link activity-action-delete"
+                                               href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
+                                               onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                        </c:if>
+                                        <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="submit" class="button button-primary button-sm">Gửi duyệt</button>
+                                            </form>
+                                        </c:if>
+                                        <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="approve" class="button button-primary button-sm">Duyệt</button>
+                                                <button type="submit" name="action" value="reject" class="button button-sm">Từ chối</button>
+                                            </form>
+                                        </c:if>
+                                        <c:if test="${canApproveActivities && activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="revokeApproval"
+                                                        class="button button-sm"
+                                                        onclick="return confirm('Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?');">Hủy duyệt</button>
+                                            </form>
+                                        </c:if>
+                                        <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
+                                            <form action="${pageContext.request.contextPath}/activity/approval" method="post">
+                                                <input type="hidden" name="id" value="${activity.id}">
+                                                <button type="submit" name="action" value="revokeRejection"
+                                                        class="button button-sm"
+                                                        onclick="return confirm('Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?');">Hủy từ chối</button>
+                                            </form>
+                                        </c:if>
                                     </div>
                                 </td>
                             </tr>
@@ -107,6 +159,28 @@
             </table>
         </div>
     </section>
-</main>
+        </main>
+    </div>
+</div>
+<script>
+    (function () {
+        function syncActionsColumnWidth() {
+            var table = document.querySelector('.activity-table-wrap table');
+            if (!table) {
+                return;
+            }
+            var cells = table.querySelectorAll('tr td:nth-child(9), tr th:nth-child(9)');
+            var maxWidth = 0;
+            cells.forEach(function (cell) {
+                maxWidth = Math.max(maxWidth, cell.getBoundingClientRect().width);
+            });
+            if (maxWidth > 0) {
+                table.style.setProperty('--activity-actions-col-width', maxWidth + 'px');
+            }
+        }
+        window.addEventListener('load', syncActionsColumnWidth);
+        window.addEventListener('resize', syncActionsColumnWidth);
+    })();
+</script>
 </body>
 </html>

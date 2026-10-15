@@ -1,31 +1,40 @@
 <%@ page pageEncoding="UTF-8" %>
+<%--@elvariable id="formData" type="com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO"--%>
+<%--@elvariable id="activity" type="com.swp391.g1.model.ExtracurricularActivity"--%>
+<c:set var="activeNav" value="activities" scope="request"/>
 <c:set var="semesterValue" value="${not empty formData ? formData.semesterId : activity.semesterId}"/>
 <c:set var="typeValue" value="${not empty formData ? formData.activityTypeId : activity.activityTypeId}"/>
 <c:set var="departmentValue" value="${not empty formData ? formData.responsibleDepartmentId : activity.responsibleDepartmentId}"/>
 <c:set var="staffValue" value="${not empty formData ? formData.responsibleStaffId : activity.responsibleStaffId}"/>
 <c:set var="companyValue" value="${not empty formData ? formData.partnerCompanyId : activity.partnerCompanyId}"/>
 <c:set var="partnerStaffValue" value="${not empty formData ? formData.partnerStaffId : activity.partnerStaffId}"/>
+<c:set var="registrationValue" value="${not empty formData ? formData.registrationFormRequired == 'true' : activity.registrationFormRequired}"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${isEdit}">Cập nhật hoạt động</c:when><c:otherwise>Tạo hoạt động</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
 </head>
 <body>
-<main class="page activity-list-page activity-form-page">
-    <header class="activity-hero">
-        <div class="activity-hero-copy">
-            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
-            <h1><c:choose><c:when test="${isEdit}">Cập nhật hoạt động</c:when><c:otherwise>Tạo hoạt động mới</c:otherwise></c:choose></h1>
-            <p>Điền thông tin để quản lý và theo dõi hoạt động ngoại khóa.</p>
-        </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
-            <span aria-hidden="true">←</span>
-            Danh sách hoạt động
-        </a>
-    </header>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <main class="page activity-list-page activity-form-page">
+            <header class="activity-hero">
+                <div class="activity-hero-copy">
+                    <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
+                    <h1><c:choose><c:when test="${isEdit}">Cập nhật hoạt động</c:when><c:otherwise>Tạo hoạt động mới</c:otherwise></c:choose></h1>
+                    <p>Điền thông tin để quản lý và theo dõi hoạt động ngoại khóa.</p>
+                </div>
+                <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
+                    <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
+                    Danh sách hoạt động
+                </a>
+            </header>
 
     <c:if test="${not empty errorMessage}">
         <div class="alert alert-error activity-alert"><c:out value="${errorMessage}"/></div>
@@ -38,7 +47,8 @@
                 <p>Các trường có dấu <span class="required-mark">*</span> là bắt buộc</p>
             </div>
         </div>
-        <form method="post" action="${pageContext.request.contextPath}/activities">
+        <form method="post" action="${pageContext.request.contextPath}/activities"
+              <c:if test="${isEdit and activity.approvalStatus == 'APPROVED'}">onsubmit="return confirm('Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần gửi duyệt lại. Bạn có chắc chắn muốn cập nhật thông tin hoạt động?');"</c:if>>
             <input type="hidden" name="action" value="${isEdit ? 'update' : 'create'}">
             <c:if test="${isEdit}">
                 <input type="hidden" name="id" value="${activity.id}">
@@ -145,14 +155,14 @@
             </div>
             <div class="form-grid activity-form-grid">
                 <div class="field">
-                    <label for="startTime">Thời gian bắt đầu</label>
-                    <input id="startTime" name="startTime" type="datetime-local" step="1"
-                           value="<c:out value='${not empty formData ? formData.startTime : activity.startTime}'/>">
+                    <label for="startTime">Thời gian bắt đầu <span class="required-mark">*</span></label>
+                    <input id="startTime" name="startTime" type="datetime-local" lang="en-GB" required
+                           value="<c:out value='${not empty formData ? formData.startTime : dt:formatInput(activity.startTime)}'/>">
                 </div>
                 <div class="field">
-                    <label for="endTime">Thời gian kết thúc</label>
-                    <input id="endTime" name="endTime" type="datetime-local" step="1"
-                           value="<c:out value='${not empty formData ? formData.endTime : activity.endTime}'/>">
+                    <label for="endTime">Thời gian kết thúc <span class="required-mark">*</span></label>
+                    <input id="endTime" name="endTime" type="datetime-local" lang="en-GB" required
+                           value="<c:out value='${not empty formData ? formData.endTime : dt:formatInput(activity.endTime)}'/>">
                 </div>
                 <div class="field field-wide">
                     <label for="address">Địa điểm</label>
@@ -162,7 +172,7 @@
             </div>
 
             <div class="activity-form-section">
-                <h3>Điểm và mô tả</h3>
+                <h3>Cấu hình và mô tả</h3>
                 <p>Cấu hình điểm thưởng, điểm phạt và thông tin bổ sung.</p>
             </div>
             <div class="form-grid activity-form-grid">
@@ -179,6 +189,13 @@
                            value="<c:out value='${not empty formData ? formData.penaltyPoint : activity.penaltyPoint}'/>">
                 </div>
                 <div class="field field-wide">
+                    <label class="checkbox-inline" for="registrationFormRequired">
+                        <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true"
+                               <c:if test="${registrationValue}">checked</c:if>>
+                        <span>Bắt buộc điền form</span>
+                    </label>
+                </div>
+                <div class="field field-wide">
                     <label for="description">Mô tả</label>
                     <textarea id="description" name="description"><c:out value="${not empty formData ? formData.description : activity.description}"/></textarea>
                 </div>
@@ -193,7 +210,9 @@
             </div>
         </form>
     </section>
-</main>
+        </main>
+    </div>
+</div>
 <script>
     (() => {
         const companySelect = document.getElementById("partnerCompanyId");

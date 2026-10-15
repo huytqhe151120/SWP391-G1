@@ -1,16 +1,34 @@
 <%@ page pageEncoding="UTF-8" %>
+<%--@elvariable id="formData" type="com.swp391.g1.dto.request.PartnerStaffRequestDTO"--%>
+<%--@elvariable id="partnerStaff" type="com.swp391.g1.model.PartnerStaff"--%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="selectedCompany" value="${not empty formData ? formData.companyId : partnerStaff.companyId}"/>
 <c:set var="selectedGender" value="${not empty formData ? formData.gender : (partnerStaff.gender == null ? '' : (partnerStaff.gender ? '1' : '0'))}"/>
 <c:set var="selectedStatus" value="${not empty formData ? formData.status : partnerStaff.status}"/>
+<c:choose>
+    <c:when test="${not empty formData.dob}">
+        <c:set var="dobValue" value="${formData.dob}"/>
+    </c:when>
+    <c:when test="${not empty partnerStaff.dob}">
+        <c:set var="dobValue" value="${fn:substring(partnerStaff.dob, 8, 10)}-${fn:substring(partnerStaff.dob, 5, 7)}-${fn:substring(partnerStaff.dob, 0, 4)}"/>
+    </c:when>
+</c:choose>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="activeNav" value="partner-staff" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${isEdit}">Cập nhật nhân viên</c:when><c:otherwise>Thêm nhân viên đối tác</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
 </head>
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <main class="page activity-list-page activity-form-page">
     <header class="activity-hero">
         <div class="activity-hero-copy">
@@ -19,7 +37,7 @@
             <p>Nhập thông tin nhân viên và công ty đối tác liên quan.</p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách nhân viên
         </a>
     </header>
@@ -78,8 +96,10 @@
                     </div>
                     <div class="field">
                         <label for="dob">Ngày sinh</label>
-                        <input id="dob" name="dob" type="date"
-                               value="<c:out value='${not empty formData ? formData.dob : partnerStaff.dob}'/>">
+                        <input id="dob" name="dob" type="text" inputmode="numeric" maxlength="10"
+                               pattern="(?:0[1-9]|[12][0-9]|3[01])-(?:0[1-9]|1[0-2])-[0-9]{4}"
+                               placeholder="dd-mm-yyyy" title="Nhập ngày theo định dạng dd-mm-yyyy"
+                               value="<c:out value='${dobValue}'/>">
                     </div>
                     <div class="field">
                         <label for="gender">Giới tính</label>
@@ -94,7 +114,7 @@
                             <label for="status">Trạng thái</label>
                             <select id="status" name="status">
                                 <option value="ACTIVE" <c:if test="${selectedStatus == 'ACTIVE'}">selected</c:if>>Đang hoạt động</option>
-                                <option value="INACTIVE" <c:if test="${selectedStatus == 'INACTIVE'}">selected</c:if>>Ngừng hoạt động</option>
+                                <option value="INACTIVE" <c:if test="${selectedStatus == 'INACTIVE'}">selected</c:if>>Không hoạt động</option>
                             </select>
                         </div>
                     </c:if>
@@ -110,5 +130,8 @@
         </form>
     </section>
 </main>
+        </div>
+    </div>
+</div>
 </body>
 </html>

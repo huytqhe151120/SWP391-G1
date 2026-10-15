@@ -9,11 +9,15 @@ import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.IPartnerStaffService;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.ResolverStyle;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class PartnerStaffServiceImpl implements IPartnerStaffService {
 
+    private static final DateTimeFormatter DISPLAY_DATE_FORMAT =
+            DateTimeFormatter.ofPattern("dd-MM-uuuu").withResolverStyle(ResolverStyle.STRICT);
     private final IPartnerStaffDAO partnerStaffDAO;
 
     public PartnerStaffServiceImpl() {
@@ -126,9 +130,9 @@ public class PartnerStaffServiceImpl implements IPartnerStaffService {
 
         if (!isEmpty(dto.getDob())) {
             try {
-                LocalDate.parse(dto.getDob());
+                parseDob(dto.getDob());
             } catch (java.time.format.DateTimeParseException e) {
-                throw new IllegalArgumentException("Ngày sinh không hợp lệ.");
+                throw new IllegalArgumentException("Ngày sinh phải có định dạng dd-mm-yyyy.");
             }
         }
 
@@ -152,7 +156,7 @@ public class PartnerStaffServiceImpl implements IPartnerStaffService {
         entity.setCompanyId(Integer.parseInt(dto.getCompanyId()));
         entity.setCode(dto.getCode().trim());
         entity.setName(dto.getName().trim());
-        entity.setDob(isEmpty(dto.getDob()) ? null : LocalDate.parse(dto.getDob()));
+        entity.setDob(isEmpty(dto.getDob()) ? null : parseDob(dto.getDob()));
         entity.setGender(isEmpty(dto.getGender()) ? null
                 : dto.getGender().equals("1") || dto.getGender().equalsIgnoreCase("true"));
         entity.setPosition(isEmpty(dto.getPosition()) ? null : dto.getPosition().trim());
@@ -161,5 +165,13 @@ public class PartnerStaffServiceImpl implements IPartnerStaffService {
 
     private boolean isEmpty(String str) {
         return str == null || str.trim().isEmpty();
+    }
+
+    private LocalDate parseDob(String value) {
+        value = value.trim();
+        if (value.matches("\\d{2}-\\d{2}-\\d{4}")) {
+            return LocalDate.parse(value, DISPLAY_DATE_FORMAT);
+        }
+        return LocalDate.parse(value);
     }
 }

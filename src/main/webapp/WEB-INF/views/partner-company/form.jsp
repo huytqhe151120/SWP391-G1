@@ -1,13 +1,20 @@
 <%@ page pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:set var="activeNav" value="partner-companies" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${isEdit}">Cập nhật công ty đối tác</c:when><c:otherwise>Thêm công ty đối tác</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-company.css">
 </head>
 <body>
+<div class="activity-app-shell">
+    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <div class="activity-app-layout">
+        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <main class="page activity-list-page activity-form-page">
     <header class="activity-hero">
         <div class="activity-hero-copy">
@@ -16,7 +23,7 @@
             <p>Nhập thông tin liên hệ và thông tin quản lý của công ty.</p>
         </div>
         <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies">
-            <span aria-hidden="true">←</span>
+            <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách công ty
         </a>
     </header>
@@ -83,7 +90,7 @@
                             <label for="status">Trạng thái</label>
                             <select id="status" name="status">
                                 <option value="ACTIVE" <c:if test="${partnerCompany.status == 'ACTIVE'}">selected</c:if>>Đang hoạt động</option>
-                                <option value="INACTIVE" <c:if test="${partnerCompany.status == 'INACTIVE'}">selected</c:if>>Ngừng hoạt động</option>
+                                <option value="INACTIVE" <c:if test="${partnerCompany.status == 'INACTIVE'}">selected</c:if>>Không hoạt động</option>
                             </select>
                         </div>
                     </c:if>
@@ -99,5 +106,8 @@
         </form>
     </section>
 </main>
+        </div>
+    </div>
+</div>
 </body>
 </html>
