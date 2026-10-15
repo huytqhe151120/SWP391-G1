@@ -238,6 +238,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
     <div class="activity-app-layout">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 
 <header class="header">
     <div class="logo">
@@ -381,6 +382,7 @@
     }
 </script>
 
+        </div>
     </div>
 </div>
 </body>

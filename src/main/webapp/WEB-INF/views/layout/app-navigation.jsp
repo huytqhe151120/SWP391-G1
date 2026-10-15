@@ -1,9 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <header class="activity-app-header">
     <a class="activity-brand" href="${pageContext.request.contextPath}/home">
-        <span class="activity-brand-mark" aria-hidden="true">SW</span>
+        <img class="activity-brand-logo" src="${pageContext.request.contextPath}/assets/images/logo-negative.svg" alt="" width="48" height="48">
         <span class="activity-brand-copy">
-            <strong>SWP391-G1</strong>
+            <strong>G1 UNIVERSITY / EAMS</strong>
             <span>Hệ thống quản lý hoạt động ngoại khóa</span>
         </span>
     </a>
