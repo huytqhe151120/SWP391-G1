@@ -18,6 +18,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
     <div class="activity-app-layout">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 <header class="topbar">
     <a class="brand" href="${pageContext.request.contextPath}/home">
         <span class="brand-mark" aria-hidden="true">Q</span>
@@ -126,6 +127,7 @@
         </section>
     </div>
 </main>
+        </div>
     </div>
 </div>
 </body>

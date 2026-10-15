@@ -48,6 +48,14 @@
     font-weight: 700;
 }
 
+.activity-brand-logo {
+    display: block;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    object-fit: contain;
+}
+
 .activity-brand-copy {
     display: grid;
     gap: 2px;
@@ -181,6 +189,58 @@
 .activity-app-layout .page {
     width: 100%;
     margin: 0;
+}
+/* Embedded content area: keeps legacy pages inside the shell column */
+.activity-app-main {
+    min-width: 0;
+}
+
+.activity-app-layout .activity-app-main > .page,
+.activity-app-layout .activity-app-main > .inbox-page,
+.activity-app-layout .activity-app-main > .qa-page,
+.activity-app-layout .activity-app-main > .container,
+.activity-app-layout .activity-app-main > .student-list-page,
+.activity-app-layout .activity-app-main > .staff-list-page,
+.activity-app-layout .activity-app-main > .chat-wrapper {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+.activity-app-layout .activity-app-main > .inbox-page,
+.activity-app-layout .activity-app-main > .qa-page,
+.activity-app-layout .activity-app-main > .container {
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.support-page .activity-app-main > .header,
+.support-page .activity-app-main > .topbar {
+    position: static !important;
+    width: 100% !important;
+    margin: 0 0 24px !important;
+}
+
+.student-chat-page .activity-app-main,
+.organizer-chat-page .activity-app-main {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 160px);
+    min-height: 520px;
+}
+
+.student-chat-page .activity-app-main > .chat-wrapper,
+.organizer-chat-page .activity-app-main > .chat-wrapper {
+    flex: 1;
+    min-height: 0;
+    padding: 0 !important;
+}
+
+.student-chat-page,
+.organizer-chat-page {
+    display: block !important;
+    height: auto !important;
 }
 
 /* Activity list */

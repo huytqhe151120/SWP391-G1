@@ -15,6 +15,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
     <div class="activity-app-layout">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
     <main class="page">
         <section class="card">
             <h1>SWP391-G1</h1>
@@ -40,6 +41,7 @@
             </form>
         </section>
     </main>
+        </div>
     </div>
 </div>
 </body>

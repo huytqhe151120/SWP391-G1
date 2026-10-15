@@ -19,6 +19,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
     <div class="activity-app-layout">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <div class="activity-app-main">
 
 <div class="page staff-list-page">
 
@@ -302,6 +303,7 @@
 <!-- ================= JAVASCRIPT ================= -->
 <script src="${pageContext.request.contextPath}/assets/js/staff.js"></script>
 
+        </div>
     </div>
 </div>
 </body>
