@@ -1105,7 +1105,6 @@ button.activity-action-link:focus-visible {
     gap: 0.5rem;
     margin: 0;
     font-weight: 400;
-    cursor: pointer;
 }
 
 .checkbox-inline input[type="checkbox"] {
@@ -1113,6 +1112,11 @@ button.activity-action-link:focus-visible {
     height: 16px;
     margin: 0;
     padding: 0;
+    cursor: pointer;
+}
+
+.checkbox-inline label {
+    margin: 0;
     cursor: pointer;
 }
 
