@@ -4,6 +4,7 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
+import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.*;
 import com.swp391.g1.service.impl.*;
 import com.swp391.g1.util.AuthContext;
@@ -19,7 +20,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
-@WebServlet(name = "ExtracurricularActivityServlet", urlPatterns = {"/activities"})
+@WebServlet(name = "ExtracurricularActivityServlet",
+        urlPatterns = {"/activities", "/activities/staffs-by-department"})
 public class ExtracurricularActivityServlet extends HttpServlet {
 
     private final IExtracurricularActivityService activityService;
@@ -70,6 +72,15 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        if ("/activities/staffs-by-department".equals(request.getServletPath())) {
+            try {
+                getStaffsByDepartmentJson(request, response);
+            } catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+            return;
+        }
+
         String action = request.getParameter("action");
         if (action == null || action.trim().isEmpty()) {
             action = "list";
@@ -91,6 +102,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                     break;
                 case "getStaffsByCompany":
                     getStaffsByCompanyJson(request, response);
+                    break;
+                case "getStaffsByDepartment":
+                    getStaffsByDepartmentJson(request, response);
                     break;
                 case "list":
                 default:
@@ -158,7 +172,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        loadDropdownData(request);
+        ExtracurricularActivityRequestDTO formData =
+                (ExtracurricularActivityRequestDTO) request.getAttribute("formData");
+        loadDropdownData(request, parseId(formData == null ? null : formData.getResponsibleDepartmentId()));
         request.getRequestDispatcher("/WEB-INF/views/activity/create.jsp").forward(request, response);
     }
 
@@ -170,7 +186,12 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             ExtracurricularActivityResponseDTO activity = activityService.getActivityById(id);
             if (activity != null) {
                 request.setAttribute("activity", activity);
-                loadDropdownData(request);
+                ExtracurricularActivityRequestDTO formData =
+                        (ExtracurricularActivityRequestDTO) request.getAttribute("formData");
+                int departmentId = formData == null
+                        ? activity.getResponsibleDepartmentId()
+                        : parseId(formData.getResponsibleDepartmentId());
+                loadDropdownData(request, departmentId);
 
                 // Nạp trước danh sách nhân viên đối tác nếu đã chọn Công ty đối tác
                 if (activity.getPartnerCompanyId() > 0) {
@@ -263,6 +284,38 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
         try (PrintWriter out = response.getWriter()) {
             out.print(json.toString());
+            out.flush();
+        }
+    }
+
+    private void getStaffsByDepartmentJson(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String departmentIdValue = request.getParameter("departmentId");
+        int departmentId = parseId(departmentIdValue);
+        if (departmentId <= 0) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Đơn vị phụ trách không hợp lệ.");
+            return;
+        }
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        StringBuilder json = new StringBuilder("[");
+        List<Staff> staffs = staffService.getStaffsByDepartmentId(departmentId);
+        for (int i = 0; i < staffs.size(); i++) {
+            Staff staff = staffs.get(i);
+            json.append("{")
+                    .append("\"id\":").append(staff.getId()).append(",")
+                    .append("\"code\":\"").append(escapeJson(staff.getCode())).append("\",")
+                    .append("\"name\":\"").append(escapeJson(staff.getName())).append("\"")
+                    .append("}");
+            if (i < staffs.size() - 1) {
+                json.append(",");
+            }
+        }
+        json.append("]");
+
+        try (PrintWriter out = response.getWriter()) {
+            out.print(json);
             out.flush();
         }
     }
@@ -435,12 +488,23 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     // HELPER METHODS
     // =========================================================================
 
-    private void loadDropdownData(HttpServletRequest request) {
+    private void loadDropdownData(HttpServletRequest request, int departmentId) {
         request.setAttribute("semesters", semesterService.getAllSemesters());
         request.setAttribute("activityTypes", activityTypeService.getActiveActivityTypes());
         request.setAttribute("departments", departmentService.getAllDepartments());
-        request.setAttribute("staffs", staffService.getAllStaffs());
+        request.setAttribute("staffs", staffService.getStaffsByDepartmentId(departmentId));
         request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
+    }
+
+    private int parseId(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private void setActivityManagementPermission(HttpServletRequest request) {

@@ -1,360 +1,186 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.querySelectorAll("a[data-confirm]").forEach(function (link) {
+    link.addEventListener("click", function (event) {
+        if (!window.confirm(link.dataset.confirm)) {
+            event.preventDefault();
+        }
+    });
+});
 
-    // ==================================================
-    // 1. SEARCH + FILTER ACTIVITY
-    // ==================================================
+document.querySelectorAll("button[data-confirm]").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+        if (!window.confirm(button.dataset.confirm)) {
+            event.preventDefault();
+        }
+    });
+});
 
-    const searchInput =
-        document.getElementById("activitySearch");
+document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+    form.addEventListener("submit", function (event) {
+        if (!window.confirm(form.dataset.confirm)) {
+            event.preventDefault();
+        }
+    });
+});
 
-    const activityStatusFilter =
-        document.getElementById("activityStatusFilter");
+(function () {
+    var departmentSelect = document.getElementById("responsibleDepartmentId");
+    var responsibleStaffSelect = document.getElementById("responsibleStaffId");
+    var message = document.getElementById("responsibleStaffMessage");
+    if (!departmentSelect || !responsibleStaffSelect || !message) {
+        return;
+    }
 
-    const approvalStatusFilter =
-        document.getElementById("approvalStatusFilter");
+    var requestVersion = 0;
+    var endpoint = departmentSelect.dataset.staffEndpoint;
 
-    const rows =
-        document.querySelectorAll(".activity-row");
+    async function loadDepartmentStaff() {
+        var departmentId = departmentSelect.value;
+        var currentRequest = ++requestVersion;
+        responsibleStaffSelect.replaceChildren(new Option("-- Chọn nhân viên --", ""));
+        responsibleStaffSelect.disabled = !departmentId;
+        message.textContent = "";
+        if (!departmentId) {
+            responsibleStaffSelect.options[0].textContent = "-- Chọn đơn vị phụ trách trước --";
+            return;
+        }
 
-    const emptyMessage =
-        document.getElementById("activityEmptyState");
-
-
-    function filterActivities() {
-
-        const keyword =
-            searchInput
-                ? searchInput.value.trim().toLowerCase()
-                : "";
-
-        const activityStatus =
-            activityStatusFilter
-                ? activityStatusFilter.value.toLowerCase()
-                : "";
-
-        const approvalStatus =
-            approvalStatusFilter
-                ? approvalStatusFilter.value.toLowerCase()
-                : "";
-
-
-        let visibleCount = 0;
-
-
-        rows.forEach(function (row) {
-
-            const rowText =
-                row.textContent.toLowerCase();
-
-            const rowActivityStatus =
-                (row.dataset.activityStatus || "")
-                    .toLowerCase();
-
-            const rowApprovalStatus =
-                (row.dataset.approvalStatus || "")
-                    .toLowerCase();
-
-
-            const matchKeyword =
-                keyword === "" ||
-                rowText.includes(keyword);
-
-
-            const matchActivityStatus =
-                activityStatus === "" ||
-                rowActivityStatus === activityStatus;
-
-
-            const matchApprovalStatus =
-                approvalStatus === "" ||
-                rowApprovalStatus === approvalStatus;
-
-
-            const visible =
-                matchKeyword &&
-                matchActivityStatus &&
-                matchApprovalStatus;
-
-
-            row.style.display =
-                visible ? "" : "none";
-
-
-            if (visible) {
-                visibleCount++;
+        var url = new URL(endpoint, document.baseURI);
+        url.searchParams.set("action", "getStaffsByDepartment");
+        url.searchParams.set("departmentId", departmentId);
+        try {
+            var response = await fetch(url.toString());
+            if (!response.ok) {
+                throw new Error("Không thể tải danh sách nhân sự của đơn vị.");
             }
-        });
-
-
-        if (emptyMessage) {
-
-            emptyMessage.style.display =
-                visibleCount === 0
-                    ? ""
-                    : "none";
+            if (!response.headers.get("content-type")?.includes("application/json")) {
+                throw new Error("Máy chủ không trả về dữ liệu nhân sự dạng JSON. Hãy tải lại ứng dụng.");
+            }
+            var staffs = await response.json();
+            if (currentRequest !== requestVersion) {
+                return;
+            }
+            staffs.forEach(function (staff) {
+                responsibleStaffSelect.add(new Option(staff.code + " - " + staff.name, staff.id));
+            });
+        } catch (error) {
+            if (currentRequest === requestVersion) {
+                responsibleStaffSelect.replaceChildren(new Option("Không tải được danh sách nhân sự.", ""));
+                message.textContent = error.message;
+            }
         }
     }
 
+    departmentSelect.addEventListener("change", loadDepartmentStaff);
+})();
 
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "input",
-            filterActivities
-        );
+(function () {
+    var table = document.querySelector(".activity-list-page .activity-table-wrap table");
+    if (!table) {
+        return;
     }
 
+    function syncStickyColumnWidths() {
+        var actionsCells = table.querySelectorAll("tr td:nth-child(9), tr th:nth-child(9)");
+        var approvalCells = table.querySelectorAll("tr td:nth-child(8), tr th:nth-child(8)");
+        var actionsWidth = 0;
+        var approvalWidth = 0;
 
-    if (activityStatusFilter) {
-
-        activityStatusFilter.addEventListener(
-            "change",
-            filterActivities
-        );
+        actionsCells.forEach(function (cell) {
+            actionsWidth = Math.max(actionsWidth, cell.getBoundingClientRect().width);
+        });
+        approvalCells.forEach(function (cell) {
+            approvalWidth = Math.max(approvalWidth, cell.getBoundingClientRect().width);
+        });
+        if (actionsWidth > 0 && approvalWidth > 0) {
+            table.style.setProperty("--activity-actions-col-width", actionsWidth + "px");
+            table.style.setProperty("--activity-approval-col-width", approvalWidth + "px");
+        }
     }
 
+    window.addEventListener("load", syncStickyColumnWidths);
+    window.addEventListener("resize", syncStickyColumnWidths);
+})();
 
-    if (approvalStatusFilter) {
-
-        approvalStatusFilter.addEventListener(
-            "change",
-            filterActivities
-        );
+(function () {
+    var companySelect = document.getElementById("partnerCompanyId");
+    var staffSelect = document.getElementById("partnerStaffId");
+    var message = document.getElementById("partnerStaffMessage");
+    if (!companySelect || !staffSelect || !message) {
+        return;
     }
 
-
-    // ==================================================
-    // 2. DELETE
-    // ==================================================
-
-    document
-        .querySelectorAll(".delete-form")
-        .forEach(function (form) {
-
-            form.addEventListener(
-                "submit",
-                function (event) {
-
-                    const confirmed =
-                        confirm(
-                            "Bạn có chắc chắn muốn xóa hoạt động này không?"
-                        );
-
-
-                    if (!confirmed) {
-
-                        event.preventDefault();
-                    }
-                }
-            );
-        });
-
-
-    // ==================================================
-    // 3. APPROVE
-    // ==================================================
-
-    document
-        .querySelectorAll(".approve-form")
-        .forEach(function (form) {
-
-            form.addEventListener(
-                "submit",
-                function (event) {
-
-                    const confirmed =
-                        confirm(
-                            "Bạn có chắc chắn muốn phê duyệt hoạt động này không?"
-                        );
-
-
-                    if (!confirmed) {
-
-                        event.preventDefault();
-                    }
-                }
-            );
-        });
-
-
-    // ==================================================
-    // 4. REJECT
-    // ==================================================
-
-    document
-        .querySelectorAll(".reject-form")
-        .forEach(function (form) {
-
-            form.addEventListener(
-                "submit",
-                function (event) {
-
-                    const noteInput =
-                        form.querySelector(".reject-note");
-
-
-                    let note =
-                        noteInput
-                            ? noteInput.value.trim()
-                            : "";
-
-
-                    // Nếu chưa nhập lý do
-                    if (note === "") {
-
-                        note =
-                            prompt(
-                                "Nhập lý do từ chối:"
-                            );
-
-
-                        // Cancel prompt
-                        if (note === null) {
-
-                            event.preventDefault();
-
-                            return;
-                        }
-
-
-                        note = note.trim();
-
-
-                        if (note === "") {
-
-                            alert(
-                                "Vui lòng nhập lý do từ chối."
-                            );
-
-                            event.preventDefault();
-
-                            return;
-                        }
-
-
-                        if (noteInput) {
-
-                            noteInput.value = note;
-                        }
-                    }
-
-
-                    const confirmed =
-                        confirm(
-                            "Bạn có chắc chắn muốn từ chối hoạt động này không?"
-                        );
-
-
-                    if (!confirmed) {
-
-                        event.preventDefault();
-                    }
-                }
-            );
-        });
-
-
-    // ==================================================
-    // 5. PARTNER -> PARTNER STAFF
-    // ==================================================
-
-    const partnerSelect =
-        document.getElementById("partnerId");
-
-    const partnerStaffSelect =
-        document.getElementById(
-            "partnerStaffId"
-        );
-
-
-    if (
-        partnerSelect &&
-        partnerStaffSelect
-    ) {
-
-        const contextPath =
-            document.body.dataset.contextPath || "";
-
-
-        partnerSelect.addEventListener(
-            "change",
-            async function () {
-
-                const partnerId =
-                    this.value;
-
-
-                partnerStaffSelect.innerHTML =
-                    '<option value="">-- Chọn partner staff --</option>';
-
-
-                if (!partnerId) {
-
-                    return;
-                }
-
-
-                try {
-
-                    const response =
-                        await fetch(
-                            contextPath +
-                            "/partner-staff?action=options&partnerId=" +
-                            encodeURIComponent(partnerId)
-                        );
-
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            "Cannot load partner staff"
-                        );
-                    }
-
-
-                    const staffList =
-                        await response.json();
-
-
-                    staffList.forEach(
-                        function (staff) {
-
-                            const option =
-                                document.createElement(
-                                    "option"
-                                );
-
-
-                            option.value =
-                                staff.id;
-
-
-                            option.textContent =
-                                staff.fullName +
-                                (
-                                    staff.position
-                                        ? " - " +
-                                        staff.position
-                                        : ""
-                                );
-
-
-                            partnerStaffSelect
-                                .appendChild(
-                                    option
-                                );
-                        }
-                    );
-
-                } catch (error) {
-
-                    console.error(error);
-
-
-                    partnerStaffSelect.innerHTML =
-                        '<option value="">Không tải được partner staff</option>';
-                }
+    var selectedStaffId = staffSelect.dataset.selected;
+    var endpoint = staffSelect.dataset.staffEndpoint;
+
+    async function loadPartnerStaff() {
+        var companyId = companySelect.value;
+        staffSelect.replaceChildren(new Option("-- Không có --", ""));
+        staffSelect.disabled = !companyId;
+        message.textContent = "";
+        if (!companyId) {
+            return;
+        }
+
+        var url = new URL(endpoint, document.baseURI);
+        url.searchParams.set("action", "getStaffsByCompany");
+        url.searchParams.set("companyId", companyId);
+        try {
+            var response = await fetch(url.toString());
+            if (!response.ok) {
+                throw new Error("Không thể tải danh sách nhân viên đối tác.");
             }
-        );
+            var staffs = await response.json();
+            staffs.forEach(function (staff) {
+                var option = new Option(staff.name, staff.id);
+                if (String(staff.id) === selectedStaffId) {
+                    option.selected = true;
+                }
+                staffSelect.add(option);
+            });
+        } catch (error) {
+            message.textContent = error.message;
+        }
     }
-});
+
+    companySelect.addEventListener("change", function () {
+        selectedStaffId = "";
+        loadPartnerStaff();
+    });
+    if (companySelect.value) {
+        loadPartnerStaff();
+    }
+})();
+
+(function () {
+    var tabButtons = document.querySelectorAll(".activity-tab-btn");
+    var tabPanes = document.querySelectorAll(".activity-tab-pane");
+    if (!tabButtons.length || !tabPanes.length) {
+        return;
+    }
+
+    function switchTab(targetId) {
+        tabButtons.forEach(function (button) {
+            var isMatch = button.getAttribute("data-tab") === targetId;
+            button.classList.toggle("active", isMatch);
+            button.setAttribute("aria-selected", isMatch ? "true" : "false");
+        });
+        tabPanes.forEach(function (pane) {
+            pane.classList.toggle("active", pane.id === targetId);
+        });
+    }
+
+    tabButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            var tabId = button.getAttribute("data-tab");
+            switchTab(tabId);
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, "#" + tabId);
+            }
+        });
+    });
+
+    var currentHash = window.location.hash.slice(1);
+    if (["tab-staff", "tab-info", "tab-partner"].indexOf(currentHash) !== -1) {
+        switchTab(currentHash);
+    }
+})();

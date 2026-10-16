@@ -64,7 +64,7 @@
                     <th scope="col">Tên hoạt động</th>
                     <th scope="col">Học kỳ</th>
                     <th scope="col">Loại hoạt động</th>
-                    <th scope="col">Đơn vị phụ trách</th>
+                    <th scope="col">Đơn vị phụ trách chính</th>
                     <th scope="col">Thời gian</th>
                     <th scope="col">Trạng thái hoạt động</th>
                     <th scope="col">Trạng thái duyệt HĐ</th>
@@ -119,7 +119,7 @@
                                                 <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
                                                 <a class="activity-action-link activity-action-delete"
                                                    href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
-                                                   onclick="return confirm('Bạn có chắc muốn xóa hoạt động này?');">Xóa</a>
+                                                   data-confirm="Bạn có chắc muốn xóa hoạt động này?">Xóa</a>
                                             </c:if>
                                         </div>
                                         <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
@@ -140,7 +140,7 @@
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeApproval"
                                                         class="button button-sm"
-                                                        onclick="return confirm('Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?');">Hủy duyệt</button>
+                                                        data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                                             </form>
                                         </c:if>
                                         <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
@@ -148,7 +148,7 @@
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeRejection"
                                                         class="button button-sm"
-                                                        onclick="return confirm('Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?');">Hủy từ chối</button>
+                                                        data-confirm="Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?">Hủy từ chối</button>
                                             </form>
                                         </c:if>
                                     </div>
@@ -164,31 +164,6 @@
         </main>
     </div>
 </div>
-<script>
-    (function () {
-        function syncStickyColumnWidths() {
-            var table = document.querySelector('.activity-list-page .activity-table-wrap table');
-            if (!table) {
-                return;
-            }
-            var actionsCells = table.querySelectorAll('tr td:nth-child(9), tr th:nth-child(9)');
-            var approvalCells = table.querySelectorAll('tr td:nth-child(8), tr th:nth-child(8)');
-            var actionsWidth = 0;
-            var approvalWidth = 0;
-            actionsCells.forEach(function (cell) {
-                actionsWidth = Math.max(actionsWidth, cell.getBoundingClientRect().width);
-            });
-            approvalCells.forEach(function (cell) {
-                approvalWidth = Math.max(approvalWidth, cell.getBoundingClientRect().width);
-            });
-            if (actionsWidth > 0 && approvalWidth > 0) {
-                table.style.setProperty('--activity-actions-col-width', actionsWidth + 'px');
-                table.style.setProperty('--activity-approval-col-width', approvalWidth + 'px');
-            }
-        }
-        window.addEventListener('load', syncStickyColumnWidths);
-        window.addEventListener('resize', syncStickyColumnWidths);
-    })();
-</script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261016-1"></script>
 </body>
 </html>

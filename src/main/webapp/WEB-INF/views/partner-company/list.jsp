@@ -97,7 +97,7 @@
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/partner-companies?action=edit&amp;id=${company.id}">Sửa</a>
                                         <a class="activity-action-link activity-action-delete"
                                            href="${pageContext.request.contextPath}/partner-companies?action=delete&amp;id=${company.id}"
-                                           onclick="return confirm('Bạn có chắc muốn xóa công ty đối tác này?');">Xóa</a>
+                                           data-confirm="Bạn có chắc muốn xóa công ty đối tác này?">Xóa</a>
                                     </div>
                                 </td>
                             </tr>
@@ -112,5 +112,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/partner-company.js"></script>
 </body>
 </html>

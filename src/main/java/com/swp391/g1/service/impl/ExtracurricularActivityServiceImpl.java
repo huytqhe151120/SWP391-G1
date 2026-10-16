@@ -2,6 +2,8 @@ package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.IExtracurricularActivityDAO;
+import com.swp391.g1.dao.IActivityStaffDAO;
+import com.swp391.g1.dao.impl.ActivityStaffDAOImpl;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum.ActivityStatus;
@@ -20,9 +22,11 @@ import java.util.Objects;
 public class ExtracurricularActivityServiceImpl implements IExtracurricularActivityService {
 
     private final IExtracurricularActivityDAO activityDAO;
+    private final IActivityStaffDAO activityStaffDAO;
 
     public ExtracurricularActivityServiceImpl() {
         this.activityDAO = new ExtracurricularActivityDAOImpl();
+        this.activityStaffDAO = new ActivityStaffDAOImpl();
     }
 
     @Override
@@ -150,6 +154,13 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (isEmpty(dto.getResponsibleStaffId())) {
             throw new IllegalArgumentException("Vui lòng chọn nhân viên phụ trách.");
         }
+        int responsibleDepartmentId = parseRequiredId(
+                dto.getResponsibleDepartmentId(), "Đơn vị phụ trách không hợp lệ.");
+        int responsibleStaffId = parseRequiredId(
+                dto.getResponsibleStaffId(), "Nhân viên phụ trách không hợp lệ.");
+        if (!activityStaffDAO.isStaffInDepartment(responsibleStaffId, responsibleDepartmentId)) {
+            throw new IllegalArgumentException("Nhân viên phụ trách phải thuộc đơn vị phụ trách đã chọn.");
+        }
 
         // Validate ràng buộc đối tác: Chọn nhân viên đối tác thì BẮT BỘC phải chọn công ty đối tác
         if (!isEmpty(dto.getPartnerStaffId()) && isEmpty(dto.getPartnerCompanyId())) {
@@ -196,6 +207,18 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");
         }
+    }
+
+    private int parseRequiredId(String value, String errorMessage) {
+        try {
+            int id = Integer.parseInt(value.trim());
+            if (id > 0) {
+                return id;
+            }
+        } catch (NumberFormatException ignored) {
+            // Report invalid form IDs as validation errors.
+        }
+        throw new IllegalArgumentException(errorMessage);
     }
 
     private ExtracurricularActivity mapToEntity(ExtracurricularActivityRequestDTO dto) {

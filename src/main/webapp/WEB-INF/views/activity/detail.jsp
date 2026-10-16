@@ -56,7 +56,7 @@
                 Thông tin chi tiết hoạt động
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-staff" data-tab="tab-staff" role="tab" aria-selected="false" aria-controls="tab-staff">
-                Nhân sự phụ trách
+                Nhân sự đồng phụ trách
                 <c:if test="${not empty assignedStaffs}">
                     <span class="activity-tab-badge"><c:out value="${assignedStaffs.size()}"/></span>
                 </c:if>
@@ -87,7 +87,7 @@
                 <section class="activity-detail-section">
                     <h3>Phụ trách và đối tác</h3>
                     <dl class="detail-grid activity-detail-grid">
-                        <div class="detail-item"><dt>Đơn vị phụ trách</dt><dd><c:out value="${activity.responsibleDepartmentCode}" default="—"/> <c:if test="${not empty activity.responsibleDepartmentName}">- <c:out value="${activity.responsibleDepartmentName}"/></c:if></dd></div>
+                        <div class="detail-item"><dt>Đơn vị phụ trách chính</dt><dd><c:out value="${activity.responsibleDepartmentCode}" default="—"/> <c:if test="${not empty activity.responsibleDepartmentName}">- <c:out value="${activity.responsibleDepartmentName}"/></c:if></dd></div>
                         <div class="detail-item"><dt>Nhân viên phụ trách chính</dt><dd><c:out value="${activity.responsibleStaffCode}" default="—"/> <c:if test="${not empty activity.responsibleStaffName}">- <c:out value="${activity.responsibleStaffName}"/></c:if></dd></div>
                         <div class="detail-item"><dt>Công ty đối tác</dt><dd><c:out value="${activity.partnerCompanyName}" default="Không có"/></dd></div>
                         <div class="detail-item"><dt>Nhân viên đối tác phụ trách chính</dt><dd><c:out value="${activity.partnerStaffName}" default="Không có"/></dd></div>
@@ -113,9 +113,13 @@
                 <section class="activity-detail-section" style="grid-column: 1 / -1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div>
-                            <h3 style="margin: 0;">Danh sách nhân sự phụ trách</h3>
+                            <h3 style="margin: 0;">Danh sách nhân sự đồng phụ trách</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Các nhân sự thuộc phòng ban phụ trách (<c:out value="${activity.responsibleDepartmentName}" default="${activity.responsibleDepartmentCode}"/>) tham gia điều phối hoạt động.
+                                Các nhân sự thuộc phòng ban phụ trách tham gia điều phối hoạt động.
+                            </p>
+                            <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
+                                Nhân sự phụ trách chính: <strong><c:out value="${activity.responsibleStaffName}" default="Chưa có"/></strong>
+                                - Đơn vị: <c:out value="${activity.responsibleDepartmentName}" default="Không có"/>
                             </p>
                         </div>
                         <span class="activity-count">
@@ -162,7 +166,7 @@
                                             <c:if test="${canRemoveStaff}">
                                                 <td style="text-align: right;">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
-                                                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy phân công nhân sự này?');">
+                                                      data-confirm="Bạn có chắc chắn muốn hủy phân công nhân sự này?">
                                                     <input type="hidden" name="action" value="unassignStaff">
                                                     <input type="hidden" name="activityId" value="${activity.id}">
                                                     <input type="hidden" name="staffId" value="${ast.staffId}">
@@ -224,7 +228,10 @@
                         <div>
                             <h3 style="margin: 0;">Danh sách nhân sự đối tác phụ trách</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Nhân sự đối tác chính: <strong><c:out value="${activity.partnerStaffName}" default="Chưa có"/></strong>
+                                Các nhân sự của đối tác tham gia điều phối hoạt động.
+                            </p>
+                            <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
+                                Nhân sự phụ trách chính của đối tác: <strong><c:out value="${activity.partnerStaffName}" default="Chưa có"/></strong>
                                 — Công ty: <c:out value="${activity.partnerCompanyName}" default="Không có"/>
                             </p>
                         </div>
@@ -269,7 +276,7 @@
                                             <c:if test="${canManagePartnerStaff}">
                                                 <td style="text-align: right;">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
-                                                          onsubmit="return confirm('Bạn có chắc chắn muốn gỡ nhân sự đối tác này?');">
+                                                          data-confirm="Bạn có chắc chắn muốn gỡ nhân sự đối tác này?">
                                                         <input type="hidden" name="action" value="unassignPartnerStaff">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="partnerStaffId" value="${aps.partnerStaffId}">
@@ -346,7 +353,7 @@
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="revokeApproval" class="button"
-                            onclick="return confirm('Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?');">Hủy duyệt</button>
+                            data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                 </form>
             </c:if>
 
@@ -355,7 +362,7 @@
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="revokeRejection" class="button"
-                            onclick="return confirm('Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?');">Hủy từ chối</button>
+                            data-confirm="Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?">Hủy từ chối</button>
                 </form>
             </c:if>
         </div>
@@ -363,38 +370,6 @@
         </main>
     </div>
 </div>
-<script>
-    (function () {
-        var tabBtns = document.querySelectorAll('.activity-tab-btn');
-        var tabPanes = document.querySelectorAll('.activity-tab-pane');
-
-        function switchTab(targetId) {
-            tabBtns.forEach(function (btn) {
-                var isMatch = btn.getAttribute('data-tab') === targetId;
-                btn.classList.toggle('active', isMatch);
-                btn.setAttribute('aria-selected', isMatch ? 'true' : 'false');
-            });
-            tabPanes.forEach(function (pane) {
-                pane.classList.toggle('active', pane.id === targetId);
-            });
-        }
-
-        tabBtns.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                var tabId = this.getAttribute('data-tab');
-                switchTab(tabId);
-                if (window.history && window.history.replaceState) {
-                    window.history.replaceState(null, null, '#' + tabId);
-                }
-            });
-        });
-
-        // Tự động mở tab dựa trên hash URL (ví dụ #tab-staff khi vừa submit xong phân công)
-        var currentHash = window.location.hash.replace('#', '');
-        if (currentHash === 'tab-staff' || currentHash === 'tab-info' || currentHash === 'tab-partner') {
-            switchTab(currentHash);
-        }
-    })();
-</script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261016-1"></script>
 </body>
 </html>
