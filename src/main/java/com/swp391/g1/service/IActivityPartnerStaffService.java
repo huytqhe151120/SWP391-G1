@@ -7,9 +7,9 @@ import com.swp391.g1.model.PartnerStaff;
 import java.util.List;
 
 public interface IActivityPartnerStaffService {
-    List<ActivityPartnerStaffResponseDTO> getPartnerStaffsByActivityId(int activityId);
+    List<ActivityPartnerStaffResponseDTO> getPartnerStaffsByActivityId(int activityId, CurrentUser user);
 
-    List<PartnerStaff> getAvailablePartnerStaffsForActivity(int activityId);
+    List<PartnerStaff> getAvailablePartnerStaffsForActivity(int activityId, CurrentUser user);
 
     boolean canAssignPartnerStaff(int activityId, CurrentUser user);
 

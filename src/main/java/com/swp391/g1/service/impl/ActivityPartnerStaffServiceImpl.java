@@ -1,19 +1,19 @@
 package com.swp391.g1.service.impl;
 
+import com.swp391.g1.dao.IActivityCollaborationInvitationDAO;
 import com.swp391.g1.dao.IActivityPartnerStaffDAO;
-import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dao.IPartnerStaffDAO;
+import com.swp391.g1.dao.impl.ActivityCollaborationInvitationDAOImpl;
 import com.swp391.g1.dao.impl.ActivityPartnerStaffDAOImpl;
-import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.impl.PartnerStaffDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityPartnerStaffResponseDTO;
 import com.swp391.g1.model.Enum;
-import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityPartnerStaffService;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,63 +21,82 @@ import java.util.stream.Collectors;
 public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffService {
 
     private final IActivityPartnerStaffDAO activityPartnerStaffDAO;
-    private final IExtracurricularActivityDAO activityDAO;
+    private final IActivityCollaborationInvitationDAO invitationDAO;
     private final IPartnerStaffDAO partnerStaffDAO;
 
     public ActivityPartnerStaffServiceImpl() {
         this.activityPartnerStaffDAO = new ActivityPartnerStaffDAOImpl();
-        this.activityDAO = new ExtracurricularActivityDAOImpl();
+        this.invitationDAO = new ActivityCollaborationInvitationDAOImpl();
         this.partnerStaffDAO = new PartnerStaffDAOImpl();
     }
 
     @Override
-    public List<ActivityPartnerStaffResponseDTO> getPartnerStaffsByActivityId(int activityId) {
-        return activityId <= 0 ? List.of() : activityPartnerStaffDAO.findByActivityId(activityId);
+    public List<ActivityPartnerStaffResponseDTO> getPartnerStaffsByActivityId(int activityId, CurrentUser user) {
+        if (activityId <= 0) {
+            return List.of();
+        }
+        List<ActivityPartnerStaffResponseDTO> all = activityPartnerStaffDAO.findByActivityId(activityId);
+        if (user == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
+            return all;
+        }
+        // Partner staff only see the assigned staff of their own company.
+        PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
+        if (me == null) {
+            return List.of();
+        }
+        return all.stream().filter(s -> s.getCompanyId() == me.getCompanyId()).collect(Collectors.toList());
+    }
+
+    /**
+     * Companies of the activity (accepted invitations) that the user may manage staff for:
+     * the invited main staff, or a leader/secretary, of that company.
+     */
+    private Set<Integer> manageableCompanyIds(int activityId, CurrentUser user) {
+        if (activityId <= 0 || user == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
+            return Set.of();
+        }
+        PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
+        if (me == null) {
+            return Set.of();
+        }
+        boolean leader = AccessPolicy.canAssignPartnerStaffToActivity(user);
+        return invitationDAO.findByActivityId(activityId).stream()
+                .filter(i -> IActivityCollaborationInvitationDAO.APPROVED.equalsIgnoreCase(i.getApprovalStatus()))
+                .filter(i -> i.getPartnerCompanyId() == me.getCompanyId())
+                .filter(i -> leader || (i.getPartnerStaffId() != null && i.getPartnerStaffId() == me.getId()))
+                .map(i -> i.getPartnerCompanyId())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<Integer> mainStaffIds(int activityId) {
+        return invitationDAO.findByActivityId(activityId).stream()
+                .filter(i -> IActivityCollaborationInvitationDAO.APPROVED.equalsIgnoreCase(i.getApprovalStatus()))
+                .map(i -> i.getPartnerStaffId())
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
     }
 
     @Override
-    public List<PartnerStaff> getAvailablePartnerStaffsForActivity(int activityId) {
-        ExtracurricularActivity activity = activityId <= 0 ? null : activityDAO.findById(activityId);
-        if (activity == null || activity.getPartnerCompanyId() == null) {
+    public List<PartnerStaff> getAvailablePartnerStaffsForActivity(int activityId, CurrentUser user) {
+        Set<Integer> companyIds = manageableCompanyIds(activityId, user);
+        if (companyIds.isEmpty()) {
             return List.of();
         }
-        Set<Integer> assignedIds = activityPartnerStaffDAO.findByActivityId(activityId).stream()
+        Set<Integer> excluded = new HashSet<>(activityPartnerStaffDAO.findByActivityId(activityId).stream()
                 .map(ActivityPartnerStaffResponseDTO::getPartnerStaffId)
-                .collect(Collectors.toSet());
-        Integer mainId = activity.getPartnerStaffId();
+                .collect(Collectors.toSet()));
+        excluded.addAll(mainStaffIds(activityId));
 
-        return partnerStaffDAO.findByCompany(activity.getPartnerCompanyId()).stream()
+        return companyIds.stream()
+                .flatMap(companyId -> partnerStaffDAO.findByCompany(companyId).stream())
                 .filter(s -> s.getStatus() == Enum.CommonStatus.ACTIVE)
-                .filter(s -> mainId == null || s.getId() != mainId)
-                .filter(s -> !assignedIds.contains(s.getId()))
+                .filter(s -> !excluded.contains(s.getId()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public boolean canAssignPartnerStaff(int activityId, CurrentUser user) {
-        if (activityId <= 0 || user == null) {
-            return false;
-        }
-        ExtracurricularActivity activity = activityDAO.findById(activityId);
-        if (activity == null) {
-            return false;
-        }
-        if (!"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
-            return false;
-        }
-        Integer mainId = activity.getPartnerStaffId();
-        if (mainId != null) {
-            PartnerStaff main = partnerStaffDAO.findById(mainId);
-            if (main != null && main.getAccountId() != null && main.getAccountId() == user.getId()) {
-                return true;
-            }
-        }
-        // Leader/secretary must belong to the partner company of the activity.
-        if (!AccessPolicy.canAssignPartnerStaffToActivity(user) || activity.getPartnerCompanyId() == null) {
-            return false;
-        }
-        return partnerStaffDAO.findByCompany(activity.getPartnerCompanyId()).stream()
-                .anyMatch(s -> s.getAccountId() != null && s.getAccountId() == user.getId());
+        return !manageableCompanyIds(activityId, user).isEmpty();
     }
 
     @Override
@@ -85,23 +104,23 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
         if (activityId <= 0 || partnerStaffId <= 0) {
             throw new IllegalArgumentException("Thông tin phân công không hợp lệ.");
         }
-        if (!canAssignPartnerStaff(activityId, user)) {
+        Set<Integer> companyIds = manageableCompanyIds(activityId, user);
+        if (companyIds.isEmpty()) {
             throw new SecurityException("Bạn không có quyền phân công nhân sự đối tác vào hoạt động này.");
-        }
-        ExtracurricularActivity activity = activityDAO.findById(activityId);
-        if (activity == null) {
-            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
         }
         PartnerStaff staff = partnerStaffDAO.findById(partnerStaffId);
         if (staff == null) {
             throw new IllegalArgumentException("Không tìm thấy nhân sự đối tác được chọn.");
         }
-        if (activity.getPartnerStaffId() != null && partnerStaffId == activity.getPartnerStaffId()) {
+        if (staff.getStatus() != Enum.CommonStatus.ACTIVE) {
+            throw new IllegalArgumentException("Nhân sự đối tác được chọn không còn hoạt động.");
+        }
+        if (mainStaffIds(activityId).contains(partnerStaffId)) {
             throw new IllegalArgumentException(
                     "Nhân sự đối tác phụ trách chính không được thêm vào danh sách nhân sự đối tác của hoạt động.");
         }
-        if (activity.getPartnerCompanyId() == null || staff.getCompanyId() != activity.getPartnerCompanyId()) {
-            throw new IllegalArgumentException("Nhân sự đối tác phải thuộc công ty đối tác của hoạt động.");
+        if (!companyIds.contains(staff.getCompanyId())) {
+            throw new IllegalArgumentException("Nhân sự đối tác phải thuộc công ty đối tác của bạn trong hoạt động.");
         }
         if (activityPartnerStaffDAO.exists(activityId, partnerStaffId)) {
             throw new IllegalArgumentException("Nhân sự đối tác này đã được phân công vào hoạt động.");
@@ -111,7 +130,11 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
 
     @Override
     public boolean removePartnerStaff(int activityId, int partnerStaffId, CurrentUser user) {
-        if (activityId <= 0 || partnerStaffId <= 0 || !canAssignPartnerStaff(activityId, user)) {
+        if (activityId <= 0 || partnerStaffId <= 0) {
+            return false;
+        }
+        PartnerStaff staff = partnerStaffDAO.findById(partnerStaffId);
+        if (staff == null || !manageableCompanyIds(activityId, user).contains(staff.getCompanyId())) {
             return false;
         }
         return activityPartnerStaffDAO.delete(activityId, partnerStaffId);

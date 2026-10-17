@@ -23,7 +23,6 @@
             <p>Quản lý thông tin liên hệ và trạng thái các đơn vị đồng hành.</p>
         </div>
         <div class="account-hero-actions">
-            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
             <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies?action=create">
                 <span class="plus-icon" aria-hidden="true">+</span>
                 Thêm công ty
@@ -98,7 +97,7 @@
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/partner-companies?action=edit&amp;id=${company.id}">Sửa</a>
                                         <a class="activity-action-link activity-action-delete"
                                            href="${pageContext.request.contextPath}/partner-companies?action=delete&amp;id=${company.id}"
-                                           onclick="return confirm('Bạn có chắc muốn xóa công ty đối tác này?');">Xóa</a>
+                                           data-confirm="Bạn có chắc muốn xóa công ty đối tác này?">Xóa</a>
                                     </div>
                                 </td>
                             </tr>
@@ -113,5 +112,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/partner-company.js"></script>
 </body>
 </html>

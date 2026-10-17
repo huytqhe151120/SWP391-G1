@@ -90,6 +90,20 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
     }
 
     @Override
+    public PartnerStaff findByAccountId(int accountId) {
+        String sql = "SELECT * FROM partner_staff WHERE account_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapPartnerStaff(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find partner staff by account.", e);
+        }
+    }
+
+    @Override
     public List<PartnerStaffResponseDTO> findAllWithDetails() {
         List<PartnerStaffResponseDTO> list = new ArrayList<>();
 

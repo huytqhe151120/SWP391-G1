@@ -9,5 +9,6 @@ public interface IPartnerStaffDAO extends IGenericDAO<PartnerStaff, Integer> {
     List<PartnerStaff> findByCode(String code);
     List<PartnerStaff> findByCommonStatus(Enum.CommonStatus status);
     List<PartnerStaff> findByCompany(int companyId);
+    PartnerStaff findByAccountId(int accountId);
     List<PartnerStaffResponseDTO> findAllWithDetails();
 }

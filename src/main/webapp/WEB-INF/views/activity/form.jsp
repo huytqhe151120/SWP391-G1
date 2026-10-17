@@ -6,8 +6,6 @@
 <c:set var="typeValue" value="${not empty formData ? formData.activityTypeId : activity.activityTypeId}"/>
 <c:set var="departmentValue" value="${not empty formData ? formData.responsibleDepartmentId : activity.responsibleDepartmentId}"/>
 <c:set var="staffValue" value="${not empty formData ? formData.responsibleStaffId : activity.responsibleStaffId}"/>
-<c:set var="companyValue" value="${not empty formData ? formData.partnerCompanyId : activity.partnerCompanyId}"/>
-<c:set var="partnerStaffValue" value="${not empty formData ? formData.partnerStaffId : activity.partnerStaffId}"/>
 <c:set var="registrationValue" value="${not empty formData ? formData.registrationFormRequired == 'true' : activity.registrationFormRequired}"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -48,7 +46,7 @@
             </div>
         </div>
         <form method="post" action="${pageContext.request.contextPath}/activities"
-              <c:if test="${isEdit and activity.approvalStatus == 'APPROVED'}">onsubmit="return confirm('Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần gửi duyệt lại. Bạn có chắc chắn muốn cập nhật thông tin hoạt động?');"</c:if>>
+              <c:if test="${isEdit and activity.approvalStatus == 'APPROVED'}">data-confirm="Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần gửi duyệt lại. Bạn có chắc chắn muốn cập nhật thông tin hoạt động?"</c:if>>
             <input type="hidden" name="action" value="${isEdit ? 'update' : 'create'}">
             <c:if test="${isEdit}">
                 <input type="hidden" name="id" value="${activity.id}">
@@ -95,13 +93,14 @@
             </div>
 
             <div class="activity-form-section">
-                <h3>Phụ trách và đối tác</h3>
-                <p>Chọn đơn vị, nhân viên tổ chức và thông tin đối tác nếu có.</p>
+                <h3>Phụ trách chính</h3>
+                <p>Chọn đơn vị phụ trách chính và nhân viên tổ chức. Đối tác được khai báo riêng trong tab "Đối tác hoạt động" ở trang chi tiết.</p>
             </div>
             <div class="form-grid activity-form-grid">
                 <div class="field">
-                    <label for="responsibleDepartmentId">Đơn vị phụ trách <span class="required-mark">*</span></label>
-                    <select id="responsibleDepartmentId" name="responsibleDepartmentId" required>
+                    <label for="responsibleDepartmentId">Đơn vị phụ trách chính <span class="required-mark">*</span></label>
+                    <select id="responsibleDepartmentId" name="responsibleDepartmentId" required
+                            data-staff-endpoint="${pageContext.request.contextPath}/activities/staffs-by-department">
                         <option value="">-- Chọn đơn vị --</option>
                         <c:forEach var="department" items="${departments}">
                             <option value="${department.id}" <c:if test="${departmentValue == department.id}">selected</c:if>>
@@ -111,41 +110,17 @@
                     </select>
                 </div>
                 <div class="field">
-                    <label for="responsibleStaffId">Nhân viên phụ trách <span class="required-mark">*</span></label>
-                    <select id="responsibleStaffId" name="responsibleStaffId" required>
-                        <option value="">-- Chọn nhân viên --</option>
+                    <label for="responsibleStaffId">Nhân viên phụ trách chính <span class="required-mark">*</span></label>
+                    <select id="responsibleStaffId" name="responsibleStaffId" required
+                            <c:if test="${empty departmentValue or departmentValue == 0}">disabled</c:if>>
+                        <option value=""><c:choose><c:when test="${empty departmentValue or departmentValue == 0}">-- Chọn đơn vị phụ trách trước --</c:when><c:otherwise>-- Chọn nhân viên --</c:otherwise></c:choose></option>
                         <c:forEach var="staff" items="${staffs}">
                             <option value="${staff.id}" <c:if test="${staffValue == staff.id}">selected</c:if>>
                                 <c:out value="${staff.code}"/> - <c:out value="${staff.name}"/>
                             </option>
                         </c:forEach>
                     </select>
-                </div>
-                <div class="field">
-                    <label for="partnerCompanyId">Công ty đối tác</label>
-                    <select id="partnerCompanyId" name="partnerCompanyId">
-                        <option value="">-- Không có --</option>
-                        <c:forEach var="company" items="${partnerCompanies}">
-                            <option value="${company.id}" <c:if test="${companyValue == company.id}">selected</c:if>>
-                                <c:out value="${company.code}"/> - <c:out value="${company.name}"/>
-                            </option>
-                        </c:forEach>
-                    </select>
-                </div>
-                <div class="field">
-                    <label for="partnerStaffId">Nhân viên công ty đối tác</label>
-                    <select id="partnerStaffId" name="partnerStaffId"
-                            data-selected="<c:out value='${partnerStaffValue}'/>"
-                            <c:if test="${empty companyValue or companyValue == 0}">disabled</c:if>>
-                        <option value="">-- Không có --</option>
-                        <c:forEach var="partnerStaff" items="${partnerStaffs}">
-                            <option value="${partnerStaff.id}"
-                                    <c:if test="${partnerStaffValue == partnerStaff.id}">selected</c:if>>
-                                <c:out value="${partnerStaff.name}"/>
-                            </option>
-                        </c:forEach>
-                    </select>
-                    <span id="partnerStaffMessage" class="field-hint" aria-live="polite"></span>
+                    <span id="responsibleStaffMessage" class="field-hint" aria-live="polite"></span>
                 </div>
             </div>
 
@@ -189,11 +164,15 @@
                            value="<c:out value='${not empty formData ? formData.penaltyPoint : activity.penaltyPoint}'/>">
                 </div>
                 <div class="field field-wide">
-                    <label class="checkbox-inline" for="registrationFormRequired">
-                        <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true"
+                    <div class="checkbox-inline">
+                        <input id="registrationFormRequired" name="registrationFormRequired"
+                               type="checkbox" value="true"
                                <c:if test="${registrationValue}">checked</c:if>>
-                        <span>Bắt buộc điền form</span>
-                    </label>
+
+                        <label for="registrationFormRequired">
+                            Bắt buộc điền form
+                        </label>
+                    </div>
                 </div>
                 <div class="field field-wide">
                     <label for="description">Mô tả</label>
@@ -213,41 +192,6 @@
         </main>
     </div>
 </div>
-<script>
-    (() => {
-        const companySelect = document.getElementById("partnerCompanyId");
-        const staffSelect = document.getElementById("partnerStaffId");
-        const message = document.getElementById("partnerStaffMessage");
-        let selectedStaffId = staffSelect.dataset.selected;
-        const endpoint = "${pageContext.request.contextPath}/activities?action=getStaffsByCompany&companyId=";
-
-        const loadPartnerStaff = async () => {
-            const companyId = companySelect.value;
-            staffSelect.replaceChildren(new Option("-- Không có --", ""));
-            staffSelect.disabled = !companyId;
-            message.textContent = "";
-            if (!companyId) return;
-
-            try {
-                const response = await fetch(endpoint + encodeURIComponent(companyId));
-                if (!response.ok) throw new Error("Không thể tải danh sách nhân viên đối tác.");
-                const staffs = await response.json();
-                staffs.forEach((staff) => {
-                    const option = new Option(staff.name, staff.id);
-                    if (String(staff.id) === selectedStaffId) option.selected = true;
-                    staffSelect.add(option);
-                });
-            } catch (error) {
-                message.textContent = error.message;
-            }
-        };
-
-        companySelect.addEventListener("change", () => {
-            selectedStaffId = "";
-            loadPartnerStaff();
-        });
-        if (companySelect.value) loadPartnerStaff();
-    })();
-</script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261016-1"></script>
 </body>
 </html>
