@@ -55,11 +55,11 @@ public class ApproveActivityServlet extends HttpServlet {
                     break;
                 case "revokeApproval":
                     success = activityService.revokeApproval(id);
-                    message = "Đã hủy duyệt, hoạt động quay về trạng thái chờ duyệt.";
+                    message = "Đã hủy duyệt, hoạt động quay về trạng thái Chờ duyệt.";
                     break;
                 case "revokeRejection":
                     success = activityService.revokeRejection(id);
-                    message = "Đã hủy từ chối, hoạt động quay về trạng thái chờ duyệt.";
+                    message = "Đã hủy từ chối, hoạt động quay về trạng thái Chờ duyệt.";
                     break;
                 default:
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hành động không hợp lệ.");

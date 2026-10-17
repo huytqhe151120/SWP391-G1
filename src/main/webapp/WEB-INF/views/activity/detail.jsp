@@ -505,7 +505,7 @@
             <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
-                    <button type="submit" name="action" value="submit" class="button button-primary">Gửi duyệt</button>
+                    <button type="submit" name="action" value="submit" class="button button-send-approval button-primary">Gửi duyệt</button>
                 </form>
             </c:if>
 
@@ -513,8 +513,8 @@
             <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
-                    <button type="submit" name="action" value="approve" class="button activity-approval-approve">Duyệt</button>
-                    <button type="submit" name="action" value="reject" class="button activity-approval-reject">Từ chối</button>
+                    <button type="submit" name="action" value="approve" class="button button-approve button-primary">Duyệt</button>
+                    <button type="submit" name="action" value="reject" class="button button-reject">Từ chối</button>
                 </form>
             </c:if>
 
@@ -522,7 +522,7 @@
             <c:if test="${canApproveActivities && activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
-                    <button type="submit" name="action" value="revokeApproval" class="button activity-approval-revoke"
+                    <button type="submit" name="action" value="revokeApproval" class="button button-cancel-approval"
                             data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                 </form>
             </c:if>
