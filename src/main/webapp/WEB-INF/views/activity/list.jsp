@@ -241,15 +241,6 @@
                                             </form>
                                         </c:if>
 
-                                        <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
-                                            <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
-                                                <input type="hidden" name="id" value="${activity.id}">
-                                                <button type="submit" name="action" value="revokeRejection"
-                                                        class="button button-sm"
-                                                        data-confirm="Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?">Hủy từ chối</button>
-                                            </form>
-                                        </c:if>
-
                                     </div>
                                 </td>
                             </tr>

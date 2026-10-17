@@ -25,16 +25,17 @@
     color: #fff;
 }
 
+/*Màu nút Hủy từ chối*/
 .activity-approval-revoke {
-    border-color: #d1d5db;
-    background: #e5e7eb;
-    color: #374151;
+    background-color: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
 }
 
 .activity-approval-revoke:hover {
-    border-color: #b8bec8;
-    background: #d1d5db;
-    color: #1f2937;
+    background-color: #DBEAFE;
+    color: #1E40AF;
+    border-color: #93C5FD;
 }
 
 .activity-app-shell {
