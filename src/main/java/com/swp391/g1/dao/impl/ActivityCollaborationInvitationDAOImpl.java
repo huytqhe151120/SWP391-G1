@@ -96,35 +96,70 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
-    public boolean insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy) {
-        String sql = "INSERT INTO activity_collaboration_invitation "
-                + "(activity_id, partner_company_id, partner_staff_id, approval_status, created_by) "
-                + "VALUES (?, ?, ?, ?, ?)";
+    public boolean insert(int activityId, int partnerCompanyId,
+                          int partnerStaffId, String createdBy) {
+
+        String sql = """
+            INSERT INTO activity_collaboration_invitation
+                (activity_id, partner_company_id, partner_staff_id,
+                 approval_status, created_by)
+            SELECT
+                a.id, ?, ?, ?, ?
+            FROM extracurricular_activity a
+            WHERE a.id = ?
+              AND a.activity_status = 'UPCOMING'
+              AND a.start_time > SYSUTCDATETIME()
+            """;
+
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, activityId);
-            ps.setInt(2, partnerCompanyId);
-            ps.setInt(3, partnerStaffId);
-            ps.setString(4, PENDING);
-            ps.setString(5, createdBy);
+
+            ps.setInt(1, partnerCompanyId);
+            ps.setInt(2, partnerStaffId);
+            ps.setString(3, PENDING);
+            ps.setString(4, createdBy);
+            ps.setInt(5, activityId);
+
+            // Chỉ thành công nếu SQL thực sự chèn được một bản ghi.
             return ps.executeUpdate() > 0;
+
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to create collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to create collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 
     @Override
-    public boolean updateStatus(int id, String expectedStatus, String newStatus) {
-        String sql = "UPDATE activity_collaboration_invitation SET approval_status = ? "
-                + "WHERE id = ? AND approval_status = ?";
+    public boolean updateStatus(int id, String expectedStatus,
+                                String newStatus) {
+
+        String sql = """
+            UPDATE i
+            SET i.approval_status = ?
+            FROM activity_collaboration_invitation i
+            INNER JOIN extracurricular_activity a
+                ON a.id = i.activity_id
+            WHERE i.id = ?
+              AND i.approval_status = ?
+              AND a.activity_status = 'UPCOMING'
+              AND a.start_time > SYSUTCDATETIME()
+            """;
+
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, newStatus);
             ps.setInt(2, id);
             ps.setString(3, expectedStatus);
+
+            // Chỉ thành công nếu cập nhật được một bản ghi.
             return ps.executeUpdate() > 0;
+
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to update collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to update collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 }

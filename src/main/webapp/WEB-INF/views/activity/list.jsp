@@ -196,18 +196,20 @@
                                     <div class="actions activity-actions">
                                         <div class="activity-action-links">
                                             <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
-                                            <c:if test="${canManageActivities}">
+                                            <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                                                 <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
+                                            </c:if>
+                                            <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
                                                 <a class="activity-action-link activity-action-delete"
                                                    href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
                                                    data-confirm="Bạn có chắc muốn xóa hoạt động này?">Xóa</a>
                                             </c:if>
                                         </div>
-                                        <c:if test="${activity.approvalStatus == 'REJECTED'}">
+                                        <c:if test="${activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'REJECTED'}">
                                             <div class="activity-review-actions-row">
                                                 <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                     <input type="hidden" name="id" value="${activity.id}">
-                                                    <button type="submit" name="action" value="submit" class="button button-primary button-sm">Gửi duyệt</button>
+                                                    <button type="submit" name="action" value="submit" class="button button-primary button-send-approval button-sm">Gửi duyệt</button>
                                                 </form>
                                                 <c:if test="${canApproveActivities}">
                                                     <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
@@ -219,13 +221,15 @@
                                                 </c:if>
                                             </div>
                                         </c:if>
-                                        <c:if test="${activity.approvalStatus == 'DRAFT'}">
+
+                                        <c:if test="${activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'DRAFT'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="submit" class="button button-primary button-send-approval button-sm">Gửi duyệt</button>
                                             </form>
                                         </c:if>
-                                        <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
+
+                                        <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'PENDING'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="approve" class="button button-approve button-sm">Duyệt</button>

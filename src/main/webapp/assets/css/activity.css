@@ -2,40 +2,39 @@
 @import "base.css";
 
 .activity-approval-approve {
-    border-color: #16803c;
-    background: #16803c;
+    border-color: #15803d;
+    background: #15803d;
     color: #fff;
 }
 
 .activity-approval-approve:hover {
-    border-color: #126b32;
-    background: #126b32;
+    border-color: #166534;
+    background: #166534;
     color: #fff;
 }
 
 .activity-approval-reject {
-    border-color: #c62828;
-    background: #c62828;
-    color: #fff;
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
 }
 
 .activity-approval-reject:hover {
-    border-color: #a91f1f;
-    background: #a91f1f;
-    color: #fff;
+    border-color: #f87171;
+    background: #fee2e2;
+    color: #991b1b;
 }
 
-/*Màu nút Hủy từ chối*/
 .activity-approval-revoke {
-    background-color: #EFF6FF;
-    color: #1D4ED8;
-    border: 1px solid #BFDBFE;
+    background-color: #fff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
 }
 
 .activity-approval-revoke:hover {
-    background-color: #DBEAFE;
-    color: #1E40AF;
-    border-color: #93C5FD;
+    background-color: #f8fafc;
+    color: #1e293b;
+    border-color: #94a3b8;
 }
 
 .activity-app-shell {
@@ -792,7 +791,7 @@
 .activity-action-link {
     padding: 6px 7px;
     border-radius: 6px;
-    color: #315d9d;
+    color: #1d4ed8;
     font-size: .8rem;
     font-weight: 600;
 }
@@ -820,11 +819,11 @@ button.activity-action-link:focus-visible {
 }
 
 .activity-action-delete {
-    color: #ad4650;
+    color: #b91c1c;
 }
 
 .activity-action-delete:hover {
-    background: #fff0f0;
+    background: #fef2f2;
 }
 
 .activity-empty-state {

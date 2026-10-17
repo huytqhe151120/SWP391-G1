@@ -125,51 +125,46 @@ h1 {
 
 }
 
-/* Nút hủy duyệt: Màu cam trắng */
 .button-cancel-approval {
-    background-color: #FFFFFF;
-    color: #B45309;
-    border: 1px solid #D97706;
+    background-color: #fff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
 }
 
 .button-reject {
-    background-color: #DC2626;
-    color: #FFFFFF;
-    border: 1px solid #DC2626;
-
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
 }
 
-/* Hover nút Từ chối: giữ nền đỏ, chuyển sang đỏ đậm */
 .button.button-reject:hover {
-    background-color: #B91C1C;
-    border-color: #B91C1C;
-    color: #FFFFFF;
+    background-color: #fee2e2;
+    border-color: #f87171;
+    color: #991b1b;
 }
 
-/* Nút Gửi duyệt: xanh dương */
 .button-send-approval {
-    background-color: #2563EB;
-    color: #FFFFFF;
-    border: 1px solid #2563EB;
+    background-color: #1d4ed8;
+    color: #fff;
+    border: 1px solid #1d4ed8;
 }
 
 .button-send-approval:hover {
-    background-color: #1D4ED8;
-    border-color: #1D4ED8;
-    color: #FFFFFF;
+    background-color: #1e40af;
+    border-color: #1e40af;
+    color: #fff;
 }
 
-/* Nút Duyệt: xanh lá */
 .button-approve {
-    background-color: #16A34A;
-    color: #FFFFFF;
-    border: 1px solid #16A34A;
+    background-color: #15803d;
+    color: #fff;
+    border: 1px solid #15803d;
 }
 
 .button-approve:hover {
-    background-color: #15803D;
-    border-color: #15803D;
-    color: #FFFFFF;
+    background-color: #166534;
+    border-color: #166534;
+    color: #fff;
 }
 
 

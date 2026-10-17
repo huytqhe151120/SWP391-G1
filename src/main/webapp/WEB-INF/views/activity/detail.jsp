@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-1">
+
 </head>
 <body>
 <div class="activity-app-shell">
@@ -45,7 +46,7 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <c:if test="${canManageActivities}">
+            <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                 <a class="button button-primary"
                    href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
             </c:if>
@@ -276,7 +277,7 @@
                                             <td><c:out value="${empty inv.createdByName ? inv.createdBy : inv.createdByName}"/></td>
                                             <td><c:out value="${inv.formattedCreatedAt}"/></td>
                                             <td style="text-align: right; white-space: nowrap;">
-                                                <c:if test="${inv.canRespond}">
+                                                <c:if test="${inv.canRespond && activity.activityStatus == 'UPCOMING'}">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline">
                                                         <input type="hidden" name="action" value="respondInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
@@ -285,7 +286,7 @@
                                                         <button type="submit" name="decision" value="reject" class="button activity-approval-reject">Từ chối</button>
                                                     </form>
                                                 </c:if>
-                                                <c:if test="${canManageActivities && inv.approvalStatus == 'PENDING'}">
+                                                <c:if test="${canManageActivities && inv.approvalStatus == 'PENDING' && activity.activityStatus == 'UPCOMING'}">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                           data-confirm="Bạn có chắc chắn muốn hủy lời mời này?">
                                                         <input type="hidden" name="action" value="cancelInvitation">
@@ -303,7 +304,7 @@
                         </table>
                     </div>
 
-                    <c:if test="${canManageActivities}">
+                    <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                         <form class="activity-partner-form" method="post" action="${pageContext.request.contextPath}/activities">
                             <input type="hidden" name="action" value="inviteCollaborator">
                             <input type="hidden" name="activityId" value="${activity.id}">
@@ -502,7 +503,7 @@
             <a class="button" href="${pageContext.request.contextPath}/activities">Đóng</a>
 
             <%-- DRAFT / REJECTED: gửi duyệt --%>
-            <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
+            <c:if test="${activity.activityStatus == 'UPCOMING' && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="submit" class="button button-send-approval button-primary">Gửi duyệt</button>
@@ -510,7 +511,7 @@
             </c:if>
 
             <%-- PENDING: duyệt / từ chối --%>
-            <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
+            <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'PENDING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="approve" class="button button-approve button-primary">Duyệt</button>
@@ -528,7 +529,7 @@
             </c:if>
 
             <%-- REJECTED: hủy từ chối --%>
-            <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
+            <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'REJECTED'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="revokeRejection" class="button activity-approval-revoke"

@@ -16,4 +16,6 @@ public interface IExtracurricularActivityService {
     boolean rejectActivity(int id);
     boolean revokeApproval(int id);
     boolean revokeRejection(int id);
+
+    void synchronizeActivityStatuses();
 }
