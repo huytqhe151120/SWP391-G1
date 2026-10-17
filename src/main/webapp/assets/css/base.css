@@ -127,7 +127,7 @@ h1 {
 
 /*
  * Nhóm nút theo ngữ nghĩa (dùng chung toàn hệ thống):
- *   button-send-approval : xanh dương - gửi đi chờ xử lý
+ *   button-send-approval : slate đậm - gửi đi chờ xử lý
  *   button-approve       : xanh lá    - đồng ý / chấp nhận
  *   button-reject        : đỏ         - từ chối / ngừng
  *   button-revoke        : xám        - hoàn tác (hủy duyệt, hủy từ chối, hủy lời mời)
@@ -157,16 +157,16 @@ h1 {
     color: #FFFFFF;
 }
 
-/* Nút Gửi duyệt: xanh dương */
+/* Nút Gửi duyệt: xám xanh đậm (slate), trung tính, khác nút chính */
 .button-send-approval {
-    background-color: #2563EB;
+    background-color: #334155;
     color: #FFFFFF;
-    border: 1px solid #2563EB;
+    border: 1px solid #334155;
 }
 
 .button-send-approval:hover {
-    background-color: #1D4ED8;
-    border-color: #1D4ED8;
+    background-color: #1E293B;
+    border-color: #1E293B;
     color: #FFFFFF;
 }
 

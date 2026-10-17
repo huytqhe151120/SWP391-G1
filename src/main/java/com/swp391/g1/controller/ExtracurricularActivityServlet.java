@@ -377,6 +377,14 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         if (idStr != null && !idStr.trim().isEmpty()) {
             int id = Integer.parseInt(idStr);
             ExtracurricularActivityResponseDTO activity = activityService.getActivityById(id);
+            if (activity != null && activity.getActivityStatus() != null
+                    && (activity.getActivityStatus().name().equals("ONGOING")
+                    || activity.getActivityStatus().name().equals("COMPLETED"))) {
+                request.getSession().setAttribute("errorMessage",
+                        "Không thể sửa hoạt động đang diễn ra hoặc đã hoàn thành.");
+                response.sendRedirect(request.getContextPath() + "/activities");
+                return;
+            }
             if (activity != null) {
                 request.setAttribute("activity", activity);
                 ExtracurricularActivityRequestDTO formData =
@@ -435,11 +443,15 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         HttpSession session = request.getSession();
         if (idStr != null && !idStr.trim().isEmpty()) {
             int id = Integer.parseInt(idStr);
-            boolean success = activityService.deleteActivity(id);
-            if (success) {
-                session.setAttribute("successMessage", "Xóa hoạt động thành công!");
-            } else {
-                session.setAttribute("errorMessage", "Xóa hoạt động thất bại!");
+            try {
+                boolean success = activityService.deleteActivity(id);
+                if (success) {
+                    session.setAttribute("successMessage", "Xóa hoạt động thành công!");
+                } else {
+                    session.setAttribute("errorMessage", "Xóa hoạt động thất bại!");
+                }
+            } catch (IllegalArgumentException e) {
+                session.setAttribute("errorMessage", e.getMessage());
             }
         }
         response.sendRedirect(request.getContextPath() + "/activities");

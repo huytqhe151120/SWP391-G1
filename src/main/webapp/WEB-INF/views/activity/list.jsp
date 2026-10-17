@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hoạt động ngoại khóa | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-8">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -196,7 +196,7 @@
                                     <div class="actions activity-actions">
                                         <div class="activity-action-links">
                                             <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
-                                            <c:if test="${canManageActivities}">
+                                            <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
                                                 <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
                                                 <a class="activity-action-link activity-action-delete"
                                                    href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
@@ -207,7 +207,7 @@
                                             <div class="activity-review-actions-row">
                                                 <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                     <input type="hidden" name="id" value="${activity.id}">
-                                                    <button type="submit" name="action" value="submit" class="button button-primary button-sm">Gửi duyệt</button>
+                                                    <button type="submit" name="action" value="submit" class="button button-send-approval button-sm">Gửi duyệt</button>
                                                 </form>
                                                 <c:if test="${canApproveActivities}">
                                                     <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">

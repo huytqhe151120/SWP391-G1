@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-8">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -45,10 +45,12 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <c:if test="${canManageActivities}">
+            <div class="activity-header-actions" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+            <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
                 <a class="button button-primary"
                    href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
             </c:if>
+            </div>
         </div>
 
         <div class="activity-tabs-nav" role="tablist">
@@ -328,9 +330,12 @@
                         </table>
                     </div>
 
-                    <c:if test="${canManageActivities}">
+                    <c:if test="${canManageActivities && activity.approvalStatus != 'APPROVED'}">
+                        <p class="field-hint">Chỉ có thể tạo lời mời đối tác khi hoạt động đã được duyệt.</p>
+                    </c:if>
+                    <c:if test="${canManageActivities && activity.approvalStatus == 'APPROVED'}">
                         <button type="button" class="button button-primary" id="invite-form-toggle"
-                                aria-expanded="false" aria-controls="invite-form-panel">Tạo lời mời</button>
+                                aria-expanded="false" aria-controls="invite-form-panel">Tạo lời mời mới</button>
                         <div id="invite-form-panel" hidden>
                         <form class="activity-partner-form" method="post" action="${pageContext.request.contextPath}/activities">
                             <input type="hidden" id="inviteAction" name="action" value="inviteCollaborator">
@@ -559,7 +564,6 @@
 
         <div class="detail-actions activity-detail-actions">
             <a class="button" href="${pageContext.request.contextPath}/activities">Đóng</a>
-
             <%-- DRAFT / REJECTED: gửi duyệt --%>
             <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">

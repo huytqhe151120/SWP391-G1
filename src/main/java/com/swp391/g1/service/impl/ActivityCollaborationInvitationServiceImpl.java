@@ -59,8 +59,13 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (user == null || !AccessPolicy.canManageActivities(user)) {
             throw new SecurityException("Bạn không có quyền mời đối tác tham gia hoạt động.");
         }
-        if (activityId <= 0 || activityDAO.findById(activityId) == null) {
+        com.swp391.g1.model.ExtracurricularActivity activity =
+                activityId <= 0 ? null : activityDAO.findById(activityId);
+        if (activity == null) {
             throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+        if (activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED) {
+            throw new IllegalArgumentException("Chỉ có thể tạo lời mời cho hoạt động đã được duyệt.");
         }
         int companyId = parseId(partnerCompanyId, "Vui lòng chọn công ty đối tác.");
         int staffId = parseId(partnerStaffId, "Vui lòng chọn nhân sự đối tác phụ trách chính.");
