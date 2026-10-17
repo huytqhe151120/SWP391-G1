@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-5">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -295,8 +295,8 @@
                                                         <input type="hidden" name="action" value="respondInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
-                                                        <button type="submit" name="decision" value="accept" class="button activity-approval-approve">Chấp nhận</button>
-                                                        <button type="submit" name="decision" value="reject" class="button activity-approval-reject">Từ chối</button>
+                                                        <button type="submit" name="decision" value="accept" class="button button-approve">Chấp nhận</button>
+                                                        <button type="submit" name="decision" value="reject" class="button button-reject">Từ chối</button>
                                                     </form>
                                                 </c:if>
                                                 <c:if test="${inv.canRevoke}">
@@ -305,7 +305,7 @@
                                                         <input type="hidden" name="action" value="revokeInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
-                                                        <button type="submit" class="button activity-approval-revoke">
+                                                        <button type="submit" class="button button-revoke">
                                                             ${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}
                                                         </button>
                                                     </form>
@@ -316,7 +316,7 @@
                                                         <input type="hidden" name="action" value="cancelInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
-                                                        <button type="submit" class="button activity-approval-revoke">Hủy lời mời</button>
+                                                        <button type="submit" class="button button-revoke">Hủy lời mời</button>
                                                     </form>
                                                 </c:if>
                                             </td>
@@ -581,7 +581,7 @@
             <c:if test="${canApproveActivities && activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
-                    <button type="submit" name="action" value="revokeApproval" class="button button-cancel-approval"
+                    <button type="submit" name="action" value="revokeApproval" class="button button-revoke"
                             data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                 </form>
             </c:if>
@@ -590,7 +590,7 @@
             <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
-                    <button type="submit" name="action" value="revokeRejection" class="button activity-approval-revoke"
+                    <button type="submit" name="action" value="revokeRejection" class="button button-revoke"
                             data-confirm="Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?">Hủy từ chối</button>
                 </form>
             </c:if>

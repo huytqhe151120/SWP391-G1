@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hoạt động ngoại khóa | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261016-9">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-5">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -213,7 +213,7 @@
                                                     <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                         <input type="hidden" name="id" value="${activity.id}">
                                                         <button type="submit" name="action" value="revokeRejection"
-                                                                class="button button-sm activity-approval-revoke"
+                                                                class="button button-sm button-revoke"
                                                                 data-confirm="Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?">Hủy từ chối</button>
                                                     </form>
                                                 </c:if>
@@ -236,7 +236,7 @@
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeApproval"
-                                                        class="button button-cancel-approval button-sm"
+                                                        class="button button-revoke button-sm"
                                                         data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                                             </form>
                                         </c:if>
