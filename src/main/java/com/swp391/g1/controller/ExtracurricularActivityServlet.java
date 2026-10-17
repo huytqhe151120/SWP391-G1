@@ -18,11 +18,25 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
+import java.util.Locale;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @WebServlet(name = "ExtracurricularActivityServlet",
         urlPatterns = {"/activities", "/activities/staffs-by-department"})
 public class ExtracurricularActivityServlet extends HttpServlet {
+
+    private static final DateTimeFormatter FILTER_DATE_FORMAT =
+            DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
 
     private final IExtracurricularActivityService activityService;
     private final IActivityTypeService activityTypeService;
@@ -33,9 +47,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final IStaffService staffService;
     private final IActivityStaffService activityStaffService;
     private final IActivityPartnerStaffService activityPartnerStaffService;
+    private final IActivityCollaborationInvitationService invitationService;
 
     public ExtracurricularActivityServlet() {
         this.activityPartnerStaffService = new ActivityPartnerStaffServiceImpl();
+        this.invitationService = new ActivityCollaborationInvitationServiceImpl();
         this.activityService = new ExtracurricularActivityServiceImpl();
         this.activityTypeService = new ActivityTypeServiceImpl();
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
@@ -58,7 +74,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 (isGetRequest
                         && ("create".equals(action) || "edit".equals(action) || "delete".equals(action)))
                 || ("POST".equalsIgnoreCase(request.getMethod())
-                        && ("create".equals(action) || "update".equals(action)));
+                        && ("create".equals(action) || "update".equals(action)))
+                || ("POST".equalsIgnoreCase(request.getMethod())
+                        && ("inviteCollaborator".equals(action) || "cancelInvitation".equals(action)));
         if (requiresManagementPermission
                 && !AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -144,6 +162,15 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 case "assignPartnerStaff":
                     assignPartnerStaff(request, response);
                     break;
+                case "inviteCollaborator":
+                    handleInvitation(request, response, "invite");
+                    break;
+                case "respondInvitation":
+                    handleInvitation(request, response, "respond");
+                    break;
+                case "cancelInvitation":
+                    handleInvitation(request, response, "cancel");
+                    break;
                 case "unassignPartnerStaff":
                     unassignPartnerStaff(request, response);
                     break;
@@ -164,10 +191,169 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
     private void listActivities(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        List<ExtracurricularActivityResponseDTO> list = activityService.getAllActivities();
-        request.setAttribute("activities", list);
+        String keyword = trimToEmpty(request.getParameter("keyword"));
+        int semesterId = parseId(request.getParameter("semesterId"));
+        int activityTypeId = parseId(request.getParameter("activityTypeId"));
+        int departmentId = parseId(request.getParameter("departmentId"));
+        String activityStatus = parseEnumName(request.getParameter("activityStatus"),
+                com.swp391.g1.model.Enum.ActivityStatus.values());
+        String approvalStatus = parseEnumName(request.getParameter("approvalStatus"),
+                com.swp391.g1.model.Enum.ApprovalStatus.values());
+        LocalDate startDate = parseDate(request.getParameter("startDate"));
+        LocalDate endDate = parseDate(request.getParameter("endDate"));
+        String normalizedKeyword = normalizeText(keyword);
+
+        List<ExtracurricularActivityResponseDTO> allActivities = new ArrayList<>();
+        for (ExtracurricularActivityResponseDTO activity : activityService.getAllActivities()) {
+            if (!normalizedKeyword.isEmpty()
+                    && !normalizeText(activity.getCode()).contains(normalizedKeyword)
+                    && !normalizeText(activity.getName()).contains(normalizedKeyword)) {
+                continue;
+            }
+            if (semesterId > 0 && activity.getSemesterId() != semesterId) {
+                continue;
+            }
+            if (activityTypeId > 0 && activity.getActivityTypeId() != activityTypeId) {
+                continue;
+            }
+            if (departmentId > 0 && activity.getResponsibleDepartmentId() != departmentId) {
+                continue;
+            }
+            if (!activityStatus.isEmpty() && !activityStatus.equals(String.valueOf(activity.getActivityStatus()))) {
+                continue;
+            }
+            if (!approvalStatus.isEmpty() && !approvalStatus.equals(String.valueOf(activity.getApprovalStatus()))) {
+                continue;
+            }
+            if (startDate != null && (activity.getStartTime() == null
+                    || activity.getStartTime().toLocalDate().isBefore(startDate))) {
+                continue;
+            }
+            if (endDate != null && (activity.getEndTime() == null
+                    || activity.getEndTime().toLocalDate().isAfter(endDate))) {
+                continue;
+            }
+            allActivities.add(activity);
+        }
+
+        boolean filtered = !normalizedKeyword.isEmpty() || semesterId > 0 || activityTypeId > 0
+                || departmentId > 0 || !activityStatus.isEmpty() || !approvalStatus.isEmpty()
+                || startDate != null || endDate != null;
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("selectedActivityStatus", activityStatus);
+        request.setAttribute("selectedApprovalStatus", approvalStatus);
+        request.setAttribute("selectedSemesterId", semesterId);
+        request.setAttribute("selectedActivityTypeId", activityTypeId);
+        request.setAttribute("selectedDepartmentId", departmentId);
+        request.setAttribute("startDate", formatDate(startDate));
+        request.setAttribute("endDate", formatDate(endDate));
+        request.setAttribute("filtered", filtered);
+        request.setAttribute("activeFilterCount",
+                (normalizedKeyword.isEmpty() ? 0 : 1) + (semesterId > 0 ? 1 : 0)
+                        + (activityTypeId > 0 ? 1 : 0) + (departmentId > 0 ? 1 : 0)
+                        + (activityStatus.isEmpty() ? 0 : 1) + (approvalStatus.isEmpty() ? 0 : 1)
+                        + (startDate != null ? 1 : 0) + (endDate != null ? 1 : 0));
+        request.setAttribute("filterQuery", buildFilterQuery(keyword, semesterId, activityTypeId,
+                departmentId, activityStatus, approvalStatus, startDate, endDate));
+        request.setAttribute("activityStatuses", com.swp391.g1.model.Enum.ActivityStatus.values());
+        request.setAttribute("approvalStatuses", com.swp391.g1.model.Enum.ApprovalStatus.values());
+        request.setAttribute("semesters", semesterService.getAllSemesters());
+        request.setAttribute("activityTypes", activityTypeService.getActiveActivityTypes());
+        request.setAttribute("departments", departmentService.getAllDepartments());
+
+        int pageSize = parsePageSize(request.getParameter("pageSize"));
+        int totalActivityCount = allActivities.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalActivityCount / pageSize));
+        int currentPage = parsePageNumber(request.getParameter("page"), totalPages);
+        int fromIndex = Math.min((currentPage - 1) * pageSize, totalActivityCount);
+        int toIndex = Math.min(fromIndex + pageSize, totalActivityCount);
+
+        request.setAttribute("activities", new ArrayList<>(allActivities.subList(fromIndex, toIndex)));
+        request.setAttribute("pageSize", pageSize);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalActivityCount", totalActivityCount);
+        request.setAttribute("firstActivityNumber", totalActivityCount == 0 ? 0 : fromIndex + 1);
+        request.setAttribute("lastActivityNumber", toIndex);
         setActivityManagementPermission(request);
         request.getRequestDispatcher("/WEB-INF/views/activity/list.jsp").forward(request, response);
+    }
+
+    private String trimToEmpty(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String normalizeText(String value) {
+        if (value == null) {
+            return "";
+        }
+        return Normalizer.normalize(value.trim(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replace('đ', 'd').replace('Đ', 'D')
+                .toLowerCase(Locale.ROOT);
+    }
+
+    private LocalDate parseDate(String value) {
+        try {
+            return value == null || value.isBlank()
+                    ? null : LocalDate.parse(value.trim(), FILTER_DATE_FORMAT);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private String formatDate(LocalDate date) {
+        return date == null ? "" : date.format(FILTER_DATE_FORMAT);
+    }
+
+    private String parseEnumName(String value, java.lang.Enum<?>[] allowed) {
+        String candidate = trimToEmpty(value);
+        for (java.lang.Enum<?> option : allowed) {
+            if (option.name().equals(candidate)) {
+                return candidate;
+            }
+        }
+        return "";
+    }
+
+    private String buildFilterQuery(String keyword, int semesterId, int activityTypeId,
+            int departmentId, String activityStatus, String approvalStatus,
+            LocalDate startDate, LocalDate endDate) {
+        StringBuilder query = new StringBuilder();
+        appendParam(query, "keyword", keyword);
+        appendParam(query, "semesterId", semesterId > 0 ? String.valueOf(semesterId) : "");
+        appendParam(query, "activityTypeId", activityTypeId > 0 ? String.valueOf(activityTypeId) : "");
+        appendParam(query, "departmentId", departmentId > 0 ? String.valueOf(departmentId) : "");
+        appendParam(query, "activityStatus", activityStatus);
+        appendParam(query, "approvalStatus", approvalStatus);
+        appendParam(query, "startDate", formatDate(startDate));
+        appendParam(query, "endDate", formatDate(endDate));
+        return query.toString();
+    }
+
+    private void appendParam(StringBuilder query, String name, String value) {
+        if (!value.isEmpty()) {
+            query.append('&').append(name).append('=')
+                    .append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+        }
+    }
+
+    private int parsePageSize(String value) {
+        try {
+            int pageSize = Integer.parseInt(value);
+            return Set.of(5, 10, 20, 25).contains(pageSize) ? pageSize : 5;
+        } catch (NumberFormatException e) {
+            return 5;
+        }
+    }
+
+    private int parsePageNumber(String value, int totalPages) {
+        try {
+            int page = Integer.parseInt(value);
+            return Math.max(1, Math.min(page, totalPages));
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
@@ -193,12 +379,6 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                         : parseId(formData.getResponsibleDepartmentId());
                 loadDropdownData(request, departmentId);
 
-                // Nạp trước danh sách nhân viên đối tác nếu đã chọn Công ty đối tác
-                if (activity.getPartnerCompanyId() > 0) {
-                    List<PartnerStaffResponseDTO> staffs = partnerStaffService.getStaffsByCompanyId(activity.getPartnerCompanyId());
-                    request.setAttribute("partnerStaffs", staffs);
-                }
-
                 request.getRequestDispatcher("/WEB-INF/views/activity/edit.jsp").forward(request, response);
                 return;
             }
@@ -215,21 +395,25 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             if (activity != null) {
                 request.setAttribute("activity", activity);
                 setActivityManagementPermission(request);
-
+                if (AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
+                    request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
+                }
                 CurrentUser currentUser = AuthContext.getCurrentUser(request);
                 boolean canAssignStaff = activityStaffService.canAssignStaff(id, currentUser);
                 request.setAttribute("canAddStaff", canAssignStaff);
                 request.setAttribute("canRemoveStaff", canAssignStaff);
+                request.setAttribute("invitations", invitationService.getInvitations(id, currentUser));
+                request.setAttribute("approvedPartners", invitationService.getApprovedPartners(id));
                 request.setAttribute("assignedStaffs", activityStaffService.getStaffsByActivityId(id));
                 if (canAssignStaff) {
                     request.setAttribute("availableStaffs", activityStaffService.getAvailableStaffsForActivity(id));
                 }
                 boolean canManagePartnerStaff = activityPartnerStaffService.canAssignPartnerStaff(id, currentUser);
                 request.setAttribute("canManagePartnerStaff", canManagePartnerStaff);
-                request.setAttribute("assignedPartnerStaffs", activityPartnerStaffService.getPartnerStaffsByActivityId(id));
+                request.setAttribute("assignedPartnerStaffs", activityPartnerStaffService.getPartnerStaffsByActivityId(id, currentUser));
                 if (canManagePartnerStaff) {
                     request.setAttribute("availablePartnerStaffs",
-                            activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id));
+                            activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id, currentUser));
                 }
                 request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
@@ -267,6 +451,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 int companyId = Integer.parseInt(companyIdStr);
                 List<PartnerStaffResponseDTO> staffs = partnerStaffService.getStaffsByCompanyId(companyId);
 
+                staffs = staffs.stream().filter(st -> "ACTIVE".equalsIgnoreCase(st.getStatus())).toList();
                 for (int i = 0; i < staffs.size(); i++) {
                     PartnerStaffResponseDTO staff = staffs.get(i);
                     json.append("{")
@@ -381,13 +566,23 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                         "Bạn không có quyền thêm nhân sự vào hoạt động này.");
                 return;
             }
-            int staffId = Integer.parseInt(request.getParameter("staffId"));
-            boolean success = activityStaffService.assignStaff(activityId, staffId, currentUser);
-            if (success) {
-                session.setAttribute("successMessage", "Phân công nhân sự thành công!");
-            } else {
-                session.setAttribute("errorMessage", "Không thể phân công nhân sự.");
+            List<Integer> staffIds = parseSelectedIds(request.getParameterValues("staffIds"));
+            int assigned = 0;
+            String firstError = null;
+            for (int staffId : staffIds) {
+                try {
+                    if (activityStaffService.assignStaff(activityId, staffId, currentUser)) {
+                        assigned++;
+                    } else if (firstError == null) {
+                        firstError = "Không thể phân công nhân sự có mã ID " + staffId + ".";
+                    }
+                } catch (Exception e) {
+                    if (firstError == null) {
+                        firstError = e.getMessage();
+                    }
+                }
             }
+            setAssignmentResult(session, assigned, staffIds.size(), "nhân sự", "phân công", firstError);
         } catch (NumberFormatException e) {
             session.setAttribute("errorMessage", "Dữ liệu phân công không hợp lệ.");
         } catch (IllegalArgumentException e) {
@@ -440,6 +635,41 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         handlePartnerStaffChange(request, response, true);
     }
 
+    private void handleInvitation(HttpServletRequest request, HttpServletResponse response, String operation)
+            throws IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        HttpSession session = request.getSession();
+        int activityId = parseId(request.getParameter("activityId"));
+        try {
+            switch (operation) {
+                case "invite":
+                    invitationService.invite(activityId, request.getParameter("partnerCompanyId"),
+                            request.getParameter("partnerStaffId"), currentUser);
+                    session.setAttribute("successMessage", "Đã gửi lời mời đối tác tham gia hoạt động.");
+                    break;
+                case "respond":
+                    boolean accept = "accept".equals(request.getParameter("decision"));
+                    invitationService.respond(parseId(request.getParameter("invitationId")), accept, currentUser);
+                    session.setAttribute("successMessage",
+                            accept ? "Đã chấp nhận lời mời tham gia hoạt động." : "Đã từ chối lời mời tham gia hoạt động.");
+                    break;
+                default:
+                    invitationService.cancel(parseId(request.getParameter("invitationId")), currentUser);
+                    session.setAttribute("successMessage", "Đã hủy lời mời.");
+                    break;
+            }
+        } catch (SecurityException | IllegalArgumentException e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", "Không thể xử lý lời mời: " + e.getMessage());
+        }
+        if (activityId > 0) {
+            response.sendRedirect(request.getContextPath()
+                    + "/activities?action=detail&id=" + activityId + "#tab-partner");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/activities");
+        }
+    }
     private void unassignPartnerStaff(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         handlePartnerStaffChange(request, response, false);
@@ -457,17 +687,31 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                         "Bạn không có quyền quản lý nhân sự đối tác của hoạt động này.");
                 return;
             }
-            int partnerStaffId = Integer.parseInt(request.getParameter("partnerStaffId"));
-            boolean success = assign
-                    ? activityPartnerStaffService.assignPartnerStaff(activityId, partnerStaffId, currentUser)
-                    : activityPartnerStaffService.removePartnerStaff(activityId, partnerStaffId, currentUser);
-            if (success) {
-                session.setAttribute("successMessage", assign
-                        ? "Phân công nhân sự đối tác thành công!"
-                        : "Đã gỡ nhân sự đối tác khỏi hoạt động.");
-            } else {
-                session.setAttribute("errorMessage", "Không thể thực hiện thao tác với nhân sự đối tác.");
+            String[] selectedPartnerIds = assign
+                    ? request.getParameterValues("partnerStaffIds")
+                    : new String[] {request.getParameter("partnerStaffId")};
+            List<Integer> partnerStaffIds = parseSelectedIds(selectedPartnerIds);
+            int completed = 0;
+            String firstError = null;
+            for (int partnerStaffId : partnerStaffIds) {
+                try {
+                    boolean success = assign
+                            ? activityPartnerStaffService.assignPartnerStaff(activityId, partnerStaffId, currentUser)
+                            : activityPartnerStaffService.removePartnerStaff(activityId, partnerStaffId, currentUser);
+                    if (success) {
+                        completed++;
+                    } else if (firstError == null) {
+                        firstError = "Không thể thực hiện thao tác với nhân sự đối tác có mã ID "
+                                + partnerStaffId + ".";
+                    }
+                } catch (Exception e) {
+                    if (firstError == null) {
+                        firstError = e.getMessage();
+                    }
+                }
             }
+            setAssignmentResult(session, completed, partnerStaffIds.size(), "nhân sự đối tác",
+                    assign ? "phân công" : "gỡ phân công", firstError);
         } catch (NumberFormatException e) {
             session.setAttribute("errorMessage", "Dữ liệu không hợp lệ.");
         } catch (IllegalArgumentException e) {
@@ -484,6 +728,41 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         }
     }
 
+    private List<Integer> parseSelectedIds(String[] values) {
+        if (values == null || values.length == 0) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một nhân sự.");
+        }
+        Set<Integer> ids = new LinkedHashSet<>();
+        for (String value : values) {
+            try {
+                int id = Integer.parseInt(value);
+                if (id <= 0) {
+                    throw new NumberFormatException();
+                }
+                ids.add(id);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Dữ liệu nhân sự được chọn không hợp lệ.");
+            }
+        }
+        return new ArrayList<>(ids);
+    }
+
+    private void setAssignmentResult(HttpSession session, int completed, int requested,
+            String staffLabel, String actionLabel, String firstError) {
+        if (completed == requested) {
+            session.setAttribute("successMessage",
+                    "Đã " + actionLabel + " " + completed + " " + staffLabel + ".");
+        } else if (completed > 0) {
+            session.setAttribute("errorMessage",
+                    "Đã " + actionLabel + " " + completed + "/" + requested + " " + staffLabel
+                            + ". Một số lựa chọn không thành công: " + firstError);
+        } else {
+            session.setAttribute("errorMessage",
+                    "Không thể " + actionLabel + " " + staffLabel + ": "
+                            + (firstError == null ? "Vui lòng chọn nhân sự." : firstError));
+        }
+    }
+
     // =========================================================================
     // HELPER METHODS
     // =========================================================================
@@ -493,7 +772,6 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         request.setAttribute("activityTypes", activityTypeService.getActiveActivityTypes());
         request.setAttribute("departments", departmentService.getAllDepartments());
         request.setAttribute("staffs", staffService.getStaffsByDepartmentId(departmentId));
-        request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
     }
 
     private int parseId(String value) {
@@ -523,8 +801,6 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         dto.setActivityTypeId(request.getParameter("activityTypeId"));
         dto.setResponsibleDepartmentId(request.getParameter("responsibleDepartmentId"));
         dto.setResponsibleStaffId(request.getParameter("responsibleStaffId"));
-        dto.setPartnerCompanyId(request.getParameter("partnerCompanyId"));
-        dto.setPartnerStaffId(request.getParameter("partnerStaffId"));
         dto.setBonusPoint(request.getParameter("bonusPoint"));       // Bổ sung
         dto.setPenaltyPoint(request.getParameter("penaltyPoint"));   // Bổ sung
         dto.setAddress(request.getParameter("address"));             // Đổi location -> address
