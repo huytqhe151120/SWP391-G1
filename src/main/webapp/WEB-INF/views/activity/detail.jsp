@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-4">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -232,7 +232,7 @@
                         <div>
                             <h3 style="margin: 0;">Lời mời đối tác</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Đối tác chỉ được hiển thị trong danh sách tham gia sau khi nhân sự được mời (hoặc trưởng/thư ký của công ty đối tác) chấp nhận lời mời.
+                                Mời hợp tác hoặc mời ngừng hợp tác đều cần lời nhắn và chỉ có hiệu lực sau khi nhân sự được mời (hoặc trưởng/thư ký của công ty đối tác) chấp nhận.
                             </p>
                         </div>
                         <span class="activity-count"><c:out value="${empty invitations ? 0 : invitations.size()}"/> lời mời</span>
@@ -244,6 +244,8 @@
                                 <th scope="col" style="width: 60px;">STT</th>
                                 <th scope="col">Công ty đối tác</th>
                                 <th scope="col">Nhân sự phụ trách chính</th>
+                                <th scope="col">Loại lời mời</th>
+                                <th scope="col">Lời nhắn</th>
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col">Người mời</th>
                                 <th scope="col">Thời gian mời</th>
@@ -254,7 +256,7 @@
                             <c:choose>
                                 <c:when test="${empty invitations}">
                                     <tr>
-                                        <td colspan="7" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
+                                        <td colspan="9" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
                                             Chưa có lời mời nào được gửi cho hoạt động này.
                                         </td>
                                     </tr>
@@ -265,10 +267,22 @@
                                             <td>${loop.index + 1}</td>
                                             <td><strong><c:out value="${inv.partnerCompanyCode}"/></strong> - <c:out value="${inv.partnerCompanyName}"/></td>
                                             <td><c:out value="${inv.partnerStaffName}" default="—"/></td>
+                                            <td>${inv.termination ? 'Mời ngừng hợp tác' : 'Mời hợp tác'}</td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${empty inv.message}">—</c:when>
+                                                    <c:otherwise>
+                                                        <button type="button" class="button activity-message-view"
+                                                                data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
+                                                                data-message="<c:out value='${inv.message}'/>">Xem</button>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
                                             <td>
                                                 <span class="badge status-pill ${st:css(inv.approvalStatus)}">
                                                     <c:choose>
                                                         <c:when test="${inv.approvalStatus == 'PENDING'}">Chờ phản hồi</c:when>
+                                                        <c:when test="${!inv.termination && inv.approvalStatus == 'APPROVED' && inv.collaborationStatus != 'ACTIVE'}">Đã ngừng hợp tác</c:when>
                                                         <c:otherwise>${st:label(inv.approvalStatus)}</c:otherwise>
                                                     </c:choose>
                                                 </span>
@@ -283,6 +297,17 @@
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
                                                         <button type="submit" name="decision" value="accept" class="button activity-approval-approve">Chấp nhận</button>
                                                         <button type="submit" name="decision" value="reject" class="button activity-approval-reject">Từ chối</button>
+                                                    </form>
+                                                </c:if>
+                                                <c:if test="${inv.canRevoke}">
+                                                    <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
+                                                          data-confirm="Hủy phản hồi sẽ đưa lời mời về trạng thái chờ phản hồi${inv.approvalStatus == 'APPROVED' ? ' và gỡ các nhân sự đối tác của công ty khỏi hoạt động' : ''}. Bạn có chắc chắn?">
+                                                        <input type="hidden" name="action" value="revokeInvitation">
+                                                        <input type="hidden" name="activityId" value="${activity.id}">
+                                                        <input type="hidden" name="invitationId" value="${inv.id}">
+                                                        <button type="submit" class="button activity-approval-revoke">
+                                                            ${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}
+                                                        </button>
                                                     </form>
                                                 </c:if>
                                                 <c:if test="${canManageActivities && inv.approvalStatus == 'PENDING'}">
@@ -304,11 +329,33 @@
                     </div>
 
                     <c:if test="${canManageActivities}">
+                        <button type="button" class="button button-primary" id="invite-form-toggle"
+                                aria-expanded="false" aria-controls="invite-form-panel">Tạo lời mời</button>
+                        <div id="invite-form-panel" hidden>
                         <form class="activity-partner-form" method="post" action="${pageContext.request.contextPath}/activities">
-                            <input type="hidden" name="action" value="inviteCollaborator">
+                            <input type="hidden" id="inviteAction" name="action" value="inviteCollaborator">
                             <input type="hidden" name="activityId" value="${activity.id}">
-                            <h4 style="margin: 0 0 0.75rem; font-size: 1rem;">Mời đối tác tham gia hoạt động</h4>
-                            <div class="form-grid activity-form-grid">
+                                                        <div class="field" style="margin-bottom: 0.75rem;">
+                                <label for="inviteType">Loại lời mời</label>
+                                <select id="inviteType">
+                                    <option value="inviteCollaborator">Mời hợp tác</option>
+                                    <option value="terminatePartner">Mời ngừng hợp tác</option>
+                                </select>
+                            </div>
+                            <div id="inviteTerminateFields" class="field" hidden>
+                                <label for="partnerCompanyLinkId">Đối tác đang hợp tác</label>
+                                <select id="partnerCompanyLinkId" name="partnerCompanyLinkId" disabled>
+                                    <option value="">-- Chọn đối tác --</option>
+                                    <c:forEach var="partner" items="${approvedPartners}">
+                                        <c:if test="${partner.active}">
+                                            <option value="${partner.id}">
+                                                <c:out value="${partner.partnerCompanyCode}"/> - <c:out value="${partner.partnerCompanyName}"/>
+                                            </option>
+                                        </c:if>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div id="inviteCollabFields" class="form-grid activity-form-grid">
                                 <div class="field">
                                     <label for="partnerCompanyId">Công ty đối tác</label>
                                     <select id="partnerCompanyId" name="partnerCompanyId" required>
@@ -329,10 +376,16 @@
                                     <span id="partnerStaffMessage" class="field-hint" aria-live="polite"></span>
                                 </div>
                             </div>
+                            <div class="field">
+                                <label for="inviteMessage">Lời nhắn gửi đối tác</label>
+                                <textarea id="inviteMessage" name="message" rows="2" maxlength="500" required
+                                          placeholder="Nội dung lời mời / lý do ngừng hợp tác"></textarea>
+                            </div>
                             <div class="activity-partner-form-actions">
                                 <button type="submit" class="button button-primary">Gửi lời mời</button>
                             </div>
                         </form>
+                        </div>
                     </c:if>
                 </section>
 
@@ -341,7 +394,7 @@
                         <div>
                             <h3 style="margin: 0;">Đối tác tham gia hoạt động</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Các đối tác đã chấp nhận lời mời, mỗi đối tác có một nhân sự phụ trách chính.
+                                Các đối tác của hoạt động và trạng thái tham gia; mỗi đối tác có một nhân sự phụ trách chính.
                             </p>
                         </div>
                         <span class="activity-count"><c:out value="${empty approvedPartners ? 0 : approvedPartners.size()}"/> đối tác</span>
@@ -354,15 +407,16 @@
                                 <th scope="col">Công ty đối tác</th>
                                 <th scope="col">Nhân sự phụ trách chính</th>
                                 <th scope="col">Chức vụ</th>
-                                <th scope="col">Ngày được mời</th>
+                                <th scope="col">Trạng thái tham gia</th>
+                                <th scope="col">Ngày tham gia</th>
                             </tr>
                             </thead>
                             <tbody>
                             <c:choose>
                                 <c:when test="${empty approvedPartners}">
                                     <tr>
-                                        <td colspan="5" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
-                                            Chưa có đối tác nào chấp nhận tham gia hoạt động này.
+                                        <td colspan="6" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
+                                            Chưa có đối tác nào được mời tham gia hoạt động này.
                                         </td>
                                     </tr>
                                 </c:when>
@@ -373,8 +427,13 @@
                                             <td><strong><c:out value="${partner.partnerCompanyCode}"/></strong> - <c:out value="${partner.partnerCompanyName}"/></td>
                                             <td><c:out value="${partner.partnerStaffName}" default="—"/></td>
                                             <td><c:out value="${partner.partnerStaffPosition}" default="—"/></td>
+                                            <td>
+                                                <span class="badge status-pill ${partner.active ? 'status-green' : 'status-gray'}">
+                                                    ${partner.active ? 'Đang hợp tác' : 'Chưa/ngừng hợp tác'}
+                                                </span>
+                                            </td>
                                             <td><c:out value="${partner.formattedCreatedAt}"/></td>
-                                        </tr>
+                                                                                    </tr>
                                     </c:forEach>
                                 </c:otherwise>
                             </c:choose>
@@ -540,6 +599,11 @@
         </main>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261017-4"></script>
+<dialog id="activity-message-modal" class="activity-message-modal">
+    <h3 id="activity-message-modal-title" style="margin-top: 0;">Lời nhắn</h3>
+    <p id="activity-message-modal-body" style="white-space: pre-wrap; word-break: break-word;"></p>
+    <div style="text-align: right;"><button type="button" class="button" id="activity-message-modal-close">Đóng</button></div>
+</dialog>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261017-7"></script>
 </body>
 </html>

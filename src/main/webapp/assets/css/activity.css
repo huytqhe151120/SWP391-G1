@@ -1525,3 +1525,21 @@ button.activity-action-link:focus-visible {
 .badge.status-pill.status-gray { background: #f2f4f7; border-color: #e4e7ed; color: #687386; }
 .badge.status-pill.status-yellow { background: #fff6dc; border-color: #f6e2a3; color: #8a6100; }
 .badge.status-pill.status-red { background: #fdecec; border-color: #f5c6c6; color: #b42318; }
+
+.activity-partner-form [hidden] {
+    display: none !important;
+}
+
+.activity-message-modal {
+    max-width: 520px;
+    width: 90%;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+.activity-message-modal::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+#invite-form-panel > .activity-partner-form {
+    margin-top: 0.75rem;
+}

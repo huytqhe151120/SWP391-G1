@@ -76,7 +76,8 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 || ("POST".equalsIgnoreCase(request.getMethod())
                         && ("create".equals(action) || "update".equals(action)))
                 || ("POST".equalsIgnoreCase(request.getMethod())
-                        && ("inviteCollaborator".equals(action) || "cancelInvitation".equals(action)));
+                        && ("inviteCollaborator".equals(action) || "cancelInvitation".equals(action)
+                                || "terminatePartner".equals(action)));
         if (requiresManagementPermission
                 && !AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -170,6 +171,12 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                     break;
                 case "cancelInvitation":
                     handleInvitation(request, response, "cancel");
+                    break;
+                case "revokeInvitation":
+                    handleInvitation(request, response, "revoke");
+                    break;
+                case "terminatePartner":
+                    handleInvitation(request, response, "terminate");
                     break;
                 case "unassignPartnerStaff":
                     unassignPartnerStaff(request, response);
@@ -644,14 +651,25 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             switch (operation) {
                 case "invite":
                     invitationService.invite(activityId, request.getParameter("partnerCompanyId"),
-                            request.getParameter("partnerStaffId"), currentUser);
+                            request.getParameter("partnerStaffId"), request.getParameter("message"), currentUser);
                     session.setAttribute("successMessage", "Đã gửi lời mời đối tác tham gia hoạt động.");
                     break;
                 case "respond":
                     boolean accept = "accept".equals(request.getParameter("decision"));
                     invitationService.respond(parseId(request.getParameter("invitationId")), accept, currentUser);
                     session.setAttribute("successMessage",
-                            accept ? "Đã chấp nhận lời mời tham gia hoạt động." : "Đã từ chối lời mời tham gia hoạt động.");
+                            accept ? "Đã chấp nhận lời mời." : "Đã từ chối lời mời.");
+                    break;
+                case "revoke":
+                    invitationService.revoke(parseId(request.getParameter("invitationId")), currentUser);
+                    session.setAttribute("successMessage", "Đã hủy phản hồi lời mời. Lời mời quay lại trạng thái chờ phản hồi.");
+                    break;
+                case "terminate":
+                    invitationService.requestTermination(activityId,
+                            parseId(request.getParameter("partnerCompanyLinkId")),
+                            request.getParameter("message"), currentUser);
+                    session.setAttribute("successMessage",
+                            "Đã gửi lời mời ngừng hợp tác. Hợp tác chỉ kết thúc sau khi đối tác chấp nhận.");
                     break;
                 default:
                     invitationService.cancel(parseId(request.getParameter("invitationId")), currentUser);

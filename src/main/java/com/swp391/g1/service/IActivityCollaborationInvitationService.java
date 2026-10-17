@@ -2,6 +2,7 @@ package com.swp391.g1.service;
 
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityCollaborationInvitationDTO;
+import com.swp391.g1.dto.response.ActivityPartnerCompanyDTO;
 
 import java.util.List;
 
@@ -10,11 +11,17 @@ public interface IActivityCollaborationInvitationService {
     List<ActivityCollaborationInvitationDTO> getInvitations(int activityId, CurrentUser user);
 
     /** Accepted invitations, i.e. the partners that take part in the activity. */
-    List<ActivityCollaborationInvitationDTO> getApprovedPartners(int activityId);
+    List<ActivityPartnerCompanyDTO> getApprovedPartners(int activityId);
 
-    void invite(int activityId, String partnerCompanyId, String partnerStaffId, CurrentUser user);
+    void invite(int activityId, String partnerCompanyId, String partnerStaffId, String message, CurrentUser user);
+
+    /** Sends a termination invitation; the collaboration only ends once the partner accepts it. */
+    void requestTermination(int activityId, int activityPartnerCompanyId, String message, CurrentUser user);
 
     void respond(int invitationId, boolean accept, CurrentUser user);
 
     void cancel(int invitationId, CurrentUser user);
+
+    /** Undoes an accepted collaboration invitation or a rejected invitation: it returns to PENDING. */
+    void revoke(int invitationId, CurrentUser user);
 }

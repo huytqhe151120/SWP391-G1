@@ -19,7 +19,11 @@ public class ActivityCollaborationInvitationDTO {
     private String createdBy;
     private String createdByName;
     private LocalDateTime createdAt;
+    private String collaborationStatus;
+    private String invitationType;
+    private String message;
     private boolean canRespond;
+    private boolean canRevoke;
 
     public int getId() {
         return id;
@@ -123,6 +127,42 @@ public class ActivityCollaborationInvitationDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getCollaborationStatus() {
+        return collaborationStatus;
+    }
+
+    public void setCollaborationStatus(String collaborationStatus) {
+        this.collaborationStatus = collaborationStatus;
+    }
+
+    public String getInvitationType() {
+        return invitationType;
+    }
+
+    public void setInvitationType(String invitationType) {
+        this.invitationType = invitationType;
+    }
+
+    public boolean isTermination() {
+        return "TERMINATION".equalsIgnoreCase(invitationType);
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public boolean isCanRevoke() {
+        return canRevoke;
+    }
+
+    public void setCanRevoke(boolean canRevoke) {
+        this.canRevoke = canRevoke;
     }
 
     public boolean isCanRespond() {
