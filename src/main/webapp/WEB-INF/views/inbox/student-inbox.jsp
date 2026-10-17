@@ -19,8 +19,8 @@
         <div class="activity-app-main">
 <a class="skip-link" href="#inbox-content">Đi đến nội dung chính</a>
 <main class="inbox-page" id="inbox-content">
-    <header class="inbox-hero">
-        <div class="hero-copy">
+    <header class="activity-hero inbox-hero">
+        <div class="hero-copy activity-hero-copy">
             <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> HỖ TRỢ SINH VIÊN</span>
             <h1>Hộp thư của tôi</h1>
             <p>Trao đổi riêng với ban tổ chức hoặc nhân viên hỗ trợ.</p>

@@ -23,7 +23,6 @@
             <p>Quản lý thông tin và công ty của các nhân viên đối tác.</p>
         </div>
         <div class="account-hero-actions">
-            <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
             <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs?action=create">
                 <span class="plus-icon" aria-hidden="true">+</span>
                 Thêm nhân viên
@@ -55,7 +54,7 @@
         </div>
         <form class="partner-staff-filter" method="get" action="${pageContext.request.contextPath}/partner-staffs">
             <label for="companyFilter">Lọc theo công ty</label>
-            <select id="companyFilter" name="companyId" onchange="this.form.submit()">
+            <select id="companyFilter" name="companyId">
                 <option value="">Tất cả công ty</option>
                 <c:forEach var="company" items="${partnerCompanies}">
                     <option value="${company.id}" <c:if test="${selectedCompanyId == company.id}">selected</c:if>>
@@ -113,7 +112,7 @@
                                         <a class="activity-action-link" href="${pageContext.request.contextPath}/partner-staffs?action=edit&amp;id=${staff.id}">Sửa</a>
                                         <a class="activity-action-link activity-action-delete"
                                            href="${pageContext.request.contextPath}/partner-staffs?action=delete&amp;id=${staff.id}"
-                                           onclick="return confirm('Bạn có chắc muốn xóa nhân viên đối tác này?');">Xóa</a>
+                                           data-confirm="Bạn có chắc muốn xóa nhân viên đối tác này?">Xóa</a>
                                     </div>
                                 </td>
                             </tr>
@@ -128,5 +127,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/partner-staff.js"></script>
 </body>
 </html>
