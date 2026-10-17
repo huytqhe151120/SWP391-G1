@@ -164,11 +164,15 @@
                            value="<c:out value='${not empty formData ? formData.penaltyPoint : activity.penaltyPoint}'/>">
                 </div>
                 <div class="field field-wide">
-                    <label class="checkbox-inline" for="registrationFormRequired">
-                        <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true"
+                    <div class="checkbox-inline">
+                        <input id="registrationFormRequired" name="registrationFormRequired"
+                               type="checkbox" value="true"
                                <c:if test="${registrationValue}">checked</c:if>>
-                        <span>Bắt buộc điền form</span>
-                    </label>
+
+                        <label for="registrationFormRequired">
+                            Bắt buộc điền form
+                        </label>
+                    </div>
                 </div>
                 <div class="field field-wide">
                     <label for="description">Mô tả</label>

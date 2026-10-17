@@ -222,24 +222,25 @@
                                         <c:if test="${activity.approvalStatus == 'DRAFT'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
-                                                <button type="submit" name="action" value="submit" class="button button-primary button-sm">Gửi duyệt</button>
+                                                <button type="submit" name="action" value="submit" class="button button-primary button-send-approval button-sm">Gửi duyệt</button>
                                             </form>
                                         </c:if>
                                         <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
-                                                <button type="submit" name="action" value="approve" class="button button-sm activity-approval-approve">Duyệt</button>
-                                                <button type="submit" name="action" value="reject" class="button button-sm activity-approval-reject">Từ chối</button>
+                                                <button type="submit" name="action" value="approve" class="button button-approve button-sm">Duyệt</button>
+                                                <button type="submit" name="action" value="reject" class="button button-reject button-sm">Từ chối</button>
                                             </form>
                                         </c:if>
                                         <c:if test="${canApproveActivities && activity.approvalStatus == 'APPROVED' && activity.activityStatus == 'UPCOMING'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeApproval"
-                                                        class="button button-sm activity-approval-revoke"
+                                                        class="button button-cancel-approval button-sm"
                                                         data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                                             </form>
                                         </c:if>
+
                                     </div>
                                 </td>
                             </tr>

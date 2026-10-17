@@ -547,7 +547,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         try {
             boolean success = activityService.updateActivity(dto);
             if (success) {
-                session.setAttribute("successMessage", "Cập nhật hoạt động thành công! Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần gửi duyệt lại.");
+                session.setAttribute("successMessage", "Cập nhật hoạt động thành công! Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần Gửi duyệt lại.");
                 response.sendRedirect(request.getContextPath() + "/activities");
             } else {
                 request.setAttribute("errorMessage", "Cập nhật không thành công. Vui lòng kiểm tra lại.");
