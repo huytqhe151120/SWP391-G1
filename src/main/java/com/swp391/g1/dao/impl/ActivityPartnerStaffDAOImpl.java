@@ -19,7 +19,7 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
         List<ActivityPartnerStaffResponseDTO> list = new ArrayList<>();
         String sql = """
                 SELECT aps.activity_id, aps.partner_staff_id, aps.assigned_on,
-                       ps.code, ps.name, ps.status, ps.position, pc.name AS company_name
+                       ps.code, ps.name, ps.status, ps.position, ps.company_id, pc.name AS company_name
                 FROM activity_partner_staff aps
                 JOIN partner_staff ps ON aps.partner_staff_id = ps.id
                 LEFT JOIN partner_company pc ON ps.company_id = pc.id
@@ -41,6 +41,7 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
                     dto.setPartnerStaffName(rs.getString("name"));
                     dto.setStatus(rs.getString("status"));
                     dto.setPosition(rs.getString("position"));
+                    dto.setCompanyId(rs.getInt("company_id"));
                     dto.setCompanyName(rs.getString("company_name"));
                     list.add(dto);
                 }
@@ -62,7 +63,7 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
             ps.setInt(2, partnerStaffId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to assign partner staff to activity.", e);
+            throw new IllegalStateException("Failed to assign partner staff to activity: " + e.getMessage(), e);
         }
     }
 

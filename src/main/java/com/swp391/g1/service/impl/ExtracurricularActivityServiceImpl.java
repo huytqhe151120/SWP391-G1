@@ -68,6 +68,11 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         ExtracurricularActivity entity = mapToEntity(dto);
         entity.setId(Integer.parseInt(dto.getId()));
         ExtracurricularActivity existing = activityDAO.findById(entity.getId());
+        if (existing != null) {
+            // Partner information is managed separately in the "Đối tác hoạt động" step.
+            entity.setPartnerCompanyId(existing.getPartnerCompanyId());
+            entity.setPartnerStaffId(existing.getPartnerStaffId());
+        }
         if (existing != null && !hasContentChanged(existing, entity)) {
             return true;
         }
@@ -81,8 +86,6 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 || a.getActivityTypeId() != b.getActivityTypeId()
                 || a.getResponsibleDepartmentId() != b.getResponsibleDepartmentId()
                 || a.getResponsibleStaffId() != b.getResponsibleStaffId()
-                || !Objects.equals(a.getPartnerCompanyId(), b.getPartnerCompanyId())
-                || !Objects.equals(a.getPartnerStaffId(), b.getPartnerStaffId())
                 || a.isRegistrationFormRequired() != b.isRegistrationFormRequired()
                 || !sameText(a.getCode(), b.getCode())
                 || !sameText(a.getCode(), b.getCode())
@@ -162,11 +165,6 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             throw new IllegalArgumentException("Nhân viên phụ trách phải thuộc đơn vị phụ trách đã chọn.");
         }
 
-        // Validate ràng buộc đối tác: Chọn nhân viên đối tác thì BẮT BỘC phải chọn công ty đối tác
-        if (!isEmpty(dto.getPartnerStaffId()) && isEmpty(dto.getPartnerCompanyId())) {
-            throw new IllegalArgumentException("Vui lòng chọn công ty đối tác trước khi chọn nhân viên đối tác.");
-        }
-
         // Validate điểm không được âm
         if (!isEmpty(dto.getBonusPoint())) {
             try {
@@ -234,10 +232,6 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         entity.setActivityTypeId(Integer.parseInt(dto.getActivityTypeId()));
         entity.setResponsibleDepartmentId(Integer.parseInt(dto.getResponsibleDepartmentId()));
         entity.setResponsibleStaffId(Integer.parseInt(dto.getResponsibleStaffId()));
-
-        // Convert các khóa ngoại Nullable
-        entity.setPartnerCompanyId(isEmpty(dto.getPartnerCompanyId()) ? null : Integer.parseInt(dto.getPartnerCompanyId()));
-        entity.setPartnerStaffId(isEmpty(dto.getPartnerStaffId()) ? null : Integer.parseInt(dto.getPartnerStaffId()));
 
         // Convert Điểm
         entity.setBonusPoint(isEmpty(dto.getBonusPoint()) ? BigDecimal.ZERO : new BigDecimal(dto.getBonusPoint()));

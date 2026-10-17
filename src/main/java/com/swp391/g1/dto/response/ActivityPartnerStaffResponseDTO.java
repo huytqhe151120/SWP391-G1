@@ -13,6 +13,7 @@ public class ActivityPartnerStaffResponseDTO {
     private String status;
     private String position;
     private String companyName;
+    private int companyId;
     private LocalDateTime assignedOn;
 
     public int getActivityId() {
@@ -61,6 +62,14 @@ public class ActivityPartnerStaffResponseDTO {
 
     public void setPosition(String position) {
         this.position = position;
+    }
+
+    public int getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(int companyId) {
+        this.companyId = companyId;
     }
 
     public String getCompanyName() {
