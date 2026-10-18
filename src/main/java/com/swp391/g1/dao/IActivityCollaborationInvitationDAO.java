@@ -15,6 +15,12 @@ public interface IActivityCollaborationInvitationDAO {
 
     List<ActivityCollaborationInvitationDTO> findByActivityId(int activityId);
 
+    /** Invitations of the given company, or of every company when the id is null. */
+    List<ActivityCollaborationInvitationDTO> findByPartnerCompanyId(Integer partnerCompanyId);
+
+    /** PENDING -> CANCELLED for every invitation whose activity is already ONGOING. Returns the number changed. */
+    int cancelPendingOfOngoingActivities();
+
     ActivityCollaborationInvitationDTO findById(int id);
 
     /** True when the company has a pending invitation (any type) in the activity. */

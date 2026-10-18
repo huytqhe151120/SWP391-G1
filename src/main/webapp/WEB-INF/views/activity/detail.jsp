@@ -58,10 +58,10 @@
                 Thông tin chi tiết hoạt động
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-staff" data-tab="tab-staff" role="tab" aria-selected="false" aria-controls="tab-staff">
-                Nhân sự đồng phụ trách
+                Đơn vị đồng phụ trách
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-partner" data-tab="tab-partner" role="tab" aria-selected="false" aria-controls="tab-partner">
-                Đối tác hoạt động
+                Đối tác hỗ trợ hoạt động
             </button>
         </div>
 
@@ -107,9 +107,117 @@
                 <section class="activity-detail-section" style="grid-column: 1 / -1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div>
+                            <h3 style="margin: 0;">Đơn vị đồng phụ trách</h3>
+                            <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
+                                Nhân sự của các đơn vị này (cùng đơn vị phụ trách chính) có thể được phân công vào hoạt động.
+                            </p>
+                        </div>
+                        <span class="activity-count"><c:out value="${empty coDepartments ? 0 : coDepartments.size()}"/> đơn vị</span>
+                    </div>
+
+                    <div class="table-wrap activity-table-wrap" style="margin-bottom: 1.5rem;">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th scope="col" style="width: 60px;">STT</th>
+                                <th scope="col">Mã đơn vị</th>
+                                <th scope="col">Tên đơn vị</th>
+                                <th scope="col">Trạng thái</th>
+                                <th scope="col">Thời gian thêm</th>
+                                <c:if test="${canRemoveStaff}">
+                                    <th scope="col" style="text-align: right; width: 120px;">Thao tác</th>
+                                </c:if>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:choose>
+                                <c:when test="${empty coDepartments}">
+                                    <tr>
+                                        <td colspan="${canRemoveStaff ? 6 : 5}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
+                                            Chưa có đơn vị đồng phụ trách nào.
+                                        </td>
+                                    </tr>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:forEach items="${coDepartments}" var="cd" varStatus="loop">
+                                        <tr>
+                                            <td>${loop.index + 1}</td>
+                                            <td><strong><c:out value="${cd.departmentCode}"/></strong></td>
+                                            <td><c:out value="${cd.departmentName}"/></td>
+                                            <td><span class="badge status-pill ${st:css(cd.departmentStatus)}">${st:label(cd.departmentStatus)}</span></td>
+                                            <td><c:out value="${cd.formattedCreatedAt}"/></td>
+                                            <c:if test="${canRemoveStaff}">
+                                                <td style="text-align: right;">
+                                                    <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
+                                                          data-confirm="Gỡ đơn vị này sẽ đồng thời gỡ các nhân sự chỉ thuộc đơn vị này khỏi hoạt động. Bạn có chắc chắn?">
+                                                        <input type="hidden" name="action" value="removeDepartment">
+                                                        <input type="hidden" name="activityId" value="${activity.id}">
+                                                        <input type="hidden" name="departmentId" value="${cd.departmentId}">
+                                                        <button type="submit" class="button" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: #dc2626; border-color: #fca5a5;">
+                                                            Gỡ bỏ
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </c:if>
+                                        </tr>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <c:if test="${canAddStaff}">
+                        <div style="background: var(--surface-secondary, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 1.25rem;">
+                            <h4 style="margin: 0 0 0.5rem; font-size: 1rem;">Thêm đơn vị đồng phụ trách</h4>
+                            <c:choose>
+                                <c:when test="${not empty availableDepartments}">
+                                    <form action="${pageContext.request.contextPath}/activities" method="post" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                        <input type="hidden" name="action" value="addDepartment">
+                                        <input type="hidden" name="activityId" value="${activity.id}">
+                                        <div class="multi-select-combobox" data-multi-select data-item-label="đơn vị">
+                                            <button type="button" class="multi-select-trigger" aria-expanded="false"
+                                                    aria-controls="department-options">
+                                                <span data-selection-label>Chọn đơn vị đồng phụ trách</span>
+                                                <span aria-hidden="true">▾</span>
+                                            </button>
+                                            <div class="multi-select-dropdown" id="department-options" hidden>
+                                                <input class="multi-select-search" type="search"
+                                                       placeholder="Tìm đơn vị..." aria-label="Tìm đơn vị">
+                                                <fieldset class="multi-select-options">
+                                                    <legend class="visually-hidden">Chọn đơn vị</legend>
+                                                    <c:forEach items="${availableDepartments}" var="dp">
+                                                        <label class="multi-select-option">
+                                                            <input type="checkbox" name="departmentIds" value="${dp.id}">
+                                                            <span><c:out value="${dp.code}"/> - <c:out value="${dp.name}"/></span>
+                                                        </label>
+                                                    </c:forEach>
+                                                </fieldset>
+                                                <div class="multi-select-empty" hidden>Không tìm thấy đơn vị phù hợp.</div>
+                                            </div>
+                                            <span class="multi-select-count" aria-live="polite">Chưa chọn đơn vị</span>
+                                        </div>
+                                        <button type="submit" class="button button-primary">
+                                            + Thêm đơn vị đồng phụ trách
+                                        </button>
+                                    </form>
+                                </c:when>
+                                <c:otherwise>
+                                    <p style="margin: 0; font-style: italic; font-size: 0.875rem; color: var(--text-muted, #64748b);">
+                                        Không còn đơn vị đang hoạt động nào để thêm.
+                                    </p>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </c:if>
+                </section>
+
+                <section class="activity-detail-section" style="grid-column: 1 / -1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div>
                             <h3 style="margin: 0;">Danh sách nhân sự đồng phụ trách</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Các nhân sự thuộc phòng ban phụ trách tham gia điều phối hoạt động.
+                                Các nhân sự thuộc đơn vị phụ trách chính hoặc đơn vị đồng phụ trách tham gia điều phối hoạt động.
                             </p>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
                                 Nhân sự phụ trách chính: <strong><c:out value="${activity.responsibleStaffName}" default="Chưa có"/></strong>
@@ -182,7 +290,7 @@
                         <div style="background: var(--surface-secondary, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 1.25rem;">
                             <h4 style="margin: 0 0 0.5rem; font-size: 1rem;">Phân công nhân sự mới</h4>
                             <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted, #64748b);">
-                                Chỉ nhân sự thuộc phòng ban phụ trách (<strong><c:out value="${activity.responsibleDepartmentName}" default="${activity.responsibleDepartmentCode}"/></strong>) mới có thể được phân công.
+                                Chỉ nhân sự đang hoạt động thuộc đơn vị phụ trách chính (<strong><c:out value="${activity.responsibleDepartmentName}" default="${activity.responsibleDepartmentCode}"/></strong>) hoặc các đơn vị đồng phụ trách mới có thể được phân công.
                             </p>
                             <c:choose>
                                 <c:when test="${not empty availableStaffs}">
@@ -218,7 +326,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <p style="margin: 0; font-style: italic; font-size: 0.875rem; color: var(--text-muted, #64748b);">
-                                        Không còn nhân sự nào thuộc phòng ban phụ trách chưa được phân công.
+                                        Không còn nhân sự đang hoạt động nào thuộc các đơn vị phụ trách chưa được phân công.
                                     </p>
                                 </c:otherwise>
                             </c:choose>
@@ -412,7 +520,7 @@
                                 <th scope="col">Công ty đối tác</th>
                                 <th scope="col">Nhân sự phụ trách chính</th>
                                 <th scope="col">Chức vụ</th>
-                                <th scope="col">Trạng thái tham gia</th>
+                                <th scope="col">Trạng thái</th>
                                 <th scope="col">Ngày tham gia</th>
                             </tr>
                             </thead>
@@ -434,7 +542,7 @@
                                             <td><c:out value="${partner.partnerStaffPosition}" default="—"/></td>
                                             <td>
                                                 <span class="badge status-pill ${partner.active ? 'status-green' : 'status-gray'}">
-                                                    ${partner.active ? 'Đang hợp tác' : 'Chưa/ngừng hợp tác'}
+                                                    ${partner.active ? 'Đang hoạt động' : 'Không hoạt động'}
                                                 </span>
                                             </td>
                                             <td><c:out value="${partner.formattedCreatedAt}"/></td>

@@ -38,10 +38,33 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (activityId <= 0) {
             return List.of();
         }
+        invitationDAO.cancelPendingOfOngoingActivities();
         List<ActivityCollaborationInvitationDTO> invitations = invitationDAO.findByActivityId(activityId);
         PartnerStaff me = isPartnerStaffUser(user) ? partnerStaffDAO.findByAccountId(user.getId()) : null;
         Set<Integer> activeCompanyIds = activeCompanyIds(activityId);
         for (ActivityCollaborationInvitationDTO invitation : invitations) {
+            invitation.setCanRespond(canRespond(invitation, user, me));
+            invitation.setCanRevoke(canRevoke(invitation, user, me, activeCompanyIds));
+        }
+        return invitations;
+    }
+
+    @Override
+    public List<ActivityCollaborationInvitationDTO> getInvitationsForUser(CurrentUser user) {
+        if (user == null) {
+            return List.of();
+        }
+        PartnerStaff me = isPartnerStaffUser(user) ? partnerStaffDAO.findByAccountId(user.getId()) : null;
+        if (isPartnerStaffUser(user) && me == null) {
+            return List.of();
+        }
+        invitationDAO.cancelPendingOfOngoingActivities();
+        List<ActivityCollaborationInvitationDTO> invitations =
+                invitationDAO.findByPartnerCompanyId(me == null ? null : me.getCompanyId());
+        java.util.Map<Integer, Set<Integer>> activeByActivity = new java.util.HashMap<>();
+        for (ActivityCollaborationInvitationDTO invitation : invitations) {
+            Set<Integer> activeCompanyIds = activeByActivity.computeIfAbsent(
+                    invitation.getActivityId(), this::activeCompanyIds);
             invitation.setCanRespond(canRespond(invitation, user, me));
             invitation.setCanRevoke(canRevoke(invitation, user, me, activeCompanyIds));
         }
@@ -166,6 +189,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     }
 
     private ActivityCollaborationInvitationDTO requirePending(int invitationId) {
+        invitationDAO.cancelPendingOfOngoingActivities();
         ActivityCollaborationInvitationDTO invitation = invitationId <= 0 ? null : invitationDAO.findById(invitationId);
         if (invitation == null) {
             throw new IllegalArgumentException("Không tìm thấy lời mời.");
