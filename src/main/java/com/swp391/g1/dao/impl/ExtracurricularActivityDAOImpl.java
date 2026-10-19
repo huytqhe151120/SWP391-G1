@@ -124,6 +124,62 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
     @Override
     public List<ExtracurricularActivityResponseDTO> findAllWithDetails() {
+        return queryActivitiesWithDetails(null, null);
+    }
+
+    @Override
+    public List<ExtracurricularActivityResponseDTO> findAllWithDetailsForStaff(int accountId, String role) {
+        if (accountId <= 0) {
+            return List.of();
+        }
+        String scope = staffScopePredicate(role);
+        return scope == null ? List.of() : queryActivitiesWithDetails(scope, accountId);
+    }
+
+    @Override
+    public boolean isInStaffActivityScope(int activityId, int accountId, String role) {
+        if (activityId <= 0 || accountId <= 0) {
+            return false;
+        }
+        String scope = staffScopePredicate(role);
+        if (scope == null) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM extracurricular_activity a WHERE a.id = ? AND " + scope;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check staff activity access.", e);
+        }
+    }
+
+    private String staffScopePredicate(String role) {
+        if ("STAFF".equals(role)) {
+            return """
+                    EXISTS (SELECT 1 FROM staff scoped_staff
+                            WHERE scoped_staff.account_id = ?
+                              AND scoped_staff.id = a.responsible_staff_id)
+                    """;
+        }
+        if ("UNIT_DEPUTY_HEAD".equals(role) || "UNIT_HEAD".equals(role)
+                || "UNIT_SECRETARY".equals(role)) {
+            return """
+                    EXISTS (SELECT 1
+                            FROM staff scoped_staff
+                            JOIN staff_assignment sa ON sa.staff_id = scoped_staff.id
+                            WHERE scoped_staff.account_id = ?
+                              AND sa.department_id = a.responsible_department_id)
+                    """;
+        }
+        return null;
+    }
+
+    private List<ExtracurricularActivityResponseDTO> queryActivitiesWithDetails(String scope, Integer accountId) {
         List<ExtracurricularActivityResponseDTO> list = new ArrayList<>();
         String sql = """
     SELECT
@@ -141,51 +197,58 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     LEFT JOIN staff st ON a.responsible_staff_id = st.id
     LEFT JOIN partner_company pc ON a.partner_company_id = pc.id
     LEFT JOIN partner_staff ps ON a.partner_staff_id = ps.id
+    """ + (scope == null ? "" : "WHERE " + scope) + """
     ORDER BY a.id DESC
     """;
 
         try (Connection conn = DBContext.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                ExtracurricularActivityResponseDTO dto = new ExtracurricularActivityResponseDTO();
-                dto.setId(rs.getInt("id"));
-                dto.setCode(rs.getString("code"));
-                dto.setName(rs.getString("name"));
-                dto.setSemesterId(rs.getInt("semester_id"));
-                dto.setActivityTypeId(rs.getInt("activity_type_id"));
-                dto.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
-                dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
-                dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
-                dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
-                dto.setBonusPoint(rs.getBigDecimal("bonus_point"));
-                dto.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
-                dto.setAddress(rs.getString("address"));
-                dto.setDescription(rs.getString("description"));
-                dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
-                dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            if (accountId != null) {
+                stmt.setInt(1, accountId);
+            }
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ExtracurricularActivityResponseDTO dto = new ExtracurricularActivityResponseDTO();
+                    dto.setId(rs.getInt("id"));
+                    dto.setCode(rs.getString("code"));
+                    dto.setName(rs.getString("name"));
+                    dto.setSemesterId(rs.getInt("semester_id"));
+                    dto.setActivityTypeId(rs.getInt("activity_type_id"));
+                    dto.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
+                    dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
+                    dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
+                    dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
+                    dto.setBonusPoint(rs.getBigDecimal("bonus_point"));
+                    dto.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
+                    dto.setAddress(rs.getString("address"));
+                    dto.setDescription(rs.getString("description"));
+                    dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
+                    dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
 
-                Timestamp startTime = rs.getTimestamp("start_time");
-                dto.setStartTime(startTime == null ? null : LocalDateTime.parse(startTime.toLocalDateTime().toString()));
-                Timestamp endTime = rs.getTimestamp("end_time");
-                dto.setEndTime(endTime == null ? null : LocalDateTime.parse(endTime.toLocalDateTime().toString()));
-                dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+                    Timestamp startTime = rs.getTimestamp("start_time");
+                    dto.setStartTime(startTime == null
+                            ? null : LocalDateTime.parse(startTime.toLocalDateTime().toString()));
+                    Timestamp endTime = rs.getTimestamp("end_time");
+                    dto.setEndTime(endTime == null
+                            ? null : LocalDateTime.parse(endTime.toLocalDateTime().toString()));
+                    dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
 
-                // Thông tin chi tiết JOIN từ các bảng liên quan
-                dto.setSemesterCode(rs.getString("semester_code"));
-                dto.setSemesterName(rs.getString("semester_name"));
-                dto.setActivityTypeCode(rs.getString("activity_type_code"));
-                dto.setActivityTypeName(rs.getString("activity_type_name"));
-                dto.setResponsibleDepartmentCode(rs.getString("dept_code"));
-                dto.setResponsibleDepartmentName(rs.getString("dept_name"));
-                dto.setResponsibleStaffCode(rs.getString("staff_code"));
-                dto.setResponsibleStaffName(rs.getString("staff_name"));
-                dto.setPartnerCompanyCode(rs.getString("company_code"));
-                dto.setPartnerCompanyName(rs.getString("company_name"));
-                dto.setPartnerStaffCode(rs.getString("partner_staff_code"));
-                dto.setPartnerStaffName(rs.getString("partner_staff_name"));
+                    // Thông tin chi tiết JOIN từ các bảng liên quan
+                    dto.setSemesterCode(rs.getString("semester_code"));
+                    dto.setSemesterName(rs.getString("semester_name"));
+                    dto.setActivityTypeCode(rs.getString("activity_type_code"));
+                    dto.setActivityTypeName(rs.getString("activity_type_name"));
+                    dto.setResponsibleDepartmentCode(rs.getString("dept_code"));
+                    dto.setResponsibleDepartmentName(rs.getString("dept_name"));
+                    dto.setResponsibleStaffCode(rs.getString("staff_code"));
+                    dto.setResponsibleStaffName(rs.getString("staff_name"));
+                    dto.setPartnerCompanyCode(rs.getString("company_code"));
+                    dto.setPartnerCompanyName(rs.getString("company_name"));
+                    dto.setPartnerStaffCode(rs.getString("partner_staff_code"));
+                    dto.setPartnerStaffName(rs.getString("partner_staff_name"));
 
-                list.add(dto);
+                    list.add(dto);
+                }
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to query extracurricular activity list.", e);
@@ -334,12 +397,52 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql = "DELETE FROM extracurricular_activity WHERE id = ?";
+        String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
+        // Remove the partner-company link before its invitation because it references that invitation.
+        String[] dependentDeletes = {
+                "DELETE FROM activity_staff WHERE activity_id = ?",
+                "DELETE FROM activity_department WHERE activity_id = ?",
+                "DELETE FROM activity_partner_staff WHERE activity_id = ?",
+                "DELETE FROM activity_partner_company WHERE activity_id = ?",
+                "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
+        };
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(existsSql)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+                for (String sql : dependentDeletes) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps =
+                             conn.prepareStatement("DELETE FROM extracurricular_activity WHERE id = ?")) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+                throw e;
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to delete extracurricular activity.", e);
         }

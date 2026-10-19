@@ -21,12 +21,18 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                    pc.code AS company_code, pc.name AS company_name,
                    ps.code AS staff_code, ps.name AS staff_name, ps.position AS staff_position,
                    acc.username AS created_by_name,
-                   apc.collaboration_status AS collaboration_status
+                   apc.collaboration_status AS collaboration_status,
+                   ea.code AS activity_code, ea.name AS activity_name, ea.approval_status AS activity_approval_status,
+                   ea.activity_status AS activity_status, ea.start_time AS activity_start_time,
+                   ea.end_time AS activity_end_time,
+                   atype.name AS activity_type_name
             FROM activity_collaboration_invitation i
             JOIN partner_company pc ON i.partner_company_id = pc.id
             LEFT JOIN partner_staff ps ON i.partner_staff_id = ps.id
             LEFT JOIN account acc ON acc.id = TRY_CAST(i.created_by AS INT)
             LEFT JOIN activity_partner_company apc ON apc.invitation_id = i.id
+            JOIN extracurricular_activity ea ON ea.id = i.activity_id
+            LEFT JOIN activity_type atype ON atype.id = ea.activity_type_id
             """;
 
     private ActivityCollaborationInvitationDTO map(ResultSet rs) throws SQLException {
@@ -44,6 +50,15 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
         dto.setInvitationType(rs.getString("invitation_type"));
         dto.setMessage(rs.getString("message"));
         dto.setCollaborationStatus(rs.getString("collaboration_status"));
+        dto.setActivityCode(rs.getString("activity_code"));
+        dto.setActivityName(rs.getString("activity_name"));
+        dto.setActivityTypeName(rs.getString("activity_type_name"));
+        dto.setActivityApprovalStatus(rs.getString("activity_approval_status"));
+        dto.setActivityStatus(rs.getString("activity_status"));
+        Timestamp start = rs.getTimestamp("activity_start_time");
+        dto.setActivityStartTime(start == null ? null : start.toLocalDateTime());
+        Timestamp end = rs.getTimestamp("activity_end_time");
+        dto.setActivityEndTime(end == null ? null : end.toLocalDateTime());
         dto.setCreatedBy(rs.getString("created_by"));
         dto.setCreatedByName(rs.getString("created_by_name"));
         Timestamp createdAt = rs.getTimestamp("created_at");
@@ -67,6 +82,67 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
             throw new IllegalStateException("Failed to find collaboration invitations of activity " + activityId, e);
         }
         return list;
+    }
+
+    @Override
+    public List<ActivityCollaborationInvitationDTO> findByPartnerCompanyId(Integer partnerCompanyId) {
+        List<ActivityCollaborationInvitationDTO> list = new ArrayList<>();
+        String sql = SELECT_DETAILS + (partnerCompanyId == null ? "" : " WHERE i.partner_company_id = ?")
+                + " ORDER BY i.created_at DESC, i.id DESC";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (partnerCompanyId != null) {
+                ps.setInt(1, partnerCompanyId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(map(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find collaboration invitations.", e);
+        }
+        return list;
+    }
+
+    @Override
+    public java.util.Set<Integer> findVisibleActivityIds(int partnerCompanyId) {
+        String sql = "SELECT activity_id FROM activity_collaboration_invitation "
+                + "WHERE partner_company_id = ? AND invitation_type = ? AND approval_status IN (?, ?) "
+                + "UNION SELECT activity_id FROM activity_partner_company "
+                + "WHERE partner_company_id = ? AND collaboration_status = 'ACTIVE'";
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, partnerCompanyId);
+            ps.setString(2, TYPE_COLLABORATION);
+            ps.setString(3, PENDING);
+            ps.setString(4, APPROVED);
+            ps.setInt(5, partnerCompanyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find visible activities of partner company.", e);
+        }
+        return ids;
+    }
+
+    @Override
+    public int cancelPendingOfOngoingActivities() {
+        String sql = "UPDATE activity_collaboration_invitation SET approval_status = ? "
+                + "WHERE approval_status = ? AND activity_id IN "
+                + "(SELECT id FROM extracurricular_activity WHERE activity_status = 'ONGOING')";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, CANCELLED);
+            ps.setString(2, PENDING);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to cancel pending invitations of ongoing activities.", e);
+        }
     }
 
     @Override

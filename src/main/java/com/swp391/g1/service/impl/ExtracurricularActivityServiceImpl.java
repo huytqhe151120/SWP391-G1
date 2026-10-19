@@ -4,6 +4,7 @@ import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dao.IActivityStaffDAO;
 import com.swp391.g1.dao.impl.ActivityStaffDAOImpl;
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum.ActivityStatus;
@@ -12,6 +13,7 @@ import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.dao.ISemesterDAO;
 import com.swp391.g1.dao.impl.SemesterDAOImpl;
 import com.swp391.g1.model.Semester;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
 
 import java.math.BigDecimal;
@@ -47,6 +49,20 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
     }
 
     @Override
+    public List<ExtracurricularActivityResponseDTO> getActivitiesVisibleTo(CurrentUser user) {
+        if (user == null) {
+            return List.of();
+        }
+        if (!AccessPolicy.hasType(user, "STAFF")) {
+            return getAllActivities();
+        }
+        if (!AccessPolicy.canUseStaffActivityScope(user) || user.getId() <= 0) {
+            return List.of();
+        }
+        return activityDAO.findAllWithDetailsForStaff(user.getId(), user.getRole());
+    }
+
+    @Override
     public ExtracurricularActivityResponseDTO getActivityById(int id) {
         if (id <= 0) {
             return null;
@@ -56,6 +72,19 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 .filter(a -> a.getId() == id)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public boolean canAccessActivity(int id, CurrentUser user) {
+        if (id <= 0 || user == null) {
+            return false;
+        }
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return activityDAO.findById(id) != null;
+        }
+        return AccessPolicy.canUseStaffActivityScope(user)
+                && user.getId() > 0
+                && activityDAO.isInStaffActivityScope(id, user.getId(), user.getRole());
     }
 
     @Override

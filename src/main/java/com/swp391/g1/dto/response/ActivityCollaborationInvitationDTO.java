@@ -22,6 +22,13 @@ public class ActivityCollaborationInvitationDTO {
     private String collaborationStatus;
     private String invitationType;
     private String message;
+    private String activityCode;
+    private String activityName;
+    private String activityTypeName;
+    private String activityApprovalStatus;
+    private String activityStatus;
+    private LocalDateTime activityStartTime;
+    private LocalDateTime activityEndTime;
     private boolean canRespond;
     private boolean canRevoke;
 
@@ -175,5 +182,61 @@ public class ActivityCollaborationInvitationDTO {
 
     public String getFormattedCreatedAt() {
         return createdAt == null ? "—" : createdAt.format(FORMATTER);
+    }
+
+    public String getActivityCode() {
+        return activityCode;
+    }
+
+    public void setActivityCode(String activityCode) {
+        this.activityCode = activityCode;
+    }
+
+    public String getActivityName() {
+        return activityName;
+    }
+
+    public void setActivityName(String activityName) {
+        this.activityName = activityName;
+    }
+
+    public String getActivityTypeName() {
+        return activityTypeName;
+    }
+
+    public void setActivityTypeName(String activityTypeName) {
+        this.activityTypeName = activityTypeName;
+    }
+
+    public String getActivityApprovalStatus() {
+        return activityApprovalStatus;
+    }
+
+    public void setActivityApprovalStatus(String activityApprovalStatus) {
+        this.activityApprovalStatus = activityApprovalStatus;
+    }
+
+    public String getActivityStatus() {
+        return activityStatus;
+    }
+
+    public void setActivityStatus(String activityStatus) {
+        this.activityStatus = activityStatus;
+    }
+
+    public LocalDateTime getActivityStartTime() {
+        return activityStartTime;
+    }
+
+    public void setActivityStartTime(LocalDateTime activityStartTime) {
+        this.activityStartTime = activityStartTime;
+    }
+
+    public LocalDateTime getActivityEndTime() {
+        return activityEndTime;
+    }
+
+    public void setActivityEndTime(LocalDateTime activityEndTime) {
+        this.activityEndTime = activityEndTime;
     }
 }

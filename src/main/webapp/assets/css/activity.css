@@ -645,11 +645,26 @@
     z-index: 3;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap th:nth-child(8) {
-    width: 120px;
-    max-width: 120px;
+.activity-list-page .activity-table-wrap .activity-status-column,
+.activity-list-page .activity-table-wrap .activity-run-status {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
     white-space: normal;
+}
+
+.activity-list-page .activity-table-wrap .activity-status-column .badge,
+.activity-list-page .activity-table-wrap .activity-run-status .badge {
+    display: inline-block;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.activity-list-page .activity-table-wrap th.activity-status-column span,
+.activity-list-page .activity-table-wrap th.activity-run-status span,
+.activity-list-page .activity-table-wrap th.invitation-status-column span {
+    display: block;
+    white-space: nowrap;
 }
 
 .activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(7),
@@ -765,29 +780,20 @@
     text-decoration: none;
 }
 
+.activity-action-delete {
+    color: #c64752;
+}
+
 button.activity-action-link {
     background: none;
     border: 0;
-    padding: 0;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.875rem;
-    font-weight: 700;
-    transition: opacity 0.15s ease;
 }
 
-button.activity-action-link:hover,
 button.activity-action-link:focus-visible {
-    text-decoration: underline;
-    opacity: 0.75;
-}
-
-.activity-action-delete {
-    color: #ad4650;
-}
-
-.activity-action-delete:hover {
-    background: #fff0f0;
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
 }
 
 .activity-empty-state {
@@ -1358,6 +1364,24 @@ button.activity-action-link:focus-visible {
     .activity-table-wrap td {
         padding-right: 12px;
         padding-left: 12px;
+    }
+
+    .activity-list-page .activity-table-wrap th:nth-child(7),
+    .activity-list-page .activity-table-wrap td:nth-child(7),
+    .activity-list-page .activity-table-wrap th:nth-child(8),
+    .activity-list-page .activity-table-wrap td:nth-child(8),
+    .activity-list-page .activity-table-wrap th:nth-child(9),
+    .activity-list-page .activity-table-wrap td:nth-child(9) {
+        position: static;
+        right: auto;
+        box-shadow: none;
+    }
+
+    .activity-list-page .activity-table-wrap .activity-status-column,
+    .activity-list-page .activity-table-wrap .activity-run-status {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
     }
 
     .activity-detail-card > .activity-table-heading {
