@@ -397,12 +397,52 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql = "DELETE FROM extracurricular_activity WHERE id = ?";
+        String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
+        // Remove the partner-company link before its invitation because it references that invitation.
+        String[] dependentDeletes = {
+                "DELETE FROM activity_staff WHERE activity_id = ?",
+                "DELETE FROM activity_department WHERE activity_id = ?",
+                "DELETE FROM activity_partner_staff WHERE activity_id = ?",
+                "DELETE FROM activity_partner_company WHERE activity_id = ?",
+                "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
+        };
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(existsSql)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+                for (String sql : dependentDeletes) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps =
+                             conn.prepareStatement("DELETE FROM extracurricular_activity WHERE id = ?")) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+                throw e;
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to delete extracurricular activity.", e);
         }

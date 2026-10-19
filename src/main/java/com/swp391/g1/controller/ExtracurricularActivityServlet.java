@@ -72,9 +72,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 || "HEAD".equalsIgnoreCase(request.getMethod());
         boolean requiresManagementPermission =
                 (isGetRequest
-                        && ("create".equals(action) || "edit".equals(action) || "delete".equals(action)))
+                        && ("create".equals(action) || "edit".equals(action)))
                 || ("POST".equalsIgnoreCase(request.getMethod())
-                        && ("create".equals(action) || "update".equals(action)))
+                        && ("create".equals(action) || "update".equals(action) || "delete".equals(action)))
                 || ("POST".equalsIgnoreCase(request.getMethod())
                         && ("inviteCollaborator".equals(action) || "cancelInvitation".equals(action)
                                 || "terminatePartner".equals(action)));
@@ -116,9 +116,6 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 case "detail":
                     showDetail(request, response);
                     break;
-                case "delete":
-                    deleteActivity(request, response);
-                    break;
                 case "getStaffsByCompany":
                     getStaffsByCompanyJson(request, response);
                     break;
@@ -150,6 +147,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             switch (action) {
                 case "create":
                     createActivity(request, response);
+                    break;
+                case "delete":
+                    deleteActivity(request, response);
                     break;
                 case "update":
                     updateActivity(request, response);

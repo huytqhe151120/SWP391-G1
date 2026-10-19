@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hoạt động ngoại khóa | SWP391-G1</title>
+    <title>EAMS | Hoạt động ngoại khóa</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261019-4">
 </head>
 <body>
@@ -143,7 +143,7 @@
                     <th scope="col">Đơn vị phụ trách chính</th>
                     <th scope="col">Thời gian</th>
                     <th scope="col" class="activity-run-status"><span>Trạng thái</span><span>hoạt động</span></th>
-                    <th scope="col" class="activity-status-column">Trạng thái duyệt</th>
+                    <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>duyệt HĐ</span></th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
@@ -198,9 +198,12 @@
                                             <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
                                             <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
                                                 <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
-                                                <a class="activity-action-link activity-action-delete"
-                                                   href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
-                                                   data-confirm="Bạn có chắc muốn xóa hoạt động này?">Xóa</a>
+                                                <form action="${pageContext.request.contextPath}/activities" method="post"
+                                                      data-confirm="Xóa hoạt động này sẽ xóa các phân công đơn vị, nhân viên, liên kết đối tác và lịch sử lời mời liên kết của hoạt động. Thao tác này không thể hoàn tác. Bạn có chắc chắn muốn tiếp tục?">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="id" value="${activity.id}">
+                                                    <button type="submit" class="activity-action-link activity-action-delete">Xóa</button>
+                                                </form>
                                             </c:if>
                                         </div>
                                         <c:if test="${activity.approvalStatus == 'REJECTED' && (canManageActivities || canApproveActivities)}">
