@@ -18,8 +18,6 @@ public class ActivityTypeDAOImpl implements IActivityTypeDAO {
         activityType.setCode(rs.getString("code"));
         activityType.setName(rs.getString("name"));
         activityType.setDescription(rs.getString("description"));
-        activityType.setBonusPoint(rs.getBigDecimal("bonus_point"));
-        activityType.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
         String status = rs.getString("status");
         activityType.setStatus(status == null ? null : Enum.CommonStatus.valueOf(status));
         return activityType;
@@ -98,20 +96,18 @@ public class ActivityTypeDAOImpl implements IActivityTypeDAO {
     @Override
     public Integer insert(ActivityType activityType) {
         String sql = "INSERT INTO activity_type "
-                + "(code, name, description, bonus_point, penalty_point, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+                + "(code, name, description, status) "
+                + "VALUES (?, ?, ?, ?)";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, activityType.getCode());
             ps.setString(2, activityType.getName());
             ps.setString(3, activityType.getDescription());
-            ps.setBigDecimal(4, activityType.getBonusPoint());
-            ps.setBigDecimal(5, activityType.getPenaltyPoint());
             if (activityType.getStatus() == null) {
-                ps.setNull(6, Types.VARCHAR);
+                ps.setNull(4, Types.VARCHAR);
             } else {
-                ps.setString(6, activityType.getStatus().name());
+                ps.setString(4, activityType.getStatus().name());
             }
 
             if (ps.executeUpdate() == 0) {
@@ -132,22 +128,20 @@ public class ActivityTypeDAOImpl implements IActivityTypeDAO {
         }
 
         String sql = "UPDATE activity_type "
-                + "SET code = ?, name = ?, description = ?, bonus_point = ?, penalty_point = ?, status = ? "
-                + "WHERE id = ?";
+                + "SET code = ?, name = ?,                 description = ?, status = ? "
+                                + "WHERE id = ?";
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, activityType.getCode());
-            ps.setString(2, activityType.getName());
-            ps.setString(3, activityType.getDescription());
-            ps.setBigDecimal(4, activityType.getBonusPoint());
-            ps.setBigDecimal(5, activityType.getPenaltyPoint());
-            if (activityType.getStatus() == null) {
-                ps.setNull(6, Types.VARCHAR);
-            } else {
-                ps.setString(6, activityType.getStatus().name());
-            }
-            ps.setInt(7, activityType.getId());
+                        try (Connection conn = DBContext.getConnection();
+                             PreparedStatement ps = conn.prepareStatement(sql)) {
+                            ps.setString(1, activityType.getCode());
+                            ps.setString(2, activityType.getName());
+                            ps.setString(3, activityType.getDescription());
+                            if (activityType.getStatus() == null) {
+                                ps.setNull(4, Types.VARCHAR);
+                            } else {
+                                ps.setString(4, activityType.getStatus().name());
+                            }
+                            ps.setInt(5, activityType.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to update activity type.", e);

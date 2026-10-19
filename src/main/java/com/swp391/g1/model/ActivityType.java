@@ -1,13 +1,10 @@
 package com.swp391.g1.model;
-import java.math.BigDecimal;
 
 public class ActivityType {
         private int id; //[cite: 1]
         private String code; //[cite: 1]
         private String name; //[cite: 1]
         private String description; //[cite: 1]
-        private BigDecimal bonusPoint; //[cite: 1]
-        private BigDecimal penaltyPoint; //[cite: 1]
         private Enum.CommonStatus status; //[cite: 1]
 
     // Constructor with no parameter
@@ -45,22 +42,6 @@ public class ActivityType {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public BigDecimal getBonusPoint() {
-        return bonusPoint;
-    }
-
-    public void setBonusPoint(BigDecimal bonusPoint) {
-        this.bonusPoint = bonusPoint;
-    }
-
-    public BigDecimal getPenaltyPoint() {
-        return penaltyPoint;
-    }
-
-    public void setPenaltyPoint(BigDecimal penaltyPoint) {
-        this.penaltyPoint = penaltyPoint;
     }
 
     public Enum.CommonStatus getStatus() {

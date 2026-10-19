@@ -6,7 +6,6 @@ import com.swp391.g1.model.ActivityType;
 import com.swp391.g1.model.Enum.CommonStatus;
 import com.swp391.g1.service.IActivityTypeService;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,14 +84,6 @@ public class ActivityTypeServiceImpl implements IActivityTypeService {
 
         if (entity.getName() == null || entity.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên loại hoạt động không được để trống.");
-        }
-
-        if (entity.getBonusPoint() != null && entity.getBonusPoint().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Điểm thưởng của loại hoạt động không được âm.");
-        }
-
-        if (entity.getPenaltyPoint() != null && entity.getPenaltyPoint().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Điểm phạt của loại hoạt động không được âm.");
         }
     }
 }
