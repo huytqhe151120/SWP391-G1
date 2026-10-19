@@ -102,6 +102,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         // Nếu chưa được duyệt, giữ nguyên approvalStatus hiện tại.
         boolean updated = activityDAO.updateUpcoming(
                 entity,
+                existing.getApprovalStatus(),
                 wasApproved ? ApprovalStatus.DRAFT : null,
                 DateTimeUtil.nowUtc()
         );
@@ -110,7 +111,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (!updated) {
             throw new IllegalArgumentException(
                     "Không thể sửa hoạt động vì hoạt động đã bắt đầu "
-                            + "hoặc không còn ở trạng thái UPCOMING."
+                            + "hoặc trạng thái duyệt đã thay đổi. Vui lòng tải lại trang."
             );
         }
 
@@ -243,6 +244,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             LocalDateTime start = LocalDateTime.parse(dto.getStartTime().trim());
             LocalDateTime end = LocalDateTime.parse(dto.getEndTime().trim());
 
+            if (!start.isAfter(DateTimeUtil.now())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải ở tương lai.");
+            }
             if (!start.isBefore(end)) {
                 throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
             }
@@ -436,6 +441,11 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         }
 
         if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        if (activity.getStartTime() == null
+                || !DateTimeUtil.now().isBefore(activity.getStartTime())) {
             throw new IllegalArgumentException(errorMessage);
         }
 

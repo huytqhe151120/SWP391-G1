@@ -1,17 +1,22 @@
 package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.IActivityCollaborationInvitationDAO;
+import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dao.IActivityPartnerStaffDAO;
 import com.swp391.g1.dao.IPartnerStaffDAO;
 import com.swp391.g1.dao.impl.ActivityCollaborationInvitationDAOImpl;
 import com.swp391.g1.dao.impl.ActivityPartnerStaffDAOImpl;
+import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.impl.PartnerStaffDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityPartnerStaffResponseDTO;
 import com.swp391.g1.model.Enum;
+import com.swp391.g1.model.Enum.ActivityStatus;
+import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityPartnerStaffService;
+import com.swp391.g1.util.DateTimeUtil;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,11 +27,13 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
 
     private final IActivityPartnerStaffDAO activityPartnerStaffDAO;
     private final IActivityCollaborationInvitationDAO invitationDAO;
+    private final IExtracurricularActivityDAO activityDAO;
     private final IPartnerStaffDAO partnerStaffDAO;
 
     public ActivityPartnerStaffServiceImpl() {
         this.activityPartnerStaffDAO = new ActivityPartnerStaffDAOImpl();
         this.invitationDAO = new ActivityCollaborationInvitationDAOImpl();
+        this.activityDAO = new ExtracurricularActivityDAOImpl();
         this.partnerStaffDAO = new PartnerStaffDAOImpl();
     }
 
@@ -53,6 +60,9 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
      */
     private Set<Integer> manageableCompanyIds(int activityId, CurrentUser user) {
         if (activityId <= 0 || user == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
+            return Set.of();
+        }
+        if (!isActivityBeforeStart(activityId)) {
             return Set.of();
         }
         PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
@@ -104,6 +114,7 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
         if (activityId <= 0 || partnerStaffId <= 0) {
             throw new IllegalArgumentException("Thông tin phân công không hợp lệ.");
         }
+        requireActivityBeforeStart(activityId);
         Set<Integer> companyIds = manageableCompanyIds(activityId, user);
         if (companyIds.isEmpty()) {
             throw new SecurityException("Bạn không có quyền phân công nhân sự đối tác vào hoạt động này.");
@@ -133,10 +144,26 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
         if (activityId <= 0 || partnerStaffId <= 0) {
             return false;
         }
+        requireActivityBeforeStart(activityId);
         PartnerStaff staff = partnerStaffDAO.findById(partnerStaffId);
         if (staff == null || !manageableCompanyIds(activityId, user).contains(staff.getCompanyId())) {
             return false;
         }
         return activityPartnerStaffDAO.delete(activityId, partnerStaffId);
+    }
+
+    private boolean isActivityBeforeStart(int activityId) {
+        ExtracurricularActivity activity = activityDAO.findById(activityId);
+        return activity != null
+                && activity.getActivityStatus() == ActivityStatus.UPCOMING
+                && activity.getStartTime() != null
+                && DateTimeUtil.now().isBefore(activity.getStartTime());
+    }
+
+    private void requireActivityBeforeStart(int activityId) {
+        if (!isActivityBeforeStart(activityId)) {
+            throw new IllegalArgumentException(
+                    "Chỉ được thay đổi phân công nhân sự đối tác trước khi hoạt động bắt đầu.");
+        }
     }
 }

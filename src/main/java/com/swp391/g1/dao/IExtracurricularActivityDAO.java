@@ -23,6 +23,7 @@ public interface IExtracurricularActivityDAO extends IGenericDAO<Extracurricular
 
     boolean updateUpcoming(
             ExtracurricularActivity activity,
+            Enum.ApprovalStatus expectedApprovalStatus,
             Enum.ApprovalStatus newApprovalStatus,
             java.time.LocalDateTime now
     );

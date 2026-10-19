@@ -301,9 +301,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     @Override
     public boolean updateUpcoming(
             ExtracurricularActivity activity,
+            Enum.ApprovalStatus expectedApprovalStatus,
             Enum.ApprovalStatus newApprovalStatus,
             LocalDateTime now) {
-        if (activity == null || activity.getId() <= 0 || now == null) {
+        if (activity == null || activity.getId() <= 0
+                || expectedApprovalStatus == null || now == null) {
             return false;
         }
 
@@ -314,7 +316,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 + "registration_form_required = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?")
                 + " WHERE id = ? AND activity_status = 'UPCOMING' "
-                + "AND start_time IS NOT NULL AND start_time > ?";
+                + "AND start_time IS NOT NULL AND start_time > ? "
+                + "AND approval_status = ?";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -349,7 +352,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 ps.setString(next++, newApprovalStatus.name());
             }
             ps.setInt(next++, activity.getId());
-            ps.setTimestamp(next, Timestamp.valueOf(now));
+            ps.setTimestamp(next++, Timestamp.valueOf(now));
+            ps.setString(next, expectedApprovalStatus.name());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
