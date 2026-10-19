@@ -645,11 +645,42 @@
     z-index: 3;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap th:nth-child(8) {
-    width: 120px;
-    max-width: 120px;
+.activity-list-page .activity-table-wrap .activity-status-column {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
     white-space: normal;
+}
+
+.activity-list-page .activity-table-wrap .activity-status-column .badge {
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+}
+
+.activity-list-page .activity-table-wrap th.activity-approval-status span {
+    white-space: nowrap;
+}
+
+.activity-list-page .activity-table-wrap .activity-run-status {
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+    white-space: normal;
+}
+
+.activity-list-page .activity-table-wrap .activity-run-status .badge {
+    display: inline-block;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.activity-list-page .activity-table-wrap th.activity-run-status span,
+.activity-list-page .activity-table-wrap th.invitation-status-column span {
+    display: block;
+    white-space: nowrap;
 }
 
 .activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(7),
@@ -1358,6 +1389,30 @@ button.activity-action-link:focus-visible {
     .activity-table-wrap td {
         padding-right: 12px;
         padding-left: 12px;
+    }
+
+    .activity-list-page .activity-table-wrap th:nth-child(7),
+    .activity-list-page .activity-table-wrap td:nth-child(7),
+    .activity-list-page .activity-table-wrap th:nth-child(8),
+    .activity-list-page .activity-table-wrap td:nth-child(8),
+    .activity-list-page .activity-table-wrap th:nth-child(9),
+    .activity-list-page .activity-table-wrap td:nth-child(9) {
+        position: static;
+        right: auto;
+        box-shadow: none;
+    }
+
+    .activity-list-page .activity-table-wrap .activity-status-column {
+        width: 150px;
+        min-width: 150px;
+        max-width: 150px;
+        white-space: normal;
+    }
+
+    .activity-list-page .activity-table-wrap .activity-run-status {
+        width: 160px;
+        min-width: 160px;
+        max-width: 160px;
     }
 
     .activity-detail-card > .activity-table-heading {

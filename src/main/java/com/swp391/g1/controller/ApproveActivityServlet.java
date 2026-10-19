@@ -1,5 +1,6 @@
 package com.swp391.g1.controller;
 
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
 import com.swp391.g1.util.AuthContext;
@@ -23,6 +24,7 @@ public class ApproveActivityServlet extends HttpServlet {
         try {
             int id = Integer.parseInt(request.getParameter("id"));
             String action = request.getParameter("action");
+            CurrentUser currentUser = AuthContext.getCurrentUser(request);
 
             if (action == null) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hành động không hợp lệ.");
@@ -31,9 +33,16 @@ public class ApproveActivityServlet extends HttpServlet {
 
             boolean decisionAction = "approve".equals(action) || "reject".equals(action)
                     || "revokeApproval".equals(action) || "revokeRejection".equals(action);
-            if (decisionAction && !AccessPolicy.canReviewActivities(AuthContext.getCurrentUser(request))) {
+            if (decisionAction && !AccessPolicy.canReviewActivities(currentUser)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN,
                         "Chỉ tài khoản ADMIN mới được duyệt, từ chối hoặc hủy duyệt hoạt động.");
+                return;
+            }
+
+            if ("submit".equals(action) && (!AccessPolicy.canManageActivities(currentUser)
+                    || !activityService.canAccessActivity(id, currentUser))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Chỉ tài khoản STAFF hoặc ADMIN mới được gửi duyệt hoạt động.");
                 return;
             }
 

@@ -104,12 +104,25 @@
 
             <!-- TAB 2: THÔNG TIN NHÂN SỰ PHỤ TRÁCH -->
             <div id="tab-staff" class="activity-tab-pane" role="tabpanel" aria-labelledby="btn-tab-staff">
+                <section class="activity-detail-section">
+                    <div>
+                        <h3 style="margin: 0;">Đối tượng phụ trách chính</h3>
+                        <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
+                            Đơn vị phụ trách chính và nhân sự được phân công chịu trách nhiệm
+                        </p>
+                        <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
+                            Đơn vị: <strong><c:out value="${activity.responsibleDepartmentName}" default="Không có"/></strong>
+                            - Nhân sự phụ trách chính: <strong><c:out value="${activity.responsibleStaffName}" default="Chưa có"/></strong>
+                        </p>
+                    </div>
+                </section>
+
                 <section class="activity-detail-section" style="grid-column: 1 / -1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <div>
                             <h3 style="margin: 0;">Đơn vị đồng phụ trách</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Nhân sự của các đơn vị này (cùng đơn vị phụ trách chính) có thể được phân công vào hoạt động.
+                                Các đơn vị cùng tham gia tổ chức hoạt động
                             </p>
                         </div>
                         <span class="activity-count"><c:out value="${empty coDepartments ? 0 : coDepartments.size()}"/> đơn vị</span>
@@ -217,7 +230,7 @@
                         <div>
                             <h3 style="margin: 0;">Danh sách nhân sự đồng phụ trách</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Các nhân sự thuộc đơn vị phụ trách chính hoặc đơn vị đồng phụ trách tham gia điều phối hoạt động.
+                                Các nhân sự thuộc đơn vị đồng phụ trách tham gia điều phối hoạt động.
                             </p>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
                                 Nhân sự phụ trách chính: <strong><c:out value="${activity.responsibleStaffName}" default="Chưa có"/></strong>
@@ -359,7 +372,7 @@
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col">Người mời</th>
                                 <th scope="col">Thời gian mời</th>
-                                <th scope="col" style="text-align: right;">Thao tác</th>
+                                <th scope="col" style="text-align: left;">Thao tác</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -399,7 +412,7 @@
                                             </td>
                                             <td><c:out value="${empty inv.createdByName ? inv.createdBy : inv.createdByName}"/></td>
                                             <td><c:out value="${inv.formattedCreatedAt}"/></td>
-                                            <td style="text-align: right; white-space: nowrap;">
+                                            <td style="text-align: left; white-space: nowrap;">
                                                 <c:if test="${inv.canRespond}">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline">
                                                         <input type="hidden" name="action" value="respondInvitation">
@@ -673,7 +686,7 @@
         <div class="detail-actions activity-detail-actions">
             <a class="button" href="${pageContext.request.contextPath}/activities">Đóng</a>
             <%-- DRAFT / REJECTED: gửi duyệt --%>
-            <c:if test="${activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED'}">
+            <c:if test="${canManageActivities && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="submit" class="button button-send-approval button-primary">Gửi duyệt</button>

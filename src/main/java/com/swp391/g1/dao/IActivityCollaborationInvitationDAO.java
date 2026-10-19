@@ -21,6 +21,9 @@ public interface IActivityCollaborationInvitationDAO {
     /** PENDING -> CANCELLED for every invitation whose activity is already ONGOING. Returns the number changed. */
     int cancelPendingOfOngoingActivities();
 
+    /** Activities a partner company may view: pending/approved collaboration invitations or an ACTIVE collaboration. */
+    java.util.Set<Integer> findVisibleActivityIds(int partnerCompanyId);
+
     ActivityCollaborationInvitationDTO findById(int id);
 
     /** True when the company has a pending invitation (any type) in the activity. */

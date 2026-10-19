@@ -106,6 +106,31 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
+    public java.util.Set<Integer> findVisibleActivityIds(int partnerCompanyId) {
+        String sql = "SELECT activity_id FROM activity_collaboration_invitation "
+                + "WHERE partner_company_id = ? AND invitation_type = ? AND approval_status IN (?, ?) "
+                + "UNION SELECT activity_id FROM activity_partner_company "
+                + "WHERE partner_company_id = ? AND collaboration_status = 'ACTIVE'";
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, partnerCompanyId);
+            ps.setString(2, TYPE_COLLABORATION);
+            ps.setString(3, PENDING);
+            ps.setString(4, APPROVED);
+            ps.setInt(5, partnerCompanyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find visible activities of partner company.", e);
+        }
+        return ids;
+    }
+
+    @Override
     public int cancelPendingOfOngoingActivities() {
         String sql = "UPDATE activity_collaboration_invitation SET approval_status = ? "
                 + "WHERE approval_status = ? AND activity_id IN "

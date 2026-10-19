@@ -72,6 +72,15 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     }
 
     @Override
+    public java.util.Set<Integer> getVisibleActivityIds(CurrentUser user) {
+        if (!isPartnerStaffUser(user)) {
+            return null;
+        }
+        PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
+        return me == null ? Set.of() : invitationDAO.findVisibleActivityIds(me.getCompanyId());
+    }
+
+    @Override
     public List<ActivityPartnerCompanyDTO> getApprovedPartners(int activityId) {
         return activityId <= 0 ? List.of() : partnerCompanyLinkDAO.findByActivityId(activityId);
     }

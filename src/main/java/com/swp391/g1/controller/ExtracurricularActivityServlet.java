@@ -216,8 +216,14 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         LocalDate endDate = parseDate(request.getParameter("endDate"));
         String normalizedKeyword = normalizeText(keyword);
 
+        Set<Integer> visibleActivityIds =
+                invitationService.getVisibleActivityIds(AuthContext.getCurrentUser(request));
         List<ExtracurricularActivityResponseDTO> allActivities = new ArrayList<>();
-        for (ExtracurricularActivityResponseDTO activity : activityService.getAllActivities()) {
+        for (ExtracurricularActivityResponseDTO activity :
+                activityService.getActivitiesVisibleTo(AuthContext.getCurrentUser(request))) {
+            if (visibleActivityIds != null && !visibleActivityIds.contains(activity.getId())) {
+                continue;
+            }
             if (!normalizedKeyword.isEmpty()
                     && !normalizeText(activity.getCode()).contains(normalizedKeyword)
                     && !normalizeText(activity.getName()).contains(normalizedKeyword)) {
@@ -383,6 +389,13 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         if (idStr != null && !idStr.trim().isEmpty()) {
             int id = Integer.parseInt(idStr);
             ExtracurricularActivityResponseDTO activity = activityService.getActivityById(id);
+            CurrentUser currentUser = AuthContext.getCurrentUser(request);
+            if (activity != null && AccessPolicy.hasType(currentUser, "STAFF")
+                    && !activityService.canAccessActivity(id, currentUser)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Bạn không có quyền sửa hoạt động này.");
+                return;
+            }
             if (activity != null && activity.getActivityStatus() != null
                     && (activity.getActivityStatus().name().equals("ONGOING")
                     || activity.getActivityStatus().name().equals("COMPLETED"))) {
@@ -413,13 +426,24 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         if (idStr != null && !idStr.trim().isEmpty()) {
             int id = Integer.parseInt(idStr);
             ExtracurricularActivityResponseDTO activity = activityService.getActivityById(id);
+            CurrentUser currentUser = AuthContext.getCurrentUser(request);
+            if (activity != null && AccessPolicy.hasType(currentUser, "STAFF")
+                    && !activityService.canAccessActivity(id, currentUser)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xem hoạt động này.");
+                return;
+            }
+            Set<Integer> visibleActivityIds =
+                    invitationService.getVisibleActivityIds(AuthContext.getCurrentUser(request));
+            if (activity != null && visibleActivityIds != null && !visibleActivityIds.contains(id)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xem hoạt động này.");
+                return;
+            }
             if (activity != null) {
                 request.setAttribute("activity", activity);
                 setActivityManagementPermission(request);
                 if (AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
                     request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
                 }
-                CurrentUser currentUser = AuthContext.getCurrentUser(request);
                 boolean canAssignStaff = activityStaffService.canAssignStaff(id, currentUser);
                 request.setAttribute("canAddStaff", canAssignStaff);
                 request.setAttribute("canRemoveStaff", canAssignStaff);
@@ -452,6 +476,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         if (idStr != null && !idStr.trim().isEmpty()) {
             int id = Integer.parseInt(idStr);
             try {
+                if (!activityService.canAccessActivity(id, AuthContext.getCurrentUser(request))) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Bạn không có quyền xóa hoạt động này.");
+                    return;
+                }
                 boolean success = activityService.deleteActivity(id);
                 if (success) {
                     session.setAttribute("successMessage", "Xóa hoạt động thành công!");
@@ -563,6 +592,13 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         ExtracurricularActivityRequestDTO dto = buildRequestDTO(request);
         dto.setId(request.getParameter("id"));
         HttpSession session = request.getSession();
+
+        int activityId = parseId(dto.getId());
+        if (!activityService.canAccessActivity(activityId, AuthContext.getCurrentUser(request))) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền sửa hoạt động này.");
+            return;
+        }
 
         try {
             boolean success = activityService.updateActivity(dto);

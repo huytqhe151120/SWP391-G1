@@ -23,3 +23,42 @@
         });
     });
 })();
+(function () {
+    var table = document.querySelector(".partner-invitation-table");
+    if (!table) {
+        return;
+    }
+
+    function widthOf(selector) {
+        var cell = table.querySelector("th" + selector);
+        return cell ? cell.getBoundingClientRect().width : 0;
+    }
+
+    function syncFrozenOffsets() {
+        table.style.setProperty("--freeze-status-width", widthOf(".freeze-status") + "px");
+        table.style.setProperty("--freeze-actions-width", widthOf(".freeze-actions") + "px");
+    }
+
+    window.addEventListener("load", syncFrozenOffsets);
+    window.addEventListener("resize", syncFrozenOffsets);
+})();
+
+(function () {
+    var panel = document.getElementById("invitation-filter-panel");
+    if (!panel) {
+        return;
+    }
+    var storageKey = "invitationFilterPanelOpen";
+    try {
+        panel.open = localStorage.getItem(storageKey) === "true";
+    } catch (error) {
+        return;
+    }
+    panel.addEventListener("toggle", function () {
+        try {
+            localStorage.setItem(storageKey, String(panel.open));
+        } catch (error) {
+            // Storage unavailable: keep default behavior.
+        }
+    });
+})();
