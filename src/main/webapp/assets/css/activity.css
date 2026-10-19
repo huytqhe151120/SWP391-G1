@@ -1,43 +1,6 @@
 /* Activity CSS - SWP391-G1 */
 @import "base.css";
 
-.activity-approval-approve {
-    border-color: #16803c;
-    background: #16803c;
-    color: #fff;
-}
-
-.activity-approval-approve:hover {
-    border-color: #126b32;
-    background: #126b32;
-    color: #fff;
-}
-
-.activity-approval-reject {
-    border-color: #c62828;
-    background: #c62828;
-    color: #fff;
-}
-
-.activity-approval-reject:hover {
-    border-color: #a91f1f;
-    background: #a91f1f;
-    color: #fff;
-}
-
-/*Màu nút Hủy từ chối*/
-.activity-approval-revoke {
-    background-color: #EFF6FF;
-    color: #1D4ED8;
-    border: 1px solid #BFDBFE;
-}
-
-.activity-approval-revoke:hover {
-    background-color: #DBEAFE;
-    color: #1E40AF;
-    border-color: #93C5FD;
-}
-
 .activity-app-shell {
     width: min(1440px, calc(100% - 48px));
     margin: 24px auto 42px;
@@ -1530,3 +1493,21 @@ button.activity-action-link:focus-visible {
 .badge.status-pill.status-gray { background: #f2f4f7; border-color: #e4e7ed; color: #687386; }
 .badge.status-pill.status-yellow { background: #fff6dc; border-color: #f6e2a3; color: #8a6100; }
 .badge.status-pill.status-red { background: #fdecec; border-color: #f5c6c6; color: #b42318; }
+
+.activity-partner-form [hidden] {
+    display: none !important;
+}
+
+.activity-message-modal {
+    max-width: 520px;
+    width: 90%;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+.activity-message-modal::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+#invite-form-panel > .activity-partner-form {
+    margin-top: 0.75rem;
+}

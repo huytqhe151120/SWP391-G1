@@ -14,4 +14,6 @@ public interface IActivityStaffDAO {
     boolean exists(int activityId, int staffId);
 
     boolean isStaffInDepartment(int staffId, int departmentId);
+
+    boolean isStaffInActivityDepartments(int staffId, int activityId);
 }

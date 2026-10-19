@@ -1,0 +1,48 @@
+/* Partner Invitation CSS - SWP391-G1 */
+@import "base.css";
+@import "activity.css";
+
+/* Partner invitation list: frozen right-hand columns */
+.partner-invitation-table {
+    min-width: 1100px;
+    width: 100%;
+}
+.partner-invitation-table .freeze {
+    position: sticky;
+    background: #fff;
+    z-index: 2;
+    white-space: nowrap;
+}
+.partner-invitation-table th.freeze {
+    background: #f7f9fc;
+    z-index: 3;
+}
+.partner-invitation-table .freeze-message {
+    right: 360px;
+    width: 110px;
+    min-width: 110px;
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+.partner-invitation-table .freeze-status {
+    right: 220px;
+    width: 140px;
+    min-width: 140px;
+}
+.partner-invitation-table .freeze-actions {
+    right: 0;
+    width: 220px;
+    min-width: 220px;
+}
+.partner-invitation-table .inline-form {
+    display: inline;
+}
+.invitation-message-modal {
+    max-width: 520px;
+    width: 90%;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+.invitation-message-modal::backdrop {
+    background: rgba(0, 0, 0, .4);
+}

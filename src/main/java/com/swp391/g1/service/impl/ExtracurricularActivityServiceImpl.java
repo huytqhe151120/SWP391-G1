@@ -9,6 +9,9 @@ import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.dao.ISemesterDAO;
+import com.swp391.g1.dao.impl.SemesterDAOImpl;
+import com.swp391.g1.model.Semester;
 import com.swp391.g1.service.IExtracurricularActivityService;
 
 import java.math.BigDecimal;
@@ -23,6 +26,15 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     private final IExtracurricularActivityDAO activityDAO;
     private final IActivityStaffDAO activityStaffDAO;
+    private final ISemesterDAO semesterDAO = new SemesterDAOImpl();
+
+    private static final String LOCKED_MESSAGE =
+            "Không thể sửa hoặc xóa hoạt động đang diễn ra hoặc đã hoàn thành.";
+
+    private boolean isLocked(ExtracurricularActivity activity) {
+        return activity != null && (activity.getActivityStatus() == ActivityStatus.ONGOING
+                || activity.getActivityStatus() == ActivityStatus.COMPLETED);
+    }
 
     public ExtracurricularActivityServiceImpl() {
         this.activityDAO = new ExtracurricularActivityDAOImpl();
@@ -68,6 +80,9 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         ExtracurricularActivity entity = mapToEntity(dto);
         entity.setId(Integer.parseInt(dto.getId()));
         ExtracurricularActivity existing = activityDAO.findById(entity.getId());
+        if (isLocked(existing)) {
+            throw new IllegalArgumentException(LOCKED_MESSAGE);
+        }
         if (existing != null) {
             // Partner information is managed separately in the "Đối tác hoạt động" step.
             entity.setPartnerCompanyId(existing.getPartnerCompanyId());
@@ -118,6 +133,9 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
     public boolean deleteActivity(int id) {
         if (id <= 0) {
             return false;
+        }
+        if (isLocked(activityDAO.findById(id))) {
+            throw new IllegalArgumentException(LOCKED_MESSAGE);
         }
         return activityDAO.delete(id);
     }
@@ -201,6 +219,18 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
             if (!start.isBefore(end)) {
                 throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
+            }
+            Semester semester = semesterDAO.findById(parseRequiredId(dto.getSemesterId(), "Học kỳ không hợp lệ."));
+            if (semester == null) {
+                throw new IllegalArgumentException("Học kỳ không tồn tại.");
+            }
+            if (semester.getTimeStart() != null && start.isBefore(semester.getTimeStart())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải sau thời gian bắt đầu của học kỳ.");
+            }
+            if (semester.getTimeEnd() != null && start.isAfter(semester.getTimeEnd())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải trước thời gian kết thúc của học kỳ.");
             }
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");
