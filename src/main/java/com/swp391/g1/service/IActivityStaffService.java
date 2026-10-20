@@ -13,6 +13,8 @@ public interface IActivityStaffService {
 
     List<Staff> getAvailableStaffsForActivity(int activityId);
 
+    boolean canManageStaffAssignments(int activityId, CurrentUser user);
+
     boolean canAssignStaff(int activityId, CurrentUser user);
 
     boolean assignStaff(int activityId, int staffId, CurrentUser user) throws Exception;

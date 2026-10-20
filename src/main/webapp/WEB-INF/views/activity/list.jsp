@@ -200,7 +200,7 @@
                                 <td class="activity-select-column">
                                     <c:if test="${canApproveActivities}">
                                         <c:choose>
-                                            <c:when test="${activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'PENDING'}">
+                                            <c:when test="${activitiesBeforeStart.contains(activity.id) && activity.approvalStatus == 'PENDING'}">
                                                 <input type="checkbox" class="activity-select-checkbox" name="id" value="${activity.id}"
                                                        form="bulk-activity-approval" data-activity-select
                                                        aria-label="Chọn hoạt động này để duyệt">
@@ -238,18 +238,18 @@
                                             <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                             Chi tiết
                                         </a>
-                                        <c:if test="${(canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED') || (canManageActivities && activity.activityStatus == 'UPCOMING' && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')) || (canApproveActivities && activity.activityStatus == 'UPCOMING' && (activity.approvalStatus == 'PENDING' || activity.approvalStatus == 'APPROVED' || activity.approvalStatus == 'REJECTED'))}">
+                                        <c:if test="${(canManageActivities && (activitiesBeforeStart.contains(activity.id) || activity.activityStatus == 'CANCELLED')) || (canManageActivities && activitiesBeforeStart.contains(activity.id) && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')) || (canApproveActivities && activitiesBeforeStart.contains(activity.id) && (activity.approvalStatus == 'PENDING' || activity.approvalStatus == 'APPROVED' || activity.approvalStatus == 'REJECTED'))}">
                                             <details class="action-menu">
                                                 <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
                                                 <div class="action-menu__items">
-                                                    <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
+                                                    <c:if test="${canManageActivities && activitiesBeforeStart.contains(activity.id)}">
                                                         <a class="action-menu-item action-menu-item--edit"
                                                            href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">
                                                             <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></span>
                                                             Chỉnh sửa
                                                         </a>
                                                     </c:if>
-                                                    <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING' && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')}">
+                                                    <c:if test="${canManageActivities && activitiesBeforeStart.contains(activity.id) && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')}">
                                                         <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                             <input type="hidden" name="id" value="${activity.id}">
                                                             <button class="action-menu-item action-menu-item--submit" type="submit" name="action" value="submit">
@@ -258,7 +258,7 @@
                                                             </button>
                                                         </form>
                                                     </c:if>
-                                                    <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'PENDING'}">
+                                                    <c:if test="${canApproveActivities && activitiesBeforeStart.contains(activity.id) && activity.approvalStatus == 'PENDING'}">
                                                         <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                             <input type="hidden" name="id" value="${activity.id}">
                                                             <button class="action-menu-item action-menu-item--approve" type="submit" name="action" value="approve">
@@ -274,7 +274,7 @@
                                                             </button>
                                                         </form>
                                                     </c:if>
-                                                    <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'APPROVED'}">
+                                                    <c:if test="${canApproveActivities && activitiesBeforeStart.contains(activity.id) && activity.approvalStatus == 'APPROVED'}">
                                                         <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                             <input type="hidden" name="id" value="${activity.id}">
                                                             <button class="action-menu-item action-menu-item--undo" type="submit" name="action" value="revokeApproval"
@@ -284,7 +284,7 @@
                                                             </button>
                                                         </form>
                                                     </c:if>
-                                                    <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'REJECTED'}">
+                                                    <c:if test="${canApproveActivities && activitiesBeforeStart.contains(activity.id) && activity.approvalStatus == 'REJECTED'}">
                                                         <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                             <input type="hidden" name="id" value="${activity.id}">
                                                             <button class="action-menu-item action-menu-item--undo" type="submit" name="action" value="revokeRejection"
@@ -294,7 +294,7 @@
                                                             </button>
                                                         </form>
                                                     </c:if>
-                                                    <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
+                                                    <c:if test="${canManageActivities && (activitiesBeforeStart.contains(activity.id) || activity.activityStatus == 'CANCELLED')}">
                                                         <form action="${pageContext.request.contextPath}/activities" method="post"
                                                               data-confirm="Xóa hoạt động này sẽ xóa các phân công đơn vị, nhân viên, liên kết đối tác và lịch sử lời mời liên kết của hoạt động. Thao tác này không thể hoàn tác. Bạn có chắc chắn muốn tiếp tục?">
                                                             <input type="hidden" name="action" value="delete">

@@ -80,12 +80,12 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
     }
 
     @Override
-    public boolean canAssignStaff(int activityId, CurrentUser user) {
+    public boolean canManageStaffAssignments(int activityId, CurrentUser user) {
         if (activityId <= 0 || user == null) {
             return false;
         }
         ExtracurricularActivity activity = activityDAO.findById(activityId);
-        if (!isActivityBeforeStart(activity)) {
+        if (activity == null) {
             return false;
         }
         if (AccessPolicy.canAssignStaffToActivity(user)
@@ -95,6 +95,12 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
         Staff currentStaff = staffDAO.findByAccountId(user.getId());
         return currentStaff != null
                 && currentStaff.getId() == activity.getResponsibleStaffId();
+    }
+
+    @Override
+    public boolean canAssignStaff(int activityId, CurrentUser user) {
+        return canManageStaffAssignments(activityId, user)
+                && isActivityBeforeStart(activityDAO.findById(activityId));
     }
 
     @Override

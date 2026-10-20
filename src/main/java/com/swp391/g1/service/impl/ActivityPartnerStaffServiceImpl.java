@@ -64,10 +64,14 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
      * the invited main staff, or a leader/secretary, of that company.
      */
     private Set<Integer> manageableCompanyIds(int activityId, CurrentUser user) {
-        if (activityId <= 0 || user == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
+        if (!isActivityBeforeStart(activityId)) {
             return Set.of();
         }
-        if (!isActivityBeforeStart(activityId)) {
+        return authorizedCompanyIds(activityId, user);
+    }
+
+    private Set<Integer> authorizedCompanyIds(int activityId, CurrentUser user) {
+        if (activityId <= 0 || user == null || !"PARTNER_STAFF".equalsIgnoreCase(user.getType())) {
             return Set.of();
         }
         PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
@@ -106,6 +110,11 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
                 .filter(s -> s.getStatus() == Enum.CommonStatus.ACTIVE)
                 .filter(s -> !excluded.contains(s.getId()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean canManagePartnerStaff(int activityId, CurrentUser user) {
+        return !authorizedCompanyIds(activityId, user).isEmpty();
     }
 
     @Override
