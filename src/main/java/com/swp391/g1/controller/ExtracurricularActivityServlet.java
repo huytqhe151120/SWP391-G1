@@ -4,6 +4,7 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
+import com.swp391.g1.model.Department;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.*;
 import com.swp391.g1.service.impl.*;
@@ -466,6 +467,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 if (canAssignStaff) {
                     request.setAttribute("availableDepartments", activityStaffService.getAvailableDepartmentsForActivity(id));
                     request.setAttribute("availableStaffs", activityStaffService.getAvailableStaffsForActivity(id));
+                    request.setAttribute("staffDepartmentLabels", activityStaffService.getDepartmentLabelsByStaff(id));
                 }
                 boolean canManagePartnerStaff = activityPartnerStaffService.canManagePartnerStaff(id, currentUser);
                 request.setAttribute("canManagePartnerStaff", canManagePartnerStaff);
@@ -560,11 +562,17 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         StringBuilder json = new StringBuilder("[");
+        // Staff are filtered through staff_assignment on this department, so it is their department
+        Department department = departmentService.getDepartmentById(departmentId);
+        String departmentCode = department == null || department.getCode() == null ? "" : department.getCode();
+        String departmentName = department == null || department.getName() == null ? "" : department.getName();
         List<Staff> staffs = staffService.getStaffsByDepartmentId(departmentId);
         for (int i = 0; i < staffs.size(); i++) {
             Staff staff = staffs.get(i);
             json.append("{")
                     .append("\"id\":").append(staff.getId()).append(",")
+                    .append("\"departmentCode\":\"").append(escapeJson(departmentCode)).append("\",")
+                    .append("\"departmentName\":\"").append(escapeJson(departmentName)).append("\",")
                     .append("\"code\":\"").append(escapeJson(staff.getCode())).append("\",")
                     .append("\"name\":\"").append(escapeJson(staff.getName())).append("\"")
                     .append("}");
