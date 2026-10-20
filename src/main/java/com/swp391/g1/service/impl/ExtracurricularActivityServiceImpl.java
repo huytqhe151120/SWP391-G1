@@ -7,6 +7,7 @@ import com.swp391.g1.dao.impl.ActivityStaffDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
+import com.swp391.g1.model.Enum.ActivityNature;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.ExtracurricularActivity;
@@ -17,7 +18,6 @@ import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
 import com.swp391.g1.util.DateTimeUtil;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -173,20 +173,15 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 || !sameText(a.getName(), b.getName())
                 || !sameText(a.getAddress(), b.getAddress())
                 || !sameText(a.getDescription(), b.getDescription())
-                || !sameNumber(a.getBonusPoint(), b.getBonusPoint())
-                || !sameNumber(a.getPenaltyPoint(), b.getPenaltyPoint())
+                || a.getNature() != b.getNature()
+                || a.isSummaryRequired() != b.isSummaryRequired()
+                || !Objects.equals(a.getMaxParticipants(), b.getMaxParticipants())
                 || !sameMinute(a.getStartTime(), b.getStartTime())
                 || !sameMinute(a.getEndTime(), b.getEndTime());
     }
 
     private boolean sameText(String x, String y) {
         return Objects.equals(x == null ? null : x.trim(), y == null ? null : y.trim());
-    }
-
-    private boolean sameNumber(BigDecimal x, BigDecimal y) {
-        BigDecimal left = x == null ? BigDecimal.ZERO : x;
-        BigDecimal right = y == null ? BigDecimal.ZERO : y;
-        return left.compareTo(right) == 0;
     }
 
     private boolean sameMinute(LocalDateTime x, LocalDateTime y) {
@@ -255,26 +250,22 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             throw new IllegalArgumentException("Nhân viên phụ trách phải thuộc đơn vị phụ trách đã chọn.");
         }
 
-        // Validate điểm không được âm
-        if (!isEmpty(dto.getBonusPoint())) {
-            try {
-                BigDecimal bonus = new BigDecimal(dto.getBonusPoint());
-                if (bonus.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Điểm thưởng không được âm.");
-                }
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Điểm thưởng có định dạng không hợp lệ.");
-            }
+        if (isEmpty(dto.getNature())) {
+            throw new IllegalArgumentException("Vui lòng chọn tính chất hoạt động.");
+        }
+        try {
+            ActivityNature.valueOf(dto.getNature().trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Tính chất hoạt động không hợp lệ.");
         }
 
-        if (!isEmpty(dto.getPenaltyPoint())) {
+        if (!isEmpty(dto.getMaxParticipants())) {
             try {
-                BigDecimal penalty = new BigDecimal(dto.getPenaltyPoint());
-                if (penalty.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Điểm phạt không được âm.");
+                if (Integer.parseInt(dto.getMaxParticipants().trim()) <= 0) {
+                    throw new IllegalArgumentException("Số lượng tham gia tối đa phải lớn hơn 0.");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Điểm phạt có định dạng không hợp lệ.");
+                throw new IllegalArgumentException("Số lượng tham gia tối đa không hợp lệ.");
             }
         }
 
@@ -339,9 +330,9 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         entity.setResponsibleDepartmentId(Integer.parseInt(dto.getResponsibleDepartmentId()));
         entity.setResponsibleStaffId(Integer.parseInt(dto.getResponsibleStaffId()));
 
-        // Convert Điểm
-        entity.setBonusPoint(isEmpty(dto.getBonusPoint()) ? BigDecimal.ZERO : new BigDecimal(dto.getBonusPoint()));
-        entity.setPenaltyPoint(isEmpty(dto.getPenaltyPoint()) ? BigDecimal.ZERO : new BigDecimal(dto.getPenaltyPoint()));
+        entity.setNature(ActivityNature.valueOf(dto.getNature().trim()));
+        entity.setSummaryRequired("true".equalsIgnoreCase(dto.getSummaryRequired()));
+        entity.setMaxParticipants(isEmpty(dto.getMaxParticipants()) ? null : Integer.valueOf(dto.getMaxParticipants().trim()));
 
         // Convert Thời gian (<input type="datetime-local"> trả về định dạng yyyy-MM-ddTHH:mm)[cite: 1]
         if (!isEmpty(dto.getStartTime())) {

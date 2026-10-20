@@ -952,8 +952,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         dto.setActivityTypeId(request.getParameter("activityTypeId"));
         dto.setResponsibleDepartmentId(request.getParameter("responsibleDepartmentId"));
         dto.setResponsibleStaffId(request.getParameter("responsibleStaffId"));
-        dto.setBonusPoint(request.getParameter("bonusPoint"));       // Bổ sung
-        dto.setPenaltyPoint(request.getParameter("penaltyPoint"));   // Bổ sung
+        dto.setNature(request.getParameter("nature"));
+        dto.setSummaryRequired(request.getParameter("summaryRequired") != null ? "true" : "false");
+        dto.setMaxParticipants(request.getParameter("maxParticipants"));
         dto.setAddress(request.getParameter("address"));             // Đổi location -> address
         dto.setStartTime(request.getParameter("startTime"));         // Đổi startDateTime -> startTime
         dto.setEndTime(request.getParameter("endTime"));             // Đổi endDateTime -> endTime

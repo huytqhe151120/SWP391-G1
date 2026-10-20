@@ -50,6 +50,49 @@ document.querySelectorAll("form[data-confirm]").forEach(function (form) {
     });
 });
 
+(function () {
+    var toolbar = document.getElementById("bulk-activity-approval");
+    if (!toolbar) {
+        return;
+    }
+    var selectAll = document.querySelector("[data-select-all-activities]");
+    var selectionCount = toolbar.querySelector("[data-selection-count]");
+    var actionButtons = toolbar.querySelectorAll("button[type=submit]");
+    var checkboxes = Array.from(document.querySelectorAll("[data-activity-select]"));
+
+    function updateSelection() {
+        var selectedCount = checkboxes.filter(function (checkbox) {
+            return checkbox.checked;
+        }).length;
+        actionButtons.forEach(function (button) {
+            button.disabled = selectedCount === 0;
+        });
+        if (selectAll) {
+            selectAll.disabled = checkboxes.length === 0;
+        }
+        selectionCount.textContent = selectedCount === 0
+            ? "Chọn hoạt động đang chờ duyệt"
+            : "Đã chọn " + selectedCount + " hoạt động";
+        if (selectAll) {
+            selectAll.checked = selectedCount > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener("change", updateSelection);
+    });
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+            updateSelection();
+        });
+    }
+    updateSelection();
+})();
+
 document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     var trigger = combobox.querySelector(".multi-select-trigger");
     var label = combobox.querySelector("[data-selection-label]");
@@ -196,8 +239,8 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     }
 
     function syncStickyColumnWidths() {
-        var actionsCells = table.querySelectorAll("tr td:nth-child(9), tr th:nth-child(9)");
-        var approvalCells = table.querySelectorAll("tr td:nth-child(8), tr th:nth-child(8)");
+        var actionsCells = table.querySelectorAll("tr td.activity-action-column, tr th.activity-action-column");
+        var approvalCells = table.querySelectorAll("tr td.activity-status-column, tr th.activity-status-column");
         var actionsWidth = 0;
         var approvalWidth = 0;
 

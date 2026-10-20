@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261017-8">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-1">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -49,7 +49,6 @@
                 <a class="button button-primary"
                    href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
             </c:if>
-            </div>
         </div>
 
         <div class="activity-tabs-nav" role="tablist">
@@ -88,13 +87,14 @@
                 </section>
 
                 <section class="activity-detail-section">
-                    <h3>Thời gian, địa điểm và điểm số</h3>
+                    <h3>Thời gian, địa điểm và cấu hình</h3>
                     <dl class="detail-grid activity-detail-grid">
                         <div class="detail-item"><dt>Bắt đầu</dt>                        <dd><c:out value="${dt:format(activity.startTime)}" default="Chưa xác định"/></dd></div>
                                                 <div class="detail-item"><dt>Kết thúc</dt><dd><c:out value="${dt:format(activity.endTime)}" default="Chưa xác định"/></dd></div>
                                                 <div class="detail-item"><dt>Bắt buộc điền form</dt><dd><c:out value="${activity.registrationFormRequired ? 'Có' : 'Không'}"/></dd></div>
-                        <div class="detail-item"><dt>Điểm thưởng</dt><dd><c:out value="${activity.bonusPoint}" default="—"/></dd></div>
-                        <div class="detail-item"><dt>Điểm phạt</dt><dd><c:out value="${activity.penaltyPoint}" default="—"/></dd></div>
+                        <div class="detail-item"><dt>Tính chất</dt><dd><c:choose><c:when test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký</c:when><c:when test="${activity.nature == 'VOLUNTARY'}">Tự nguyện</c:when><c:when test="${activity.nature == 'MANDATORY'}">Bắt buộc</c:when><c:otherwise>—</c:otherwise></c:choose></dd></div>
+                        <div class="detail-item"><dt>Yêu cầu bài tổng kết</dt><dd><c:out value="${activity.summaryRequired ? 'Có' : 'Không'}"/></dd></div>
+                        <div class="detail-item"><dt>Số lượng tối đa</dt><dd><c:out value="${activity.maxParticipants}" default="Không giới hạn"/></dd></div>
                         <div class="detail-item field-wide"><dt>Địa điểm</dt><dd><c:out value="${activity.address}" default="Chưa cập nhật"/></dd></div>
                         <div class="detail-item field-wide"><dt>Mô tả</dt><dd class="activity-detail-description"><c:out value="${activity.description}" default="Chưa có mô tả"/></dd></div>
                     </dl>

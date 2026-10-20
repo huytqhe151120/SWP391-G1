@@ -1,6 +1,6 @@
 ﻿/* Account Management CSS - SWP391-G1 */
 @import "base.css";
-@import "activity.css";
+@import "activity.css?v=20261020-4";
 
 .account-page .account-hero-actions {
     position: relative;
@@ -79,6 +79,16 @@
     padding: 14px 15px;
     color: #536177;
     font-size: .88rem;
+}
+
+.account-table th:last-child,
+.account-table td:last-child {
+    width: 150px;
+    min-width: 150px;
+}
+
+.account-table .activity-actions {
+    justify-content: flex-start;
 }
 
 .account-table tbody tr:last-child td {

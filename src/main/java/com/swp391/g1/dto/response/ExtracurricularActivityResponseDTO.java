@@ -2,7 +2,6 @@ package com.swp391.g1.dto.response;
 
 import com.swp391.g1.model.Enum;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class ExtracurricularActivityResponseDTO {
@@ -29,8 +28,9 @@ public class ExtracurricularActivityResponseDTO {
     private String partnerCompanyName;           // Join from PartnerCompany
     private String partnerStaffCode;                // Join from PartnerStaff (nullable)
     private String partnerStaffName;             // Join from PartnerStaff (nullable)
-    private BigDecimal bonusPoint;
-    private BigDecimal penaltyPoint;
+    private Enum.ActivityNature nature;
+    private boolean summaryRequired;
+    private Integer maxParticipants;
     private String address;
     private String description;
     private Enum.ActivityStatus activityStatus;        // UPCOMING, ONGOING, COMPLETED, CANCELLED[cite: 1]
@@ -165,20 +165,28 @@ public class ExtracurricularActivityResponseDTO {
         this.partnerStaffName = partnerStaffName;
     }
 
-    public BigDecimal getBonusPoint() {
-        return bonusPoint;
+    public Enum.ActivityNature getNature() {
+        return nature;
     }
 
-    public void setBonusPoint(BigDecimal bonusPoint) {
-        this.bonusPoint = bonusPoint;
+    public void setNature(Enum.ActivityNature nature) {
+        this.nature = nature;
     }
 
-    public BigDecimal getPenaltyPoint() {
-        return penaltyPoint;
+    public boolean isSummaryRequired() {
+        return summaryRequired;
     }
 
-    public void setPenaltyPoint(BigDecimal penaltyPoint) {
-        this.penaltyPoint = penaltyPoint;
+    public void setSummaryRequired(boolean summaryRequired) {
+        this.summaryRequired = summaryRequired;
+    }
+
+    public Integer getMaxParticipants() {
+        return maxParticipants;
+    }
+
+    public void setMaxParticipants(Integer maxParticipants) {
+        this.maxParticipants = maxParticipants;
     }
 
     public String getAddress() {

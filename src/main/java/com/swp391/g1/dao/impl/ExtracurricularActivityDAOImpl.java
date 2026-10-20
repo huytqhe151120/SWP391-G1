@@ -27,8 +27,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
         activity.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
         activity.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
-        activity.setBonusPoint(rs.getBigDecimal("bonus_point"));
-        activity.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
+        String nature = rs.getString("nature");
+        activity.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+        activity.setSummaryRequired(rs.getBoolean("is_summary_required"));
+        activity.setMaxParticipants((Integer) rs.getObject("max_participants"));
         activity.setAddress(rs.getString("address"));
         activity.setDescription(rs.getString("description"));
 
@@ -218,8 +220,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
                 dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
                 dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
-                dto.setBonusPoint(rs.getBigDecimal("bonus_point"));
-                dto.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
+                String nature = rs.getString("nature");
+                dto.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+                dto.setSummaryRequired(rs.getBoolean("is_summary_required"));
+                dto.setMaxParticipants((Integer) rs.getObject("max_participants"));
                 dto.setAddress(rs.getString("address"));
                 dto.setDescription(rs.getString("description"));
                 dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
@@ -275,9 +279,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     public Integer insert(ExtracurricularActivity activity) {
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
-                + "partner_company_id, partner_staff_id, bonus_point, penalty_point, address, description, "
-                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "partner_company_id, partner_staff_id, nature, is_summary_required, address, description, "
+                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required, max_participants) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -309,9 +313,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
-                + "partner_company_id = ?, partner_staff_id = ?, bonus_point = ?, penalty_point = ?, "
+                + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
                 + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
-                + "registration_form_required = ?"
+                + "registration_form_required = ?, max_participants = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?") + " WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
@@ -331,8 +335,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             } else {
                 ps.setInt(7, activity.getPartnerStaffId());
             }
-            ps.setBigDecimal(8, activity.getBonusPoint());
-            ps.setBigDecimal(9, activity.getPenaltyPoint());
+            ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
+            ps.setBoolean(9, activity.isSummaryRequired());
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
@@ -341,7 +345,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setTimestamp(14, activity.getEndTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
             ps.setBoolean(15, activity.isRegistrationFormRequired());
-            int next = 16;
+            setMaxParticipants(ps, 16, activity);
+            int next = 17;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
@@ -368,9 +373,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
-                + "partner_company_id = ?, partner_staff_id = ?, bonus_point = ?, penalty_point = ?, "
+                + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
                 + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
-                + "registration_form_required = ?"
+                + "registration_form_required = ?, max_participants = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?")
                 + " WHERE id = ? AND activity_status = 'UPCOMING' "
                 + "AND start_time IS NOT NULL AND start_time > ? "
@@ -393,8 +398,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             } else {
                 ps.setInt(7, activity.getPartnerStaffId());
             }
-            ps.setBigDecimal(8, activity.getBonusPoint());
-            ps.setBigDecimal(9, activity.getPenaltyPoint());
+            ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
+            ps.setBoolean(9, activity.isSummaryRequired());
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
@@ -403,8 +408,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setTimestamp(14, activity.getEndTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
             ps.setBoolean(15, activity.isRegistrationFormRequired());
+            setMaxParticipants(ps, 16, activity);
 
-            int next = 16;
+            int next = 17;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
@@ -418,6 +424,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
             }
             throw new IllegalStateException("Failed to update upcoming extracurricular activity.", e);
+        }
+    }
+
+    private void setMaxParticipants(PreparedStatement ps, int index, ExtracurricularActivity activity) throws SQLException {
+        if (activity.getMaxParticipants() == null) {
+            ps.setNull(index, Types.INTEGER);
+        } else {
+            ps.setInt(index, activity.getMaxParticipants());
         }
     }
 
@@ -446,8 +460,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         } else {
             ps.setInt(7, activity.getPartnerStaffId());
         }
-        ps.setBigDecimal(8, activity.getBonusPoint());
-        ps.setBigDecimal(9, activity.getPenaltyPoint());
+        ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
+        ps.setBoolean(9, activity.isSummaryRequired());
         ps.setString(10, activity.getAddress());
         ps.setString(11, activity.getDescription());
         ps.setString(12, activity.getActivityStatus() == null ? null : activity.getActivityStatus().name());
@@ -458,6 +472,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         ps.setTimestamp(16, activity.getEndTime() == null
                 ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
         ps.setBoolean(17, activity.isRegistrationFormRequired());
+        setMaxParticipants(ps, 18, activity);
     }
 
     @Override
@@ -583,13 +598,34 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     "The synchronization time must not be null.");
         }
 
-        // 1. Chưa được duyệt mà đã đến giờ bắt đầu thì hủy.
-        String cancelUnapprovedSql =
-                "UPDATE extracurricular_activity " +
-                        "SET activity_status = 'CANCELLED' " +
-                        "WHERE activity_status = 'UPCOMING' " +
-                        "AND approval_status IN ('DRAFT', 'PENDING', 'REJECTED') " +
-                        "AND start_time IS NOT NULL AND start_time <= ?";
+        // Transition newly rejected activities and their linked partner records atomically.
+        String rejectUnapprovedSql = """
+                DECLARE @RejectedActivities TABLE (id INT PRIMARY KEY);
+
+                UPDATE extracurricular_activity
+                SET approval_status = 'REJECTED',
+                    activity_status = 'CANCELLED'
+                OUTPUT inserted.id INTO @RejectedActivities (id)
+                WHERE activity_status = 'UPCOMING'
+                  AND (approval_status IS NULL OR approval_status <> 'APPROVED')
+                  AND start_time IS NOT NULL
+                  AND start_time <= ?;
+
+                UPDATE i
+                SET approval_status = 'CANCELLED'
+                FROM activity_collaboration_invitation i
+                JOIN @RejectedActivities r ON r.id = i.activity_id;
+
+                UPDATE apc
+                SET collaboration_status = 'DEACTIVE'
+                FROM activity_partner_company apc
+                JOIN @RejectedActivities r ON r.id = apc.activity_id;
+
+                UPDATE aps
+                SET collaboration_status = 'DEACTIVE'
+                FROM activity_partner_staff aps
+                JOIN @RejectedActivities r ON r.id = aps.activity_id;
+                """;
 
         // 2. Đã duyệt nhưng đã qua cả giờ kết thúc: chuyển thẳng từ UPCOMING sang COMPLETED.
         String completeMissedWindowSql =
@@ -630,12 +666,12 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             conn.setAutoCommit(false);
 
             try {
-                // Bước 1: Hủy hoạt động chưa được duyệt.
+                // Bước 1: Từ chối hoạt động chưa được duyệt và đồng bộ dữ liệu liên quan.
                 try (PreparedStatement ps =
-                             conn.prepareStatement(cancelUnapprovedSql)) {
+                             conn.prepareStatement(rejectUnapprovedSql)) {
 
                     ps.setTimestamp(1, Timestamp.valueOf(now));
-                    ps.executeUpdate();
+                    ps.execute();
                 }
 
                 // Bước 2: Bắt kịp hoạt động đã kết thúc khi Tomcat tắt.

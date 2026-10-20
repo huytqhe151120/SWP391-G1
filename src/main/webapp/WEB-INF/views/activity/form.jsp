@@ -7,6 +7,7 @@
 <c:set var="departmentValue" value="${not empty formData ? formData.responsibleDepartmentId : activity.responsibleDepartmentId}"/>
 <c:set var="staffValue" value="${not empty formData ? formData.responsibleStaffId : activity.responsibleStaffId}"/>
 <c:set var="registrationValue" value="${not empty formData ? formData.registrationFormRequired == 'true' : activity.registrationFormRequired}"/>
+<c:set var="summaryValue" value="${not empty formData ? formData.summaryRequired == 'true' : activity.summaryRequired}"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -148,20 +149,32 @@
 
             <div class="activity-form-section">
                 <h3>Cấu hình và mô tả</h3>
-                <p>Cấu hình điểm thưởng, điểm phạt và thông tin bổ sung.</p>
+                <p>Cấu hình tính chất, số lượng tham gia và thông tin bổ sung.</p>
             </div>
             <div class="form-grid activity-form-grid">
                 <div class="field">
-                    <label for="bonusPoint">Điểm thưởng</label>
-                    <input id="bonusPoint" name="bonusPoint" type="number" min="0" step="0.01"
-                           placeholder="Ví dụ: 5"
-                           value="<c:out value='${not empty formData ? formData.bonusPoint : activity.bonusPoint}'/>">
+                    <label for="nature">Tính chất <span class="required">*</span></label>
+                    <c:set var="natureValue" value="${not empty formData ? formData.nature : activity.nature}"/>
+                    <select id="nature" name="nature" required>
+                        <option value="">-- Chọn tính chất --</option>
+                        <option value="REQUIRE_REGISTRATION" ${natureValue == 'REQUIRE_REGISTRATION' ? 'selected' : ''}>Cần đăng ký</option>
+                        <option value="VOLUNTARY" ${natureValue == 'VOLUNTARY' ? 'selected' : ''}>Tự nguyện</option>
+                        <option value="MANDATORY" ${natureValue == 'MANDATORY' ? 'selected' : ''}>Bắt buộc</option>
+                    </select>
                 </div>
                 <div class="field">
-                    <label for="penaltyPoint">Điểm phạt</label>
-                    <input id="penaltyPoint" name="penaltyPoint" type="number" min="0" step="0.01"
-                           placeholder="Ví dụ: 2"
-                           value="<c:out value='${not empty formData ? formData.penaltyPoint : activity.penaltyPoint}'/>">
+                    <label for="maxParticipants">Số lượng tham gia tối đa</label>
+                    <input id="maxParticipants" name="maxParticipants" type="number" min="1" step="1"
+                           placeholder="Không giới hạn"
+                           value="<c:out value='${not empty formData ? formData.maxParticipants : activity.maxParticipants}'/>">
+                </div>
+                <div class="field field-wide">
+                    <div class="checkbox-inline">
+                        <input id="summaryRequired" name="summaryRequired"
+                               type="checkbox" value="true"
+                               <c:if test="${summaryValue}">checked</c:if>>
+                        <label for="summaryRequired">Yêu cầu nộp bài tổng kết</label>
+                    </div>
                 </div>
                 <div class="field field-wide">
                     <div class="checkbox-inline">

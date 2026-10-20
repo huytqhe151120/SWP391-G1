@@ -359,6 +359,39 @@
     background: #edf4ff;
 }
 
+.activity-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.btn-create-activity {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #1e40af;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition: background-color .15s, transform .1s;
+}
+
+.btn-create-activity:hover {
+    background: #1e3a8a;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-create-activity:active {
+    transform: scale(.95);
+}
+
 .plus-icon {
     font-size: 1.25rem;
     font-weight: 400;
@@ -440,6 +473,57 @@
 
 .activity-filter-panel[open] > .activity-filter-toggle::after {
     transform: rotate(180deg);
+}
+
+.activity-bulk-toolbar {
+    display: flex;
+    min-height: 62px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 26px;
+    border-top: 1px solid #edf0f5;
+    background: #fbfcfe;
+}
+
+.activity-bulk-selection {
+    color: #536782;
+    font-size: .86rem;
+    font-weight: 600;
+}
+
+.activity-bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-outline {
+    border-color: #b9c8dc;
+    background: #fff;
+    color: #344963;
+}
+
+.button-outline:hover:not(:disabled) {
+    border-color: #829ab8;
+    background: #f4f7fb;
+}
+
+.button-danger-light {
+    border-color: #f1b5b9;
+    background: #fff5f5;
+    color: #a22b35;
+}
+
+.button-danger-light:hover:not(:disabled) {
+    border-color: #e7959b;
+    background: #ffe9ea;
+    color: #8f202a;
+}
+
+.activity-bulk-actions .button:disabled {
+    cursor: not-allowed;
+    opacity: .48;
 }
 
 .activity-filter-toggle:hover {
@@ -647,8 +731,8 @@
     width: 100%;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(9),
-.activity-list-page .activity-table-wrap td:nth-child(9) {
+.activity-list-page .activity-table-wrap th.activity-action-column,
+.activity-list-page .activity-table-wrap td.activity-action-column {
     position: sticky;
     right: 0;
     z-index: 2;
@@ -656,8 +740,8 @@
     white-space: nowrap;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(8),
-.activity-list-page .activity-table-wrap td:nth-child(8) {
+.activity-list-page .activity-table-wrap th.activity-status-column,
+.activity-list-page .activity-table-wrap td.activity-status-column {
     position: sticky;
     right: var(--activity-actions-col-width, 0px);
     z-index: 2;
@@ -665,8 +749,8 @@
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap td:nth-child(7) {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-run-status {
     position: sticky;
     right: calc(var(--activity-approval-col-width, 0px) + var(--activity-actions-col-width, 0px));
     z-index: 2;
@@ -674,9 +758,9 @@
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap th:nth-child(8),
-.activity-list-page .activity-table-wrap th:nth-child(9) {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column {
     background: #f7f9fc;
     z-index: 3;
 }
@@ -703,46 +787,60 @@
     white-space: nowrap;
 }
 
-.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(7),
-.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(8),
-.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(9) {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-status-column,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-action-column {
     background: #f8faff;
 }
 
 .activity-list-page .activity-actions {
     width: 100%;
-    align-items: stretch;
-    flex-direction: column;
-}
-
-.activity-list-page .activity-action-links,
-.activity-list-page .activity-actions form.activity-review-actions {
-    display: inline-flex;
-    width: max-content;
-    max-width: 100%;
     align-items: center;
+    justify-content: space-between;
     flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 6px;
+    gap: 8px;
 }
 
-.activity-list-page .activity-actions form.activity-review-actions {
+.activity-list-page .activity-table-wrap th.activity-action-column,
+.activity-list-page .activity-table-wrap td.activity-action-column {
+    width: 132px;
+    min-width: 132px;
+}
+
+.activity-select-column {
+    width: 42px;
+    min-width: 42px;
+    text-align: center !important;
+}
+
+.activity-select-checkbox {
+    width: 16px !important;
+    height: 16px;
+    min-height: 16px !important;
     margin: 0;
+    padding: 0;
+    accent-color: #2457c5;
+    vertical-align: middle;
+    cursor: pointer;
 }
 
-.activity-list-page .activity-review-actions-row {
-    display: inline-flex;
-    width: max-content;
-    max-width: 100%;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 6px;
+.activity-select-checkbox:disabled {
+    accent-color: #aab4c2;
+    cursor: not-allowed;
+    opacity: .55;
 }
 
-.activity-list-page .activity-actions .button,
-.activity-list-page .activity-action-links a {
-    flex: 0 0 auto;
-    white-space: nowrap;
+@media (max-width: 680px) {
+    .activity-bulk-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 18px;
+    }
+
+    .activity-bulk-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
 }
 
 .activity-code {
@@ -1004,6 +1102,64 @@ button.activity-action-link:focus-visible {
     padding: 18px 30px;
     border-top: 1px solid #edf0f5;
     background: #fafbfd;
+}
+
+.activity-detail-page {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.activity-detail-page .activity-detail-card {
+    max-width: 100%;
+    min-width: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(31, 56, 94, 0.08);
+}
+
+.activity-detail-page .activity-tabs-nav {
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.activity-detail-page .activity-tab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.activity-detail-page .activity-detail-content {
+    min-width: 0;
+    padding-bottom: 24px;
+}
+
+.activity-detail-page .activity-tab-pane,
+.activity-detail-page .activity-detail-section {
+    min-width: 0;
+}
+
+.activity-detail-page .activity-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #edf0f5;
+    border-radius: 8px;
+}
+
+.activity-detail-page .activity-table-wrap table {
+    width: 100%;
+    min-width: 640px;
+}
+
+.activity-detail-page .activity-table-wrap td[colspan] {
+    padding: 32px 16px !important;
+    text-align: center !important;
+    white-space: normal;
+    color: #8a97ab !important;
+}
+
+.activity-detail-page .activity-detail-actions {
+    flex-wrap: wrap;
 }
 
 /* Activity forms */
@@ -1410,12 +1566,12 @@ button.activity-action-link:focus-visible {
         padding-left: 12px;
     }
 
-    .activity-list-page .activity-table-wrap th:nth-child(7),
-    .activity-list-page .activity-table-wrap td:nth-child(7),
-    .activity-list-page .activity-table-wrap th:nth-child(8),
-    .activity-list-page .activity-table-wrap td:nth-child(8),
-    .activity-list-page .activity-table-wrap th:nth-child(9),
-    .activity-list-page .activity-table-wrap td:nth-child(9) {
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-run-status,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-status-column,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-action-column {
         position: static;
         right: auto;
         box-shadow: none;

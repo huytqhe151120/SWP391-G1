@@ -9,7 +9,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lời mời hợp tác | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=8">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=13">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -100,7 +101,8 @@
                 </c:if>
             </div>
         </form>
-        </details>        <div class="table-wrap activity-table-wrap">
+        </details>
+        <div class="table-wrap activity-table-wrap">
             <table class="partner-invitation-table">
                 <thead>
                 <tr>
@@ -148,7 +150,7 @@
                                     <c:choose>
                                         <c:when test="${empty inv.message}">—</c:when>
                                         <c:otherwise>
-                                            <button type="button" class="button invitation-message-view"
+                                            <button type="button" class="button button-sm invitation-message-view"
                                                     data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
                                                     data-message="<c:out value='${inv.message}'/>">Xem</button>
                                         </c:otherwise>
@@ -165,26 +167,35 @@
                                 </td>
                                 <td class="freeze freeze-actions">
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}#tab-partner">Chi tiết</a>
-                                        <c:if test="${inv.canRespond}">
-                                            <form action="${pageContext.request.contextPath}/activities" method="post" class="inline-form">
-                                                <input type="hidden" name="action" value="respondInvitation">
-                                                <input type="hidden" name="returnTo" value="partner-invitations">
-                                                <input type="hidden" name="activityId" value="${inv.activityId}">
-                                                <input type="hidden" name="invitationId" value="${inv.id}">
-                                                <button type="submit" name="decision" value="accept" class="button button-approve">Chấp nhận</button>
-                                                <button type="submit" name="decision" value="reject" class="button button-reject">Từ chối</button>
-                                            </form>
-                                        </c:if>
-                                        <c:if test="${inv.canRevoke}">
-                                            <form action="${pageContext.request.contextPath}/activities" method="post" class="inline-form"
-                                                  data-confirm="Hủy phản hồi sẽ đưa lời mời về trạng thái chờ phản hồi${inv.approvalStatus == 'APPROVED' ? ' và gỡ các nhân sự đối tác của công ty khỏi hoạt động' : ''}. Bạn có chắc chắn?">
-                                                <input type="hidden" name="action" value="revokeInvitation">
-                                                <input type="hidden" name="returnTo" value="partner-invitations">
-                                                <input type="hidden" name="activityId" value="${inv.activityId}">
-                                                <input type="hidden" name="invitationId" value="${inv.id}">
-                                                <button type="submit" class="button button-revoke">${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}</button>
-                                            </form>
+                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}#tab-partner">
+                                            Chi tiết
+                                        </a>
+                                        <c:if test="${inv.canRespond || inv.canRevoke}">
+                                            <details class="action-menu">
+                                                <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
+                                                <div class="action-menu__items">
+                                                    <c:if test="${inv.canRespond}">
+                                                        <form action="${pageContext.request.contextPath}/activities" method="post">
+                                                            <input type="hidden" name="action" value="respondInvitation">
+                                                            <input type="hidden" name="returnTo" value="partner-invitations">
+                                                            <input type="hidden" name="activityId" value="${inv.activityId}">
+                                                            <input type="hidden" name="invitationId" value="${inv.id}">
+                                                            <button type="submit" name="decision" value="accept" class="action-menu-item action-menu-item--approve">Chấp nhận lời mời</button>
+                                                            <button type="submit" name="decision" value="reject" class="action-menu-item action-menu-item--reject">Từ chối lời mời</button>
+                                                        </form>
+                                                    </c:if>
+                                                    <c:if test="${inv.canRevoke}">
+                                                        <form action="${pageContext.request.contextPath}/activities" method="post"
+                                                              data-confirm="Hủy phản hồi sẽ đưa lời mời về trạng thái chờ phản hồi${inv.approvalStatus == 'APPROVED' ? ' và gỡ các nhân sự đối tác của công ty khỏi hoạt động' : ''}. Bạn có chắc chắn?">
+                                                            <input type="hidden" name="action" value="revokeInvitation">
+                                                            <input type="hidden" name="returnTo" value="partner-invitations">
+                                                            <input type="hidden" name="activityId" value="${inv.activityId}">
+                                                            <input type="hidden" name="invitationId" value="${inv.id}">
+                                                            <button type="submit" class="action-menu-item action-menu-item--undo">${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}</button>
+                                                        </form>
+                                                    </c:if>
+                                                </div>
+                                            </details>
                                         </c:if>
                                     </div>
                                 </td>
@@ -252,6 +263,7 @@
     <p id="invitation-message-modal-body" style="white-space: pre-wrap; word-break: break-word;"></p>
     <div style="text-align: right;"><button type="button" class="button" id="invitation-message-modal-close">Đóng</button></div>
 </dialog>
+<script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
 <script src="${pageContext.request.contextPath}/assets/js/partner-invitation.js?v=3"></script>
 </body>
 </html>

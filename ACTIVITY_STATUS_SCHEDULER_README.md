@@ -7,7 +7,7 @@ status and its start/end times:
 
 | Current activity status | Approval status | Time condition | New activity status |
 | --- | --- | --- | --- |
-| `UPCOMING` | `DRAFT`, `PENDING`, or `REJECTED` | `start_time <= now` | `CANCELLED` |
+| `UPCOMING` | Any status other than `APPROVED` | `start_time <= now` | `approval_status = REJECTED`; `activity_status = CANCELLED` |
 | `UPCOMING` | `APPROVED` | `end_time <= now` | `COMPLETED` |
 | `UPCOMING` | `APPROVED` | `start_time <= now < end_time` | `ONGOING` |
 | `ONGOING` | `APPROVED` | `end_time <= now` | `COMPLETED` |
@@ -17,9 +17,14 @@ is eligible as soon as `now` equals the corresponding timestamp.
 
 The scheduler only updates the source states shown above. It does not change
 `COMPLETED` or `CANCELLED` activities, and it does not process rows with
-missing start/end times or approval statuses outside the listed cases.
-Pending collaboration invitations are cancelled in the same synchronization
-transaction when their activity becomes `ONGOING`, `COMPLETED`, or `CANCELLED`.
+missing start/end times.
+When an unapproved activity reaches its start time, all its collaboration
+invitations become `CANCELLED`, and its activity-partner-company and
+activity-partner-staff rows become `DEACTIVE` in their `collaboration_status`
+columns. These changes are committed in the same transaction as the activity
+transition. Pending collaboration invitations are also cancelled in the same
+synchronization transaction when their activity becomes `ONGOING`,
+`COMPLETED`, or `CANCELLED`.
 
 If the application was offline for an entire approved activity, the startup
 run catches it up directly from `UPCOMING` to `COMPLETED` when its end time
@@ -56,6 +61,11 @@ is retried by a later scheduled run; it is not retried immediately.
 All activity-status and pending-invitation updates in one synchronization pass run in a single
 transaction. They are committed together; if an update fails, the transaction
 is rolled back and the failure is logged by the scheduler.
+
+Before deploying this version, run
+`src/main/resources/db/migration/V1__add_activity_partner_staff_collaboration_status.sql`
+once against the application database. Existing partner-staff assignments
+receive `ACTIVE` as their initial collaboration status.
 
 ## Requirements
 
