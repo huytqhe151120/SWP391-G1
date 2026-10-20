@@ -18,9 +18,24 @@ public final class AccessPolicy {
         return hasType(user, ADMIN_TYPE);
     }
 
-    /** ADMIN and STAFF can create, edit, and delete extracurricular activities. */
+    /** ADMIN and STAFF can use activity management; STAFF operations are scope-checked separately. */
     public static boolean canManageActivities(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
+    /** STAFF activity access is limited to a responsible staff member or unit role. */
+    public static boolean canUseStaffActivityScope(CurrentUser user) {
+        if (!hasType(user, "STAFF") || user.getRole() == null) {
+            return false;
+        }
+        return switch (user.getRole()) {
+            case "STAFF", "UNIT_DEPUTY_HEAD", "UNIT_HEAD", "UNIT_SECRETARY" -> true;
+            default -> false;
+        };
+    }
+
+    public static boolean hasType(CurrentUser user, String type) {
+        return user != null && type.equals(user.getType());
     }
 
     /** Only ADMIN can approve, reject, or revoke the approval decision of an activity. */
@@ -66,9 +81,5 @@ public final class AccessPolicy {
     /** ADMIN organizers and STAFF can access their resolved 1-to-1 inbox. */
     public static boolean canUseSupportInbox(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
-    }
-
-    private static boolean hasType(CurrentUser user, String type) {
-        return user != null && type.equals(user.getType());
     }
 }
