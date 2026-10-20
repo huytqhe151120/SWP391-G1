@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hộp thư của tôi | SWP391-G1</title>
@@ -19,8 +19,8 @@
         <div class="activity-app-main">
 <a class="skip-link" href="#inbox-content">Đi đến nội dung chính</a>
 <main class="inbox-page" id="inbox-content">
-    <header class="inbox-hero">
-        <div class="hero-copy">
+    <header class="activity-hero inbox-hero">
+        <div class="hero-copy activity-hero-copy">
             <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> HỖ TRỢ SINH VIÊN</span>
             <h1>Hộp thư của tôi</h1>
             <p>Trao đổi riêng với ban tổ chức hoặc nhân viên hỗ trợ.</p>

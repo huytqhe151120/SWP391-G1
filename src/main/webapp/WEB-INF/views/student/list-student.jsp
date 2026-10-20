@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student List</title>
@@ -27,10 +27,10 @@
 <div class="student-list-page">
 
     <!-- ================= HEADER ================= -->
-    <header class="student-hero">
+    <header class="activity-hero student-hero">
 
         <div>
-            <span class="hero-label">SWP391-G1 / Quản lý sinh viên</span>
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ SINH VIÊN</span>
 
             <h1>Danh sách sinh viên</h1>
 

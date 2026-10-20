@@ -4,8 +4,9 @@ public class ExtracurricularActivityRequestDTO {
     private String id;
     private String code;
     private String name;
-    private String bonusPoint;
-    private String penaltyPoint;
+    private String nature;                  // REQUIRE_REGISTRATION, VOLUNTARY or MANDATORY
+    private String summaryRequired;         // "true" when the toggle is on
+    private String maxParticipants;
     private String address;
     private String description;
     private String startTime;                // Received as String from form, then convert to LocalDateTime in the controller
@@ -54,20 +55,28 @@ public class ExtracurricularActivityRequestDTO {
         this.name = name;
     }
 
-    public String getBonusPoint() {
-        return bonusPoint;
+    public String getNature() {
+        return nature;
     }
 
-    public void setBonusPoint(String bonusPoint) {
-        this.bonusPoint = bonusPoint;
+    public void setNature(String nature) {
+        this.nature = nature;
     }
 
-    public String getPenaltyPoint() {
-        return penaltyPoint;
+    public String getSummaryRequired() {
+        return summaryRequired;
     }
 
-    public void setPenaltyPoint(String penaltyPoint) {
-        this.penaltyPoint = penaltyPoint;
+    public void setSummaryRequired(String summaryRequired) {
+        this.summaryRequired = summaryRequired;
+    }
+
+    public String getMaxParticipants() {
+        return maxParticipants;
+    }
+
+    public void setMaxParticipants(String maxParticipants) {
+        this.maxParticipants = maxParticipants;
     }
 
     public String getAddress() {

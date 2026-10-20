@@ -9,57 +9,6 @@ body {
     background: #f5f7fb;
 }
 
-/* ===== HERO ===== */
-.staff-hero {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 2.2rem 3rem;
-    margin-bottom: 1.5rem;
-    border-radius: 22px;
-    color: #fff;
-    background: linear-gradient(135deg, #12305c 0%, #1e4277 55%, #2563a8 100%);
-    box-shadow: 0 12px 30px rgba(18, 48, 92, 0.25);
-}
-
-/* vòng tròn trang trí bên phải */
-.staff-hero::before,
-.staff-hero::after {
-    content: "";
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    pointer-events: none;
-}
-.staff-hero::before { width: 420px; height: 420px; right: 60px; top: -120px; }
-.staff-hero::after  { width: 260px; height: 260px; right: 140px; top: -40px; }
-
-.staff-hero > * { position: relative; z-index: 1; }
-
-.staff-hero .hero-label {
-    display: block;
-    margin-bottom: 0.8rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: #b9cdf0;
-}
-
-.staff-hero h1 {
-    margin: 0;
-    font-size: 2.6rem;
-    font-weight: 800;
-    line-height: 1.1;
-}
-
-.staff-hero p {
-    margin: 0.8rem 0 0;
-    color: #dbe6fb;
-}
-
 /* ===== NÚT TRANG CHỦ (ghost button) ===== */
 .staff-hero-actions {
     display: flex;
@@ -231,8 +180,6 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 760px) {
-    .staff-hero { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
-    .staff-hero h1 { font-size: 1.8rem; }
     .staff-toolbar { flex-direction: column; }
     .staff-filter { width: 100%; }
     .staff-table-heading { flex-direction: column; align-items: flex-start; }

@@ -5,6 +5,7 @@ import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.util.DateTimeUtil;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -26,8 +27,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
         activity.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
         activity.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
-        activity.setBonusPoint(rs.getBigDecimal("bonus_point"));
-        activity.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
+        String nature = rs.getString("nature");
+        activity.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+        activity.setSummaryRequired(rs.getBoolean("is_summary_required"));
+        activity.setMaxParticipants((Integer) rs.getObject("max_participants"));
         activity.setAddress(rs.getString("address"));
         activity.setDescription(rs.getString("description"));
 
@@ -41,9 +44,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setActivityTypeId(rs.getInt("activity_type_id"));
 
         Timestamp startTime = rs.getTimestamp("start_time");
-        activity.setStartTime(startTime == null ? null : startTime.toLocalDateTime());
+        activity.setStartTime(startTime == null
+                ? null : DateTimeUtil.fromUtc(startTime.toLocalDateTime()));
         Timestamp endTime = rs.getTimestamp("end_time");
-        activity.setEndTime(endTime == null ? null : endTime.toLocalDateTime());
+        activity.setEndTime(endTime == null
+                ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
         activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
         return activity;
     }
@@ -124,6 +129,62 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
     @Override
     public List<ExtracurricularActivityResponseDTO> findAllWithDetails() {
+        return queryActivitiesWithDetails(null, null);
+    }
+
+    @Override
+    public List<ExtracurricularActivityResponseDTO> findAllWithDetailsForStaff(int accountId, String role) {
+        if (accountId <= 0) {
+            return List.of();
+        }
+        String scope = staffScopePredicate(role);
+        return scope == null ? List.of() : queryActivitiesWithDetails(scope, accountId);
+    }
+
+    @Override
+    public boolean isInStaffActivityScope(int activityId, int accountId, String role) {
+        if (activityId <= 0 || accountId <= 0) {
+            return false;
+        }
+        String scope = staffScopePredicate(role);
+        if (scope == null) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM extracurricular_activity a WHERE a.id = ? AND " + scope;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check staff activity access.", e);
+        }
+    }
+
+    private String staffScopePredicate(String role) {
+        if ("STAFF".equals(role)) {
+            return """
+                    EXISTS (SELECT 1 FROM staff scoped_staff
+                            WHERE scoped_staff.account_id = ?
+                              AND scoped_staff.id = a.responsible_staff_id)
+                    """;
+        }
+        if ("UNIT_DEPUTY_HEAD".equals(role) || "UNIT_HEAD".equals(role)
+                || "UNIT_SECRETARY".equals(role)) {
+            return """
+                    EXISTS (SELECT 1
+                            FROM staff scoped_staff
+                            JOIN staff_assignment sa ON sa.staff_id = scoped_staff.id
+                            WHERE scoped_staff.account_id = ?
+                              AND sa.department_id = a.responsible_department_id)
+                    """;
+        }
+        return null;
+    }
+
+    private List<ExtracurricularActivityResponseDTO> queryActivitiesWithDetails(String scope, Integer accountId) {
         List<ExtracurricularActivityResponseDTO> list = new ArrayList<>();
         String sql = """
     SELECT
@@ -141,6 +202,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     LEFT JOIN staff st ON a.responsible_staff_id = st.id
     LEFT JOIN partner_company pc ON a.partner_company_id = pc.id
     LEFT JOIN partner_staff ps ON a.partner_staff_id = ps.id
+    """ + (scope == null ? "" : "WHERE " + scope) + """
     ORDER BY a.id DESC
     """;
 
@@ -158,17 +220,21 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
                 dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
                 dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
-                dto.setBonusPoint(rs.getBigDecimal("bonus_point"));
-                dto.setPenaltyPoint(rs.getBigDecimal("penalty_point"));
+                String nature = rs.getString("nature");
+                dto.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+                dto.setSummaryRequired(rs.getBoolean("is_summary_required"));
+                dto.setMaxParticipants((Integer) rs.getObject("max_participants"));
                 dto.setAddress(rs.getString("address"));
                 dto.setDescription(rs.getString("description"));
                 dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
                 dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
 
                 Timestamp startTime = rs.getTimestamp("start_time");
-                dto.setStartTime(startTime == null ? null : LocalDateTime.parse(startTime.toLocalDateTime().toString()));
+                dto.setStartTime(startTime == null
+                        ? null : DateTimeUtil.fromUtc(startTime.toLocalDateTime()));
                 Timestamp endTime = rs.getTimestamp("end_time");
-                dto.setEndTime(endTime == null ? null : LocalDateTime.parse(endTime.toLocalDateTime().toString()));
+                dto.setEndTime(endTime == null
+                        ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
                 dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
 
                 // Thông tin chi tiết JOIN từ các bảng liên quan
@@ -213,9 +279,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     public Integer insert(ExtracurricularActivity activity) {
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
-                + "partner_company_id, partner_staff_id, bonus_point, penalty_point, address, description, "
-                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "partner_company_id, partner_staff_id, nature, is_summary_required, address, description, "
+                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required, max_participants) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -247,9 +313,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
-                + "partner_company_id = ?, partner_staff_id = ?, bonus_point = ?, penalty_point = ?, "
+                + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
                 + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
-                + "registration_form_required = ?"
+                + "registration_form_required = ?, max_participants = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?") + " WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
@@ -269,15 +335,18 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             } else {
                 ps.setInt(7, activity.getPartnerStaffId());
             }
-            ps.setBigDecimal(8, activity.getBonusPoint());
-            ps.setBigDecimal(9, activity.getPenaltyPoint());
+            ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
+            ps.setBoolean(9, activity.isSummaryRequired());
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
-            ps.setTimestamp(13, activity.getStartTime() == null ? null : Timestamp.valueOf(activity.getStartTime()));
-            ps.setTimestamp(14, activity.getEndTime() == null ? null : Timestamp.valueOf(activity.getEndTime()));
+            ps.setTimestamp(13, activity.getStartTime() == null
+                    ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
+            ps.setTimestamp(14, activity.getEndTime() == null
+                    ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
             ps.setBoolean(15, activity.isRegistrationFormRequired());
-            int next = 16;
+            setMaxParticipants(ps, 16, activity);
+            int next = 17;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
@@ -288,6 +357,81 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
             }
             throw new IllegalStateException("Failed to update extracurricular activity: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean updateUpcoming(
+            ExtracurricularActivity activity,
+            Enum.ApprovalStatus expectedApprovalStatus,
+            Enum.ApprovalStatus newApprovalStatus,
+            LocalDateTime now) {
+        if (activity == null || activity.getId() <= 0
+                || expectedApprovalStatus == null || now == null) {
+            return false;
+        }
+
+        String sql = "UPDATE extracurricular_activity SET "
+                + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
+                + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
+                + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
+                + "registration_form_required = ?, max_participants = ?"
+                + (newApprovalStatus == null ? "" : ", approval_status = ?")
+                + " WHERE id = ? AND activity_status = 'UPCOMING' "
+                + "AND start_time IS NOT NULL AND start_time > ? "
+                + "AND approval_status = ?";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activity.getSemesterId());
+            ps.setString(2, activity.getCode());
+            ps.setString(3, activity.getName());
+            ps.setInt(4, activity.getResponsibleDepartmentId());
+            ps.setInt(5, activity.getResponsibleStaffId());
+            if (activity.getPartnerCompanyId() == null) {
+                ps.setNull(6, Types.INTEGER);
+            } else {
+                ps.setInt(6, activity.getPartnerCompanyId());
+            }
+            if (activity.getPartnerStaffId() == null) {
+                ps.setNull(7, Types.INTEGER);
+            } else {
+                ps.setInt(7, activity.getPartnerStaffId());
+            }
+            ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
+            ps.setBoolean(9, activity.isSummaryRequired());
+            ps.setString(10, activity.getAddress());
+            ps.setString(11, activity.getDescription());
+            ps.setInt(12, activity.getActivityTypeId());
+            ps.setTimestamp(13, activity.getStartTime() == null
+                    ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
+            ps.setTimestamp(14, activity.getEndTime() == null
+                    ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
+            ps.setBoolean(15, activity.isRegistrationFormRequired());
+            setMaxParticipants(ps, 16, activity);
+
+            int next = 17;
+            if (newApprovalStatus != null) {
+                ps.setString(next++, newApprovalStatus.name());
+            }
+            ps.setInt(next++, activity.getId());
+            ps.setTimestamp(next++, Timestamp.valueOf(now));
+            ps.setString(next, expectedApprovalStatus.name());
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            if (isDuplicateCodeError(e)) {
+                throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
+            }
+            throw new IllegalStateException("Failed to update upcoming extracurricular activity.", e);
+        }
+    }
+
+    private void setMaxParticipants(PreparedStatement ps, int index, ExtracurricularActivity activity) throws SQLException {
+        if (activity.getMaxParticipants() == null) {
+            ps.setNull(index, Types.INTEGER);
+        } else {
+            ps.setInt(index, activity.getMaxParticipants());
         }
     }
 
@@ -316,16 +460,19 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         } else {
             ps.setInt(7, activity.getPartnerStaffId());
         }
-        ps.setBigDecimal(8, activity.getBonusPoint());
-        ps.setBigDecimal(9, activity.getPenaltyPoint());
+        ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
+        ps.setBoolean(9, activity.isSummaryRequired());
         ps.setString(10, activity.getAddress());
         ps.setString(11, activity.getDescription());
         ps.setString(12, activity.getActivityStatus() == null ? null : activity.getActivityStatus().name());
         ps.setString(13, activity.getApprovalStatus() == null ? null : activity.getApprovalStatus().name());
         ps.setInt(14, activity.getActivityTypeId());
-        ps.setTimestamp(15, activity.getStartTime() == null ? null : Timestamp.valueOf(activity.getStartTime()));
-        ps.setTimestamp(16, activity.getEndTime() == null ? null : Timestamp.valueOf(activity.getEndTime()));
+        ps.setTimestamp(15, activity.getStartTime() == null
+                ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
+        ps.setTimestamp(16, activity.getEndTime() == null
+                ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
         ps.setBoolean(17, activity.isRegistrationFormRequired());
+        setMaxParticipants(ps, 18, activity);
     }
 
     @Override
@@ -334,28 +481,313 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql = "DELETE FROM extracurricular_activity WHERE id = ?";
+        String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
+        // Remove the partner-company link before its invitation because it references that invitation.
+        String[] dependentDeletes = {
+                "DELETE FROM activity_staff WHERE activity_id = ?",
+                "DELETE FROM activity_department WHERE activity_id = ?",
+                "DELETE FROM activity_partner_staff WHERE activity_id = ?",
+                "DELETE FROM activity_partner_company WHERE activity_id = ?",
+                "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
+        };
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(existsSql)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+                for (String sql : dependentDeletes) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps =
+                             conn.prepareStatement("DELETE FROM extracurricular_activity WHERE id = ?")) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+                throw e;
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to delete extracurricular activity.", e);
         }
     }
 
     @Override
-    public boolean updateApprovalStatus(int id, Enum.ApprovalStatus status) {
-        String sql = "UPDATE extracurricular_activity SET approval_status = ? WHERE id = ?";
+    public boolean updateApprovalStatusIfUpcoming(
+            int id,
+            Enum.ApprovalStatus status,
+            List<Enum.ApprovalStatus> allowedFrom,
+            LocalDateTime now) {
+
+        if (id <= 0 || status == null
+                || allowedFrom == null || allowedFrom.isEmpty()
+                || now == null) {
+            return false;
+        }
+
+        StringBuilder sql = new StringBuilder(
+                "UPDATE extracurricular_activity "
+                        + "SET approval_status = ? "
+                        + "WHERE id = ? "
+                        + "AND activity_status = 'UPCOMING' "
+                        + "AND start_time IS NOT NULL "
+                        + "AND start_time > ? "
+                        + "AND approval_status IN (");
+
+        for (int i = 0; i < allowedFrom.size(); i++) {
+            if (i > 0) {
+                sql.append(",");
+            }
+            sql.append("?");
+        }
+
+        sql.append(")");
 
         try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
             ps.setString(1, status.name());
             ps.setInt(2, id);
+            ps.setTimestamp(3, Timestamp.valueOf(now));
+
+            int index = 4;
+            for (Enum.ApprovalStatus from : allowedFrom) {
+                ps.setString(index++, from.name());
+            }
+
+            // Chỉ thành công nếu câu SQL cập nhật được ít nhất một dòng.
             return ps.executeUpdate() > 0;
+
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to update approval status: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to update approval status: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Đồng bộ trạng thái hoạt động bằng thời gian UTC.
+     *
+     * Xử lý cả trường hợp Tomcat tắt trong thời gian diễn ra hoạt động.
+     */
+    @Override
+    public void synchronizeActivityStatuses(
+            java.time.LocalDateTime now) {
+
+        if (now == null) {
+            throw new IllegalArgumentException(
+                    "The synchronization time must not be null.");
+        }
+
+        // Transition newly rejected activities and their linked partner records atomically.
+        String rejectUnapprovedSql = """
+                DECLARE @RejectedActivities TABLE (id INT PRIMARY KEY);
+
+                UPDATE extracurricular_activity
+                SET approval_status = 'REJECTED',
+                    activity_status = 'CANCELLED'
+                OUTPUT inserted.id INTO @RejectedActivities (id)
+                WHERE activity_status = 'UPCOMING'
+                  AND (approval_status IS NULL OR approval_status <> 'APPROVED')
+                  AND start_time IS NOT NULL
+                  AND start_time <= ?;
+
+                UPDATE i
+                SET approval_status = 'CANCELLED'
+                FROM activity_collaboration_invitation i
+                JOIN @RejectedActivities r ON r.id = i.activity_id;
+
+                UPDATE apc
+                SET collaboration_status = 'INACTIVE'
+                FROM activity_partner_company apc
+                JOIN @RejectedActivities r ON r.id = apc.activity_id;
+
+                UPDATE aps
+                SET collaboration_status = 'INACTIVE'
+                FROM activity_partner_staff aps
+                JOIN @RejectedActivities r ON r.id = aps.activity_id;
+                """;
+
+        // 2. Đã duyệt nhưng đã qua cả giờ kết thúc: chuyển thẳng từ UPCOMING sang COMPLETED.
+        String completeMissedWindowSql =
+                "UPDATE extracurricular_activity " +
+                        "SET activity_status = 'COMPLETED' " +
+                        "WHERE activity_status = 'UPCOMING' " +
+                        "AND approval_status = 'APPROVED' " +
+                        "AND end_time IS NOT NULL AND end_time <= ?";
+
+        // 3. Đã duyệt, đã bắt đầu nhưng chưa kết thúc.
+        String startApprovedSql =
+                "UPDATE extracurricular_activity " +
+                        "SET activity_status = 'ONGOING' " +
+                        "WHERE activity_status = 'UPCOMING' " +
+                        "AND approval_status = 'APPROVED' " +
+                        "AND start_time IS NOT NULL AND start_time <= ? " +
+                        "AND end_time IS NOT NULL AND end_time > ?";
+
+        // 4. Đang diễn ra và đã đến giờ kết thúc.
+        String completeOngoingSql =
+                "UPDATE extracurricular_activity " +
+                        "SET activity_status = 'COMPLETED' " +
+                        "WHERE activity_status = 'ONGOING' " +
+                        "AND approval_status = 'APPROVED' " +
+                        "AND end_time IS NOT NULL AND end_time <= ?";
+
+        String cancelInactiveInvitationsSql =
+                "UPDATE activity_collaboration_invitation " +
+                        "SET approval_status = 'CANCELLED' " +
+                        "WHERE approval_status = 'PENDING' " +
+                        "AND activity_id IN (" +
+                        "SELECT id FROM extracurricular_activity " +
+                        "WHERE activity_status IN ('ONGOING', 'COMPLETED', 'CANCELLED'))";
+
+        try (Connection conn = DBContext.getConnection()) {
+
+            boolean originalAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+
+            try {
+                // Bước 1: Từ chối hoạt động chưa được duyệt và đồng bộ dữ liệu liên quan.
+                try (PreparedStatement ps =
+                             conn.prepareStatement(rejectUnapprovedSql)) {
+
+                    ps.setTimestamp(1, Timestamp.valueOf(now));
+                    ps.execute();
+                }
+
+                // Bước 2: Bắt kịp hoạt động đã kết thúc khi Tomcat tắt.
+                try (PreparedStatement ps =
+                             conn.prepareStatement(completeMissedWindowSql)) {
+
+                    ps.setTimestamp(1, Timestamp.valueOf(now));
+                    ps.executeUpdate();
+                }
+
+                // Bước 3: Chuyển hoạt động đã duyệt sang ONGOING.
+                try (PreparedStatement ps =
+                             conn.prepareStatement(startApprovedSql)) {
+
+                    ps.setTimestamp(1, Timestamp.valueOf(now));
+                    ps.setTimestamp(2, Timestamp.valueOf(now));
+                    ps.executeUpdate();
+                }
+
+                // Bước 4: Hoàn thành hoạt động đang diễn ra đã hết giờ.
+                try (PreparedStatement ps =
+                             conn.prepareStatement(completeOngoingSql)) {
+
+                    ps.setTimestamp(1, Timestamp.valueOf(now));
+                    ps.executeUpdate();
+                }
+
+                // Hủy lời mời còn chờ khi hoạt động không còn ở trạng thái UPCOMING.
+                try (PreparedStatement ps =
+                             conn.prepareStatement(cancelInactiveInvitationsSql)) {
+                    ps.executeUpdate();
+                }
+
+                // Lưu tất cả thay đổi.
+                conn.commit();
+
+            } catch (SQLException e) {
+
+                // Có lỗi thì hoàn tác toàn bộ thay đổi trong transaction.
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+
+                throw e;
+
+            } finally {
+                try {
+                    conn.setAutoCommit(originalAutoCommit);
+                } catch (SQLException ignored) {
+                    // Connection sắp được đóng.
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new IllegalStateException(
+                    "Failed to synchronize extracurricular activity statuses.",
+                    e);
+        }
+    }
+
+    @Override
+    public boolean deleteIfNotOngoingOrCompleted(int id) {
+        if (id <= 0) {
+            return false;
+        }
+
+        String[] dependentDeletes = {
+                "DELETE FROM activity_staff WHERE activity_id = ?",
+                "DELETE FROM activity_department WHERE activity_id = ?",
+                "DELETE FROM activity_partner_staff WHERE activity_id = ?",
+                "DELETE FROM activity_partner_company WHERE activity_id = ?",
+                "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
+        };
+        String deleteActivitySql = """
+                DELETE FROM extracurricular_activity
+                WHERE id = ?
+                  AND (
+                      activity_status = 'CANCELLED'
+                      OR (activity_status = 'UPCOMING'
+                          AND start_time IS NOT NULL
+                          AND start_time > SYSUTCDATETIME())
+                  )
+                """;
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                for (String sql : dependentDeletes) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(deleteActivitySql)) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(
+                    "Failed to delete activity that has not started or was cancelled.", e);
+        }
+    }
+
 }

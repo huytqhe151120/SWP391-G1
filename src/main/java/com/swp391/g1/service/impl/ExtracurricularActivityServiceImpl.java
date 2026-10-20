@@ -2,14 +2,22 @@ package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.IExtracurricularActivityDAO;
+import com.swp391.g1.dao.IActivityStaffDAO;
+import com.swp391.g1.dao.impl.ActivityStaffDAOImpl;
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
+import com.swp391.g1.model.Enum.ActivityNature;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.dao.ISemesterDAO;
+import com.swp391.g1.dao.impl.SemesterDAOImpl;
+import com.swp391.g1.model.Semester;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
+import com.swp391.g1.util.DateTimeUtil;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -20,14 +28,39 @@ import java.util.Objects;
 public class ExtracurricularActivityServiceImpl implements IExtracurricularActivityService {
 
     private final IExtracurricularActivityDAO activityDAO;
+    private final IActivityStaffDAO activityStaffDAO;
+    private final ISemesterDAO semesterDAO = new SemesterDAOImpl();
+
+    private static final String LOCKED_MESSAGE =
+            "Không thể sửa hoặc xóa hoạt động đang diễn ra hoặc đã hoàn thành.";
+
+    private boolean isLocked(ExtracurricularActivity activity) {
+        return activity != null && (activity.getActivityStatus() == ActivityStatus.ONGOING
+                || activity.getActivityStatus() == ActivityStatus.COMPLETED);
+    }
 
     public ExtracurricularActivityServiceImpl() {
         this.activityDAO = new ExtracurricularActivityDAOImpl();
+        this.activityStaffDAO = new ActivityStaffDAOImpl();
     }
 
     @Override
     public List<ExtracurricularActivityResponseDTO> getAllActivities() {
         return activityDAO.findAllWithDetails();
+    }
+
+    @Override
+    public List<ExtracurricularActivityResponseDTO> getActivitiesVisibleTo(CurrentUser user) {
+        if (user == null) {
+            return List.of();
+        }
+        if (!AccessPolicy.hasType(user, "STAFF")) {
+            return getAllActivities();
+        }
+        if (!AccessPolicy.canUseStaffActivityScope(user) || user.getId() <= 0) {
+            return List.of();
+        }
+        return activityDAO.findAllWithDetailsForStaff(user.getId(), user.getRole());
     }
 
     @Override
@@ -40,6 +73,19 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 .filter(a -> a.getId() == id)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public boolean canAccessActivity(int id, CurrentUser user) {
+        if (id <= 0 || user == null) {
+            return false;
+        }
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return activityDAO.findById(id) != null;
+        }
+        return AccessPolicy.canUseStaffActivityScope(user)
+                && user.getId() > 0
+                && activityDAO.isInStaffActivityScope(id, user.getId(), user.getRole());
     }
 
     @Override
@@ -58,18 +104,63 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     @Override
     public boolean updateActivity(ExtracurricularActivityRequestDTO dto) throws Exception {
-        // Validate input data (need to check ID)
+
+        // Bước 1: Validate dữ liệu đầu vào (giữ nguyên phần validate).
         validateRequestDTO(dto, true);
-        // Map from RequestDTO to Entity
+
+        // Bước 2: Chuyển RequestDTO thành Entity.
         ExtracurricularActivity entity = mapToEntity(dto);
-        entity.setId(Integer.parseInt(dto.getId()));
+        entity.setId(Integer.parseInt(dto.getId().trim()));
+
+        // Bước 3: Lấy hoạt động hiện tại từ database.
         ExtracurricularActivity existing = activityDAO.findById(entity.getId());
-        if (existing != null && !hasContentChanged(existing, entity)) {
+        if (isLocked(existing)) {
+            throw new IllegalArgumentException(LOCKED_MESSAGE);
+        }
+        if (existing != null) {
+            // Partner information is managed separately in the "Đối tác hoạt động" step.
+            entity.setPartnerCompanyId(existing.getPartnerCompanyId());
+            entity.setPartnerStaffId(existing.getPartnerStaffId());
+        }
+
+        // Bước 4: Chỉ cho phép sửa khi hoạt động vẫn UPCOMING.
+        requireUpcomingActivity(
+                entity.getId(),
+                "Không thể sửa hoạt động khi hoạt động không còn ở trạng thái UPCOMING."
+        );
+
+        // Bước 5: Giữ nguyên thông tin đối tác vì thông tin này được quản lý riêng.
+        entity.setPartnerCompanyId(existing.getPartnerCompanyId());
+        entity.setPartnerStaffId(existing.getPartnerStaffId());
+
+        // Bước 6: Nếu nội dung không thay đổi thì không cần cập nhật.
+        if (!hasContentChanged(existing, entity)) {
             return true;
         }
-        // Editing an approved activity invalidates the approval: it goes back to draft atomically.
-        boolean wasApproved = existing != null && existing.getApprovalStatus() == ApprovalStatus.APPROVED;
-        return activityDAO.update(entity, wasApproved ? ApprovalStatus.DRAFT : null);
+
+        // Bước 7: Kiểm tra hoạt động đã được duyệt trước khi sửa hay chưa.
+        boolean wasApproved =
+                existing.getApprovalStatus() == ApprovalStatus.APPROVED;
+
+        // Bước 8: Cập nhật có điều kiện trong database.
+        // Nếu đã được duyệt, chuyển approvalStatus về DRAFT.
+        // Nếu chưa được duyệt, giữ nguyên approvalStatus hiện tại.
+        boolean updated = activityDAO.updateUpcoming(
+                entity,
+                existing.getApprovalStatus(),
+                wasApproved ? ApprovalStatus.DRAFT : null,
+                DateTimeUtil.nowUtc()
+        );
+
+        // Bước 9: Nếu cập nhật thất bại, thông báo lỗi.
+        if (!updated) {
+            throw new IllegalArgumentException(
+                    "Không thể sửa hoạt động vì hoạt động đã bắt đầu "
+                            + "hoặc trạng thái duyệt đã thay đổi. Vui lòng tải lại trang."
+            );
+        }
+
+        return true;
     }
 
     private boolean hasContentChanged(ExtracurricularActivity a, ExtracurricularActivity b) {
@@ -77,28 +168,20 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 || a.getActivityTypeId() != b.getActivityTypeId()
                 || a.getResponsibleDepartmentId() != b.getResponsibleDepartmentId()
                 || a.getResponsibleStaffId() != b.getResponsibleStaffId()
-                || !Objects.equals(a.getPartnerCompanyId(), b.getPartnerCompanyId())
-                || !Objects.equals(a.getPartnerStaffId(), b.getPartnerStaffId())
                 || a.isRegistrationFormRequired() != b.isRegistrationFormRequired()
-                || !sameText(a.getCode(), b.getCode())
                 || !sameText(a.getCode(), b.getCode())
                 || !sameText(a.getName(), b.getName())
                 || !sameText(a.getAddress(), b.getAddress())
                 || !sameText(a.getDescription(), b.getDescription())
-                || !sameNumber(a.getBonusPoint(), b.getBonusPoint())
-                || !sameNumber(a.getPenaltyPoint(), b.getPenaltyPoint())
+                || a.getNature() != b.getNature()
+                || a.isSummaryRequired() != b.isSummaryRequired()
+                || !Objects.equals(a.getMaxParticipants(), b.getMaxParticipants())
                 || !sameMinute(a.getStartTime(), b.getStartTime())
                 || !sameMinute(a.getEndTime(), b.getEndTime());
     }
 
     private boolean sameText(String x, String y) {
         return Objects.equals(x == null ? null : x.trim(), y == null ? null : y.trim());
-    }
-
-    private boolean sameNumber(BigDecimal x, BigDecimal y) {
-        BigDecimal left = x == null ? BigDecimal.ZERO : x;
-        BigDecimal right = y == null ? BigDecimal.ZERO : y;
-        return left.compareTo(right) == 0;
     }
 
     private boolean sameMinute(LocalDateTime x, LocalDateTime y) {
@@ -112,7 +195,16 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (id <= 0) {
             return false;
         }
-        return activityDAO.delete(id);
+
+        boolean deleted = activityDAO.deleteIfNotOngoingOrCompleted(id);
+
+        if (!deleted) {
+            throw new IllegalArgumentException(
+                    "Không thể xóa hoạt động đang diễn ra hoặc đã hoàn thành."
+            );
+        }
+
+        return true;
     }
 
     private void validateRequestDTO(ExtracurricularActivityRequestDTO dto, boolean isUpdate) throws Exception {
@@ -150,32 +242,30 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (isEmpty(dto.getResponsibleStaffId())) {
             throw new IllegalArgumentException("Vui lòng chọn nhân viên phụ trách.");
         }
-
-        // Validate ràng buộc đối tác: Chọn nhân viên đối tác thì BẮT BỘC phải chọn công ty đối tác
-        if (!isEmpty(dto.getPartnerStaffId()) && isEmpty(dto.getPartnerCompanyId())) {
-            throw new IllegalArgumentException("Vui lòng chọn công ty đối tác trước khi chọn nhân viên đối tác.");
+        int responsibleDepartmentId = parseRequiredId(
+                dto.getResponsibleDepartmentId(), "Đơn vị phụ trách không hợp lệ.");
+        int responsibleStaffId = parseRequiredId(
+                dto.getResponsibleStaffId(), "Nhân viên phụ trách không hợp lệ.");
+        if (!activityStaffDAO.isStaffInDepartment(responsibleStaffId, responsibleDepartmentId)) {
+            throw new IllegalArgumentException("Nhân viên phụ trách phải thuộc đơn vị phụ trách đã chọn.");
         }
 
-        // Validate điểm không được âm
-        if (!isEmpty(dto.getBonusPoint())) {
-            try {
-                BigDecimal bonus = new BigDecimal(dto.getBonusPoint());
-                if (bonus.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Điểm thưởng không được âm.");
-                }
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Điểm thưởng có định dạng không hợp lệ.");
-            }
+        if (isEmpty(dto.getNature())) {
+            throw new IllegalArgumentException("Vui lòng chọn tính chất hoạt động.");
+        }
+        try {
+            ActivityNature.valueOf(dto.getNature().trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Tính chất hoạt động không hợp lệ.");
         }
 
-        if (!isEmpty(dto.getPenaltyPoint())) {
+        if (!isEmpty(dto.getMaxParticipants())) {
             try {
-                BigDecimal penalty = new BigDecimal(dto.getPenaltyPoint());
-                if (penalty.compareTo(BigDecimal.ZERO) < 0) {
-                    throw new IllegalArgumentException("Điểm phạt không được âm.");
+                if (Integer.parseInt(dto.getMaxParticipants().trim()) <= 0) {
+                    throw new IllegalArgumentException("Số lượng tham gia tối đa phải lớn hơn 0.");
                 }
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Điểm phạt có định dạng không hợp lệ.");
+                throw new IllegalArgumentException("Số lượng tham gia tối đa không hợp lệ.");
             }
         }
 
@@ -190,12 +280,40 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             LocalDateTime start = LocalDateTime.parse(dto.getStartTime().trim());
             LocalDateTime end = LocalDateTime.parse(dto.getEndTime().trim());
 
+            if (!start.isAfter(DateTimeUtil.now())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải ở tương lai.");
+            }
             if (!start.isBefore(end)) {
                 throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
+            }
+            Semester semester = semesterDAO.findById(parseRequiredId(dto.getSemesterId(), "Học kỳ không hợp lệ."));
+            if (semester == null) {
+                throw new IllegalArgumentException("Học kỳ không tồn tại.");
+            }
+            if (semester.getTimeStart() != null && start.isBefore(semester.getTimeStart())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải sau thời gian bắt đầu của học kỳ.");
+            }
+            if (semester.getTimeEnd() != null && start.isAfter(semester.getTimeEnd())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải trước thời gian kết thúc của học kỳ.");
             }
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");
         }
+    }
+
+    private int parseRequiredId(String value, String errorMessage) {
+        try {
+            int id = Integer.parseInt(value.trim());
+            if (id > 0) {
+                return id;
+            }
+        } catch (NumberFormatException ignored) {
+            // Report invalid form IDs as validation errors.
+        }
+        throw new IllegalArgumentException(errorMessage);
     }
 
     private ExtracurricularActivity mapToEntity(ExtracurricularActivityRequestDTO dto) {
@@ -212,13 +330,9 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         entity.setResponsibleDepartmentId(Integer.parseInt(dto.getResponsibleDepartmentId()));
         entity.setResponsibleStaffId(Integer.parseInt(dto.getResponsibleStaffId()));
 
-        // Convert các khóa ngoại Nullable
-        entity.setPartnerCompanyId(isEmpty(dto.getPartnerCompanyId()) ? null : Integer.parseInt(dto.getPartnerCompanyId()));
-        entity.setPartnerStaffId(isEmpty(dto.getPartnerStaffId()) ? null : Integer.parseInt(dto.getPartnerStaffId()));
-
-        // Convert Điểm
-        entity.setBonusPoint(isEmpty(dto.getBonusPoint()) ? BigDecimal.ZERO : new BigDecimal(dto.getBonusPoint()));
-        entity.setPenaltyPoint(isEmpty(dto.getPenaltyPoint()) ? BigDecimal.ZERO : new BigDecimal(dto.getPenaltyPoint()));
+        entity.setNature(ActivityNature.valueOf(dto.getNature().trim()));
+        entity.setSummaryRequired("true".equalsIgnoreCase(dto.getSummaryRequired()));
+        entity.setMaxParticipants(isEmpty(dto.getMaxParticipants()) ? null : Integer.valueOf(dto.getMaxParticipants().trim()));
 
         // Convert Thời gian (<input type="datetime-local"> trả về định dạng yyyy-MM-ddTHH:mm)[cite: 1]
         if (!isEmpty(dto.getStartTime())) {
@@ -273,7 +387,22 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             throw new IllegalArgumentException(
                     "Không thể hủy duyệt vì hoạt động đã diễn ra, đã kết thúc hoặc đã bị hủy.");
         }
-        return activityDAO.updateApprovalStatus(id, ApprovalStatus.PENDING);
+
+        boolean updated = activityDAO.updateApprovalStatusIfUpcoming(
+                id,
+                ApprovalStatus.PENDING,
+                List.of(ApprovalStatus.APPROVED),
+                DateTimeUtil.nowUtc()
+        );
+
+        if (!updated) {
+            throw new IllegalArgumentException(
+                    "Không thể hủy duyệt: hoạt động đã bắt đầu "
+                            + "hoặc trạng thái duyệt đã thay đổi."
+            );
+        }
+
+        return true;
     }
 
     @Override
@@ -283,18 +412,93 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 ApprovalStatus.REJECTED);
     }
 
-    private boolean changeApprovalStatus(int id, ApprovalStatus target,
-                                         String errorMessage, ApprovalStatus... allowedFrom) {
+    private boolean changeApprovalStatus(
+            int id,
+            ApprovalStatus target,
+            String errorMessage,
+            ApprovalStatus... allowedFrom) {
+
         if (id <= 0) {
             return false;
         }
+
+        // Bước 1: Lấy hoạt động từ database.
         ExtracurricularActivity activity = activityDAO.findById(id);
+
         if (activity == null) {
             return false;
         }
+
+        // Bước 2: Kiểm tra trạng thái duyệt hiện tại có hợp lệ không.
         if (!Arrays.asList(allowedFrom).contains(activity.getApprovalStatus())) {
             throw new IllegalArgumentException(errorMessage);
         }
-        return activityDAO.updateApprovalStatus(id, target);
+
+        // Bước 3: Chỉ cho phép đổi trạng thái duyệt khi hoạt động UPCOMING.
+        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+            throw new IllegalArgumentException(
+                    "Không thể thay đổi trạng thái duyệt vì hoạt động "
+                            + "không còn ở trạng thái UPCOMING.");
+        }
+
+        // Bước 4: Cập nhật có điều kiện trực tiếp trong database.
+        boolean updated = activityDAO.updateApprovalStatusIfUpcoming(
+                id,
+                target,
+                Arrays.asList(allowedFrom),
+                DateTimeUtil.nowUtc()
+        );
+
+        // Bước 5: Nếu database không cập nhật được, báo lỗi.
+        if (!updated) {
+            throw new IllegalArgumentException(
+                    "Không thể thay đổi trạng thái duyệt: hoạt động đã bắt đầu "
+                            + "hoặc trạng thái đã thay đổi. Vui lòng tải lại trang."
+            );
+        }
+
+        return true;
     }
+
+    /**
+     * Đồng bộ trạng thái hoạt động theo thời gian UTC.
+     */
+    @Override
+    public void synchronizeActivityStatuses() {
+
+        LocalDateTime now = DateTimeUtil.nowUtc();
+
+        // Gọi DAO cập nhật trạng thái trong database.
+        activityDAO.synchronizeActivityStatuses(now);
+    }
+
+    /**
+     * Loại bỏ mọi hành động thay đổi khi hoạt động đó không còn diễn ra nữa.
+     */
+    private ExtracurricularActivity requireUpcomingActivity(
+            int id, String errorMessage) {
+
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID hoạt động không hợp lệ.");
+        }
+
+        ExtracurricularActivity activity = activityDAO.findById(id);
+
+        if (activity == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+
+        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        if (activity.getStartTime() == null
+                || !DateTimeUtil.now().isBefore(activity.getStartTime())) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        return activity;
+    }
+
+
 }

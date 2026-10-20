@@ -16,59 +16,6 @@ body {
 /* ===== PAGE ===== */
 .student-list-page { width: 100%; }
 
-/* ===== HERO ===== */
-.student-hero {
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 2.2rem 3rem;
-    margin-bottom: 1.5rem;
-    border-radius: 22px;
-    color: #fff;
-    background: linear-gradient(135deg, #12305c 0%, #1e4277 55%, #2563a8 100%);
-    box-shadow: 0 12px 30px rgba(18, 48, 92, 0.25);
-}
-
-/* vòng tròn trang trí bên phải */
-.student-hero::before,
-.student-hero::after {
-    content: "";
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    pointer-events: none;
-}
-.student-hero::before { width: 420px; height: 420px; right: 60px;  top: -120px; }
-.student-hero::after  { width: 260px; height: 260px; right: 140px; top: -40px; }
-
-.student-hero > * { position: relative; z-index: 1; }
-
-.student-hero .hero-label {
-    display: block;
-    margin-bottom: 0.8rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: #b9cdf0;
-}
-
-.student-hero h1 {
-    margin: 0;
-    font-size: 2.6rem;
-    font-weight: 800;
-    line-height: 1.1;
-    color: #fff;
-}
-
-.student-hero p {
-    margin: 0.8rem 0 0;
-    color: #dbe6fb;
-}
-
 /* ===== NÚT TRANG CHỦ ===== */
 .student-hero-actions {
     display: flex;
@@ -249,8 +196,6 @@ body {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 760px) {
-    .student-hero { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
-    .student-hero h1 { font-size: 1.8rem; }
     .student-toolbar { flex-direction: column; }
     .student-filter { width: 100%; }
     .student-table-heading { flex-direction: column; align-items: flex-start; }

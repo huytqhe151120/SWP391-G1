@@ -98,7 +98,7 @@ public class StaffDAOImpl implements IStaffDAO {
     public List<Staff> findByDepartmentId(int departmentId) {
         List<Staff> staffs = new ArrayList<>();
         String sql = """
-                SELECT s.*
+                SELECT DISTINCT s.*
                 FROM staff s
                 JOIN staff_assignment sa ON s.id = sa.staff_id
                 WHERE sa.department_id = ? AND s.status = 'ACTIVE'

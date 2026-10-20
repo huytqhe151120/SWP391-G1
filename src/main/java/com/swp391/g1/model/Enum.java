@@ -7,19 +7,26 @@ public class Enum {
         INACTIVE
     }
 
-    // Status for
+    // Status for activity
     public enum ActivityStatus {
-        UPCOMING,
-        ONGOING,
-        COMPLETED,
-        CANCELLED
+        UPCOMING, // Sắp diễn ra
+        ONGOING, // Đang diễn ra
+        COMPLETED, // Đã hoàn thành
+        CANCELLED // Đã hủy
     }
 
-    // Status for
+    // Status for approval process
     public enum ApprovalStatus {
-        DRAFT,
-        PENDING,
-        APPROVED,
-        REJECTED
+        DRAFT, // Bản nháp
+        PENDING, // Chờ duyệt
+        APPROVED, // Đã duyệt
+        REJECTED // Đã từ chối
+    }
+
+    // Participation nature of an activity
+    public enum ActivityNature {
+        REQUIRE_REGISTRATION,
+        VOLUNTARY,
+        MANDATORY
     }
 }
