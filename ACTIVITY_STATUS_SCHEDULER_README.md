@@ -18,6 +18,8 @@ is eligible as soon as `now` equals the corresponding timestamp.
 The scheduler only updates the source states shown above. It does not change
 `COMPLETED` or `CANCELLED` activities, and it does not process rows with
 missing start/end times or approval statuses outside the listed cases.
+Pending collaboration invitations are cancelled in the same synchronization
+transaction when their activity becomes `ONGOING`, `COMPLETED`, or `CANCELLED`.
 
 If the application was offline for an entire approved activity, the startup
 run catches it up directly from `UPCOMING` to `COMPLETED` when its end time
@@ -51,7 +53,7 @@ Because synchronization runs periodically, a transition can become visible
 up to approximately one scheduler interval after its boundary. A failed run
 is retried by a later scheduled run; it is not retried immediately.
 
-All four database updates in one synchronization pass run in a single
+All activity-status and pending-invitation updates in one synchronization pass run in a single
 transaction. They are committed together; if an update fails, the transaction
 is rolled back and the failure is logged by the scheduler.
 

@@ -616,6 +616,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                         "AND approval_status = 'APPROVED' " +
                         "AND end_time IS NOT NULL AND end_time <= ?";
 
+        String cancelInactiveInvitationsSql =
+                "UPDATE activity_collaboration_invitation " +
+                        "SET approval_status = 'CANCELLED' " +
+                        "WHERE approval_status = 'PENDING' " +
+                        "AND activity_id IN (" +
+                        "SELECT id FROM extracurricular_activity " +
+                        "WHERE activity_status IN ('ONGOING', 'COMPLETED', 'CANCELLED'))";
+
         try (Connection conn = DBContext.getConnection()) {
 
             boolean originalAutoCommit = conn.getAutoCommit();
@@ -655,6 +663,12 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     ps.executeUpdate();
                 }
 
+                // Hủy lời mời còn chờ khi hoạt động không còn ở trạng thái UPCOMING.
+                try (PreparedStatement ps =
+                             conn.prepareStatement(cancelInactiveInvitationsSql)) {
+                    ps.executeUpdate();
+                }
+
                 // Lưu tất cả thay đổi.
                 conn.commit();
 
@@ -690,21 +704,53 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql =
-                "DELETE FROM extracurricular_activity "
-                        + "WHERE id = ? "
-                        + "AND activity_status IN ('UPCOMING', 'CANCELLED')";
+        String[] dependentDeletes = {
+                "DELETE FROM activity_staff WHERE activity_id = ?",
+                "DELETE FROM activity_department WHERE activity_id = ?",
+                "DELETE FROM activity_partner_staff WHERE activity_id = ?",
+                "DELETE FROM activity_partner_company WHERE activity_id = ?",
+                "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
+        };
+        String deleteActivitySql = """
+                DELETE FROM extracurricular_activity
+                WHERE id = ?
+                  AND (
+                      activity_status = 'CANCELLED'
+                      OR (activity_status = 'UPCOMING'
+                          AND start_time IS NOT NULL
+                          AND start_time > SYSUTCDATETIME())
+                  )
+                """;
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-
-            return ps.executeUpdate() > 0;
-
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                for (String sql : dependentDeletes) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps = conn.prepareStatement(deleteActivitySql)) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+                throw e;
+            }
         } catch (SQLException e) {
             throw new IllegalStateException(
-                    "Failed to delete activity that is not ongoing or completed.", e);
+                    "Failed to delete activity that has not started or was cancelled.", e);
         }
     }
 

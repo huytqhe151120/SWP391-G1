@@ -131,17 +131,18 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
-    public int cancelPendingOfOngoingActivities() {
+    public int cancelPendingForInactiveActivities() {
         String sql = "UPDATE activity_collaboration_invitation SET approval_status = ? "
                 + "WHERE approval_status = ? AND activity_id IN "
-                + "(SELECT id FROM extracurricular_activity WHERE activity_status = 'ONGOING')";
+                + "(SELECT id FROM extracurricular_activity "
+                + "WHERE activity_status IN ('ONGOING', 'COMPLETED', 'CANCELLED'))";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, CANCELLED);
             ps.setString(2, PENDING);
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to cancel pending invitations of ongoing activities.", e);
+            throw new IllegalStateException("Failed to cancel pending invitations for inactive activities.", e);
         }
     }
 

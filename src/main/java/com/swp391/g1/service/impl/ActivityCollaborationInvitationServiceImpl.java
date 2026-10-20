@@ -41,7 +41,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (activityId <= 0) {
             return List.of();
         }
-        invitationDAO.cancelPendingOfOngoingActivities();
+        invitationDAO.cancelPendingForInactiveActivities();
         List<ActivityCollaborationInvitationDTO> invitations = invitationDAO.findByActivityId(activityId);
         PartnerStaff me = isPartnerStaffUser(user) ? partnerStaffDAO.findByAccountId(user.getId()) : null;
         Set<Integer> activeCompanyIds = activeCompanyIds(activityId);
@@ -61,7 +61,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (isPartnerStaffUser(user) && me == null) {
             return List.of();
         }
-        invitationDAO.cancelPendingOfOngoingActivities();
+        invitationDAO.cancelPendingForInactiveActivities();
         List<ActivityCollaborationInvitationDTO> invitations =
                 invitationDAO.findByPartnerCompanyId(me == null ? null : me.getCompanyId());
         java.util.Map<Integer, Set<Integer>> activeByActivity = new java.util.HashMap<>();
@@ -242,7 +242,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     }
 
     private ActivityCollaborationInvitationDTO requirePending(int invitationId) {
-        invitationDAO.cancelPendingOfOngoingActivities();
+        invitationDAO.cancelPendingForInactiveActivities();
         ActivityCollaborationInvitationDTO invitation = invitationId <= 0 ? null : invitationDAO.findById(invitationId);
         if (invitation == null) {
             throw new IllegalArgumentException("Không tìm thấy lời mời.");

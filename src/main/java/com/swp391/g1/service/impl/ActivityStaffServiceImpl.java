@@ -213,11 +213,7 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
         if (activityId <= 0 || departmentId <= 0 || !canAssignStaff(activityId, user)) {
             return false;
         }
-        if (!activityDepartmentDAO.delete(activityId, departmentId)) {
-            return false;
-        }
-        activityDepartmentDAO.deleteStaffOutsideDepartments(activityId);
-        return true;
+        return activityDepartmentDAO.delete(activityId, departmentId);
     }
 
     private List<Integer> getActiveActivityDepartmentIds(ExtracurricularActivity activity) {
