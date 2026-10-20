@@ -617,12 +617,12 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 JOIN @RejectedActivities r ON r.id = i.activity_id;
 
                 UPDATE apc
-                SET collaboration_status = 'DEACTIVE'
+                SET collaboration_status = 'INACTIVE'
                 FROM activity_partner_company apc
                 JOIN @RejectedActivities r ON r.id = apc.activity_id;
 
                 UPDATE aps
-                SET collaboration_status = 'DEACTIVE'
+                SET collaboration_status = 'INACTIVE'
                 FROM activity_partner_staff aps
                 JOIN @RejectedActivities r ON r.id = aps.activity_id;
                 """;

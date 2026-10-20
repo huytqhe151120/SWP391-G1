@@ -20,7 +20,7 @@ The scheduler only updates the source states shown above. It does not change
 missing start/end times.
 When an unapproved activity reaches its start time, all its collaboration
 invitations become `CANCELLED`, and its activity-partner-company and
-activity-partner-staff rows become `DEACTIVE` in their `collaboration_status`
+activity-partner-staff rows become `INACTIVE` in their `collaboration_status`
 columns. These changes are committed in the same transaction as the activity
 transition. Pending collaboration invitations are also cancelled in the same
 synchronization transaction when their activity becomes `ONGOING`,

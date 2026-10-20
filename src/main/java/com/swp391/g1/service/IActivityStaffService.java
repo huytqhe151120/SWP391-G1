@@ -14,13 +14,15 @@ public interface IActivityStaffService {
 
     List<Staff> getAvailableStaffsForActivity(int activityId);
 
-    Map<Integer, String> getDepartmentLabelsByStaff(int activityId);
+    boolean canManageStaffAssignments(int activityId, CurrentUser user);
 
     boolean canAssignStaff(int activityId, CurrentUser user);
 
     boolean assignStaff(int activityId, int staffId, CurrentUser user) throws Exception;
 
     boolean removeStaff(int activityId, int staffId, CurrentUser user);
+
+    Map<Integer, String> getDepartmentLabelsByStaff(int activityId);
 
     List<ActivityDepartmentResponseDTO> getDepartmentsByActivityId(int activityId);
 
