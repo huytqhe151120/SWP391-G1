@@ -155,7 +155,7 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
                     "Chỉ được thay đổi phân công nhân sự trước khi hoạt động bắt đầu.");
         }
     }
-}
+
     @Override
     public List<ActivityDepartmentResponseDTO> getDepartmentsByActivityId(int activityId) {
         if (activityId <= 0) {

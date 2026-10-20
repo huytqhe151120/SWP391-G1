@@ -5,6 +5,7 @@ import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dao.IActivityPartnerCompanyDAO;
 import com.swp391.g1.dao.IActivityPartnerStaffDAO;
 import com.swp391.g1.dao.IPartnerStaffDAO;
+import com.swp391.g1.dao.impl.ActivityCollaborationInvitationDAOImpl;
 import com.swp391.g1.dao.impl.ActivityPartnerCompanyDAOImpl;
 import com.swp391.g1.dao.impl.ActivityPartnerStaffDAOImpl;
 import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;

@@ -198,9 +198,19 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     @Override
     public boolean insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
                           String invitationType, String message) {
-        String insertSql = "INSERT INTO activity_collaboration_invitation "
-                + "(activity_id, partner_company_id, partner_staff_id, approval_status, invitation_type, message, created_by) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String insertSql = """
+                INSERT INTO activity_collaboration_invitation
+                    (activity_id, partner_company_id, partner_staff_id, approval_status,
+                     invitation_type, message, created_by)
+                SELECT ?, ?, ?, ?, ?, ?, ?
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM extracurricular_activity
+                    WHERE id = ?
+                      AND activity_status = 'UPCOMING'
+                      AND start_time > SYSUTCDATETIME()
+                )
+                """;
         String reuseSql = "UPDATE activity_partner_company SET partner_staff_id = ?, invitation_id = ?, "
                 + "collaboration_status = 'INACTIVE' WHERE activity_id = ? AND partner_company_id = ?";
         String linkSql = "INSERT INTO activity_partner_company "
@@ -218,7 +228,11 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                     ps.setString(5, invitationType);
                     ps.setString(6, message);
                     ps.setString(7, createdBy);
-                    ps.executeUpdate();
+                    ps.setInt(8, activityId);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
                     try (ResultSet keys = ps.getGeneratedKeys()) {
                         if (!keys.next()) {
                             conn.rollback();
@@ -290,8 +304,16 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
      * a TERMINATION invitation only changes the collaboration when it is approved.
      */
     private boolean changeStatus(int id, String fromStatus, String toStatus) {
-        String updateInvitation = "UPDATE activity_collaboration_invitation SET approval_status = ? "
-                + "WHERE id = ? AND approval_status = ?";
+        String updateInvitation = """
+                UPDATE i
+                SET approval_status = ?
+                FROM activity_collaboration_invitation i
+                JOIN extracurricular_activity a ON a.id = i.activity_id
+                WHERE i.id = ?
+                  AND i.approval_status = ?
+                  AND a.activity_status = 'UPCOMING'
+                  AND a.start_time > SYSUTCDATETIME()
+                """;
         String selectType = "SELECT invitation_type FROM activity_collaboration_invitation WHERE id = ?";
         String updateOwnLink = "UPDATE activity_partner_company SET collaboration_status = ? WHERE invitation_id = ?";
         String createLink = "INSERT INTO activity_partner_company "
