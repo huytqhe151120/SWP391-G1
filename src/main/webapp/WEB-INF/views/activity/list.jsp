@@ -8,8 +8,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hoạt động ngoại khóa | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261016-9">
+    <title>EAMS | Hoạt động ngoại khóa</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261019-4">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -142,8 +142,8 @@
                     <th scope="col">Loại hoạt động</th>
                     <th scope="col">Đơn vị phụ trách chính</th>
                     <th scope="col">Thời gian</th>
-                    <th scope="col">Trạng thái hoạt động</th>
-                    <th scope="col">Trạng thái duyệt</th>
+                    <th scope="col" class="activity-run-status"><span>Trạng thái</span><span>hoạt động</span></th>
+                    <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>duyệt HĐ</span></th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
@@ -190,32 +190,35 @@
                                         <c:otherwise>Chưa xác định</c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td><span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span></td>
-                                <td><span class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span></td>
+                                <td class="activity-run-status"><span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span></td>
+                                <td class="activity-status-column"><span class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span></td>
                                 <td>
                                     <div class="actions activity-actions">
                                         <div class="activity-action-links">
                                             <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">Chi tiết</a>
-                                            <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
-                                                <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
-                                            </c:if>
                                             <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
-                                                <a class="activity-action-link activity-action-delete"
-                                                   href="${pageContext.request.contextPath}/activities?action=delete&amp;id=${activity.id}"
-                                                   data-confirm="Bạn có chắc muốn xóa hoạt động này?">Xóa</a>
+                                                <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Sửa</a>
+                                                <form action="${pageContext.request.contextPath}/activities" method="post"
+                                                      data-confirm="Xóa hoạt động này sẽ xóa các phân công đơn vị, nhân viên, liên kết đối tác và lịch sử lời mời liên kết của hoạt động. Thao tác này không thể hoàn tác. Bạn có chắc chắn muốn tiếp tục?">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="id" value="${activity.id}">
+                                                    <button type="submit" class="activity-action-link activity-action-delete">Xóa</button>
+                                                </form>
                                             </c:if>
                                         </div>
-                                        <c:if test="${activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'REJECTED'}">
+                                        <c:if test="${activity.approvalStatus == 'REJECTED' && (canManageActivities || canApproveActivities)}">
                                             <div class="activity-review-actions-row">
+                                                <c:if test="${canManageActivities}">
                                                 <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                     <input type="hidden" name="id" value="${activity.id}">
                                                     <button type="submit" name="action" value="submit" class="button button-primary button-send-approval button-sm">Gửi duyệt</button>
                                                 </form>
+                                                </c:if>
                                                 <c:if test="${canApproveActivities}">
                                                     <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                         <input type="hidden" name="id" value="${activity.id}">
                                                         <button type="submit" name="action" value="revokeRejection"
-                                                                class="button button-sm activity-approval-revoke"
+                                                                class="button button-sm button-revoke"
                                                                 data-confirm="Hủy từ chối và đưa hoạt động về trạng thái chờ duyệt?">Hủy từ chối</button>
                                                     </form>
                                                 </c:if>
@@ -240,7 +243,7 @@
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="revokeApproval"
-                                                        class="button button-cancel-approval button-sm"
+                                                        class="button button-revoke button-sm"
                                                         data-confirm="Hủy duyệt và đưa hoạt động về trạng thái chờ duyệt?">Hủy duyệt</button>
                                             </form>
                                         </c:if>

@@ -125,10 +125,23 @@ h1 {
 
 }
 
-.button-cancel-approval {
-    background-color: #fff;
-    color: #334155;
-    border: 1px solid #cbd5e1;
+/*
+ * Nhóm nút theo ngữ nghĩa (dùng chung toàn hệ thống):
+ *   button-send-approval : slate đậm - gửi đi chờ xử lý
+ *   button-approve       : xanh lá    - đồng ý / chấp nhận
+ *   button-reject        : đỏ         - từ chối / ngừng
+ *   button-revoke        : xám        - hoàn tác (hủy duyệt, hủy từ chối, hủy lời mời)
+ */
+.button-revoke {
+    background-color: #E5E7EB;
+    color: #4B5563;
+    border: 1px solid #D1D5DB;
+}
+
+.button.button-revoke:hover {
+    background-color: #D1D5DB;
+    border-color: #9CA3AF;
+    color: #374151;
 }
 
 .button-reject {

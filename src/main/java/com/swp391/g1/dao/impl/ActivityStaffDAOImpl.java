@@ -24,7 +24,15 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
                 FROM activity_staff ast
                  JOIN staff s ON ast.staff_id = s.id
                 JOIN extracurricular_activity ea ON ast.activity_id = ea.id
-                LEFT JOIN staff_assignment sa ON s.id = sa.staff_id AND sa.department_id = ea.responsible_department_id
+                OUTER APPLY (
+                    SELECT TOP 1 x.position, x.department_id
+                    FROM staff_assignment x
+                    WHERE x.staff_id = s.id
+                      AND (x.department_id = ea.responsible_department_id
+                           OR x.department_id IN (SELECT ad.department_id FROM activity_department ad
+                                                  WHERE ad.activity_id = ea.id))
+                    ORDER BY CASE WHEN x.department_id = ea.responsible_department_id THEN 0 ELSE 1 END
+                ) sa
                 LEFT JOIN department d ON sa.department_id = d.id
                 WHERE ast.activity_id = ?
                 ORDER BY ast.assigned_on DESC
@@ -117,6 +125,32 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to check if staff is assigned to activity.", e);
+        }
+    }
+
+    @Override
+    public boolean isStaffInActivityDepartments(int staffId, int activityId) {
+        String sql = """
+                SELECT 1
+                FROM staff s
+                JOIN staff_assignment sa ON sa.staff_id = s.id
+                JOIN department d ON d.id = sa.department_id
+                JOIN extracurricular_activity ea ON ea.id = ?
+                WHERE s.id = ? AND s.status = 'ACTIVE' AND d.status = 'ACTIVE'
+                  AND (sa.department_id = ea.responsible_department_id
+                       OR sa.department_id IN (SELECT ad.department_id FROM activity_department ad
+                                               WHERE ad.activity_id = ea.id))
+                """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, staffId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check if staff belongs to activity departments.", e);
         }
     }
 

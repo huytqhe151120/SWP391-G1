@@ -681,11 +681,26 @@
     z-index: 3;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap th:nth-child(8) {
-    width: 120px;
-    max-width: 120px;
+.activity-list-page .activity-table-wrap .activity-status-column,
+.activity-list-page .activity-table-wrap .activity-run-status {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
     white-space: normal;
+}
+
+.activity-list-page .activity-table-wrap .activity-status-column .badge,
+.activity-list-page .activity-table-wrap .activity-run-status .badge {
+    display: inline-block;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.activity-list-page .activity-table-wrap th.activity-status-column span,
+.activity-list-page .activity-table-wrap th.activity-run-status span,
+.activity-list-page .activity-table-wrap th.invitation-status-column span {
+    display: block;
+    white-space: nowrap;
 }
 
 .activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(7),
@@ -801,18 +816,17 @@
     text-decoration: none;
 }
 
+.activity-action-delete {
+    color: #c64752;
+}
+
 button.activity-action-link {
     background: none;
     border: 0;
-    padding: 0;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.875rem;
-    font-weight: 700;
-    transition: opacity 0.15s ease;
 }
 
-button.activity-action-link:hover,
 button.activity-action-link:focus-visible {
     text-decoration: underline;
     opacity: 0.75;
@@ -1396,6 +1410,24 @@ button.activity-action-link:focus-visible {
         padding-left: 12px;
     }
 
+    .activity-list-page .activity-table-wrap th:nth-child(7),
+    .activity-list-page .activity-table-wrap td:nth-child(7),
+    .activity-list-page .activity-table-wrap th:nth-child(8),
+    .activity-list-page .activity-table-wrap td:nth-child(8),
+    .activity-list-page .activity-table-wrap th:nth-child(9),
+    .activity-list-page .activity-table-wrap td:nth-child(9) {
+        position: static;
+        right: auto;
+        box-shadow: none;
+    }
+
+    .activity-list-page .activity-table-wrap .activity-status-column,
+    .activity-list-page .activity-table-wrap .activity-run-status {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
+    }
+
     .activity-detail-card > .activity-table-heading {
         padding: 19px 20px;
         flex-direction: column;
@@ -1529,3 +1561,21 @@ button.activity-action-link:focus-visible {
 .badge.status-pill.status-gray { background: #f2f4f7; border-color: #e4e7ed; color: #687386; }
 .badge.status-pill.status-yellow { background: #fff6dc; border-color: #f6e2a3; color: #8a6100; }
 .badge.status-pill.status-red { background: #fdecec; border-color: #f5c6c6; color: #b42318; }
+
+.activity-partner-form [hidden] {
+    display: none !important;
+}
+
+.activity-message-modal {
+    max-width: 520px;
+    width: 90%;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+.activity-message-modal::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+#invite-form-panel > .activity-partner-form {
+    margin-top: 0.75rem;
+}

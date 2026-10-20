@@ -2,13 +2,15 @@ package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.IActivityCollaborationInvitationDAO;
 import com.swp391.g1.dao.IExtracurricularActivityDAO;
+import com.swp391.g1.dao.IActivityPartnerCompanyDAO;
 import com.swp391.g1.dao.IActivityPartnerStaffDAO;
 import com.swp391.g1.dao.IPartnerStaffDAO;
-import com.swp391.g1.dao.impl.ActivityCollaborationInvitationDAOImpl;
+import com.swp391.g1.dao.impl.ActivityPartnerCompanyDAOImpl;
 import com.swp391.g1.dao.impl.ActivityPartnerStaffDAOImpl;
 import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.impl.PartnerStaffDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
+import com.swp391.g1.dto.response.ActivityPartnerCompanyDTO;
 import com.swp391.g1.dto.response.ActivityPartnerStaffResponseDTO;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.Enum.ActivityStatus;
@@ -28,12 +30,14 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
     private final IActivityPartnerStaffDAO activityPartnerStaffDAO;
     private final IActivityCollaborationInvitationDAO invitationDAO;
     private final IExtracurricularActivityDAO activityDAO;
+    private final IActivityPartnerCompanyDAO partnerCompanyDAO;
     private final IPartnerStaffDAO partnerStaffDAO;
 
     public ActivityPartnerStaffServiceImpl() {
         this.activityPartnerStaffDAO = new ActivityPartnerStaffDAOImpl();
         this.invitationDAO = new ActivityCollaborationInvitationDAOImpl();
         this.activityDAO = new ExtracurricularActivityDAOImpl();
+        this.partnerCompanyDAO = new ActivityPartnerCompanyDAOImpl();
         this.partnerStaffDAO = new PartnerStaffDAOImpl();
     }
 
@@ -70,19 +74,18 @@ public class ActivityPartnerStaffServiceImpl implements IActivityPartnerStaffSer
             return Set.of();
         }
         boolean leader = AccessPolicy.canAssignPartnerStaffToActivity(user);
-        return invitationDAO.findByActivityId(activityId).stream()
-                .filter(i -> IActivityCollaborationInvitationDAO.APPROVED.equalsIgnoreCase(i.getApprovalStatus()))
+        return partnerCompanyDAO.findByActivityId(activityId).stream()
+                .filter(ActivityPartnerCompanyDTO::isActive)
                 .filter(i -> i.getPartnerCompanyId() == me.getCompanyId())
-                .filter(i -> leader || (i.getPartnerStaffId() != null && i.getPartnerStaffId() == me.getId()))
+                .filter(i -> leader || i.getPartnerStaffId() == me.getId())
                 .map(i -> i.getPartnerCompanyId())
                 .collect(Collectors.toSet());
     }
 
     private Set<Integer> mainStaffIds(int activityId) {
-        return invitationDAO.findByActivityId(activityId).stream()
-                .filter(i -> IActivityCollaborationInvitationDAO.APPROVED.equalsIgnoreCase(i.getApprovalStatus()))
+        return partnerCompanyDAO.findByActivityId(activityId).stream()
+                .filter(ActivityPartnerCompanyDTO::isActive)
                 .map(i -> i.getPartnerStaffId())
-                .filter(id -> id != null)
                 .collect(Collectors.toSet());
     }
 

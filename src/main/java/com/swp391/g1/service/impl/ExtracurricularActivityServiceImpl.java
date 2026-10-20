@@ -4,11 +4,16 @@ import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dao.IActivityStaffDAO;
 import com.swp391.g1.dao.impl.ActivityStaffDAOImpl;
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.dao.ISemesterDAO;
+import com.swp391.g1.dao.impl.SemesterDAOImpl;
+import com.swp391.g1.model.Semester;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
 import com.swp391.g1.util.DateTimeUtil;
 
@@ -24,6 +29,15 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     private final IExtracurricularActivityDAO activityDAO;
     private final IActivityStaffDAO activityStaffDAO;
+    private final ISemesterDAO semesterDAO = new SemesterDAOImpl();
+
+    private static final String LOCKED_MESSAGE =
+            "Không thể sửa hoặc xóa hoạt động đang diễn ra hoặc đã hoàn thành.";
+
+    private boolean isLocked(ExtracurricularActivity activity) {
+        return activity != null && (activity.getActivityStatus() == ActivityStatus.ONGOING
+                || activity.getActivityStatus() == ActivityStatus.COMPLETED);
+    }
 
     public ExtracurricularActivityServiceImpl() {
         this.activityDAO = new ExtracurricularActivityDAOImpl();
@@ -36,6 +50,20 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
     }
 
     @Override
+    public List<ExtracurricularActivityResponseDTO> getActivitiesVisibleTo(CurrentUser user) {
+        if (user == null) {
+            return List.of();
+        }
+        if (!AccessPolicy.hasType(user, "STAFF")) {
+            return getAllActivities();
+        }
+        if (!AccessPolicy.canUseStaffActivityScope(user) || user.getId() <= 0) {
+            return List.of();
+        }
+        return activityDAO.findAllWithDetailsForStaff(user.getId(), user.getRole());
+    }
+
+    @Override
     public ExtracurricularActivityResponseDTO getActivityById(int id) {
         if (id <= 0) {
             return null;
@@ -45,6 +73,19 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 .filter(a -> a.getId() == id)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public boolean canAccessActivity(int id, CurrentUser user) {
+        if (id <= 0 || user == null) {
+            return false;
+        }
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return activityDAO.findById(id) != null;
+        }
+        return AccessPolicy.canUseStaffActivityScope(user)
+                && user.getId() > 0
+                && activityDAO.isInStaffActivityScope(id, user.getId(), user.getRole());
     }
 
     @Override
@@ -73,9 +114,13 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
         // Bước 3: Lấy hoạt động hiện tại từ database.
         ExtracurricularActivity existing = activityDAO.findById(entity.getId());
-
-        if (existing == null) {
-            throw new IllegalArgumentException("Không tìm thấy hoạt động cần cập nhật.");
+        if (isLocked(existing)) {
+            throw new IllegalArgumentException(LOCKED_MESSAGE);
+        }
+        if (existing != null) {
+            // Partner information is managed separately in the "Đối tác hoạt động" step.
+            entity.setPartnerCompanyId(existing.getPartnerCompanyId());
+            entity.setPartnerStaffId(existing.getPartnerStaffId());
         }
 
         // Bước 4: Chỉ cho phép sửa khi hoạt động vẫn UPCOMING.
@@ -250,6 +295,18 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             }
             if (!start.isBefore(end)) {
                 throw new IllegalArgumentException("Thời gian bắt đầu phải trước thời gian kết thúc.");
+            }
+            Semester semester = semesterDAO.findById(parseRequiredId(dto.getSemesterId(), "Học kỳ không hợp lệ."));
+            if (semester == null) {
+                throw new IllegalArgumentException("Học kỳ không tồn tại.");
+            }
+            if (semester.getTimeStart() != null && start.isBefore(semester.getTimeStart())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải sau thời gian bắt đầu của học kỳ.");
+            }
+            if (semester.getTimeEnd() != null && start.isAfter(semester.getTimeEnd())) {
+                throw new IllegalArgumentException(
+                        "Thời gian bắt đầu hoạt động phải trước thời gian kết thúc của học kỳ.");
             }
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Định dạng ngày/giờ không hợp lệ.");

@@ -127,6 +127,62 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
     @Override
     public List<ExtracurricularActivityResponseDTO> findAllWithDetails() {
+        return queryActivitiesWithDetails(null, null);
+    }
+
+    @Override
+    public List<ExtracurricularActivityResponseDTO> findAllWithDetailsForStaff(int accountId, String role) {
+        if (accountId <= 0) {
+            return List.of();
+        }
+        String scope = staffScopePredicate(role);
+        return scope == null ? List.of() : queryActivitiesWithDetails(scope, accountId);
+    }
+
+    @Override
+    public boolean isInStaffActivityScope(int activityId, int accountId, String role) {
+        if (activityId <= 0 || accountId <= 0) {
+            return false;
+        }
+        String scope = staffScopePredicate(role);
+        if (scope == null) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM extracurricular_activity a WHERE a.id = ? AND " + scope;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check staff activity access.", e);
+        }
+    }
+
+    private String staffScopePredicate(String role) {
+        if ("STAFF".equals(role)) {
+            return """
+                    EXISTS (SELECT 1 FROM staff scoped_staff
+                            WHERE scoped_staff.account_id = ?
+                              AND scoped_staff.id = a.responsible_staff_id)
+                    """;
+        }
+        if ("UNIT_DEPUTY_HEAD".equals(role) || "UNIT_HEAD".equals(role)
+                || "UNIT_SECRETARY".equals(role)) {
+            return """
+                    EXISTS (SELECT 1
+                            FROM staff scoped_staff
+                            JOIN staff_assignment sa ON sa.staff_id = scoped_staff.id
+                            WHERE scoped_staff.account_id = ?
+                              AND sa.department_id = a.responsible_department_id)
+                    """;
+        }
+        return null;
+    }
+
+    private List<ExtracurricularActivityResponseDTO> queryActivitiesWithDetails(String scope, Integer accountId) {
         List<ExtracurricularActivityResponseDTO> list = new ArrayList<>();
         String sql = """
     SELECT
@@ -144,6 +200,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     LEFT JOIN staff st ON a.responsible_staff_id = st.id
     LEFT JOIN partner_company pc ON a.partner_company_id = pc.id
     LEFT JOIN partner_staff ps ON a.partner_staff_id = ps.id
+    """ + (scope == null ? "" : "WHERE " + scope) + """
     ORDER BY a.id DESC
     """;
 
@@ -409,12 +466,52 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql = "DELETE FROM extracurricular_activity WHERE id = ?";
+        String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
+        // Remove the partner-company link before its invitation because it references that invitation.
+        String[] dependentDeletes = {
+                "DELETE FROM activity_staff WHERE activity_id = ?",
+                "DELETE FROM activity_department WHERE activity_id = ?",
+                "DELETE FROM activity_partner_staff WHERE activity_id = ?",
+                "DELETE FROM activity_partner_company WHERE activity_id = ?",
+                "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
+        };
 
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(existsSql)) {
+                    ps.setInt(1, id);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            return false;
+                        }
+                    }
+                }
+                for (String sql : dependentDeletes) {
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setInt(1, id);
+                        ps.executeUpdate();
+                    }
+                }
+                try (PreparedStatement ps =
+                             conn.prepareStatement("DELETE FROM extracurricular_activity WHERE id = ?")) {
+                    ps.setInt(1, id);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+                throw e;
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to delete extracurricular activity.", e);
         }

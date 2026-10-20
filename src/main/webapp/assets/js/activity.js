@@ -218,6 +218,35 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
 })();
 
 (function () {
+    var type = document.getElementById("inviteType");
+    var action = document.getElementById("inviteAction");
+    var collab = document.getElementById("inviteCollabFields");
+    var terminate = document.getElementById("inviteTerminateFields");
+    if (!type || !action || !collab || !terminate) {
+        return;
+    }
+    var link = document.getElementById("partnerCompanyLinkId");
+    var company = document.getElementById("partnerCompanyId");
+    var staff = document.getElementById("partnerStaffId");
+
+    function sync() {
+        var isTerminate = type.value === "terminatePartner";
+        action.value = type.value;
+        collab.hidden = isTerminate;
+        terminate.hidden = !isTerminate;
+        link.disabled = !isTerminate;
+        link.required = isTerminate;
+        company.disabled = isTerminate;
+        staff.disabled = isTerminate || !company.value;
+    }
+    type.addEventListener("change", sync);
+    company.addEventListener("change", function () {
+        setTimeout(sync, 0);
+    });
+    sync();
+})();
+
+(function () {
     var companySelect = document.getElementById("partnerCompanyId");
     var staffSelect = document.getElementById("partnerStaffId");
     var message = document.getElementById("partnerStaffMessage");
@@ -299,4 +328,39 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     if (["tab-staff", "tab-info", "tab-partner"].indexOf(currentHash) !== -1) {
         switchTab(currentHash);
     }
+})();
+
+(function () {
+    var modal = document.getElementById("activity-message-modal");
+    if (!modal) {
+        return;
+    }
+    document.querySelectorAll(".activity-message-view").forEach(function (button) {
+        button.addEventListener("click", function () {
+            document.getElementById("activity-message-modal-title").textContent = button.dataset.title;
+            document.getElementById("activity-message-modal-body").textContent = button.dataset.message;
+            modal.showModal();
+        });
+    });
+    document.getElementById("activity-message-modal-close").addEventListener("click", function () {
+        modal.close();
+    });
+    modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+            modal.close();
+        }
+    });
+})();
+
+(function () {
+    var toggle = document.getElementById("invite-form-toggle");
+    var panel = document.getElementById("invite-form-panel");
+    if (!toggle || !panel) {
+        return;
+    }
+    toggle.addEventListener("click", function () {
+        var open = panel.hidden;
+        panel.hidden = !open;
+        toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
 })();
