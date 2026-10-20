@@ -7,11 +7,14 @@ import com.swp391.g1.model.Department;
 import com.swp391.g1.model.Staff;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IActivityStaffService {
     List<ActivityStaffResponseDTO> getStaffsByActivityId(int activityId);
 
     List<Staff> getAvailableStaffsForActivity(int activityId);
+
+    Map<Integer, String> getDepartmentLabelsByStaff(int activityId);
 
     boolean canAssignStaff(int activityId, CurrentUser user);
 

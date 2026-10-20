@@ -80,6 +80,11 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
     }
 
     @Override
+    public Map<Integer, String> getDepartmentLabelsByStaff(int activityId) {
+        return activityId <= 0 ? Map.of() : activityStaffDAO.findDepartmentLabelsByStaff(activityId);
+    }
+
+    @Override
     public boolean canAssignStaff(int activityId, CurrentUser user) {
         if (activityId <= 0 || user == null) {
             return false;

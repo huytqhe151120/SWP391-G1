@@ -6,7 +6,7 @@
 <html lang="vi">
 
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
     <meta charset="UTF-8">
     <title>Staff List</title>
 

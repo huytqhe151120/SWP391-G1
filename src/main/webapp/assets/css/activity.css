@@ -1470,10 +1470,6 @@ button.activity-action-link:focus-visible {
     clip-path: inset(50%);
 }
 
-.activity-cancel-button {
-    margin-right: auto;
-}
-
 /* Activity Media Queries */
 @media (max-width: 1024px) {
     .activity-app-layout {
@@ -1734,4 +1730,117 @@ button.activity-action-link:focus-visible {
 }
 #invite-form-panel > .activity-partner-form {
     margin-top: 0.75rem;
+}
+/* .field is a column flexbox, so flex-basis: 260px on the combobox became a 260px height */
+.field > .multi-select-combobox {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.activity-form-grid .field {
+    gap: 6px;
+}
+
+.activity-form-grid .error-msg:empty,
+.activity-form-grid .field-hint:empty {
+    display: none;
+}
+
+/* Flatpickr date-time inputs */
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group input {
+    width: 100%;
+    padding-right: 42px;
+    border: 1px solid #dce4ef;
+    border-radius: 8px;
+    background-color: #fbfcfe;
+    cursor: pointer;
+}
+
+.date-input-group input:focus,
+.date-input-group input.active {
+    border-color: #3b82f6;
+    outline: 0;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.date-input-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    display: flex;
+    color: #64748b;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.flatpickr-calendar {
+    z-index: 9999 !important;
+    border: 1px solid #dce4ef;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(28, 48, 76, 0.16);
+    font-family: inherit;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    border-color: #3b82f6;
+    background: #3b82f6;
+}
+
+.flatpickr-day.today:not(.selected) {
+    border-color: #3b82f6;
+}
+
+.flatpickr-day:hover {
+    background: #eff6ff;
+}
+
+.flatpickr-months .flatpickr-month,
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+span.flatpickr-weekday {
+    color: #233752;
+    fill: #233752;
+}
+
+.form-actions-footer {
+    display: flex;
+    justify-content: flex-end; /* Đẩy cụm nút về bên phải */
+    align-items: center;
+    gap: 0.75rem; /* Khoảng cách giữa 2 nút */
+    margin-top: 1.5rem;
+}
+
+/* Calendar header: keep month dropdown, year and arrows from overlapping */
+.flatpickr-calendar .flatpickr-current-month {
+    left: 12.5%;
+    display: flex;
+    width: 75%;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+}
+
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+    flex: 0 1 auto;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 2px 4px;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper {
+    flex: 0 0 auto;
+    width: 6ch;
+}
+
+.flatpickr-calendar .flatpickr-current-month input.cur-year {
+    font-size: 1rem;
 }

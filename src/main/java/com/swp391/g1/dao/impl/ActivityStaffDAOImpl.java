@@ -10,7 +10,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ActivityStaffDAOImpl implements IActivityStaffDAO {
 
@@ -63,6 +65,36 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
             throw new IllegalStateException("Failed to find assigned staffs for activity " + activityId, e);
         }
         return list;
+    }
+
+    @Override
+    public Map<Integer, String> findDepartmentLabelsByStaff(int activityId) {
+        Map<Integer, String> labels = new LinkedHashMap<>();
+        String sql = """
+                SELECT DISTINCT sa.staff_id, d.code, d.name,
+                       CASE WHEN d.id = ea.responsible_department_id THEN 0 ELSE 1 END AS priority
+                FROM extracurricular_activity ea
+                JOIN staff_assignment sa ON sa.department_id = ea.responsible_department_id
+                     OR sa.department_id IN (SELECT ad.department_id FROM activity_department ad
+                                             WHERE ad.activity_id = ea.id)
+                JOIN department d ON d.id = sa.department_id
+                WHERE ea.id = ?
+                ORDER BY sa.staff_id, priority, d.code
+                """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String label = rs.getString("code") + " - " + rs.getString("name");
+                    labels.merge(rs.getInt("staff_id"), label, (a, b) -> a + ", " + b);
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find department labels for activity " + activityId, e);
+        }
+        return labels;
     }
 
     @Override
