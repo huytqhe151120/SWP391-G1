@@ -13,6 +13,8 @@ public interface IRegistrationFormService {
 
     String save(RegistrationForm form);
 
+    String updateStatus(int id, String status);
+
     String delete(int id);
 
     String register(int formId, int studentId, String note);

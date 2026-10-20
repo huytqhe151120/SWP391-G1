@@ -15,6 +15,8 @@ public interface IRegistrationFormDAO {
 
     boolean update(RegistrationForm form);
 
+    boolean updateStatus(int id, String status);
+
     boolean delete(int id);
 
     boolean registerStudent(int formId, int studentId, String note);

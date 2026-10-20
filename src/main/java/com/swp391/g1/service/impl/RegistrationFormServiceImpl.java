@@ -2,6 +2,7 @@ package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.IRegistrationFormDAO;
 import com.swp391.g1.dao.impl.RegistrationFormDAOImpl;
+import com.swp391.g1.model.Enum.RegistrationFormStatus;
 import com.swp391.g1.model.RegistrationForm;
 import com.swp391.g1.service.IRegistrationFormService;
 
@@ -32,10 +33,26 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             return "Thời gian đóng phải sau thời gian mở.";
         f.setTitle(f.getTitle().trim());
         f.setDescription(f.getDescription() == null ? "" : f.getDescription().trim());
-        if (!"OPEN".equals(f.getStatus())) f.setStatus("DRAFT");
+        if (f.getStatus() == null) return "Vui lòng chọn trạng thái form.";
+        try {
+            RegistrationFormStatus.valueOf(f.getStatus());
+        } catch (IllegalArgumentException e) {
+            return "Trạng thái form không hợp lệ.";
+        }
         if (f.getId() > 0)
             return dao.update(f) ? null : "Không thể sửa form đã có sinh viên đăng ký hoặc form không tồn tại.";
         return dao.insert(f) ? null : "Không thể tạo form đăng ký.";
+    }
+
+    public String updateStatus(int id, String status) {
+        if (id <= 0) return "Form đăng ký không hợp lệ.";
+        if (status == null) return "Trạng thái form không hợp lệ.";
+        try {
+            RegistrationFormStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            return "Trạng thái form không hợp lệ.";
+        }
+        return dao.updateStatus(id, status) ? null : "Không tìm thấy form đăng ký.";
     }
 
     public String delete(int id) {

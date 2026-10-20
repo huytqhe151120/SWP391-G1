@@ -21,6 +21,9 @@
             <h1>SWP391-G1</h1>
             <p class="subtitle">Hệ thống quản lý hoạt động ngoại khóa</p>
             <p><a class="button button-primary" href="${pageContext.request.contextPath}/activities">Quản lý hoạt động</a></p>
+            <c:if test="${canManageActivities}">
+                <p><a class="button" href="${pageContext.request.contextPath}/registration-forms">Quản lý form đăng ký</a></p>
+            </c:if>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-companies">Quản lý công ty đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/partner-staffs">Quản lý nhân viên đối tác</a></p>
             <p><a class="button" href="${pageContext.request.contextPath}/student">Quản lý sinh viên</a></p>

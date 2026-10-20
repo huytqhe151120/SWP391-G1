@@ -23,6 +23,13 @@ public class Enum {
         REJECTED // Đã từ chối
     }
 
+    // Registration form status
+    public enum RegistrationFormStatus {
+        DRAFT, // Bản nháp
+        OPEN, // Đang mở đăng ký
+        CLOSED // Đã đóng đăng ký
+    }
+
     // Participation nature of an activity
     public enum ActivityNature {
         REQUIRE_REGISTRATION,

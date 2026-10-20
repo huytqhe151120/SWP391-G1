@@ -54,6 +54,16 @@ public class RegistrationFormServlet extends HttpServlet {
                 resp.sendError(403, "Chỉ STAFF/ADMIN được quản lý form đăng ký.");
                 return;
             }
+            if ("view".equals(action)) {
+                RegistrationForm f = service.getById(id(req));
+                if (f == null) {
+                    resp.sendError(404);
+                    return;
+                }
+                req.setAttribute("form", f);
+                req.getRequestDispatcher("/WEB-INF/views/registration/detail.jsp").forward(req, resp);
+                return;
+            }
             if ("create".equals(action) || "edit".equals(action)) {
                 RegistrationForm f = "edit".equals(action) ? service.getById(id(req)) : new RegistrationForm();
                 if (f == null) {
@@ -104,6 +114,12 @@ public class RegistrationFormServlet extends HttpServlet {
                 resp.sendError(403);
                 return;
             }
+            if ("status".equals(action)) {
+                error = service.updateStatus(id(req), req.getParameter("status"));
+                resp.sendRedirect(req.getContextPath() + "/registration-forms?msg="
+                        + (error == null ? "statusUpdated" : "statusError"));
+                return;
+            }
             if ("delete".equals(action)) {
                 error = service.delete(id(req));
                 resp.sendRedirect(req.getContextPath() + "/registration-forms?msg=" + (error == null ? "deleted" : "deleteError"));
@@ -114,7 +130,7 @@ public class RegistrationFormServlet extends HttpServlet {
             f.setActivityId(parseInt(req.getParameter("activityId")));
             f.setTitle(req.getParameter("title"));
             f.setDescription(req.getParameter("description"));
-            f.setStatus("OPEN".equals(req.getParameter("status")) ? "OPEN" : "DRAFT");
+            f.setStatus(req.getParameter("status"));
             f.setOpenAt(parseDate(req.getParameter("openAt")));
             f.setCloseAt(parseDate(req.getParameter("closeAt")));
             error = service.save(f);

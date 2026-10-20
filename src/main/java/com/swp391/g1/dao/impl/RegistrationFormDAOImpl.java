@@ -97,6 +97,18 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     @Override
+    public boolean updateStatus(int id, String status) {
+        String sql = "UPDATE dbo.activity_registration_form SET status=?,updated_at=SYSDATETIME() WHERE id=?";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, status);
+            p.setInt(2, id);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể cập nhật trạng thái form đăng ký.", e);
+        }
+    }
+
+    @Override
     public boolean delete(int id) {
         String sql = "DELETE FROM dbo.activity_registration_form WHERE id=? AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=?)";
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {

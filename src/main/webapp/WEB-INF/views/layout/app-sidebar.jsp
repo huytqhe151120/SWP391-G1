@@ -22,6 +22,12 @@
            <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">◷</span>Hoạt động ngoại khóa
         </a>
+        <% if (navAdmin || navStaff) { %>
+        <a class="<%= "registration-forms".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/registration-forms"
+           <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">✓</span>Quản lý form đăng ký
+        </a>
+        <% } %>
         <a class="<%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"
                 <%= "partner-invitations".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">✉</span>Lời mời hợp tác
@@ -46,6 +52,13 @@
         <a class="<%= "accounts".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/accounts"
            <%= "accounts".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">⚙</span>Tài khoản
+        </a>
+        <% } %>
+        <% if (navStudent) { %>
+        <span class="activity-nav-group">Hoạt động dành cho sinh viên</span>
+        <a class="<%= "registration-forms".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/registration-forms?action=student"
+           <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">✓</span>Đăng ký hoạt động
         </a>
         <% } %>
         <% if (navAdmin || navStaff) { %>
