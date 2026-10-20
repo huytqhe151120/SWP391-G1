@@ -253,7 +253,9 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to create collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to create collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 
@@ -364,7 +366,9 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to update collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to update collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 

@@ -67,12 +67,23 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
 
     @Override
     public boolean insert(int activityId, int staffId) {
-        String sql = "INSERT INTO activity_staff (activity_id, staff_id, assigned_on) VALUES (?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
+        String sql = """
+                INSERT INTO activity_staff (activity_id, staff_id, assigned_on)
+                SELECT ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM extracurricular_activity
+                    WHERE id = ?
+                      AND activity_status = 'UPCOMING'
+                      AND start_time > SYSUTCDATETIME()
+                )
+                """;
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             ps.setInt(2, staffId);
+            ps.setInt(3, activityId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to assign staff to activity.", e);
@@ -81,7 +92,15 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
 
     @Override
     public boolean delete(int activityId, int staffId) {
-        String sql = "DELETE FROM activity_staff WHERE activity_id = ? AND staff_id = ?";
+        String sql = """
+                DELETE ast
+                FROM activity_staff ast
+                INNER JOIN extracurricular_activity ea ON ea.id = ast.activity_id
+                WHERE ast.activity_id = ?
+                  AND ast.staff_id = ?
+                  AND ea.activity_status = 'UPCOMING'
+                  AND ea.start_time > SYSUTCDATETIME()
+                """;
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

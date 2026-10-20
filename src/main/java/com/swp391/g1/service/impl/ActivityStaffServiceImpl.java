@@ -16,9 +16,11 @@ import com.swp391.g1.dto.response.ActivityStaffResponseDTO;
 import com.swp391.g1.model.Department;
 import com.swp391.g1.model.Enum.CommonStatus;
 import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityStaffService;
+import com.swp391.g1.util.DateTimeUtil;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -83,7 +85,7 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
             return false;
         }
         ExtracurricularActivity activity = activityDAO.findById(activityId);
-        if (activity == null) {
+        if (!isActivityBeforeStart(activity)) {
             return false;
         }
         if (AccessPolicy.canAssignStaffToActivity(user)
@@ -100,6 +102,7 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
         if (activityId <= 0 || staffId <= 0) {
             throw new IllegalArgumentException("Thông tin phân công không hợp lệ.");
         }
+        requireActivityBeforeStart(activityId);
         if (!canAssignStaff(activityId, user)) {
             throw new SecurityException("Bạn không có quyền phân công nhân sự vào hoạt động này.");
         }
@@ -131,12 +134,28 @@ public class ActivityStaffServiceImpl implements IActivityStaffService {
         if (activityId <= 0 || staffId <= 0) {
             return false;
         }
+        requireActivityBeforeStart(activityId);
         if (!canAssignStaff(activityId, user)) {
             return false;
         }
         return activityStaffDAO.delete(activityId, staffId);
     }
 
+    private boolean isActivityBeforeStart(ExtracurricularActivity activity) {
+        return activity != null
+                && activity.getActivityStatus() == ActivityStatus.UPCOMING
+                && activity.getStartTime() != null
+                && DateTimeUtil.now().isBefore(activity.getStartTime());
+    }
+
+    private void requireActivityBeforeStart(int activityId) {
+        ExtracurricularActivity activity = activityDAO.findById(activityId);
+        if (!isActivityBeforeStart(activity)) {
+            throw new IllegalArgumentException(
+                    "Chỉ được thay đổi phân công nhân sự trước khi hoạt động bắt đầu.");
+        }
+    }
+}
     @Override
     public List<ActivityDepartmentResponseDTO> getDepartmentsByActivityId(int activityId) {
         if (activityId <= 0) {

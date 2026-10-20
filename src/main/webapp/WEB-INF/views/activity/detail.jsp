@@ -45,8 +45,7 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <div class="activity-header-actions" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
-            <c:if test="${canManageActivities && activity.activityStatus != 'ONGOING' && activity.activityStatus != 'COMPLETED'}">
+            <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                 <a class="button button-primary"
                    href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
             </c:if>
@@ -255,7 +254,7 @@
                                 <th scope="col">Trạng thái nhân sự</th>
                                 <th scope="col">Chức vụ</th>
                                 <th scope="col">Thời gian phân công</th>
-                                <c:if test="${canRemoveStaff}">
+                                <c:if test="${canRemoveStaff && activity.activityStatus == 'UPCOMING'}">
                                     <th scope="col" style="text-align: right; width: 120px;">Thao tác</th>
                                 </c:if>
                             </tr>
@@ -264,7 +263,7 @@
                             <c:choose>
                                 <c:when test="${empty assignedStaffs}">
                                     <tr>
-                                        <td colspan="${canRemoveStaff ? 7 : 6}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
+                                        <td colspan="${canRemoveStaff && activity.activityStatus == 'UPCOMING' ? 7 : 6}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
                                             Chưa có nhân sự nào được phân công phụ trách hoạt động này.
                                         </td>
                                     </tr>
@@ -278,7 +277,7 @@
                                             <td><span class="badge status-pill ${st:css(ast.staffStatus)}">${st:label(ast.staffStatus)}</span></td>
                                             <td><c:out value="${ast.position}" default="Nhân viên"/></td>
                                             <td><c:out value="${ast.formattedAssignedOn}"/></td>
-                                            <c:if test="${canRemoveStaff}">
+                                            <c:if test="${canRemoveStaff && activity.activityStatus == 'UPCOMING'}">
                                                 <td style="text-align: right;">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                       data-confirm="Bạn có chắc chắn muốn hủy phân công nhân sự này?">
@@ -299,7 +298,7 @@
                         </table>
                     </div>
 
-                    <c:if test="${canAddStaff}">
+                    <c:if test="${canAddStaff && activity.activityStatus == 'UPCOMING'}">
                         <div style="background: var(--surface-secondary, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 1.25rem;">
                             <h4 style="margin: 0 0 0.5rem; font-size: 1rem;">Phân công nhân sự mới</h4>
                             <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted, #64748b);">
@@ -412,8 +411,8 @@
                                             </td>
                                             <td><c:out value="${empty inv.createdByName ? inv.createdBy : inv.createdByName}"/></td>
                                             <td><c:out value="${inv.formattedCreatedAt}"/></td>
-                                            <td style="text-align: left; white-space: nowrap;">
-                                                <c:if test="${inv.canRespond}">
+                                            <td style="text-align: right; white-space: nowrap;">
+                                                <c:if test="${inv.canRespond && activity.activityStatus == 'UPCOMING'}">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline">
                                                         <input type="hidden" name="action" value="respondInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
@@ -433,7 +432,7 @@
                                                         </button>
                                                     </form>
                                                 </c:if>
-                                                <c:if test="${canManageActivities && inv.approvalStatus == 'PENDING'}">
+                                                <c:if test="${canManageActivities && inv.approvalStatus == 'PENDING' && activity.activityStatus == 'UPCOMING'}">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                           data-confirm="Bạn có chắc chắn muốn hủy lời mời này?">
                                                         <input type="hidden" name="action" value="cancelInvitation">
@@ -590,7 +589,7 @@
                                 <th scope="col">Chức vụ</th>
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col">Thời gian phân công</th>
-                                <c:if test="${canManagePartnerStaff}">
+                                <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
                                     <th scope="col" style="text-align: right; width: 120px;">Thao tác</th>
                                 </c:if>
                             </tr>
@@ -599,7 +598,7 @@
                             <c:choose>
                                 <c:when test="${empty assignedPartnerStaffs}">
                                     <tr>
-                                        <td colspan="${canManagePartnerStaff ? 8 : 7}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
+                                        <td colspan="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING' ? 8 : 7}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
                                             Chưa có nhân sự đối tác nào được phân công phụ trách hoạt động này.
                                         </td>
                                     </tr>
@@ -614,7 +613,7 @@
                                             <td><c:out value="${aps.position}" default="—"/></td>
                                             <td><span class="badge status-pill ${st:css(aps.status)}">${st:label(aps.status)}</span></td>
                                             <td><c:out value="${aps.formattedAssignedOn}"/></td>
-                                            <c:if test="${canManagePartnerStaff}">
+                                            <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
                                                 <td style="text-align: right;">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                           data-confirm="Bạn có chắc chắn muốn gỡ nhân sự đối tác này?">
@@ -635,7 +634,7 @@
                         </table>
                     </div>
 
-                    <c:if test="${canManagePartnerStaff}">
+                    <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
                         <div style="background: var(--surface-secondary, #f8fafc); border: 1px solid var(--border, #e2e8f0); border-radius: 8px; padding: 1.25rem;">
                             <h4 style="margin: 0 0 0.5rem; font-size: 1rem;">Phân công nhân sự đối tác mới</h4>
                             <p style="margin: 0 0 1rem; font-size: 0.875rem; color: var(--text-muted, #64748b);">
@@ -686,7 +685,7 @@
         <div class="detail-actions activity-detail-actions">
             <a class="button" href="${pageContext.request.contextPath}/activities">Đóng</a>
             <%-- DRAFT / REJECTED: gửi duyệt --%>
-            <c:if test="${canManageActivities && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')}">
+            <c:if test="${activity.activityStatus == 'UPCOMING' && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="submit" class="button button-send-approval button-primary">Gửi duyệt</button>
@@ -694,7 +693,7 @@
             </c:if>
 
             <%-- PENDING: duyệt / từ chối --%>
-            <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
+            <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'PENDING'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="approve" class="button button-approve button-primary">Duyệt</button>
@@ -712,7 +711,7 @@
             </c:if>
 
             <%-- REJECTED: hủy từ chối --%>
-            <c:if test="${canApproveActivities && activity.approvalStatus == 'REJECTED'}">
+            <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'REJECTED'}">
                 <form action="${pageContext.request.contextPath}/activity/approval" method="post" style="display:inline">
                     <input type="hidden" name="id" value="${activity.id}">
                     <button type="submit" name="action" value="revokeRejection" class="button button-revoke"

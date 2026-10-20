@@ -211,7 +211,7 @@
                                                 <c:if test="${canManageActivities}">
                                                 <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                     <input type="hidden" name="id" value="${activity.id}">
-                                                    <button type="submit" name="action" value="submit" class="button button-send-approval button-sm">Gửi duyệt</button>
+                                                    <button type="submit" name="action" value="submit" class="button button-primary button-send-approval button-sm">Gửi duyệt</button>
                                                 </form>
                                                 </c:if>
                                                 <c:if test="${canApproveActivities}">
@@ -224,13 +224,15 @@
                                                 </c:if>
                                             </div>
                                         </c:if>
-                                        <c:if test="${canManageActivities && activity.approvalStatus == 'DRAFT'}">
+
+                                        <c:if test="${activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'DRAFT'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="submit" class="button button-primary button-send-approval button-sm">Gửi duyệt</button>
                                             </form>
                                         </c:if>
-                                        <c:if test="${canApproveActivities && activity.approvalStatus == 'PENDING'}">
+
+                                        <c:if test="${canApproveActivities && activity.activityStatus == 'UPCOMING' && activity.approvalStatus == 'PENDING'}">
                                             <form class="activity-review-actions" action="${pageContext.request.contextPath}/activity/approval" method="post">
                                                 <input type="hidden" name="id" value="${activity.id}">
                                                 <button type="submit" name="action" value="approve" class="button button-approve button-sm">Duyệt</button>

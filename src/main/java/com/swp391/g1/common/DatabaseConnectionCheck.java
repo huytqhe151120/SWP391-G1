@@ -12,5 +12,6 @@ public class DatabaseConnectionCheck {
             System.err.println("Kết nối thất bại: " + e.getMessage());
             e.printStackTrace();
         }
+
     }
 }

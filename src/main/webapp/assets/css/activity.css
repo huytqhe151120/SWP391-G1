@@ -1,6 +1,42 @@
 /* Activity CSS - SWP391-G1 */
 @import "base.css";
 
+.activity-approval-approve {
+    border-color: #15803d;
+    background: #15803d;
+    color: #fff;
+}
+
+.activity-approval-approve:hover {
+    border-color: #166534;
+    background: #166534;
+    color: #fff;
+}
+
+.activity-approval-reject {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.activity-approval-reject:hover {
+    border-color: #f87171;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.activity-approval-revoke {
+    background-color: #fff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+.activity-approval-revoke:hover {
+    background-color: #f8fafc;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
 .activity-app-shell {
     width: min(1440px, calc(100% - 48px));
     margin: 24px auto 42px;
@@ -770,7 +806,7 @@
 .activity-action-link {
     padding: 6px 7px;
     border-radius: 6px;
-    color: #315d9d;
+    color: #1d4ed8;
     font-size: .8rem;
     font-weight: 600;
 }
@@ -792,8 +828,16 @@ button.activity-action-link {
 }
 
 button.activity-action-link:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
+    text-decoration: underline;
+    opacity: 0.75;
+}
+
+.activity-action-delete {
+    color: #b91c1c;
+}
+
+.activity-action-delete:hover {
+    background: #fef2f2;
 }
 
 .activity-empty-state {

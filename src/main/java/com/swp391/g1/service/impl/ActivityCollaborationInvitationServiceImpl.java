@@ -14,11 +14,14 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityCollaborationInvitationDTO;
 import com.swp391.g1.dto.response.ActivityPartnerCompanyDTO;
 import com.swp391.g1.model.Enum.CommonStatus;
+import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.PartnerCompany;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityCollaborationInvitationService;
+import com.swp391.g1.util.DateTimeUtil;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -91,6 +94,9 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (user == null || !AccessPolicy.canManageActivities(user)) {
             throw new SecurityException("Bạn không có quyền mời đối tác tham gia hoạt động.");
         }
+
+        requireUpcomingActivity(activityId);
+
         com.swp391.g1.model.ExtracurricularActivity activity =
                 activityId <= 0 ? null : activityDAO.findById(activityId);
         if (activity == null) {
@@ -137,6 +143,20 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (invitationDAO.existsPendingInvitation(activityId, link.getPartnerCompanyId())) {
             throw new IllegalArgumentException("Đối tác này đang có lời mời chờ phản hồi.");
         }
+
+        boolean inserted = invitationDAO.insert(
+                activityId,
+                companyId,
+                staffId,
+                String.valueOf(user.getId())
+        );
+
+        if (!inserted) {
+            throw new IllegalArgumentException(
+                    "Không thể gửi lời mời. Hoạt động có thể đã bắt đầu "
+                            + "hoặc không còn ở trạng thái UPCOMING."
+            );
+        }
         invitationDAO.insert(activityId, link.getPartnerCompanyId(), link.getPartnerStaffId(),
                 String.valueOf(user.getId()), IActivityCollaborationInvitationDAO.TYPE_TERMINATION, note);
     }
@@ -144,10 +164,31 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     @Override
     public void respond(int invitationId, boolean accept, CurrentUser user) {
         ActivityCollaborationInvitationDTO invitation = requirePending(invitationId);
-        PartnerStaff me = isPartnerStaffUser(user) ? partnerStaffDAO.findByAccountId(user.getId()) : null;
+
+        // Kiểm tra hoạt động còn cho phép phản hồi lời mời không.
+        requireUpcomingActivity(invitation.getActivityId());
+
+        PartnerStaff me = isPartnerStaffUser(user)
+                ? partnerStaffDAO.findByAccountId(user.getId())
+                : null;
+
         if (!canRespond(invitation, user, me)) {
-            throw new SecurityException("Bạn không có quyền phản hồi lời mời này.");
+            throw new SecurityException(
+                    "Bạn không có quyền phản hồi lời mời này."
+            );
         }
+
+        String newStatus = accept
+                ? IActivityCollaborationInvitationDAO.APPROVED
+                : IActivityCollaborationInvitationDAO.REJECTED;
+
+        if (!invitationDAO.updateStatus(
+                invitationId,
+                IActivityCollaborationInvitationDAO.PENDING,
+                newStatus)) {
+            throw new IllegalArgumentException(
+                    "Lời mời đã được xử lý trước đó."
+            );
         boolean updated = accept ? invitationDAO.accept(invitationId) : invitationDAO.reject(invitationId);
         if (!updated) {
             throw new IllegalArgumentException("Lời mời đã được xử lý trước đó.");
@@ -270,6 +311,39 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             return id;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(errorMessage, e);
+        }
+    }
+
+    /**
+     * Chỉ cho phép thao tác lời mời khi hoạt động còn UPCOMING
+     * và chưa đến thời điểm bắt đầu.
+     */
+    private void requireUpcomingActivity(int activityId) {
+        if (activityId <= 0) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+
+        ExtracurricularActivity activity = activityDAO.findById(activityId);
+
+        if (activity == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+
+        if (activity.getActivityStatus() == null
+                || !"UPCOMING".equalsIgnoreCase(
+                activity.getActivityStatus().toString())) {
+            throw new IllegalArgumentException(
+                    "Chỉ được thao tác lời mời khi hoạt động đang ở trạng thái UPCOMING."
+            );
+        }
+
+        LocalDateTime startTime = activity.getStartTime();
+        LocalDateTime now = DateTimeUtil.now();
+
+        if (startTime == null || !now.isBefore(startTime)) {
+            throw new IllegalArgumentException(
+                    "Không thể thao tác lời mời sau khi hoạt động bắt đầu."
+            );
         }
     }
 }
