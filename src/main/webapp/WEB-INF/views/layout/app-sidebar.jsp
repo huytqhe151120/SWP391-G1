@@ -97,7 +97,6 @@
                 </span>Trang chủ
             </a>
 
-            <a href="<%= ctx %>/partner-invitations">Lời mời phối hợp</a>
             <span class="activity-nav-group">Quản lý</span>
             <a class="<%= "activities".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/activities"
                <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
