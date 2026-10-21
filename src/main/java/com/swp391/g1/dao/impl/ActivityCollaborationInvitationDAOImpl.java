@@ -212,11 +212,6 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                       AND start_time > SYSUTCDATETIME()
                 )
                 """;
-        String reuseSql = "UPDATE activity_partner_company SET partner_staff_id = ?, invitation_id = ?, "
-                + "collaboration_status = 'INACTIVE' WHERE activity_id = ? AND partner_company_id = ?";
-        String linkSql = "INSERT INTO activity_partner_company "
-                + "(activity_id, partner_company_id, partner_staff_id, invitation_id, collaboration_status) "
-                + "VALUES (?, ?, ?, ?, 'INACTIVE')";
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -240,25 +235,6 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                             return 0;
                         }
                         invitationId = keys.getInt(1);
-                    }
-                }
-                if (TYPE_COLLABORATION.equals(invitationType)) {
-                    int reused;
-                    try (PreparedStatement ps = conn.prepareStatement(reuseSql)) {
-                        ps.setInt(1, partnerStaffId);
-                        ps.setInt(2, invitationId);
-                        ps.setInt(3, activityId);
-                        ps.setInt(4, partnerCompanyId);
-                        reused = ps.executeUpdate();
-                    }
-                    if (reused == 0) {
-                        try (PreparedStatement ps = conn.prepareStatement(linkSql)) {
-                            ps.setInt(1, activityId);
-                            ps.setInt(2, partnerCompanyId);
-                            ps.setInt(3, partnerStaffId);
-                            ps.setInt(4, invitationId);
-                            ps.executeUpdate();
-                        }
                     }
                 }
                 conn.commit();
@@ -317,9 +293,17 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                 """;
         String selectType = "SELECT invitation_type FROM activity_collaboration_invitation WHERE id = ?";
         String updateOwnLink = "UPDATE activity_partner_company SET collaboration_status = ? WHERE invitation_id = ?";
+        String reuseLink = """
+                UPDATE apc SET partner_staff_id = i.partner_staff_id, invitation_id = i.id,
+                       collaboration_status = 'ACTIVE'
+                FROM activity_partner_company apc
+                JOIN activity_collaboration_invitation i ON i.activity_id = apc.activity_id
+                     AND i.partner_company_id = apc.partner_company_id
+                WHERE i.id = ?
+                """;
         String createLink = "INSERT INTO activity_partner_company "
                 + "(activity_id, partner_company_id, partner_staff_id, invitation_id, collaboration_status) "
-                + "SELECT activity_id, partner_company_id, partner_staff_id, id, ? "
+                + "SELECT activity_id, partner_company_id, partner_staff_id, id, 'ACTIVE' "
                 + "FROM activity_collaboration_invitation WHERE id = ? AND partner_staff_id IS NOT NULL";
         String deactivateCompanyLink = """
                 UPDATE apc SET collaboration_status = 'INACTIVE'
@@ -361,24 +345,30 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                         executeById(conn, deactivateCompanyLink, id);
                     }
                 } else {
-                    String collaborationStatus = APPROVED.equals(toStatus) ? "ACTIVE" : "INACTIVE";
                     if (APPROVED.equals(fromStatus)) {
                         executeById(conn, deleteStaff, id);
                     }
-                    int linked;
-                    try (PreparedStatement ps = conn.prepareStatement(updateOwnLink)) {
-                        ps.setString(1, collaborationStatus);
-                        ps.setInt(2, id);
-                        linked = ps.executeUpdate();
-                    }
-                    if (linked == 0) {
-                        try (PreparedStatement ps = conn.prepareStatement(createLink)) {
-                            ps.setString(1, collaborationStatus);
-                            ps.setInt(2, id);
-                            if (ps.executeUpdate() == 0) {
-                                conn.rollback();
-                                return false;
+                    if (APPROVED.equals(toStatus)) {
+                        // Chỉ thêm đối tác vào hoạt động sau khi lời mời được duyệt
+                        int linked;
+                        try (PreparedStatement ps = conn.prepareStatement(reuseLink)) {
+                            ps.setInt(1, id);
+                            linked = ps.executeUpdate();
+                        }
+                        if (linked == 0) {
+                            try (PreparedStatement ps = conn.prepareStatement(createLink)) {
+                                ps.setInt(1, id);
+                                if (ps.executeUpdate() == 0) {
+                                    conn.rollback();
+                                    return false;
+                                }
                             }
+                        }
+                    } else {
+                        try (PreparedStatement ps = conn.prepareStatement(updateOwnLink)) {
+                            ps.setString(1, "INACTIVE");
+                            ps.setInt(2, id);
+                            ps.executeUpdate();
                         }
                     }
                 }

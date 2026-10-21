@@ -38,7 +38,10 @@
         else if (uri.contains("/accounts")) navActive = "accounts";
     }
     String ctx = request.getContextPath();
+    pageContext.setAttribute("navDisplayName", navUser == null ? "" : navUser.getDisplayName());
+    pageContext.setAttribute("navRoleLabel", navUser == null ? "" : navUser.getRoleLabel());
 %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <aside class="activity-side-nav" aria-label="Điều hướng hệ thống">
     <nav class="activity-nav-menu">
         <%-- ========================================== --%>
@@ -238,4 +241,15 @@
             </a>
         <% } %>
     </nav>
+    <% if (navUser != null) { %>
+    <div class="activity-sidebar-account">
+        <div class="activity-sidebar-user">
+            <strong><c:out value="${navDisplayName}"/></strong>
+            <span><c:out value="${navRoleLabel}"/></span>
+        </div>
+        <form method="post" action="<%= ctx %>/logout">
+            <button class="activity-sidebar-logout" type="submit">Đăng xuất</button>
+        </form>
+    </div>
+    <% } %>
 </aside>
