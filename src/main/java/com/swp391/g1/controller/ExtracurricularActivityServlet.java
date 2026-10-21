@@ -476,6 +476,24 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                     request.setAttribute("availablePartnerStaffs",
                             activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id, currentUser));
                 }
+                if (AccessPolicy.canUseStudentQuestions(currentUser)
+                        && activity.getApprovalStatus() == com.swp391.g1.model.Enum.ApprovalStatus.APPROVED) {
+                    var student = new com.swp391.g1.service.impl.StudentServiceImpl()
+                            .getStudentByAccountId(currentUser.getId());
+                    if (student != null) {
+                        var questions = new com.swp391.g1.dao.impl.QuestionDAOImpl()
+                                .getVisibleQuestionsForStudent(student.getId(), id);
+                        var answers = new java.util.LinkedHashMap<Integer,
+                                java.util.List<com.swp391.g1.model.Answer>>();
+                        var answerDAO = new com.swp391.g1.dao.impl.AnswerDAOImpl();
+                        for (var question : questions) {
+                            answers.put(question.getId(), answerDAO.getPublishedByQuestionId(question.getId()));
+                        }
+                        request.setAttribute("showActivityQuestions", true);
+                        request.setAttribute("activityQuestions", questions);
+                        request.setAttribute("activityAnswers", answers);
+                    }
+                }
                 request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
             }

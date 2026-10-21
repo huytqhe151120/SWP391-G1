@@ -11,6 +11,9 @@ public interface IAnswerDAO {
 
     boolean insert(Answer answer);
 
+    /** Inserts and publishes one answer atomically, returning false on failure. */
+    boolean insertPublished(Answer answer);
+
     boolean publish(int answerId);
 
     boolean delete(int answerId);

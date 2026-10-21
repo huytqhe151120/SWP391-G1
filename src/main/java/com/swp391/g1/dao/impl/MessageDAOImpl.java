@@ -34,7 +34,7 @@ public class MessageDAOImpl implements IMessageDAO {
         String sql = "SELECT m.*, " +
                      "s.name AS student_name, s.code AS student_code, " +
                      "st.name AS staff_name, st.code AS staff_code " +
-                     "FROM [dbo].[Message] m " +
+                     "FROM [dbo].[message] m " +
                      "LEFT JOIN [dbo].[student] s ON m.student_id = s.id " +
                      "LEFT JOIN [dbo].[staff] st ON m.staff_id = st.id " +
                      "WHERE m.student_id = ? AND m.staff_id = ? " +
@@ -59,10 +59,10 @@ public class MessageDAOImpl implements IMessageDAO {
         String sql = "SELECT m.*, " +
                      "s.name AS student_name, s.code AS student_code, " +
                      "st.name AS staff_name, st.code AS staff_code " +
-                     "FROM [dbo].[Message] m " +
+                     "FROM [dbo].[message] m " +
                      "INNER JOIN (" +
                      "  SELECT student_id, MAX(sent_at) AS max_sent " +
-                     "  FROM [dbo].[Message] WHERE staff_id = ? GROUP BY student_id" +
+                     "  FROM [dbo].[message] WHERE staff_id = ? GROUP BY student_id" +
                      ") latest ON m.student_id = latest.student_id AND m.sent_at = latest.max_sent " +
                      "LEFT JOIN [dbo].[student] s ON m.student_id = s.id " +
                      "LEFT JOIN [dbo].[staff] st ON m.staff_id = st.id " +
@@ -88,7 +88,7 @@ public class MessageDAOImpl implements IMessageDAO {
         String sql = "SELECT m.*, " +
                      "s.name AS student_name, s.code AS student_code, " +
                      "st.name AS staff_name, st.code AS staff_code " +
-                     "FROM [dbo].[Message] m " +
+                     "FROM [dbo].[message] m " +
                      "LEFT JOIN [dbo].[student] s ON m.student_id = s.id " +
                      "LEFT JOIN [dbo].[staff] st ON m.staff_id = st.id " +
                      "WHERE m.student_id = ? " +
@@ -108,7 +108,7 @@ public class MessageDAOImpl implements IMessageDAO {
     /** Send a message */
     @Override
     public boolean send(Message msg) {
-        String sql = "INSERT INTO [dbo].[Message] (student_id, staff_id, sender_type, content, sent_at, is_read) " +
+        String sql = "INSERT INTO [dbo].[message] (student_id, staff_id, sender_type, content, sent_at, is_read) " +
                      "VALUES (?, ?, ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2), 0)";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -125,7 +125,7 @@ public class MessageDAOImpl implements IMessageDAO {
     /** Mark messages as read (for staff reading student messages) */
     @Override
     public void markAsRead(int studentId, int staffId) {
-        String sql = "UPDATE [dbo].[Message] SET is_read = 1 " +
+        String sql = "UPDATE [dbo].[message] SET is_read = 1 " +
                      "WHERE student_id = ? AND staff_id = ? AND sender_type = 'STUDENT'";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -140,7 +140,7 @@ public class MessageDAOImpl implements IMessageDAO {
     /** Count unread messages for a staff */
     @Override
     public int countUnread(int staffId) {
-        String sql = "SELECT COUNT(*) FROM [dbo].[Message] WHERE staff_id = ? AND sender_type = 'STUDENT' AND is_read = 0";
+        String sql = "SELECT COUNT(*) FROM [dbo].[message] WHERE staff_id = ? AND sender_type = 'STUDENT' AND is_read = 0";
         try (Connection connection = DBContext.getConnection();
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, staffId);

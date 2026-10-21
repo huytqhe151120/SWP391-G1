@@ -3,17 +3,24 @@ package com.swp391.g1.model;
 import java.time.LocalDateTime;
 
 public class Question {
+    private boolean publicQuestion;
+    public boolean isPublicQuestion() { return publicQuestion; }
+    public void setPublicQuestion(boolean value) { publicQuestion = value; }
+
     private int id;
     private String title;
     private String content;
     private boolean isAnonymous;
     private String status; // PENDING, ANSWERED
     private int studentId;
+    private Integer activityId;
     private LocalDateTime createdAt;
 
     // For JOIN display
     private String studentName;
     private String studentCode;
+    private String activityName;
+    private String activityCode;
 
     public Question() {}
 
@@ -46,6 +53,9 @@ public class Question {
     public int getStudentId() { return studentId; }
     public void setStudentId(int studentId) { this.studentId = studentId; }
 
+    public Integer getActivityId() { return activityId; }
+    public void setActivityId(Integer activityId) { this.activityId = activityId; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -54,4 +64,10 @@ public class Question {
 
     public String getStudentCode() { return studentCode; }
     public void setStudentCode(String studentCode) { this.studentCode = studentCode; }
+
+    public String getActivityName() { return activityName; }
+    public void setActivityName(String activityName) { this.activityName = activityName; }
+
+    public String getActivityCode() { return activityCode; }
+    public void setActivityCode(String activityCode) { this.activityCode = activityCode; }
 }

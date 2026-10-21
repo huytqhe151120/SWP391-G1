@@ -68,9 +68,10 @@ public final class AccessPolicy {
         };
     }
 
-    /** ADMIN and STAFF own the Q&A moderation workflow. */
+    /** ADMIN, university STAFF, and assigned PARTNER_STAFF can answer questions. */
     public static boolean canManageQuestions(CurrentUser user) {
-        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF")
+                || hasType(user, "PARTNER_STAFF");
     }
 
     /** Only students can submit questions and use the student Q&A page. */
@@ -82,4 +83,15 @@ public final class AccessPolicy {
     public static boolean canUseSupportInbox(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
     }
+
+    /** Only students can submit and track their own appeal requests. */
+    public static boolean canUseStudentAppeals(CurrentUser user) {
+        return hasType(user, "STUDENT");
+    }
+
+    /** ADMIN and STAFF can view and process (approve/reject) appeal requests. */
+    public static boolean canManageAppeals(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
 }
