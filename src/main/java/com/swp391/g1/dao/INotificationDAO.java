@@ -26,6 +26,9 @@ public interface INotificationDAO {
     /** Sends a submission confirmation only to the student who owns the question. */
     int createQuestionSenderNotification(int questionId, String title, String content, String targetUrl);
 
+    /** Creates a notification addressed to one authenticated account. */
+    int createAccountNotification(int accountId, String eventType, String title, String content, String targetUrl);
+
     /** filter: all|unread|read; category: all|activities|qa|appeals|results|messages. */
     List<NotificationDTO> findByAccount(int accountId, String filter, String category, int offset, int limit);
 

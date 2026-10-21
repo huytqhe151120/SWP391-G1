@@ -13,6 +13,8 @@ import com.swp391.g1.model.Staff;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IStaffService;
+import com.swp391.g1.service.INotificationService;
+import com.swp391.g1.service.impl.NotificationServiceImpl;
 import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
@@ -41,6 +43,7 @@ import java.util.List;
 @WebServlet("/qa-management")
 public class AnswerQuestionServlet extends HttpServlet {
 
+    private final INotificationService notificationService = new NotificationServiceImpl();
     private final IQuestionDAO questionDAO = new QuestionDAOImpl();
     private final IAnswerDAO answerDAO = new AnswerDAOImpl();
     private final IStaffService staffService = new StaffServiceImpl();
@@ -173,7 +176,8 @@ public class AnswerQuestionServlet extends HttpServlet {
         }
         Integer questionId = parsePositiveInt(request.getParameter("questionId"));
         String content = normalize(request.getParameter("content"));
-        if (questionId == null || questionDAO.getById(questionId) == null) {
+        Question question = questionId == null ? null : questionDAO.getById(questionId);
+        if (question == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Câu hỏi không hợp lệ.");
             return;
         }
@@ -210,6 +214,11 @@ public class AnswerQuestionServlet extends HttpServlet {
             }
         }
 
+        if (saved) {
+            notificationService.notifyAnswerSaved(questionId, question.getActivityId(), question.getTitle(),
+                    responder.user().getId(), publishImmediately);
+        }
+
         response.sendRedirect(request.getContextPath() + "/qa-management?action=view&id=" + questionId
                 + "&msg=" + (saved ? "success" : "error"));
     }
@@ -231,6 +240,13 @@ public class AnswerQuestionServlet extends HttpServlet {
         boolean ok = answerDAO.publish(answerId);
         if (ok) {
             questionDAO.updateStatus(questionId, "ANSWERED");
+            if (!"PUBLISHED".equals(answer.getApprovalStatus())) {
+                Question question = questionDAO.getById(questionId);
+                if (question != null) {
+                    notificationService.notifyAnswerSaved(questionId, question.getActivityId(), question.getTitle(),
+                            responder.user().getId(), true);
+                }
+            }
         }
 
         response.sendRedirect(request.getContextPath() + "/qa-management?action=view&id=" + questionId

@@ -32,6 +32,9 @@ public interface INotificationService {
     /** Gửi xác nhận cho người gửi và thông báo câu hỏi mới tới các tài khoản có quyền trả lời. */
     void notifyQuestionCreated(int questionId, int activityId, String title, String activityName);
 
+    /** Confirms the reply to its sender and notifies the question owner when published. */
+    void notifyAnswerSaved(int questionId, Integer activityId, String questionTitle, int responderAccountId, boolean published);
+
     List<NotificationDTO> getNotifications(int accountId, String filter, String category, int page, int size);
 
     int countNotifications(int accountId, String filter, String category);

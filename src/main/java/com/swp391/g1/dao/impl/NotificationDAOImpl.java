@@ -149,6 +149,12 @@ public class NotificationDAOImpl implements INotificationDAO {
                 recipientsSql, questionId);
     }
 
+    @Override
+    public int createAccountNotification(int accountId, String eventType, String title, String content, String targetUrl) {
+        return createNotificationForRecipients(eventType, title, content, targetUrl,
+                "SELECT id AS account_id FROM account WHERE id = ?", accountId);
+    }
+
     private int createNotificationForRecipients(
             String eventType, String title, String content, String targetUrl,
             String recipientsSql, int... recipientParams) {
