@@ -29,4 +29,10 @@ public class Enum {
         VOLUNTARY,
         MANDATORY
     }
+
+    // Recurrence mode for activity series
+    public enum RecurrenceMode {
+        MONTHLY,
+        YEARLY
+    }
 }

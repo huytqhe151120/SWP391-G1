@@ -22,6 +22,10 @@
            <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">◷</span>Hoạt động ngoại khóa
         </a>
+        <a class="<%= "activity-series".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/activity-series"
+           <%= "activity-series".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">↻</span>Chuỗi hoạt động
+        </a>
         <a class="<%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"
                 <%= "partner-invitations".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">✉</span>Lời mời hợp tác
