@@ -20,7 +20,7 @@ public interface INotificationDAO {
     int createPartnerInvitationOwnerNotification(
             int invitationId, String eventType, String title, String content, String targetUrl);
 
-    /** Notifies university responders and partner staff assigned to the activity. */
+    /** Notifies all ADMIN, STAFF, and PARTNER_STAFF accounts with Q&A access. */
     int createQuestionNotification(int activityId, String title, String content, String targetUrl);
 
     /** Sends a submission confirmation only to the student who owns the question. */
