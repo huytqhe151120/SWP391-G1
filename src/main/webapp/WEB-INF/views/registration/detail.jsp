@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết form đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-13">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -26,6 +26,11 @@
                         <p><c:out value="${form.title}"/></p>
                     </div>
                 </header>
+
+                <c:if test="${not empty sessionScope.errorMessage}">
+                    <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
+                    <c:remove var="errorMessage" scope="session"/>
+                </c:if>
 
                 <section class="card activity-form-card activity-detail-card registration-detail-card">
                     <div class="activity-table-heading">
@@ -130,6 +135,7 @@
                                                 <td class="registration-sticky-status">
                                                     <c:choose>
                                                         <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
+                                                        <c:when test="${application.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
                                                         <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
                                                     </c:choose>
                                                 </td>

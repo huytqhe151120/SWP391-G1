@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <c:set var="activeNav" value="registration-forms" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -10,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý form đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-12">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-13">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
@@ -80,14 +81,14 @@
                                     <td><c:out value="${f.activityName}"/></td>
                                     <td class="registration-time-cell">
                                         <span><strong>Từ:</strong>
-                                            <c:choose><c:when test="${not empty f.openAt}"><c:out value="${fn:replace(f.openAt, 'T', ' ')}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
+                                            <c:choose><c:when test="${not empty f.openAt}"><c:out value="${dt:format(f.openAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
                                         </span>
                                         <span><strong>Đến:</strong>
-                                            <c:choose><c:when test="${not empty f.closeAt}"><c:out value="${fn:replace(f.closeAt, 'T', ' ')}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
+                                            <c:choose><c:when test="${not empty f.closeAt}"><c:out value="${dt:format(f.closeAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
                                         </span>
                                     </td>
                                     <td class="registration-sticky-status">
-                                        <span class="badge status-pill ${f.status eq 'CLOSED' ? 'status-red' : st:css(f.status)}">${st:label(f.status)}</span>
+                                        <span class="badge status-pill ${st:css(f.status)}">${st:label(f.status)}</span>
                                     </td>
                                     <td class="registration-sticky-count"><span class="registration-count"><c:out value="${f.registrationCount}"/></span></td>
                                     <td class="registration-sticky-actions">

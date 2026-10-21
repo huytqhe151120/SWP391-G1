@@ -3,8 +3,8 @@ package com.swp391.g1.model;
 public class Enum {
     // Status for entities
     public enum CommonStatus {
-        ACTIVE,
-        INACTIVE
+        ACTIVE, // Đang hoạt động
+        INACTIVE // Không hoạt động
     }
 
     // Status for activity
@@ -30,10 +30,17 @@ public class Enum {
         CLOSED // Đã đóng đăng ký
     }
 
+    // Student application review status
+    public enum RegistrationApplicationStatus {
+        SUBMITTED, // Chờ xử lý
+        APPROVED, // Đã duyệt
+        REJECTED // Đã từ chối
+    }
+
     // Participation nature of an activity
     public enum ActivityNature {
-        REQUIRE_REGISTRATION,
-        VOLUNTARY,
-        MANDATORY
+        REQUIRE_REGISTRATION, // Yêu cầu đăng ký
+        VOLUNTARY, // Tự nguyện
+        MANDATORY // Bắt buộc
     }
 }

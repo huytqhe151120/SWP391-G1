@@ -51,10 +51,12 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final IActivityStaffService activityStaffService;
     private final IActivityPartnerStaffService activityPartnerStaffService;
     private final IActivityCollaborationInvitationService invitationService;
+    private final IRegistrationFormService registrationFormService;
 
     public ExtracurricularActivityServlet() {
         this.activityPartnerStaffService = new ActivityPartnerStaffServiceImpl();
         this.invitationService = new ActivityCollaborationInvitationServiceImpl();
+        this.registrationFormService = new RegistrationFormServiceImpl();
         this.activityService = new ExtracurricularActivityServiceImpl();
         this.activityTypeService = new ActivityTypeServiceImpl();
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
@@ -451,6 +453,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             }
             if (activity != null) {
                 request.setAttribute("activity", activity);
+                if (AccessPolicy.canManageActivities(currentUser)) {
+                    request.setAttribute("registrationForm", registrationFormService.getByActivityId(id));
+                }
                 request.setAttribute("activityBeforeStart",
                         isUpcomingBeforeStart(activity, DateTimeUtil.now()));
                 setActivityManagementPermission(request);

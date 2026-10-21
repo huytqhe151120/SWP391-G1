@@ -993,6 +993,14 @@ button.activity-action-link:focus-visible {
     flex-shrink: 0;
 }
 
+.activity-detail-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 /* Activity detail tabs navigation */
 .activity-tabs-nav {
     display: flex;
@@ -1330,12 +1338,6 @@ button.activity-action-link:focus-visible {
     min-width: 155px;
 }
 
-.registration-edit-lock {
-    color: #b33c48;
-    font-size: .9rem;
-    font-weight: 600;
-}
-
 .multi-select-combobox {
     position: relative;
     flex: 1 1 260px;
@@ -1593,6 +1595,12 @@ button.activity-action-link:focus-visible {
 
     .activity-detail-card > .activity-table-heading .button {
         align-self: stretch;
+    }
+
+    .activity-detail-header-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .activity-detail-content {

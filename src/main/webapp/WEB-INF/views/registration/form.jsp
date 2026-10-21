@@ -63,8 +63,8 @@
                                     <c:if test="${empty activities}">
                                         <small class="field-hint">
                                             <c:choose>
-                                                <c:when test="${hasApprovedActivities}">Tất cả hoạt động đã duyệt đều đã có form đăng ký.</c:when>
-                                                <c:otherwise>Chưa có hoạt động nào được duyệt để tạo form đăng ký.</c:otherwise>
+                                                <c:when test="${hasEligibleApprovedActivities}">Tất cả hoạt động đã duyệt và chưa diễn ra đều đã có form đăng ký.</c:when>
+                                                <c:otherwise>Chưa có hoạt động nào vừa được duyệt vừa ở trạng thái chưa diễn ra để tạo form.</c:otherwise>
                                             </c:choose>
                                         </small>
                                     </c:if>
@@ -109,16 +109,13 @@
                                     </select>
                                 </div>
                             </div>
-                            <c:if test="${form.registrationCount > 0}">
-                                <div class="alert activity-alert">Form đã có sinh viên đăng ký; không thể chỉnh sửa thông tin.</div>
-                            </c:if>
                         </div>
 
                         <div class="form-actions activity-form-actions">
                             <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms">Hủy</a>
                             <c:choose>
                                 <c:when test="${form.registrationCount > 0}">
-                                    <span class="registration-edit-lock">Form đã có sinh viên đăng ký nên không thể chỉnh sửa.</span>
+                                    <span>Không thể chỉnh sửa form đã có sinh viên đăng ký.</span>
                                 </c:when>
                                 <c:otherwise>
                                     <button class="button button-primary" type="submit">

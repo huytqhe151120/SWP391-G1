@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RegistrationFormServiceImpl implements IRegistrationFormService {
     private final IRegistrationFormDAO dao = new RegistrationFormDAOImpl();
@@ -36,6 +37,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
 
     public RegistrationForm getById(int id) {
         return id > 0 ? dao.findById(id) : null;
+    }
+
+    @Override
+    public RegistrationForm getByActivityId(int activityId) {
+        return activityId > 0 ? dao.findByActivityId(activityId) : null;
     }
 
     @Override
@@ -66,6 +72,20 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     @Override
+    public String rejectApplication(int registrationId) {
+        if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
+        return dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED")
+                ? null : "Chỉ có thể từ chối đơn đang chờ xử lý.";
+    }
+
+    @Override
+    public String undoApplicationRejection(int registrationId) {
+        if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
+        return dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED")
+                ? null : "Chỉ có thể hủy từ chối đơn đã bị từ chối.";
+    }
+
+    @Override
     public String undoApplicationApproval(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
         return dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED")
@@ -77,6 +97,9 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (!dao.isActivityApproved(f.getActivityId())) {
             return "Chỉ được tạo hoặc chỉnh sửa form cho hoạt động đã được duyệt.";
         }
+        if (!dao.isActivityUpcoming(f.getActivityId())) {
+            return "Chỉ được tạo hoặc chỉnh sửa form đăng ký cho hoạt động ở trạng thái Chưa diễn ra.";
+        }
         if (dao.hasFormForActivity(f.getActivityId(), f.getId())) {
             return "Hoạt động này đã có form đăng ký. Mỗi hoạt động chỉ được tạo một form.";
         }
@@ -87,7 +110,10 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (f.getOpenAt() != null && f.getCloseAt() != null && !f.getCloseAt().isAfter(f.getOpenAt()))
             return "Thời gian đóng đăng ký phải lớn hơn thời gian mở đăng ký.";
         LocalDateTime now = DateTimeUtil.now();
-        if (f.getOpenAt() != null && f.getOpenAt().isBefore(now))
+        RegistrationForm existingForm = f.getId() > 0 ? getById(f.getId()) : null;
+        boolean openingTimeUnchanged = existingForm != null
+                && Objects.equals(f.getOpenAt(), existingForm.getOpenAt());
+        if (f.getOpenAt() != null && f.getOpenAt().isBefore(now) && !openingTimeUnchanged)
             return "Thời gian mở đăng ký không được ở quá khứ.";
         if (f.getCloseAt() != null && !f.getCloseAt().isAfter(now))
             return "Thời gian đóng đăng ký phải ở tương lai.";
@@ -98,6 +124,14 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             RegistrationFormStatus.valueOf(f.getStatus());
         } catch (IllegalArgumentException e) {
             return "Trạng thái form không hợp lệ.";
+        }
+        if (RegistrationFormStatus.DRAFT.name().equals(f.getStatus())
+                && f.getOpenAt() != null && !f.getOpenAt().isAfter(now)) {
+            return "Form bản nháp không thể có thời gian mở đã qua; hãy chọn trạng thái phù hợp hoặc đặt thời gian mở mới.";
+        }
+        if (RegistrationFormStatus.OPENING.name().equals(f.getStatus())
+                && f.getOpenAt() != null && f.getOpenAt().isAfter(now)) {
+            return "Chưa đến thời gian mở đăng ký. Hãy lưu form ở trạng thái Bản nháp để form tự mở đúng hạn.";
         }
         if (RegistrationFormStatus.OPENING.name().equals(f.getStatus())
                 && f.getCloseAt() != null && !f.getCloseAt().isAfter(now)) {
@@ -110,11 +144,14 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (!dao.isActivityApproved(f.getActivityId())) {
             return "Không thể lưu form vì hoạt động chưa được duyệt.";
         }
+        if (!dao.isActivityUpcoming(f.getActivityId())) {
+            return "Không thể lưu form vì hoạt động không còn ở trạng thái Chưa diễn ra.";
+        }
         if (dao.hasFormForActivity(f.getActivityId(), f.getId())) {
             return "Hoạt động này đã có form đăng ký. Mỗi hoạt động chỉ được tạo một form.";
         }
         now = DateTimeUtil.now();
-        if (f.getOpenAt() != null && f.getOpenAt().isBefore(now)) {
+        if (f.getOpenAt() != null && f.getOpenAt().isBefore(now) && !openingTimeUnchanged) {
             return "Thời gian mở đăng ký không được ở quá khứ.";
         }
         if (f.getCloseAt() != null && !f.getCloseAt().isAfter(now)) {
@@ -139,10 +176,12 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             if (!dao.isActivityApproved(form.getActivityId())) {
                 return "Chỉ được mở form khi hoạt động đã được duyệt.";
             }
+            if (!dao.isActivityUpcoming(form.getActivityId())) {
+                return "Không thể mở form vì hoạt động không còn ở trạng thái Chưa diễn ra.";
+            }
             LocalDateTime now = DateTimeUtil.now();
-            boolean reopening = RegistrationFormStatus.CLOSED.name().equals(form.getStatus());
-            if (!reopening && form.getOpenAt() != null && !form.getOpenAt().isAfter(now)) {
-                return "Không thể mở form vì thời gian mở đăng ký đã ở quá khứ.";
+            if (form.getOpenAt() != null && form.getOpenAt().isAfter(now)) {
+                return "Chưa đến thời gian mở đăng ký. Hãy giữ form ở trạng thái Bản nháp để tự mở đúng hạn.";
             }
             if (form.getCloseAt() != null && !form.getCloseAt().isAfter(now)) {
                 return "Không thể mở form vì thời gian đóng đăng ký đã qua.";

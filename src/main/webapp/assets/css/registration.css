@@ -333,6 +333,88 @@
     font-size: .86rem;
 }
 
+.registration-review-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.registration-review-actions form {
+    margin: 0;
+}
+
+.registration-review-button {
+    min-width: 145px;
+    border: 1px solid transparent;
+    color: #fff;
+    font-weight: 650;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.registration-review-button--approve {
+    background: #21804a;
+    border-color: #21804a;
+}
+
+.registration-review-button--approve:hover {
+    background: #176a3b;
+    border-color: #176a3b;
+}
+
+.registration-review-button--reject {
+    background: #b42318;
+    border-color: #b42318;
+}
+
+.registration-review-button--reject:hover {
+    background: #941b13;
+    border-color: #941b13;
+}
+
+.registration-review-button--undo-approval {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #405777;
+}
+
+.registration-review-button--undo-approval:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #2f4663;
+}
+
+.registration-review-button--undo-rejection {
+    background: #fff7ed;
+    border-color: #fed7aa;
+    color: #9a3412;
+}
+
+.registration-review-button--undo-rejection:hover {
+    background: #ffedd5;
+    border-color: #fdba74;
+    color: #7c2d12;
+}
+
+.registration-review-button:focus-visible {
+    outline: 3px solid rgb(45 102 177 / 30%);
+    outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+    .registration-review-actions {
+        width: 100%;
+    }
+
+    .registration-review-actions form {
+        flex: 1 1 0;
+    }
+
+    .registration-review-button {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
 .registration-applications-table th,
 .registration-applications-table td {
     padding-right: 12px;

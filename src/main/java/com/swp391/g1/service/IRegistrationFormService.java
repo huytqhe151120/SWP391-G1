@@ -16,6 +16,8 @@ public interface IRegistrationFormService {
 
     RegistrationForm getById(int id);
 
+    RegistrationForm getByActivityId(int activityId);
+
     RegistrationForm getOpenFormById(int id, int studentId);
 
     boolean hasStudentRegistered(int formId, int studentId);
@@ -25,6 +27,10 @@ public interface IRegistrationFormService {
     RegistrationApplication getApplicationById(int registrationId);
 
     String reviewApplication(int registrationId);
+
+    String rejectApplication(int registrationId);
+
+    String undoApplicationRejection(int registrationId);
 
     String undoApplicationApproval(int registrationId);
 

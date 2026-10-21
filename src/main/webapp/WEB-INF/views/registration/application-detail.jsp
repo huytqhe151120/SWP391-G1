@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết đơn đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-14">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -27,6 +27,8 @@
                 </header>
 
                 <c:if test="${param.msg eq 'approved'}"><div class="alert alert-success activity-alert">Đã duyệt đơn đăng ký.</div></c:if>
+                <c:if test="${param.msg eq 'rejected'}"><div class="alert alert-error activity-alert">Đã từ chối đơn đăng ký.</div></c:if>
+                <c:if test="${param.msg eq 'rejectionUndone'}"><div class="alert alert-success activity-alert">Đã hủy từ chối; đơn trở về trạng thái chờ duyệt.</div></c:if>
                 <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt đơn; đơn đang chờ xử lý.</div></c:if>
                 <c:if test="${param.msg eq 'reviewError'}"><div class="alert alert-error activity-alert">Trạng thái đơn đã thay đổi hoặc không thể cập nhật.</div></c:if>
 
@@ -38,6 +40,7 @@
                         </div>
                         <c:choose>
                             <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
+                            <c:when test="${application.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
                             <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
                         </c:choose>
                     </div>
@@ -74,18 +77,34 @@
                         <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=applications&amp;id=${form.id}">Quay lại danh sách đơn</a>
                         <c:choose>
                             <c:when test="${application.status eq 'SUBMITTED'}">
+                                <div class="registration-review-actions">
                                 <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                                     <input type="hidden" name="action" value="approveApplication">
                                     <input type="hidden" name="registrationId" value="${application.id}">
-                                    <button class="button button-primary" type="submit">Duyệt đơn</button>
+                                    <button class="button registration-review-button registration-review-button--approve" type="submit">Duyệt đơn</button>
                                 </form>
+                                <form method="post" action="${pageContext.request.contextPath}/registration-forms"
+                                      onsubmit="return confirm('Từ chối đơn đăng ký này?')">
+                                    <input type="hidden" name="action" value="rejectApplication">
+                                    <input type="hidden" name="registrationId" value="${application.id}">
+                                    <button class="button registration-review-button registration-review-button--reject" type="submit">Từ chối đơn</button>
+                                </form>
+                                </div>
                             </c:when>
                             <c:when test="${application.status eq 'APPROVED'}">
                                 <form method="post" action="${pageContext.request.contextPath}/registration-forms"
                                       onsubmit="return confirm('Hủy duyệt đơn này và chuyển về trạng thái chờ xử lý?')">
                                     <input type="hidden" name="action" value="undoApplicationApproval">
                                     <input type="hidden" name="registrationId" value="${application.id}">
-                                    <button class="button" type="submit">Hủy duyệt</button>
+                                    <button class="button registration-review-button registration-review-button--undo-approval" type="submit">Hủy duyệt</button>
+                                </form>
+                            </c:when>
+                            <c:when test="${application.status eq 'REJECTED'}">
+                                <form method="post" action="${pageContext.request.contextPath}/registration-forms"
+                                      onsubmit="return confirm('Hủy từ chối đơn này và chuyển về trạng thái chờ duyệt?')">
+                                    <input type="hidden" name="action" value="undoApplicationRejection">
+                                    <input type="hidden" name="registrationId" value="${application.id}">
+                                    <button class="button registration-review-button registration-review-button--undo-rejection" type="submit">Hủy từ chối</button>
                                 </form>
                             </c:when>
                         </c:choose>

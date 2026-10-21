@@ -37,9 +37,8 @@ public final class StatusUtil {
         return switch (status.toString()) {
             case "ACTIVE", "COMPLETED", "APPROVED" -> "status-green";
             case "ONGOING", "PENDING" -> "status-yellow";
-            case "CANCELLED", "REJECTED" -> "status-red";
+            case "CANCELLED", "REJECTED", "CLOSED" -> "status-red";
             case "OPENING" -> "status-green";
-            case "CLOSED" -> "status-gray";
             case "DRAFT" -> "status-yellow";
             default -> "status-gray";
         };

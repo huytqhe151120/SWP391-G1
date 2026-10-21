@@ -4,6 +4,7 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.RegistrationApplication;
 import com.swp391.g1.model.RegistrationForm;
 import com.swp391.g1.model.RegistrationFormField;
+import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.Student;
 import com.swp391.g1.service.AccessPolicy;
@@ -108,6 +109,37 @@ public class RegistrationFormServlet extends HttpServlet {
                 if (f == null) {
                     resp.sendError(404);
                     return;
+                }
+                if ("edit".equals(action) && f.getRegistrationCount() > 0) {
+                    req.getSession().setAttribute("errorMessage",
+                            "Form đã có sinh viên đăng ký nên không thể chỉnh sửa.");
+                    resp.sendRedirect(req.getContextPath()
+                            + "/registration-forms?action=view&id=" + f.getId());
+                    return;
+                }
+                if ("create".equals(action)) {
+                    int activityId = parseInt(req.getParameter("activityId"));
+                    if (activityId > 0) {
+                        var activity = activityService.getActivityById(activityId);
+                        if (activity == null) {
+                            resp.sendError(404, "Không tìm thấy hoạt động.");
+                            return;
+                        }
+                        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+                            req.getSession().setAttribute("errorMessage",
+                                    "Không thể tạo form đăng ký vì hoạt động không ở trạng thái Chưa diễn ra.");
+                            resp.sendRedirect(req.getContextPath()
+                                    + "/activities?action=detail&id=" + activityId);
+                            return;
+                        }
+                        RegistrationForm existing = service.getByActivityId(activityId);
+                        if (existing != null) {
+                            resp.sendRedirect(req.getContextPath()
+                                    + "/registration-forms?action=view&id=" + existing.getId());
+                            return;
+                        }
+                        f.setActivityId(activityId);
+                    }
                 }
                 req.setAttribute("form", f);
                 setFormPageAttributes(req, f);
@@ -218,18 +250,27 @@ public class RegistrationFormServlet extends HttpServlet {
                                 + URLEncoder.encode(error, StandardCharsets.UTF_8)));
                 return;
             }
-            if ("approveApplication".equals(action) || "undoApplicationApproval".equals(action)) {
+            if ("approveApplication".equals(action) || "rejectApplication".equals(action)
+                    || "undoApplicationApproval".equals(action) || "undoApplicationRejection".equals(action)) {
                 int registrationId = parseInt(req.getParameter("registrationId"));
-                error = "approveApplication".equals(action)
-                        ? service.reviewApplication(registrationId)
-                        : service.undoApplicationApproval(registrationId);
+                error = switch (action) {
+                    case "approveApplication" -> service.reviewApplication(registrationId);
+                    case "rejectApplication" -> service.rejectApplication(registrationId);
+                    case "undoApplicationApproval" -> service.undoApplicationApproval(registrationId);
+                    default -> service.undoApplicationRejection(registrationId);
+                };
                 RegistrationApplication application = service.getApplicationById(registrationId);
                 if (application == null) {
                     resp.sendError(404);
                     return;
                 }
                 String message = error == null
-                        ? ("approveApplication".equals(action) ? "approved" : "approvalUndone")
+                        ? switch (action) {
+                            case "approveApplication" -> "approved";
+                            case "rejectApplication" -> "rejected";
+                            case "undoApplicationRejection" -> "rejectionUndone";
+                            default -> "approvalUndone";
+                        }
                         : "reviewError";
                 resp.sendRedirect(req.getContextPath() + "/registration-forms?action=application&id="
                         + application.getId() + "&msg=" + message);
@@ -242,7 +283,15 @@ public class RegistrationFormServlet extends HttpServlet {
             }
             String rawId = req.getParameter("id");
             int formId = parseInt(rawId);
-            if (rawId != null && !rawId.isBlank() && formId <= 0) {
+            boolean invalidFormId = false;
+            if (rawId != null && !rawId.isBlank()) {
+                try {
+                    invalidFormId = Integer.parseInt(rawId.trim()) < 0;
+                } catch (NumberFormatException e) {
+                    invalidFormId = true;
+                }
+            }
+            if (invalidFormId) {
                 error = "Form đăng ký không hợp lệ.";
                 RegistrationForm invalidForm = new RegistrationForm();
                 invalidForm.setActivityId(parseInt(req.getParameter("activityId")));
@@ -263,6 +312,13 @@ public class RegistrationFormServlet extends HttpServlet {
                 RegistrationForm existing = service.getById(f.getId());
                 if (existing == null) {
                     resp.sendError(404);
+                    return;
+                }
+                if (existing.getRegistrationCount() > 0) {
+                    req.getSession().setAttribute("errorMessage",
+                            "Form đã có sinh viên đăng ký nên không thể chỉnh sửa.");
+                    resp.sendRedirect(req.getContextPath()
+                            + "/registration-forms?action=view&id=" + existing.getId());
                     return;
                 }
                 f.setFields(existing.getFields());
@@ -330,8 +386,9 @@ public class RegistrationFormServlet extends HttpServlet {
                 .toList();
         var approvedActivities = activityService.getAllActivities().stream()
                 .filter(activity -> activity.getApprovalStatus() == ApprovalStatus.APPROVED)
+                .filter(activity -> activity.getActivityStatus() == ActivityStatus.UPCOMING)
                 .toList();
-        request.setAttribute("hasApprovedActivities", !approvedActivities.isEmpty());
+        request.setAttribute("hasEligibleApprovedActivities", !approvedActivities.isEmpty());
         request.setAttribute("activities", approvedActivities.stream()
                 .filter(activity -> !usedActivityIds.contains(activity.getId()))
                 .toList());

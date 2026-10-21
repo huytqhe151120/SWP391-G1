@@ -16,6 +16,8 @@ public interface IRegistrationFormDAO {
 
     RegistrationForm findById(int id);
 
+    RegistrationForm findByActivityId(int activityId);
+
     RegistrationForm findOpenFormById(int id, int studentId);
 
     List<RegistrationApplication> findApplications(int formId);
@@ -23,6 +25,8 @@ public interface IRegistrationFormDAO {
     RegistrationApplication findApplicationById(int registrationId);
 
     boolean isActivityApproved(int activityId);
+
+    boolean isActivityUpcoming(int activityId);
 
     boolean hasFormForActivity(int activityId, int exceptFormId);
 

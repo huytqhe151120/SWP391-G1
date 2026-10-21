@@ -92,6 +92,23 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     @Override
+    public RegistrationForm findByActivityId(int activityId) {
+        try (Connection c = DBContext.getConnection();
+                PreparedStatement p = c.prepareStatement(SELECT + " WHERE f.activity_id=?")) {
+            p.setInt(1, activityId);
+            RegistrationForm form;
+            try (ResultSet r = p.executeQuery()) {
+                if (!r.next()) return null;
+                form = map(r);
+            }
+            form.setFields(findFields(c, form.getId()));
+            return form;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể tải form đăng ký của hoạt động.", e);
+        }
+    }
+
+    @Override
     public RegistrationForm findOpenFormById(int id, int studentId) {
         String sql = SELECT + " WHERE f.id=? AND f.status='OPENING' "
                 + "AND (f.open_at IS NULL OR f.open_at<=SYSDATETIME()) "
@@ -123,6 +140,19 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể kiểm tra trạng thái duyệt của hoạt động.", e);
+        }
+    }
+
+    @Override
+    public boolean isActivityUpcoming(int activityId) {
+        String sql = "SELECT 1 FROM dbo.extracurricular_activity WHERE id=? AND activity_status='UPCOMING'";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            try (ResultSet r = p.executeQuery()) {
+                return r.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra trạng thái hoạt động.", e);
         }
     }
 
@@ -288,10 +318,12 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         String sql = "INSERT INTO dbo.activity_registration_form(activity_id,title,description,open_at,close_at,status,created_at) "
                 + "OUTPUT INSERTED.id SELECT ?,?,?,?,?,?,SYSDATETIME() "
                 + "WHERE EXISTS(SELECT 1 FROM dbo.extracurricular_activity "
-                + "WHERE id=? AND approval_status='APPROVED') "
+                + "WHERE id=? AND approval_status='APPROVED' AND activity_status='UPCOMING') "
                 + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration_form existing "
                 + "WHERE existing.activity_id=? ) "
                 + "AND (CAST(? AS datetime2) IS NULL OR CAST(? AS datetime2)>=SYSDATETIME()) "
+                + "AND (?<>'OPENING' OR CAST(? AS datetime2) IS NULL "
+                + "OR CAST(? AS datetime2)<=SYSDATETIME()) "
                 + "AND (?<>'OPENING' OR CAST(? AS datetime2) IS NULL "
                 + "OR CAST(? AS datetime2)>SYSDATETIME())";
         try (Connection c = DBContext.getConnection()) {
@@ -305,8 +337,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     p.setTimestamp(9, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
                     p.setTimestamp(10, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
                     p.setString(11, f.getStatus());
-                    p.setTimestamp(12, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
-                    p.setTimestamp(13, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(12, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setTimestamp(13, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setString(14, f.getStatus());
+                    p.setTimestamp(15, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(16, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
                     try (ResultSet r = p.executeQuery()) {
                         if (!r.next()) {
                             c.rollback();
@@ -335,8 +370,12 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "WHERE id=? AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=?) "
                 + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration_form existing "
                 + "WHERE existing.activity_id=? AND existing.id<>?) "
-                + "AND EXISTS(SELECT 1 FROM dbo.extracurricular_activity WHERE id=? AND approval_status='APPROVED') "
-                + "AND (CAST(? AS datetime2) IS NULL OR CAST(? AS datetime2)>=SYSDATETIME()) "
+                + "AND EXISTS(SELECT 1 FROM dbo.extracurricular_activity "
+                + "WHERE id=? AND approval_status='APPROVED' AND activity_status='UPCOMING') "
+                + "AND (CAST(? AS datetime2) IS NULL OR CAST(? AS datetime2)>=SYSDATETIME() "
+                + "OR open_at=CAST(? AS datetime2)) "
+                + "AND (?<>'OPENING' OR CAST(? AS datetime2) IS NULL "
+                + "OR CAST(? AS datetime2)<=SYSDATETIME()) "
                 + "AND (?<>'OPENING' OR CAST(? AS datetime2) IS NULL "
                 + "OR CAST(? AS datetime2)>SYSDATETIME())";
         try (Connection c = DBContext.getConnection()) {
@@ -352,9 +391,13 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     p.setInt(11, f.getActivityId());
                     p.setTimestamp(12, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
                     p.setTimestamp(13, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
-                    p.setString(14, f.getStatus());
-                    p.setTimestamp(15, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
-                    p.setTimestamp(16, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(14, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setString(15, f.getStatus());
+                    p.setTimestamp(16, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setTimestamp(17, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setString(18, f.getStatus());
+                    p.setTimestamp(19, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(20, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
                     changed = p.executeUpdate();
                 }
                 if (changed == 0) {
@@ -424,7 +467,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "WHERE a.id=activity_registration_form.activity_id AND a.approval_status='APPROVED' "
                 + "AND a.activity_status='UPCOMING' "
                 + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME())) "
-                + "AND (open_at IS NULL OR open_at>SYSDATETIME() OR status='CLOSED') "
+                + "AND (open_at IS NULL OR open_at<=SYSDATETIME()) "
                 + "AND (close_at IS NULL OR close_at>SYSDATETIME())))";
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             p.setString(1, status);

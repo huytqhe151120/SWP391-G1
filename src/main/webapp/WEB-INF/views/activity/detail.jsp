@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261021-12">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -41,10 +41,31 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
-                <a class="button button-primary"
-                   href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
-            </c:if>
+            <div class="activity-detail-header-actions">
+                <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
+                    <a class="button button-primary"
+                       href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+                </c:if>
+                <c:if test="${canManageActivities}">
+                    <c:choose>
+                        <c:when test="${not empty registrationForm}">
+                            <a class="button button-primary"
+                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}">
+                                Xem form và đơn đăng ký
+                            </a>
+                        </c:when>
+                        <c:when test="${activity.approvalStatus == 'APPROVED'}">
+                            <a class="button button-primary"
+                               href="${pageContext.request.contextPath}/registration-forms?action=create&amp;activityId=${activity.id}">
+                                Tạo form đăng ký
+                            </a>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="field-hint">Chỉ có thể tạo form đăng ký sau khi hoạt động được duyệt.</span>
+                        </c:otherwise>
+                    </c:choose>
+                </c:if>
+            </div>
         </div>
 
         <div class="activity-tabs-nav" role="tablist">

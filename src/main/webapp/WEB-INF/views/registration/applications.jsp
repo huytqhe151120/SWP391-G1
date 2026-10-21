@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Đơn sinh viên đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-14">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -29,6 +29,7 @@
                 </header>
 
                 <c:if test="${param.msg eq 'approved'}"><div class="alert alert-success activity-alert">Đã duyệt đơn đăng ký.</div></c:if>
+                <c:if test="${param.msg eq 'rejected'}"><div class="alert alert-error activity-alert">Đã từ chối đơn đăng ký.</div></c:if>
                 <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt; đơn trở về trạng thái chờ xử lý.</div></c:if>
                 <c:if test="${param.msg eq 'reviewError'}"><div class="alert alert-error activity-alert">Trạng thái đơn đã thay đổi hoặc không thể cập nhật.</div></c:if>
 
@@ -58,6 +59,7 @@
                                     <td class="registration-sticky-status">
                                         <c:choose>
                                             <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
+                                            <c:when test="${application.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
                                             <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
                                         </c:choose>
                                     </td>
