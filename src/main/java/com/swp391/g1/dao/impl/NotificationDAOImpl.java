@@ -15,6 +15,19 @@ public class NotificationDAOImpl implements INotificationDAO {
         return "";
     }
 
+    // Only fixed SQL fragments are selected; request values never become SQL.
+    private static String categoryClause(String category) {
+        if (category == null) return "";
+        return switch (category) {
+            case "activities" -> " AND (n.event_type LIKE 'ACTIVITY[_]%' OR n.event_type LIKE 'PARTNER[_]%' OR n.target_url LIKE '/activities%' OR n.target_url LIKE '/partner-invitations%')";
+            case "qa" -> " AND (n.event_type LIKE 'QUESTION[_]%' OR n.event_type LIKE 'ANSWER[_]%' OR n.event_type LIKE 'QA[_]%' OR n.target_url LIKE '/student-qa%' OR n.target_url LIKE '/qa-management%' OR n.target_url LIKE '/answer-question%')";
+            case "appeals" -> " AND (n.event_type LIKE 'APPEAL[_]%' OR n.target_url LIKE '/appeal%')";
+            case "results" -> " AND (n.event_type LIKE 'RESULT[_]%' OR n.target_url LIKE '/results%' OR n.target_url LIKE '/student-points%')";
+            case "messages" -> " AND (n.event_type LIKE 'MESSAGE[_]%' OR n.target_url LIKE '/student-inbox%' OR n.target_url LIKE '/organizer-inbox%')";
+            default -> "";
+        };
+    }
+
     @Override
     public int createApprovalNotification(String title, String content, String targetUrl) {
         try (Connection c = DBContext.getConnection()) {
@@ -147,10 +160,10 @@ public class NotificationDAOImpl implements INotificationDAO {
     }
 
     @Override
-    public List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit) {
+    public List<NotificationDTO> findByAccount(int accountId, String filter, String category, int offset, int limit) {
         String sql = "SELECT n.id, n.title, n.content, n.target_url, n.created_at, un.is_read "
                 + "FROM user_notifications un JOIN notifications n ON n.id = un.notification_id "
-                + "WHERE un.user_id = ?" + filterClause(filter)
+                + "WHERE un.user_id = ?" + filterClause(filter) + categoryClause(category)
                 + " ORDER BY n.created_at DESC, n.id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         List<NotificationDTO> list = new ArrayList<>();
         try (Connection c = DBContext.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
@@ -176,14 +189,14 @@ public class NotificationDAOImpl implements INotificationDAO {
     }
 
     @Override
-    public int countByAccount(int accountId, String filter) {
-        return count("SELECT COUNT(*) FROM user_notifications un WHERE un.user_id = ?"
-                + filterClause(filter), accountId);
+    public int countByAccount(int accountId, String filter, String category) {
+        return count("SELECT COUNT(*) FROM user_notifications un JOIN notifications n ON n.id = un.notification_id WHERE un.user_id = ?"
+                + filterClause(filter) + categoryClause(category), accountId);
     }
 
     @Override
     public int countUnread(int accountId) {
-        return countByAccount(accountId, "unread");
+        return countByAccount(accountId, "unread", "all");
     }
 
     private int count(String sql, int accountId) {

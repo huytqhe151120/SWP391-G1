@@ -99,15 +99,15 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
-    public List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size) {
+    public List<NotificationDTO> getNotifications(int accountId, String filter, String category, int page, int size) {
         int safeSize = Math.max(1, Math.min(size, 50));
         int offset = (Math.max(page, 1) - 1) * safeSize;
-        return notificationDAO.findByAccount(accountId, filter, offset, safeSize);
+        return notificationDAO.findByAccount(accountId, filter, category, offset, safeSize);
     }
 
     @Override
-    public int countNotifications(int accountId, String filter) {
-        return notificationDAO.countByAccount(accountId, filter);
+    public int countNotifications(int accountId, String filter, String category) {
+        return notificationDAO.countByAccount(accountId, filter, category);
     }
 
     @Override

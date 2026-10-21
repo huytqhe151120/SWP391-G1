@@ -29,9 +29,9 @@ public interface INotificationService {
     /** Gửi thông báo phản hồi lời mời của đối tác tới nhân sự phụ trách chính. */
     void notifyPartnerInvitationOwner(int invitationId, String eventType, String title, String content);
 
-    List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size);
+    List<NotificationDTO> getNotifications(int accountId, String filter, String category, int page, int size);
 
-    int countNotifications(int accountId, String filter);
+    int countNotifications(int accountId, String filter, String category);
 
     int countUnread(int accountId);
 

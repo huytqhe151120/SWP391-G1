@@ -20,10 +20,10 @@ public interface INotificationDAO {
     int createPartnerInvitationOwnerNotification(
             int invitationId, String eventType, String title, String content, String targetUrl);
 
-    /** filter: "all" | "unread" | "read". */
-    List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);
+    /** filter: all|unread|read; category: all|activities|qa|appeals|results|messages. */
+    List<NotificationDTO> findByAccount(int accountId, String filter, String category, int offset, int limit);
 
-    int countByAccount(int accountId, String filter);
+    int countByAccount(int accountId, String filter, String category);
 
     int countUnread(int accountId);
 

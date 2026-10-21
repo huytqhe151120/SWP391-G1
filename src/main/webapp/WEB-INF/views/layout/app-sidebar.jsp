@@ -28,6 +28,8 @@
         else if (uri.contains("/student-qa")) navActive = "student-qa";
         else if (uri.contains("/qa-management")) navActive = "qa-management";
         else if (uri.contains("/appeal")) navActive = "appeal";
+        else if (uri.contains("/notifications")) navActive = "notifications";
+        else if (uri.contains("/profile")) navActive = "profile";
         else if (uri.contains("/student-inbox") || uri.contains("/organizer-inbox")) navActive = "inbox";
         else if (uri.contains("/student")) navActive = "students";
         else if (uri.contains("/staff")) navActive = "staff";
@@ -81,20 +83,6 @@
                 </span>Phúc khảo
             </a>
 
-            <span class="activity-nav-group">Cá nhân</span>
-            <a class="<%= "inbox".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-inbox"
-               <%= "inbox".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-                <span class="activity-nav-icon" aria-hidden="true">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                </span>Hộp thư &amp; Thông báo
-            </a>
-
-            <a class="<%= "profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/home#profile"
-               <%= "profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-                <span class="activity-nav-icon" aria-hidden="true">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                </span>Hồ sơ cá nhân
-            </a>
         <% } %>
 
         <%-- ========================================== --%>
@@ -170,13 +158,6 @@
                 </span>Quản lý Hỏi &amp; Đáp
             </a>
 
-            <a class="<%= "inbox".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/organizer-inbox"
-               <%= "inbox".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-                <span class="activity-nav-icon" aria-hidden="true">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                </span>Hộp thư hỗ trợ
-            </a>
-
             <a class="<%= "points-management".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/appeal?action=manage"
                <%= "points-management".equals(navActive) ? "aria-current=\"page\"" : "" %>>
                 <span class="activity-nav-icon" aria-hidden="true">
@@ -239,6 +220,22 @@
                 <span class="activity-nav-icon" aria-hidden="true">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                 </span>Quản lý Hỏi &amp; Đáp
+            </a>
+        <% } %>
+        <% if (!isGuest) { %>
+            <span class="activity-nav-group">Cá nhân</span>
+            <a class="<%= "notifications".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/notifications"
+               <%= "notifications".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <span class="activity-nav-icon" aria-hidden="true">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </span>Thông báo
+            </a>
+
+            <a class="<%= "profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/profile"
+               <%= "profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <span class="activity-nav-icon" aria-hidden="true">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </span>Hồ sơ cá nhân
             </a>
         <% } %>
     </nav>
