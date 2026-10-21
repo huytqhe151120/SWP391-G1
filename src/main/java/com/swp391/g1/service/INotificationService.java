@@ -29,7 +29,7 @@ public interface INotificationService {
     /** Gửi thông báo phản hồi lời mời của đối tác tới nhân sự phụ trách chính. */
     void notifyPartnerInvitationOwner(int invitationId, String eventType, String title, String content);
 
-    /** Gửi thông báo câu hỏi mới tới các tài khoản có quyền trả lời. */
+    /** Gửi xác nhận cho người gửi và thông báo câu hỏi mới tới các tài khoản có quyền trả lời. */
     void notifyQuestionCreated(int questionId, int activityId, String title, String activityName);
 
     List<NotificationDTO> getNotifications(int accountId, String filter, String category, int page, int size);

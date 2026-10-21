@@ -23,6 +23,9 @@ public interface INotificationDAO {
     /** Notifies university responders and partner staff assigned to the activity. */
     int createQuestionNotification(int activityId, String title, String content, String targetUrl);
 
+    /** Sends a submission confirmation only to the student who owns the question. */
+    int createQuestionSenderNotification(int questionId, String title, String content, String targetUrl);
+
     /** filter: all|unread|read; category: all|activities|qa|appeals|results|messages. */
     List<NotificationDTO> findByAccount(int accountId, String filter, String category, int offset, int limit);
 

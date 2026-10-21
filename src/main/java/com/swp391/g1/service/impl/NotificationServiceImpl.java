@@ -101,6 +101,14 @@ public class NotificationServiceImpl implements INotificationService {
     @Override
     public void notifyQuestionCreated(int questionId, int activityId, String title, String activityName) {
         try {
+            notificationDAO.createQuestionSenderNotification(questionId,
+                    "Đã gửi câu hỏi thành công",
+                    "Câu hỏi \"" + title + "\" về hoạt động \"" + activityName + "\" đã được gửi và đang chờ trả lời.",
+                    "/student-qa?activityId=" + activityId);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send question submission confirmation.", e);
+        }
+        try {
             notificationDAO.createQuestionNotification(activityId,
                     "Câu hỏi mới",
                     "Câu hỏi \"" + title + "\" về hoạt động \"" + activityName + "\" đang chờ trả lời.",

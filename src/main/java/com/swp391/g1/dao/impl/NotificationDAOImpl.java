@@ -137,6 +137,18 @@ public class NotificationDAOImpl implements INotificationDAO {
                 recipientsSql, activityId, activityId);
     }
 
+    @Override
+    public int createQuestionSenderNotification(int questionId, String title, String content, String targetUrl) {
+        String recipientsSql = """
+                SELECT s.account_id
+                FROM question q
+                JOIN student s ON s.id = q.student_id
+                WHERE q.id = ? AND s.account_id IS NOT NULL
+                """;
+        return createNotificationForRecipients("QUESTION_SUBMITTED", title, content, targetUrl,
+                recipientsSql, questionId);
+    }
+
     private int createNotificationForRecipients(
             String eventType, String title, String content, String targetUrl,
             String recipientsSql, int... recipientParams) {
