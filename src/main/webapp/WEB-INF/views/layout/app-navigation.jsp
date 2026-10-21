@@ -25,9 +25,5 @@
         <script>window.APP_CTX = '${pageContext.request.contextPath}';</script>
         <script src="${pageContext.request.contextPath}/assets/js/notification.js" defer></script>
         <% } %>
-        <span class="activity-header-user">${empty sessionScope['com.swp391.g1.auth.CURRENT_USER'] ? 'Tài khoản' : sessionScope['com.swp391.g1.auth.CURRENT_USER'].username}</span>
-        <form method="post" action="${pageContext.request.contextPath}/logout">
-            <button class="activity-header-action" type="submit">Đăng xuất</button>
-        </form>
     </div>
 </header>

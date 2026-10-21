@@ -4,6 +4,8 @@
     font-family: "Segoe UI", Arial, sans-serif;
     color: #172033;
     background: #f3f6fb;
+    --surface-secondary: #f8fafc;
+    --border: #e2e8f0;
 }
 
 * {
@@ -46,8 +48,9 @@ a:hover {
 }
 
 .page {
-    width: min(1180px, calc(100% - 40px));
-    margin: 36px auto;
+    width: min(1440px, calc(100% - clamp(24px, 4vw, 64px)));
+    min-width: 0;
+    margin: clamp(20px, 3vw, 36px) auto;
 }
 
 .page-header,
@@ -72,6 +75,13 @@ h1 {
 .subtitle {
     margin: 7px 0 0;
     color: #64718a;
+}
+
+.error-msg,
+.field-error {
+    color: #dc2626;
+    font-size: .81rem;
+    line-height: 1.4;
 }
 
 .card {
@@ -183,7 +193,11 @@ h1 {
 
 
 .table-wrap {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
 }
 
 table {
@@ -330,9 +344,9 @@ textarea:focus {
     letter-spacing: .14em;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 760px) {
     .page {
-        width: min(100% - 24px, 1180px);
+        width: min(100% - 24px, 1440px);
         margin: 20px auto;
     }
 

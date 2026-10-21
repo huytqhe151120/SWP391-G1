@@ -511,12 +511,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         }
 
         if (activity.getStartTime() == null
-                || !DateTimeUtil.now().isBefore(activity.getStartTime())) {
+                || !DateTimeUtil.nowUtc().isBefore(activity.getStartTime())) {
             throw new IllegalArgumentException(errorMessage);
         }
 
         return activity;
     }
-
-
 }
