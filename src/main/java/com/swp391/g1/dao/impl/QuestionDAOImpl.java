@@ -206,13 +206,18 @@ public class QuestionDAOImpl implements IQuestionDAO {
                      "(title, content, is_anonymous, status, student_id, activity_id, is_public, created_at) " +
                      "VALUES (?, ?, ?, 'PENDING', ?, ?, 0, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
         try (Connection connection = DBContext.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, question.getTitle());
             ps.setString(2, question.getContent());
             ps.setBoolean(3, question.isAnonymous());
             ps.setInt(4, question.getStudentId());
             ps.setInt(5, question.getActivityId());
-            return ps.executeUpdate() > 0;
+            if (ps.executeUpdate() == 0) return false;
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (!keys.next()) throw new SQLException("Question ID was not generated.");
+                question.setId(keys.getInt(1));
+            }
+            return true;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to insert question.", e);
         }

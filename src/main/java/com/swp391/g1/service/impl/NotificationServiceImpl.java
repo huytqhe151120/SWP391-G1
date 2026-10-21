@@ -99,6 +99,18 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
+    public void notifyQuestionCreated(int questionId, int activityId, String title, String activityName) {
+        try {
+            notificationDAO.createQuestionNotification(activityId,
+                    "Câu hỏi mới",
+                    "Câu hỏi \"" + title + "\" về hoạt động \"" + activityName + "\" đang chờ trả lời.",
+                    "/qa-management?action=view&id=" + questionId);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send new question notification.", e);
+        }
+    }
+
+    @Override
     public List<NotificationDTO> getNotifications(int accountId, String filter, String category, int page, int size) {
         int safeSize = Math.max(1, Math.min(size, 50));
         int offset = (Math.max(page, 1) - 1) * safeSize;

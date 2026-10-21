@@ -94,7 +94,7 @@
                <%= "home".equals(navActive) ? "aria-current=\"page\"" : "" %>>
                 <span class="activity-nav-icon" aria-hidden="true">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                </span>Tổng quan
+                </span>Trang chủ
             </a>
 
             <a href="<%= ctx %>/partner-invitations">Lời mời phối hợp</a>
@@ -189,7 +189,7 @@
                <%= "home".equals(navActive) ? "aria-current=\"page\"" : "" %>>
                 <span class="activity-nav-icon" aria-hidden="true">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                </span>Tổng quan
+                </span>Trang chủ
             </a>
 
             <span class="activity-nav-group">Hoạt động</span>

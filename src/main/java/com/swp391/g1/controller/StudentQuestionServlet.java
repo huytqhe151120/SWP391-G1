@@ -14,6 +14,8 @@ import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.INotificationService;
+import com.swp391.g1.service.impl.NotificationServiceImpl;
 import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
@@ -34,6 +36,7 @@ public class StudentQuestionServlet extends HttpServlet {
     private static final int MAX_TITLE_LENGTH = 200;
     private static final int MAX_CONTENT_LENGTH = 4000;
 
+    private final INotificationService notificationService = new NotificationServiceImpl();
     private final IQuestionDAO questionDAO = new QuestionDAOImpl();
     private final IAnswerDAO answerDAO = new AnswerDAOImpl();
     private final IStudentService studentService = new StudentServiceImpl();
@@ -73,6 +76,7 @@ public class StudentQuestionServlet extends HttpServlet {
             question.setStudentId(student.getId());
             question.setActivityId(activityId);
             if (questionDAO.insert(question)) {
+                notificationService.notifyQuestionCreated(question.getId(), activityId, title, activity.getName());
                 response.sendRedirect(request.getContextPath() + ("activity".equals(request.getParameter("returnTo"))
                         ? "/activities?action=detail&id=" + activityId + "&msg=question-created#activity-qa"
                         : "/student-qa?activityId=" + activityId + "&msg=created"));

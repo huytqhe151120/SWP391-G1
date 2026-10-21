@@ -20,6 +20,9 @@ public interface INotificationDAO {
     int createPartnerInvitationOwnerNotification(
             int invitationId, String eventType, String title, String content, String targetUrl);
 
+    /** Notifies university responders and partner staff assigned to the activity. */
+    int createQuestionNotification(int activityId, String title, String content, String targetUrl);
+
     /** filter: all|unread|read; category: all|activities|qa|appeals|results|messages. */
     List<NotificationDTO> findByAccount(int accountId, String filter, String category, int offset, int limit);
 
