@@ -30,6 +30,20 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
     }
 
     @Override
+    public PartnerStaff findByAccountId(int accountId) {
+        String sql = "SELECT * FROM partner_staff WHERE account_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapPartnerStaff(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find partner staff by account ID.", e);
+        }
+    }
+
+    @Override
     public List<PartnerStaff> findByCode(String code) {
         List<PartnerStaff> list = new ArrayList<>();
         String sql = "SELECT * FROM partner_staff WHERE code = ?";
@@ -87,20 +101,6 @@ public class PartnerStaffDAOImpl implements IPartnerStaffDAO {
             throw new IllegalStateException("Failed to find partner staff by company.", e);
         }
         return list;
-    }
-
-    @Override
-    public PartnerStaff findByAccountId(int accountId) {
-        String sql = "SELECT * FROM partner_staff WHERE account_id = ?";
-        try (Connection conn = DBContext.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, accountId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? mapPartnerStaff(rs) : null;
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Failed to find partner staff by account.", e);
-        }
     }
 
     @Override

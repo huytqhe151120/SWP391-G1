@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 public class Answer {
     private int id;
     private int questionId;
-    private int staffId;
+    private Integer staffId;
+    private Integer partnerStaffId;
     private String content;
     private String approvalStatus; // DRAFT, PUBLISHED
     private LocalDateTime createdAt;
@@ -14,6 +15,7 @@ public class Answer {
     // For JOIN display
     private String staffName;
     private String staffCode;
+    private String responderType;
 
     public Answer() {}
 
@@ -34,8 +36,11 @@ public class Answer {
     public int getQuestionId() { return questionId; }
     public void setQuestionId(int questionId) { this.questionId = questionId; }
 
-    public int getStaffId() { return staffId; }
-    public void setStaffId(int staffId) { this.staffId = staffId; }
+    public Integer getStaffId() { return staffId; }
+    public void setStaffId(Integer staffId) { this.staffId = staffId; }
+
+    public Integer getPartnerStaffId() { return partnerStaffId; }
+    public void setPartnerStaffId(Integer partnerStaffId) { this.partnerStaffId = partnerStaffId; }
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
@@ -54,4 +59,7 @@ public class Answer {
 
     public String getStaffCode() { return staffCode; }
     public void setStaffCode(String staffCode) { this.staffCode = staffCode; }
+
+    public String getResponderType() { return responderType; }
+    public void setResponderType(String responderType) { this.responderType = responderType; }
 }

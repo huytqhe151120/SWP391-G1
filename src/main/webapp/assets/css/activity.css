@@ -247,21 +247,27 @@
 
 .activity-nav-icon {
     display: grid;
-    width: 24px;
-    height: 24px;
-    flex: 0 0 24px;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
     place-items: center;
-    border-radius: 7px;
-    background: #f0f4fa;
+    border-radius: 8px;
+    background: #f1f5f9;
     color: #647c9c;
     font-size: 0.94rem;
     line-height: 1;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.activity-nav-icon svg {
+    display: block;
 }
 
 .activity-nav-menu a:hover,
 .activity-nav-menu a.active {
     background: #edf5ff;
     color: #183f7a;
+    font-weight: 600;
     text-decoration: none;
 }
 

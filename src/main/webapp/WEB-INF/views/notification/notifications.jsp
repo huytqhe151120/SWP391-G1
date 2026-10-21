@@ -22,10 +22,19 @@
                         <button type="button" data-filter="unread">Chưa đọc</button>
                         <button type="button" data-filter="read">Đã đọc</button>
                     </span>
+                    <label for="notifCategory">Nhóm thông báo</label>
+                    <select id="notifCategory">
+                        <option value="all">Tất cả nhóm</option>
+                        <option value="activities">Activities — Hoạt động</option>
+                        <option value="qa">Q&amp;A — Hỏi đáp</option>
+                        <option value="appeals">Appeals — Phúc khảo</option>
+                        <option value="results">Results — Kết quả</option>
+                        <option value="messages">Messages — Tin nhắn</option>
+                    </select>
                     <span class="spacer"></span>
                     <button type="button" id="notifPageReadAll">Đánh dấu tất cả đã đọc</button>
                 </div>
-                <div id="notifList" class="notif-page-list"></div>
+                <div aria-live="polite" id="notifList" class="notif-page-list"></div>
                 <div id="notifPager" class="notif-pager"></div>
             </main>
         </div>

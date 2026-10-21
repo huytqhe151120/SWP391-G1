@@ -253,7 +253,8 @@
     <div class="toast toast-${param.msg}" id="toast">
         <c:choose>
             <c:when test="${param.msg == 'success'}"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#check"/></svg> Đã lưu câu trả lời</c:when>
-            <c:when test="${param.msg == 'published'}"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#check-circle"/></svg> Đã đăng câu trả lời lên Q&amp;A công khai</c:when>
+            <c:when test="${param.msg == 'published'}"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#check-circle"/></svg> Đã xuất bản câu trả lời</c:when>
+            <c:when test="${param.msg == 'visibility'}">Đã cập nhật quyền xem câu hỏi</c:when>
             <c:when test="${param.msg == 'deleted'}"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#trash"/></svg> Đã xóa câu trả lời</c:when>
             <c:otherwise><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#alert"/></svg> Có lỗi xảy ra</c:otherwise>
         </c:choose>
@@ -266,6 +267,13 @@
     <%-- Question --%>
     <div class="question-section">
         <div class="q-label"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#question"/></svg> Câu hỏi từ sinh viên</div>
+        <form method="post" action="${pageContext.request.contextPath}/qa-management">
+            <input type="hidden" name="action" value="visibility">
+            <input type="hidden" name="questionId" value="${question.id}">
+            <input type="hidden" name="publicQuestion" value="${not question.publicQuestion}">
+            <p>${question.publicQuestion ? 'Công khai: mọi sinh viên đều xem được' : 'Riêng tư: chỉ sinh viên đã hỏi xem được'}</p>
+            <button type="submit" class="btn btn-primary">${question.publicQuestion ? 'Unpublic · Chuyển riêng tư' : 'Public · Công khai câu hỏi'}</button>
+        </form>
         <h1 class="q-title"><c:out value="${question.title}"/></h1>
         <div class="q-content"><c:out value="${question.content}"/></div>
         <div class="q-meta">
@@ -300,12 +308,10 @@
                 <div class="answer-card ${ans.approvalStatus.toLowerCase()}">
                     <div class="answer-header">
                         <div class="answer-author">
-                            <div class="avatar">
-                                NV
-                            </div>
+                            <div class="avatar">${ans.responderType == 'PARTNER_STAFF' ? 'ĐT' : 'NV'}</div>
                             <div>
                                 <div class="author-name"><c:out value="${ans.staffName}"/></div>
-                                <div class="author-code"><c:out value="${ans.staffCode}"/></div>
+                                <div class="author-code"><c:out value="${ans.staffCode}"/> · ${ans.responderType == 'PARTNER_STAFF' ? 'Nhân viên đối tác' : 'Nhân viên nhà trường'}</div>
                             </div>
                         </div>
                         <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -317,7 +323,8 @@
                                     <span class="status-draft"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#file"/></svg> Nháp</span>
                                 </c:otherwise>
                             </c:choose>
-                            <div class="answer-actions">
+                            <c:set var="canEditAnswer" value="${!isPartnerResponder || ans.partnerStaffId == currentPartnerStaffId}"/>
+                            <c:if test="${canEditAnswer}"><div class="answer-actions">
                                 <c:if test="${ans.approvalStatus == 'DRAFT'}">
                                     <form method="post" action="${pageContext.request.contextPath}/qa-management" style="display:inline">
                                         <input type="hidden" name="action" value="publish">
@@ -333,7 +340,7 @@
                                     <input type="hidden" name="questionId" value="${question.id}">
                                     <button type="submit" class="btn btn-delete" aria-label="Xóa câu trả lời"><svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#trash"/></svg></button>
                                 </form>
-                            </div>
+                            </div></c:if>
                         </div>
                     </div>
                     <div class="answer-content"><c:out value="${ans.content}"/></div>

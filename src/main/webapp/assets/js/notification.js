@@ -85,9 +85,9 @@
     // ---- Trang danh sách ----
     var page = document.getElementById('notifList');
     if (page) {
-        var state = {filter: 'all', page: 1}, pager = document.getElementById('notifPager');
+        var state = {filter: 'all', category: 'all', page: 1}, pager = document.getElementById('notifPager');
         function load() {
-            get({action: 'list', filter: state.filter, page: state.page, size: 10}).then(function (d) {
+            get({action: 'list', filter: state.filter, category: state.category, page: state.page, size: 10}).then(function (d) {
                 state.page = d.page;
                 setBadge(d.unread);
                 page.innerHTML = d.items.length ? d.items.map(itemHtml).join('')
@@ -97,6 +97,11 @@
                     '<button ' + (d.page >= d.pages ? 'disabled' : '') + ' data-p="' + (d.page + 1) + '">Sau ›</button>';
             }).catch(function () { page.innerHTML = '<p class="notif-empty">Không tải được thông báo.</p>'; });
         }
+        document.getElementById('notifCategory').addEventListener('change', function () {
+            state.category = this.value;
+            state.page = 1;
+            load();
+        });
         window.reloadNotifPage = load;
         pager.addEventListener('click', function (e) {
             var b = e.target.closest('button[data-p]');

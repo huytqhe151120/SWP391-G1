@@ -32,7 +32,7 @@
         <div>
             <p class="eyebrow">KÊNH HỖ TRỢ</p>
             <h1 id="page-title">Gửi câu hỏi, nhận câu trả lời rõ ràng</h1>
-            <p class="intro-copy">Bạn có thể xem các câu hỏi đã được trả lời. Câu hỏi đang chờ chỉ hiển thị với chính bạn và bộ phận phụ trách.</p>
+            <p class="intro-copy">Bạn có thể xem câu hỏi công khai và câu hỏi của chính mình. Câu hỏi riêng tư chỉ hiển thị với người hỏi và bộ phận phụ trách.</p>
         </div>
         <div class="student-chip">
             <span class="student-avatar">SV</span>
@@ -47,6 +47,10 @@
         <div class="notice notice-error" role="alert"><c:out value="${error}"/></div>
     </c:if>
 
+    <c:if test="${not empty selectedActivity}">
+        <p>Hỏi &amp; Đáp: <c:out value="${selectedActivity.name}"/></p>
+        <a href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${selectedActivity.id}#activity-qa">Về chi tiết hoạt động</a>
+    </c:if>
     <div class="content-grid">
         <section class="question-form-panel" aria-labelledby="ask-title">
             <p class="section-index">01</p>
@@ -54,6 +58,16 @@
             <p class="section-note">Mô tả đủ bối cảnh để staff có thể trả lời chính xác.</p>
 
             <form method="post" action="${pageContext.request.contextPath}/student-qa">
+                <label for="activityId">Hoạt động</label>
+                <select id="activityId" name="activityId" required>
+                    <option value="">-- Chọn hoạt động --</option>
+                    <c:forEach var="activity" items="${activities}">
+                        <option value="${activity.id}" ${submittedActivityId == activity.id ? 'selected' : ''}>
+                            <c:out value="${activity.name}"/> (<c:out value="${activity.code}"/>)
+                        </option>
+                    </c:forEach>
+                </select>
+
                 <label for="title">Tiêu đề</label>
                 <input id="title" name="title" maxlength="200" required
                        value="<c:out value='${submittedTitle}'/>"
@@ -104,6 +118,9 @@
                                     <time>${dt:format(q.createdAt)}</time>
                                 </div>
                                 <h3><c:out value="${q.title}"/></h3>
+                                <c:if test="${not empty q.activityName}">
+                                    <p class="activity-reference">Hoạt động: <c:out value="${q.activityName}"/> (<c:out value="${q.activityCode}"/>)</p>
+                                </c:if>
                                 <p class="question-content"><c:out value="${q.content}"/></p>
                                 <p class="author">
                                     <c:choose>
@@ -114,7 +131,7 @@
 
                                 <c:forEach var="answer" items="${answersByQuestion[q.id]}">
                                     <div class="answer">
-                                        <span class="answer-label">PHẢN HỒI TỪ STAFF</span>
+                                        <span class="answer-label">${answer.responderType == 'PARTNER_STAFF' ? 'PHẢN HỒI TỪ ĐỐI TÁC' : 'PHẢN HỒI TỪ NHÀ TRƯỜNG'}</span>
                                         <p><c:out value="${answer.content}"/></p>
                                         <small><c:out value="${answer.staffName}"/> · ${dt:format(answer.publishedAt)}</small>
                                     </div>

@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * JSON API: GET ?action=list|count, POST action=read(id)|readAll.
- * list: filter=all|unread|read, page, size.
+ * list: filter=all|unread|read, category=all|activities|qa|appeals|results|messages, page, size.
  */
 @WebServlet("/api/notifications")
 public class NotificationApiServlet extends HttpServlet {
@@ -36,11 +36,12 @@ public class NotificationApiServlet extends HttpServlet {
                 return;
             }
             String filter = normalizeFilter(req.getParameter("filter"));
+            String category = req.getParameter("category");
             int size = clamp(intParam(req, "size", 10), 1, 50);
-            int total = service.countNotifications(user.getId(), filter);
+            int total = service.countNotifications(user.getId(), filter, category);
             int pages = Math.max(1, (total + size - 1) / size);
             int page = clamp(intParam(req, "page", 1), 1, pages);
-            List<NotificationDTO> items = service.getNotifications(user.getId(), filter, page, size);
+            List<NotificationDTO> items = service.getNotifications(user.getId(), filter, category, page, size);
 
             StringBuilder sb = new StringBuilder("{\"unread\":").append(service.countUnread(user.getId()))
                     .append(",\"total\":").append(total).append(",\"page\":").append(page)

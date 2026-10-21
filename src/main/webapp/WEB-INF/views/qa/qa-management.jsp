@@ -321,6 +321,8 @@
                         <div class="q-header">
                             <div style="flex:1">
                                 <div class="q-title"><c:out value="${q.title}"/></div>
+                                <span class="badge">${q.publicQuestion ? "Công khai" : "Riêng tư"}</span>
+                                <c:if test="${not empty q.activityName}"><div class="q-content">Hoạt động: <c:out value="${q.activityName}"/> (<c:out value="${q.activityCode}"/>)</div></c:if>
                                 <div class="q-content"><c:out value="${q.content}"/></div>
                             </div>
                         </div>

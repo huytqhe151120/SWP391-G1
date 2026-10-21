@@ -765,6 +765,9 @@
             </c:if>
         </div>
     </section>
+            <c:if test="${showActivityQuestions}">
+                <jsp:include page="/WEB-INF/views/qa/activity-questions.jsp"/>
+            </c:if>
         </main>
     </div>
 </div>

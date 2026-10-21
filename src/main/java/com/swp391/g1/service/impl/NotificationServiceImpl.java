@@ -99,15 +99,60 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
-    public List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size) {
-        int safeSize = Math.max(1, Math.min(size, 50));
-        int offset = (Math.max(page, 1) - 1) * safeSize;
-        return notificationDAO.findByAccount(accountId, filter, offset, safeSize);
+    public void notifyQuestionCreated(int questionId, int activityId, String title, String activityName) {
+        try {
+            notificationDAO.createQuestionSenderNotification(questionId,
+                    "Đã gửi câu hỏi thành công",
+                    "Câu hỏi \"" + title + "\" về hoạt động \"" + activityName + "\" đã được gửi và đang chờ trả lời.",
+                    "/student-qa?activityId=" + activityId);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send question submission confirmation.", e);
+        }
+        try {
+            notificationDAO.createQuestionNotification(activityId,
+                    "Câu hỏi mới",
+                    "Câu hỏi \"" + title + "\" về hoạt động \"" + activityName + "\" đang chờ trả lời.",
+                    "/qa-management?action=view&id=" + questionId);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send new question notification.", e);
+        }
     }
 
     @Override
-    public int countNotifications(int accountId, String filter) {
-        return notificationDAO.countByAccount(accountId, filter);
+    public void notifyAnswerSaved(int questionId, Integer activityId, String questionTitle,
+            int responderAccountId, boolean published) {
+        try {
+            notificationDAO.createAccountNotification(responderAccountId,
+                    published ? "ANSWER_SENT" : "ANSWER_DRAFT_SAVED",
+                    published ? "Đã gửi câu trả lời thành công" : "Đã lưu nháp câu trả lời",
+                    "Câu trả lời cho câu hỏi \"" + questionTitle + "\" "
+                            + (published ? "đã được gửi thành công." : "đã được lưu nháp."),
+                    "/qa-management?action=view&id=" + questionId);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send answer confirmation.", e);
+        }
+        if (published) {
+            try {
+                notificationDAO.createQuestionSenderNotification(questionId,
+                        "Câu hỏi của bạn đã được trả lời",
+                        "Câu hỏi \"" + questionTitle + "\" đã được trả lời.",
+                        activityId == null ? "/student-qa" : "/student-qa?activityId=" + activityId);
+            } catch (RuntimeException e) {
+                LOGGER.log(Level.WARNING, "Could not notify question owner about the answer.", e);
+            }
+        }
+    }
+
+    @Override
+    public List<NotificationDTO> getNotifications(int accountId, String filter, String category, int page, int size) {
+        int safeSize = Math.max(1, Math.min(size, 50));
+        int offset = (Math.max(page, 1) - 1) * safeSize;
+        return notificationDAO.findByAccount(accountId, filter, category, offset, safeSize);
+    }
+
+    @Override
+    public int countNotifications(int accountId, String filter, String category) {
+        return notificationDAO.countByAccount(accountId, filter, category);
     }
 
     @Override
