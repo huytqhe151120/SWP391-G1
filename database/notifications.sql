@@ -1,0 +1,5 @@
+-- SQL Server. Schema thực tế đã có trên DB (tham khảo, không cần chạy lại):
+-- notifications(id bigint IDENTITY, title, content, type CHECK ('IN_APP'|'EMAIL'), event_type,
+--               target_url NULL, created_at DEFAULT sysdatetime())
+-- user_notifications(id bigint IDENTITY, user_id -> account.id, notification_id -> notifications.id,
+--                    is_read bit DEFAULT 0, read_at NULL, created_at DEFAULT sysdatetime())

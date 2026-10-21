@@ -197,8 +197,8 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
-    public boolean insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
-                          String invitationType, String message) {
+    public int insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
+                      String invitationType, String message) {
         String insertSql = """
                 INSERT INTO activity_collaboration_invitation
                     (activity_id, partner_company_id, partner_staff_id, approval_status,
@@ -232,12 +232,12 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                     ps.setInt(8, activityId);
                     if (ps.executeUpdate() == 0) {
                         conn.rollback();
-                        return false;
+                        return 0;
                     }
                     try (ResultSet keys = ps.getGeneratedKeys()) {
                         if (!keys.next()) {
                             conn.rollback();
-                            return false;
+                            return 0;
                         }
                         invitationId = keys.getInt(1);
                     }
@@ -262,7 +262,7 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                     }
                 }
                 conn.commit();
-                return true;
+                return invitationId;
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
