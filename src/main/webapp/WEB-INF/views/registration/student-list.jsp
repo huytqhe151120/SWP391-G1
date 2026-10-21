@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Đăng ký hoạt động | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-10">
 </head>
 <body>
 <div class="activity-app-shell">

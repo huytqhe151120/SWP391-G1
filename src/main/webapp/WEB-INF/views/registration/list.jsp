@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý form đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-6">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-12">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
@@ -41,7 +41,7 @@
                     <div class="alert alert-success activity-alert">Đã cập nhật trạng thái form.</div>
                 </c:if>
                 <c:if test="${param.msg eq 'statusError'}">
-                    <div class="alert alert-error activity-alert">Không thể cập nhật trạng thái form.</div>
+                    <div class="alert alert-error activity-alert"><c:out value="${param.error}" default="Không thể cập nhật trạng thái form."/></div>
                 </c:if>
 
                 <section class="card activity-table-card registration-table-card">
@@ -87,7 +87,7 @@
                                         </span>
                                     </td>
                                     <td class="registration-sticky-status">
-                                        <span class="badge status-pill ${st:css(f.status)}">${st:label(f.status)}</span>
+                                        <span class="badge status-pill ${f.status eq 'CLOSED' ? 'status-red' : st:css(f.status)}">${st:label(f.status)}</span>
                                     </td>
                                     <td class="registration-sticky-count"><span class="registration-count"><c:out value="${f.registrationCount}"/></span></td>
                                     <td class="registration-sticky-actions">
@@ -108,10 +108,10 @@
                                                     <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                                                         <input type="hidden" name="action" value="status">
                                                         <input type="hidden" name="id" value="${f.id}">
-                                                        <input type="hidden" name="status" value="${f.status eq 'OPEN' ? 'CLOSED' : 'OPEN'}">
-                                                        <button class="action-menu-item ${f.status eq 'OPEN' ? 'action-menu-item--undo' : 'action-menu-item--approve'}" type="submit">
-                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><c:choose><c:when test="${f.status eq 'OPEN'}"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></c:when><c:otherwise><path d="m5 12 4 4L19 6"/></c:otherwise></c:choose></svg></span>
-                                                            <c:choose><c:when test="${f.status eq 'OPEN'}">Đóng đăng ký</c:when><c:when test="${f.status eq 'CLOSED'}">Mở lại đăng ký</c:when><c:otherwise>Mở đăng ký</c:otherwise></c:choose>
+                                                        <input type="hidden" name="status" value="${f.status eq 'OPENING' ? 'CLOSED' : 'OPENING'}">
+                                                        <button class="action-menu-item ${f.status eq 'OPENING' ? 'action-menu-item--undo' : 'action-menu-item--approve'}" type="submit">
+                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><c:choose><c:when test="${f.status eq 'OPENING'}"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></c:when><c:otherwise><path d="m5 12 4 4L19 6"/></c:otherwise></c:choose></svg></span>
+                                                            <c:choose><c:when test="${f.status eq 'OPENING'}">Đóng đăng ký</c:when><c:when test="${f.status eq 'CLOSED'}">Mở lại đăng ký</c:when><c:otherwise>Mở đăng ký</c:otherwise></c:choose>
                                                         </button>
                                                     </form>
                                                     <form method="post" action="${pageContext.request.contextPath}/registration-forms"

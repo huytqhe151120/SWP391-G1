@@ -16,7 +16,7 @@ public final class StatusUtil {
             Map.entry("PENDING", "Chờ duyệt"),
             Map.entry("APPROVED", "Đã duyệt"),
             Map.entry("REJECTED", "Đã từ chối"),
-            Map.entry("OPENING", "Đang mở"),
+            Map.entry("OPENING", "Đang mở đăng ký"),
             Map.entry("CLOSED", "Đã đóng đăng ký"));
 
     private StatusUtil() {
@@ -38,7 +38,7 @@ public final class StatusUtil {
             case "ACTIVE", "COMPLETED", "APPROVED" -> "status-green";
             case "ONGOING", "PENDING" -> "status-yellow";
             case "CANCELLED", "REJECTED" -> "status-red";
-            case "OPEN" -> "status-green";
+            case "OPENING" -> "status-green";
             case "CLOSED" -> "status-gray";
             case "DRAFT" -> "status-yellow";
             default -> "status-gray";

@@ -1,6 +1,8 @@
 package com.swp391.g1.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RegistrationForm {
     private int id;
@@ -12,6 +14,7 @@ public class RegistrationForm {
     private LocalDateTime closeAt;
     private String status;
     private int registrationCount;
+    private List<RegistrationFormField> fields = new ArrayList<>();
 
     public int getId() {
         return id;
@@ -84,4 +87,13 @@ public class RegistrationForm {
     public void setRegistrationCount(int registrationCount) {
         this.registrationCount = registrationCount;
     }
+
+    public List<RegistrationFormField> getFields() {
+        return fields;
+    }
+
+    public void setFields(List<RegistrationFormField> fields) {
+        this.fields = fields == null ? new ArrayList<>() : fields;
+    }
+
 }

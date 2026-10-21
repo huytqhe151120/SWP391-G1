@@ -1,15 +1,30 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.model.RegistrationForm;
+import com.swp391.g1.model.RegistrationFormField;
+import com.swp391.g1.model.RegistrationApplication;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IRegistrationFormDAO {
     List<RegistrationForm> findAll();
 
     List<RegistrationForm> findOpenForms();
 
+    List<RegistrationForm> findOpenFormsForStudent(int studentId);
+
     RegistrationForm findById(int id);
+
+    RegistrationForm findOpenFormById(int id, int studentId);
+
+    List<RegistrationApplication> findApplications(int formId);
+
+    RegistrationApplication findApplicationById(int registrationId);
+
+    boolean isActivityApproved(int activityId);
+
+    void synchronizeFormStatuses();
 
     boolean insert(RegistrationForm form);
 
@@ -22,4 +37,11 @@ public interface IRegistrationFormDAO {
     boolean registerStudent(int formId, int studentId, String note);
 
     boolean hasStudentRegistered(int formId, int studentId);
+
+    boolean registerStudentWithAnswers(int formId, int studentId, String note,
+            List<RegistrationFormField> answers);
+
+    boolean reviewApplication(int registrationId, String expectedStatus, String newStatus);
+
+    Map<String, String> findSavedProfile(int studentId);
 }

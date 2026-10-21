@@ -55,10 +55,13 @@
                                         <option value="">-- Chọn hoạt động --</option>
                                         <c:forEach items="${activities}" var="a">
                                             <option value="${a.id}" <c:if test="${form.activityId == a.id}">selected</c:if>>
-                                                <c:out value="${a.code}"/> - <c:out value="${a.name}"/> (<c:out value="${a.approvalStatus}"/>)
+                                                <c:out value="${a.code}"/> - <c:out value="${a.name}"/>
                                             </option>
                                         </c:forEach>
                                     </select>
+                                    <c:if test="${empty activities}">
+                                        <small class="field-hint">Chưa có hoạt động nào được duyệt để tạo form đăng ký.</small>
+                                    </c:if>
                                 </div>
                                 <div class="field field-wide">
                                     <label for="title">Tiêu đề form <span class="required-mark">*</span></label>
@@ -75,22 +78,22 @@
 
                             <div class="activity-form-section">
                                 <h3>Thời gian và trạng thái</h3>
-                                <p>Để trống thời gian nếu không muốn giới hạn thời hạn đăng ký.</p>
+                                <p>Form bản nháp có thời gian mở sẽ tự động mở đúng hạn; form đang mở tự động đóng khi hết hạn. Để trống nếu không giới hạn thời gian.</p>
                             </div>
                             <div class="form-grid activity-form-grid">
                                 <div class="field">
                                     <label for="openAt">Thời gian mở đăng ký</label>
-                                    <input id="openAt" name="openAt" type="datetime-local" value="${form.openAt}">
+                                    <input id="openAt" name="openAt" type="datetime-local" min="${minimumRegistrationTime}" value="${form.openAt}">
                                 </div>
                                 <div class="field">
                                     <label for="closeAt">Thời gian đóng đăng ký</label>
-                                    <input id="closeAt" name="closeAt" type="datetime-local" value="${form.closeAt}">
+                                    <input id="closeAt" name="closeAt" type="datetime-local" min="${minimumRegistrationTime}" value="${form.closeAt}">
                                 </div>
                                 <div class="field">
                                     <label for="status">Trạng thái</label>
                                     <select id="status" name="status">
                                         <option value="DRAFT" <c:if test="${form.status eq 'DRAFT'}">selected</c:if>>Bản nháp</option>
-                                        <option value="OPEN" <c:if test="${form.status eq 'OPEN'}">selected</c:if>>Mở đăng ký</option>
+                                        <option value="OPENING" <c:if test="${form.status eq 'OPENING'}">selected</c:if>>Đang mở đăng ký</option>
                                         <option value="CLOSED" <c:if test="${form.status eq 'CLOSED'}">selected</c:if>>Đã đóng đăng ký</option>
                                     </select>
                                 </div>

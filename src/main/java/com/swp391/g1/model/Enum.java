@@ -26,7 +26,7 @@ public class Enum {
     // Registration form status
     public enum RegistrationFormStatus {
         DRAFT, // Bản nháp
-        OPEN, // Đang mở đăng ký
+        OPENING, // Đang mở đăng ký
         CLOSED // Đã đóng đăng ký
     }
 

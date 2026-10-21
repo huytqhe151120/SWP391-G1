@@ -230,20 +230,21 @@
 }
 
 .registration-table {
-    width: max(100%, 1920px);
-    min-width: 1920px;
+    width: 100%;
+    min-width: 1220px;
     table-layout: fixed;
     border-collapse: separate;
     border-spacing: 0;
 }
 
 .activity-list-page .activity-table-wrap table.registration-table {
-    width: max(100%, 1920px);
-    min-width: 1920px;
+    width: 100%;
+    min-width: 1220px;
 }
 
 .registration-table th,
 .registration-table td {
+    box-sizing: border-box;
     padding: 14px 16px;
     border-bottom: 1px solid #edf0f5;
     color: #536177;
@@ -263,12 +264,123 @@
     white-space: nowrap;
 }
 
-.registration-table th:nth-child(1) { width: 450px; }
-.registration-table th:nth-child(2) { width: 500px; }
-.registration-table th:nth-child(3) { width: 570px; }
+.registration-table th:nth-child(1) { width: 260px; }
+.registration-table th:nth-child(2) { width: 280px; }
+.registration-table th:nth-child(3) { width: 280px; }
 .registration-table th.registration-sticky-status { width: 130px; }
 .registration-table th.registration-sticky-count { width: 120px; }
 .registration-table th.registration-sticky-actions { width: 150px; }
+
+.registration-table td:nth-child(2) {
+    white-space: normal;
+}
+
+.registration-applications-table {
+    min-width: 945px;
+}
+
+.activity-list-page .activity-table-wrap table.registration-applications-table {
+    width: 100%;
+    min-width: 945px;
+}
+
+.registration-applications-table th:nth-child(1) { width: 280px; }
+.registration-applications-table th:nth-child(2) { width: 140px; }
+.registration-applications-table th:nth-child(3) { width: 250px; }
+.registration-applications-table th:nth-child(4) { width: 145px; }
+.registration-applications-table th:nth-child(5) { width: 130px; }
+
+.registration-applications-table th.registration-sticky-status,
+.registration-applications-table td.registration-sticky-status {
+    right: 130px;
+    width: 145px;
+    min-width: 145px;
+    max-width: 145px;
+}
+
+.registration-applications-table th.registration-sticky-actions,
+.registration-applications-table td.registration-sticky-actions {
+    right: 0;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+    white-space: nowrap;
+}
+
+.registration-detail-tabs {
+    margin-top: 0;
+}
+
+.registration-detail-tab-content {
+    padding-top: 0;
+}
+
+.registration-detail-tab-content .registration-applications-tab {
+    padding-top: 20px;
+}
+
+.registration-applications-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.registration-applications-heading p {
+    margin: 5px 0 0;
+    color: #77849a;
+    font-size: .86rem;
+}
+
+.registration-applications-table th,
+.registration-applications-table td {
+    padding-right: 12px;
+    padding-left: 12px;
+}
+
+.registration-applications-table th:first-child,
+.registration-applications-table td:first-child {
+    padding-left: 16px;
+}
+
+.registration-applications-table th:last-child,
+.registration-applications-table td:last-child {
+    padding-right: 16px;
+}
+
+.registration-applications-list-table {
+    min-width: 1105px;
+}
+
+.activity-list-page .activity-table-wrap table.registration-applications-list-table {
+    width: 100%;
+    min-width: 1105px;
+}
+
+.registration-applications-list-table th:nth-child(1) { width: 250px; }
+.registration-applications-list-table th:nth-child(2) { width: 130px; }
+.registration-applications-list-table th:nth-child(3) { width: 220px; }
+.registration-applications-list-table th:nth-child(4) { width: 230px; }
+.registration-applications-list-table th:nth-child(5) { width: 145px; }
+.registration-applications-list-table th:nth-child(6) { width: 130px; }
+
+.registration-applications-list-table th.registration-sticky-status,
+.registration-applications-list-table td.registration-sticky-status {
+    right: 130px;
+    width: 145px;
+    min-width: 145px;
+    max-width: 145px;
+}
+
+.registration-applications-list-table th.registration-sticky-actions,
+.registration-applications-list-table td.registration-sticky-actions {
+    right: 0;
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+    white-space: nowrap;
+}
 
 .registration-table tbody tr:hover td {
     background-color: #f8faff;
@@ -554,28 +666,47 @@
 
 @media (max-width: 700px) {
     .activity-list-page .activity-table-wrap table.registration-table {
-        width: max(100%, 1850px);
-        min-width: 1850px;
+        width: 100%;
+        min-width: 1220px;
     }
 
-    .registration-table th.registration-sticky-status,
-    .registration-table td.registration-sticky-status {
+    .registration-management-page .registration-table:not(.registration-applications-table):not(.registration-applications-list-table) th.registration-sticky-status,
+    .registration-management-page .registration-table:not(.registration-applications-table):not(.registration-applications-list-table) td.registration-sticky-status {
         right: 218px;
         width: 112px;
         min-width: 112px;
         max-width: 112px;
     }
 
-    .registration-table th.registration-sticky-count,
-    .registration-table td.registration-sticky-count {
+    .registration-management-page .registration-table:not(.registration-applications-table):not(.registration-applications-list-table) th.registration-sticky-count,
+    .registration-management-page .registration-table:not(.registration-applications-table):not(.registration-applications-list-table) td.registration-sticky-count {
         right: 112px;
         width: 106px;
         min-width: 106px;
         max-width: 106px;
     }
 
-    .registration-table th.registration-sticky-actions,
-    .registration-table td.registration-sticky-actions {
+    .registration-management-page .registration-table:not(.registration-applications-table):not(.registration-applications-list-table) th.registration-sticky-actions,
+    .registration-management-page .registration-table:not(.registration-applications-table):not(.registration-applications-list-table) td.registration-sticky-actions {
+        width: 112px;
+        min-width: 112px;
+        max-width: 112px;
+    }
+
+    .registration-applications-table th.registration-sticky-status,
+    .registration-applications-table td.registration-sticky-status,
+    .registration-applications-list-table th.registration-sticky-status,
+    .registration-applications-list-table td.registration-sticky-status {
+        right: 112px;
+        width: 124px;
+        min-width: 124px;
+        max-width: 124px;
+    }
+
+    .registration-applications-table th.registration-sticky-actions,
+    .registration-applications-table td.registration-sticky-actions,
+    .registration-applications-list-table th.registration-sticky-actions,
+    .registration-applications-list-table td.registration-sticky-actions {
         width: 112px;
         min-width: 112px;
         max-width: 112px;
@@ -596,5 +727,13 @@
     .student-registration-actions {
         margin: 18px -18px -18px;
         padding: 16px 18px;
+    }
+
+    .activity-list-page .activity-table-wrap table.registration-applications-table {
+        min-width: 945px;
+    }
+
+    .activity-list-page .activity-table-wrap table.registration-applications-list-table {
+        min-width: 1105px;
     }
 }
