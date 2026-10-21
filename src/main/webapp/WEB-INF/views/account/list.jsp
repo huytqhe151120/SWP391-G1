@@ -9,7 +9,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý tài khoản | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261020-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -26,10 +27,6 @@
         </div>
         <div class="account-hero-actions">
             <a class="button account-home-button" href="${pageContext.request.contextPath}/home">Trang chủ</a>
-            <a class="button activity-create-button" href="${pageContext.request.contextPath}/accounts/create">
-                <span class="plus-icon" aria-hidden="true">+</span>
-                Tạo tài khoản
-            </a>
         </div>
     </header>
 
@@ -108,12 +105,18 @@
                 <h2 id="account-table-title">Danh sách tài khoản</h2>
                 <p>Các tài khoản phù hợp với tiêu chí đã chọn</p>
             </div>
-            <span class="activity-count">
-                <c:choose>
-                    <c:when test="${empty accounts}">0 tài khoản</c:when>
-                    <c:otherwise><c:out value="${accounts.size()}"/> tài khoản</c:otherwise>
-                </c:choose>
-            </span>
+            <div class="activity-heading-actions">
+                <span class="activity-count">
+                    <c:choose>
+                        <c:when test="${empty accounts}">0 tài khoản</c:when>
+                        <c:otherwise><c:out value="${accounts.size()}"/> tài khoản</c:otherwise>
+                    </c:choose>
+                </span>
+                <a class="btn-create-activity" href="${pageContext.request.contextPath}/accounts/create">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+                    Tạo tài khoản
+                </a>
+            </div>
         </div>
         <div class="table-wrap activity-table-wrap">
             <table class="account-table">
@@ -149,8 +152,17 @@
                                 <td><span class="badge account-status account-status-${fn:escapeXml(a.status)}">${st:label(a.status)}</span></td>
                                 <td>
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}">Chi tiết</a>
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}/edit">Sửa</a>
+                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}">
+                                            Chi tiết
+                                        </a>
+                                        <details class="action-menu">
+                                            <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
+                                            <div class="action-menu__items">
+                                                <a class="action-menu-item action-menu-item--edit" href="${pageContext.request.contextPath}/accounts/${a.id}/edit">
+                                                    Chỉnh sửa
+                                                </a>
+                                            </div>
+                                        </details>
                                     </div>
                                 </td>
                             </tr>
@@ -165,5 +177,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
 </body>
 </html>

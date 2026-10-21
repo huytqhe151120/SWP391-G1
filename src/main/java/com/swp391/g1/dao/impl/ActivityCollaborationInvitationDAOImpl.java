@@ -106,17 +106,43 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
-    public int cancelPendingOfOngoingActivities() {
+    public java.util.Set<Integer> findVisibleActivityIds(int partnerCompanyId) {
+        String sql = "SELECT activity_id FROM activity_collaboration_invitation "
+                + "WHERE partner_company_id = ? AND invitation_type = ? AND approval_status IN (?, ?) "
+                + "UNION SELECT activity_id FROM activity_partner_company "
+                + "WHERE partner_company_id = ? AND collaboration_status = 'ACTIVE'";
+        java.util.Set<Integer> ids = new java.util.HashSet<>();
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, partnerCompanyId);
+            ps.setString(2, TYPE_COLLABORATION);
+            ps.setString(3, PENDING);
+            ps.setString(4, APPROVED);
+            ps.setInt(5, partnerCompanyId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt(1));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find visible activities of partner company.", e);
+        }
+        return ids;
+    }
+
+    @Override
+    public int cancelPendingForInactiveActivities() {
         String sql = "UPDATE activity_collaboration_invitation SET approval_status = ? "
                 + "WHERE approval_status = ? AND activity_id IN "
-                + "(SELECT id FROM extracurricular_activity WHERE activity_status = 'ONGOING')";
+                + "(SELECT id FROM extracurricular_activity "
+                + "WHERE activity_status IN ('ONGOING', 'COMPLETED', 'CANCELLED'))";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, CANCELLED);
             ps.setString(2, PENDING);
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to cancel pending invitations of ongoing activities.", e);
+            throw new IllegalStateException("Failed to cancel pending invitations for inactive activities.", e);
         }
     }
 
@@ -173,9 +199,19 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     @Override
     public boolean insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
                           String invitationType, String message) {
-        String insertSql = "INSERT INTO activity_collaboration_invitation "
-                + "(activity_id, partner_company_id, partner_staff_id, approval_status, invitation_type, message, created_by) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String insertSql = """
+                INSERT INTO activity_collaboration_invitation
+                    (activity_id, partner_company_id, partner_staff_id, approval_status,
+                     invitation_type, message, created_by)
+                SELECT ?, ?, ?, ?, ?, ?, ?
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM extracurricular_activity
+                    WHERE id = ?
+                      AND activity_status = 'UPCOMING'
+                      AND start_time > SYSUTCDATETIME()
+                )
+                """;
         String reuseSql = "UPDATE activity_partner_company SET partner_staff_id = ?, invitation_id = ?, "
                 + "collaboration_status = 'INACTIVE' WHERE activity_id = ? AND partner_company_id = ?";
         String linkSql = "INSERT INTO activity_partner_company "
@@ -193,7 +229,11 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                     ps.setString(5, invitationType);
                     ps.setString(6, message);
                     ps.setString(7, createdBy);
-                    ps.executeUpdate();
+                    ps.setInt(8, activityId);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
                     try (ResultSet keys = ps.getGeneratedKeys()) {
                         if (!keys.next()) {
                             conn.rollback();
@@ -228,7 +268,9 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to create collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to create collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 
@@ -263,8 +305,16 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
      * a TERMINATION invitation only changes the collaboration when it is approved.
      */
     private boolean changeStatus(int id, String fromStatus, String toStatus) {
-        String updateInvitation = "UPDATE activity_collaboration_invitation SET approval_status = ? "
-                + "WHERE id = ? AND approval_status = ?";
+        String updateInvitation = """
+                UPDATE i
+                SET approval_status = ?
+                FROM activity_collaboration_invitation i
+                JOIN extracurricular_activity a ON a.id = i.activity_id
+                WHERE i.id = ?
+                  AND i.approval_status = ?
+                  AND a.activity_status = 'UPCOMING'
+                  AND a.start_time > SYSUTCDATETIME()
+                """;
         String selectType = "SELECT invitation_type FROM activity_collaboration_invitation WHERE id = ?";
         String updateOwnLink = "UPDATE activity_partner_company SET collaboration_status = ? WHERE invitation_id = ?";
         String createLink = "INSERT INTO activity_partner_company "
@@ -339,7 +389,9 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to update collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to update collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 

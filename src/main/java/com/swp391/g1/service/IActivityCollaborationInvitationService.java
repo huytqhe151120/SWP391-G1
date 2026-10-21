@@ -13,6 +13,12 @@ public interface IActivityCollaborationInvitationService {
     /** Invitations visible to the user: their company's for partner staff, all for other users. */
     List<ActivityCollaborationInvitationDTO> getInvitationsForUser(CurrentUser user);
 
+    /**
+     * Ids of the activities the user may view, or null when the user is not restricted.
+     * Partner staff only see activities their company is invited to (pending/approved) or actively collaborates in.
+     */
+    java.util.Set<Integer> getVisibleActivityIds(CurrentUser user);
+
     /** Accepted invitations, i.e. the partners that take part in the activity. */
     List<ActivityPartnerCompanyDTO> getApprovedPartners(int activityId);
 

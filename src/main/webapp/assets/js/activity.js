@@ -1,4 +1,38 @@
 (function () {
+    var tabButtons = document.querySelectorAll(".activity-tab-btn");
+    var tabPanes = document.querySelectorAll(".activity-tab-pane");
+    if (!tabButtons.length || !tabPanes.length) {
+        return;
+    }
+
+    function switchTab(targetId) {
+        tabButtons.forEach(function (button) {
+            var isMatch = button.getAttribute("data-tab") === targetId;
+            button.classList.toggle("active", isMatch);
+            button.setAttribute("aria-selected", isMatch ? "true" : "false");
+        });
+        tabPanes.forEach(function (pane) {
+            pane.classList.toggle("active", pane.id === targetId);
+        });
+    }
+
+    tabButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            var tabId = button.getAttribute("data-tab");
+            switchTab(tabId);
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, "#" + tabId);
+            }
+        });
+    });
+
+    var currentHash = window.location.hash.slice(1);
+    if (["tab-staff", "tab-info", "tab-partner"].indexOf(currentHash) !== -1) {
+        switchTab(currentHash);
+    }
+})();
+
+(function () {
     var panel = document.getElementById("activity-filter-panel");
     if (!panel) {
         return;
@@ -50,25 +84,84 @@ document.querySelectorAll("form[data-confirm]").forEach(function (form) {
     });
 });
 
+(function () {
+    var toolbar = document.getElementById("bulk-activity-approval");
+    if (!toolbar) {
+        return;
+    }
+    var selectAll = document.querySelector("[data-select-all-activities]");
+    var selectionCount = toolbar.querySelector("[data-selection-count]");
+    var actionButtons = toolbar.querySelectorAll("button[type=submit]");
+    var checkboxes = Array.from(document.querySelectorAll("[data-activity-select]"));
+
+    function updateSelection() {
+        var selectedCount = checkboxes.filter(function (checkbox) {
+            return checkbox.checked;
+        }).length;
+        actionButtons.forEach(function (button) {
+            button.disabled = selectedCount === 0;
+        });
+        if (selectAll) {
+            selectAll.disabled = checkboxes.length === 0;
+        }
+        selectionCount.textContent = selectedCount === 0
+            ? "Chọn hoạt động đang chờ duyệt"
+            : "Đã chọn " + selectedCount + " hoạt động";
+        if (selectAll) {
+            selectAll.checked = selectedCount > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener("change", updateSelection);
+    });
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+            updateSelection();
+        });
+    }
+    updateSelection();
+})();
+
 document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     var trigger = combobox.querySelector(".multi-select-trigger");
     var label = combobox.querySelector("[data-selection-label]");
     var dropdown = combobox.querySelector(".multi-select-dropdown");
     var search = combobox.querySelector(".multi-select-search");
-    var options = Array.from(combobox.querySelectorAll(".multi-select-option"));
+    var optionList = combobox.querySelector(".multi-select-options");
     var emptyState = combobox.querySelector(".multi-select-empty");
     var count = combobox.querySelector(".multi-select-count");
     var initialLabel = label.textContent.trim();
     var itemLabel = combobox.dataset.itemLabel;
+    var isSingle = combobox.hasAttribute("data-single");
+
+    function getOptions() {
+        return Array.from(combobox.querySelectorAll(".multi-select-option"));
+    }
+
+    function closeDropdown() {
+        dropdown.hidden = true;
+        trigger.setAttribute("aria-expanded", "false");
+        combobox.classList.remove("is-open");
+        combobox.classList.remove("opens-up");
+    }
 
     function updateSelection() {
-        var selectedOptions = options.filter(function (option) {
+        var selectedOptions = getOptions().filter(function (option) {
             return option.querySelector("input").checked;
         });
         var selectedCount = selectedOptions.length;
+        combobox.classList.remove("is-invalid");
         if (selectedCount === 0) {
             label.textContent = initialLabel;
             count.textContent = "Chưa chọn " + itemLabel;
+        } else if (isSingle) {
+            label.textContent = selectedOptions[0].querySelector("span").textContent.trim();
+            count.textContent = "Đã chọn " + itemLabel;
         } else {
             label.textContent = selectedOptions.slice(0, 2).map(function (option) {
                 return option.querySelector("span").textContent.trim();
@@ -80,7 +173,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     function filterOptions() {
         var query = search.value.trim().toLocaleLowerCase();
         var visibleCount = 0;
-        options.forEach(function (option) {
+        getOptions().forEach(function (option) {
             var matches = option.textContent.toLocaleLowerCase().includes(query);
             option.hidden = !matches;
             if (matches) {
@@ -94,6 +187,63 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         var spaceBelow = window.innerHeight - trigger.getBoundingClientRect().bottom;
         var spaceAbove = trigger.getBoundingClientRect().top;
         combobox.classList.toggle("opens-up", spaceBelow < 280 && spaceAbove > spaceBelow);
+    }
+
+    function setDisabled(disabled) {
+        combobox.toggleAttribute("data-disabled", disabled);
+        trigger.disabled = disabled;
+        getOptions().forEach(function (option) {
+            option.querySelector("input").disabled = disabled;
+        });
+        if (disabled) {
+            closeDropdown();
+        }
+    }
+
+    function setOptions(items) {
+        var inputName = combobox.dataset.inputName;
+        var disabled = trigger.disabled;
+        optionList.querySelectorAll(".multi-select-option").forEach(function (option) {
+            option.remove();
+        });
+        items.forEach(function (item) {
+            var option = document.createElement("label");
+            var input = document.createElement("input");
+            var text = document.createElement("span");
+            option.className = "multi-select-option";
+            input.type = isSingle ? "radio" : "checkbox";
+            input.name = inputName;
+            input.value = item.id;
+            input.disabled = disabled;
+            input.addEventListener("change", onOptionChange);
+            text.textContent = item.name;
+            option.append(input, text);
+            optionList.append(option);
+        });
+        search.value = "";
+        filterOptions();
+        updateSelection();
+    }
+
+    function onOptionChange() {
+        updateSelection();
+        if (isSingle) {
+            closeDropdown();
+            trigger.focus();
+        }
+    }
+
+    function validate() {
+        var invalid = combobox.hasAttribute("data-required") && !trigger.disabled
+            && !getOptions().some(function (option) {
+                return option.querySelector("input").checked;
+            });
+        combobox.classList.toggle("is-invalid", invalid);
+        if (invalid) {
+            count.textContent = "Vui lòng chọn " + itemLabel;
+            trigger.focus();
+        }
+        return !invalid;
     }
 
     trigger.addEventListener("click", function () {
@@ -114,81 +264,39 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     });
 
     search.addEventListener("input", filterOptions);
-    options.forEach(function (option) {
-        option.querySelector("input").addEventListener("change", updateSelection);
+    getOptions().forEach(function (option) {
+        option.querySelector("input").addEventListener("change", onOptionChange);
     });
 
     combobox.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && !dropdown.hidden) {
-            dropdown.hidden = true;
-            trigger.setAttribute("aria-expanded", "false");
-            combobox.classList.remove("is-open");
-            combobox.classList.remove("opens-up");
+            closeDropdown();
             trigger.focus();
         }
     });
 
     document.addEventListener("click", function (event) {
         if (!combobox.contains(event.target) && !dropdown.hidden) {
-            dropdown.hidden = true;
-            trigger.setAttribute("aria-expanded", "false");
-            combobox.classList.remove("is-open");
-            combobox.classList.remove("opens-up");
+            closeDropdown();
         }
     });
+
+    var form = combobox.closest("form");
+    if (form) {
+        form.addEventListener("submit", function (event) {
+            if (!validate()) {
+                event.preventDefault();
+            }
+        });
+    }
+
+    function setPlaceholder(text) {
+        initialLabel = text;
+        updateSelection();
+    }
+
+    combobox.comboboxApi = {setDisabled: setDisabled, setOptions: setOptions, setPlaceholder: setPlaceholder};
 });
-
-(function () {
-    var departmentSelect = document.getElementById("responsibleDepartmentId");
-    var responsibleStaffSelect = document.getElementById("responsibleStaffId");
-    var message = document.getElementById("responsibleStaffMessage");
-    if (!departmentSelect || !responsibleStaffSelect || !message) {
-        return;
-    }
-
-    var requestVersion = 0;
-    var endpoint = departmentSelect.dataset.staffEndpoint;
-
-    async function loadDepartmentStaff() {
-        var departmentId = departmentSelect.value;
-        var currentRequest = ++requestVersion;
-        responsibleStaffSelect.replaceChildren(new Option("-- Chọn nhân viên --", ""));
-        responsibleStaffSelect.disabled = !departmentId;
-        message.textContent = "";
-        if (!departmentId) {
-            responsibleStaffSelect.options[0].textContent = "-- Chọn đơn vị phụ trách trước --";
-            return;
-        }
-
-        var url = new URL(endpoint, document.baseURI);
-        url.searchParams.set("action", "getStaffsByDepartment");
-        url.searchParams.set("departmentId", departmentId);
-        try {
-            var response = await fetch(url.toString());
-            if (!response.ok) {
-                throw new Error("Không thể tải danh sách nhân sự của đơn vị.");
-            }
-            if (!response.headers.get("content-type")?.includes("application/json")) {
-                throw new Error("Máy chủ không trả về dữ liệu nhân sự dạng JSON. Hãy tải lại ứng dụng.");
-            }
-            var staffs = await response.json();
-            if (currentRequest !== requestVersion) {
-                return;
-            }
-            staffs.forEach(function (staff) {
-                responsibleStaffSelect.add(new Option(staff.code + " - " + staff.name, staff.id));
-            });
-        } catch (error) {
-            if (currentRequest === requestVersion) {
-                responsibleStaffSelect.replaceChildren(new Option("Không tải được danh sách nhân sự.", ""));
-                message.textContent = error.message;
-            }
-        }
-    }
-
-    departmentSelect.addEventListener("change", loadDepartmentStaff);
-})();
-
 (function () {
     var table = document.querySelector(".activity-list-page .activity-table-wrap table");
     if (!table) {
@@ -196,8 +304,8 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     }
 
     function syncStickyColumnWidths() {
-        var actionsCells = table.querySelectorAll("tr td:nth-child(9), tr th:nth-child(9)");
-        var approvalCells = table.querySelectorAll("tr td:nth-child(8), tr th:nth-child(8)");
+        var actionsCells = table.querySelectorAll("tr td.activity-action-column, tr th.activity-action-column");
+        var approvalCells = table.querySelectorAll("tr td.activity-status-column, tr th.activity-status-column");
         var actionsWidth = 0;
         var approvalWidth = 0;
 
@@ -225,19 +333,21 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     if (!type || !action || !collab || !terminate) {
         return;
     }
-    var link = document.getElementById("partnerCompanyLinkId");
-    var company = document.getElementById("partnerCompanyId");
-    var staff = document.getElementById("partnerStaffId");
+    var link = document.getElementById("partnerLinkCombobox");
+    var company = document.getElementById("partnerCompanyCombobox");
+    var staff = document.getElementById("partnerStaffCombobox");
+    if (!link || !company || !staff || !link.comboboxApi || !company.comboboxApi || !staff.comboboxApi) {
+        return;
+    }
 
     function sync() {
         var isTerminate = type.value === "terminatePartner";
         action.value = type.value;
         collab.hidden = isTerminate;
         terminate.hidden = !isTerminate;
-        link.disabled = !isTerminate;
-        link.required = isTerminate;
-        company.disabled = isTerminate;
-        staff.disabled = isTerminate || !company.value;
+        link.comboboxApi.setDisabled(!isTerminate);
+        company.comboboxApi.setDisabled(isTerminate);
+        staff.comboboxApi.setDisabled(isTerminate || !company.querySelector("input:checked"));
     }
     type.addEventListener("change", sync);
     company.addEventListener("change", function () {
@@ -247,20 +357,18 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
 })();
 
 (function () {
-    var companySelect = document.getElementById("partnerCompanyId");
-    var staffSelect = document.getElementById("partnerStaffId");
+    var companyCombobox = document.getElementById("partnerCompanyCombobox");
+    var staffCombobox = document.getElementById("partnerStaffCombobox");
     var message = document.getElementById("partnerStaffMessage");
-    if (!companySelect || !staffSelect || !message) {
+    if (!companyCombobox || !staffCombobox || !message) {
         return;
     }
 
-    var selectedStaffId = staffSelect.dataset.selected;
-    var endpoint = staffSelect.dataset.staffEndpoint;
+    var staffApi = staffCombobox.comboboxApi;
+    var endpoint = staffCombobox.dataset.staffEndpoint;
 
-    async function loadPartnerStaff() {
-        var companyId = companySelect.value;
-        staffSelect.replaceChildren(new Option("-- Chọn nhân sự phụ trách chính --", ""));
-        staffSelect.disabled = !companyId;
+    async function loadPartnerStaff(companyId) {
+        staffApi.setOptions([]);
         message.textContent = "";
         if (!companyId) {
             return;
@@ -275,59 +383,17 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
                 throw new Error("Không thể tải danh sách nhân viên đối tác.");
             }
             var staffs = await response.json();
-            staffs.forEach(function (staff) {
-                var option = new Option(staff.name, staff.id);
-                if (String(staff.id) === selectedStaffId) {
-                    option.selected = true;
-                }
-                staffSelect.add(option);
-            });
+            if (companyCombobox.querySelector("input:checked").value === companyId) {
+                staffApi.setOptions(staffs);
+            }
         } catch (error) {
             message.textContent = error.message;
         }
     }
 
-    companySelect.addEventListener("change", function () {
-        selectedStaffId = "";
-        loadPartnerStaff();
+    companyCombobox.addEventListener("change", function (event) {
+        loadPartnerStaff(event.target.value);
     });
-    if (companySelect.value) {
-        loadPartnerStaff();
-    }
-})();
-
-(function () {
-    var tabButtons = document.querySelectorAll(".activity-tab-btn");
-    var tabPanes = document.querySelectorAll(".activity-tab-pane");
-    if (!tabButtons.length || !tabPanes.length) {
-        return;
-    }
-
-    function switchTab(targetId) {
-        tabButtons.forEach(function (button) {
-            var isMatch = button.getAttribute("data-tab") === targetId;
-            button.classList.toggle("active", isMatch);
-            button.setAttribute("aria-selected", isMatch ? "true" : "false");
-        });
-        tabPanes.forEach(function (pane) {
-            pane.classList.toggle("active", pane.id === targetId);
-        });
-    }
-
-    tabButtons.forEach(function (button) {
-        button.addEventListener("click", function () {
-            var tabId = button.getAttribute("data-tab");
-            switchTab(tabId);
-            if (window.history && window.history.replaceState) {
-                window.history.replaceState(null, null, "#" + tabId);
-            }
-        });
-    });
-
-    var currentHash = window.location.hash.slice(1);
-    if (["tab-staff", "tab-info", "tab-partner"].indexOf(currentHash) !== -1) {
-        switchTab(currentHash);
-    }
 })();
 
 (function () {

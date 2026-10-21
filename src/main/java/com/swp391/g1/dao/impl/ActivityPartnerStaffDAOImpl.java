@@ -54,13 +54,24 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
 
     @Override
     public boolean insert(int activityId, int partnerStaffId) {
-        String sql = "INSERT INTO activity_partner_staff (activity_id, partner_staff_id, assigned_on) "
-                + "VALUES (?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
+        String sql = """
+                INSERT INTO activity_partner_staff
+                    (activity_id, partner_staff_id, assigned_on, collaboration_status)
+                SELECT ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2), 'ACTIVE'
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM extracurricular_activity
+                    WHERE id = ?
+                      AND activity_status = 'UPCOMING'
+                      AND start_time > SYSUTCDATETIME()
+                )
+                """;
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             ps.setInt(2, partnerStaffId);
+            ps.setInt(3, activityId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to assign partner staff to activity: " + e.getMessage(), e);
@@ -69,7 +80,15 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
 
     @Override
     public boolean delete(int activityId, int partnerStaffId) {
-        String sql = "DELETE FROM activity_partner_staff WHERE activity_id = ? AND partner_staff_id = ?";
+        String sql = """
+                DELETE aps
+                FROM activity_partner_staff aps
+                INNER JOIN extracurricular_activity ea ON ea.id = aps.activity_id
+                WHERE aps.activity_id = ?
+                  AND aps.partner_staff_id = ?
+                  AND ea.activity_status = 'UPCOMING'
+                  AND ea.start_time > SYSUTCDATETIME()
+                """;
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

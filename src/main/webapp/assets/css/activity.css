@@ -1,6 +1,42 @@
 /* Activity CSS - SWP391-G1 */
 @import "base.css";
 
+.activity-approval-approve {
+    border-color: #15803d;
+    background: #15803d;
+    color: #fff;
+}
+
+.activity-approval-approve:hover {
+    border-color: #166534;
+    background: #166534;
+    color: #fff;
+}
+
+.activity-approval-reject {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.activity-approval-reject:hover {
+    border-color: #f87171;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.activity-approval-revoke {
+    background-color: #fff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+.activity-approval-revoke:hover {
+    background-color: #f8fafc;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
 .activity-app-shell {
     width: min(1440px, calc(100% - 48px));
     margin: 24px auto 42px;
@@ -323,6 +359,39 @@
     background: #edf4ff;
 }
 
+.activity-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.btn-create-activity {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #1e40af;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+    transition: background-color .15s, transform .1s;
+}
+
+.btn-create-activity:hover {
+    background: #1e3a8a;
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-create-activity:active {
+    transform: scale(.95);
+}
+
 .plus-icon {
     font-size: 1.25rem;
     font-weight: 400;
@@ -404,6 +473,57 @@
 
 .activity-filter-panel[open] > .activity-filter-toggle::after {
     transform: rotate(180deg);
+}
+
+.activity-bulk-toolbar {
+    display: flex;
+    min-height: 62px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 26px;
+    border-top: 1px solid #edf0f5;
+    background: #fbfcfe;
+}
+
+.activity-bulk-selection {
+    color: #536782;
+    font-size: .86rem;
+    font-weight: 600;
+}
+
+.activity-bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-outline {
+    border-color: #b9c8dc;
+    background: #fff;
+    color: #344963;
+}
+
+.button-outline:hover:not(:disabled) {
+    border-color: #829ab8;
+    background: #f4f7fb;
+}
+
+.button-danger-light {
+    border-color: #f1b5b9;
+    background: #fff5f5;
+    color: #a22b35;
+}
+
+.button-danger-light:hover:not(:disabled) {
+    border-color: #e7959b;
+    background: #ffe9ea;
+    color: #8f202a;
+}
+
+.activity-bulk-actions .button:disabled {
+    cursor: not-allowed;
+    opacity: .48;
 }
 
 .activity-filter-toggle:hover {
@@ -611,8 +731,8 @@
     width: 100%;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(9),
-.activity-list-page .activity-table-wrap td:nth-child(9) {
+.activity-list-page .activity-table-wrap th.activity-action-column,
+.activity-list-page .activity-table-wrap td.activity-action-column {
     position: sticky;
     right: 0;
     z-index: 2;
@@ -620,8 +740,8 @@
     white-space: nowrap;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(8),
-.activity-list-page .activity-table-wrap td:nth-child(8) {
+.activity-list-page .activity-table-wrap th.activity-status-column,
+.activity-list-page .activity-table-wrap td.activity-status-column {
     position: sticky;
     right: var(--activity-actions-col-width, 0px);
     z-index: 2;
@@ -629,8 +749,8 @@
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap td:nth-child(7) {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-run-status {
     position: sticky;
     right: calc(var(--activity-approval-col-width, 0px) + var(--activity-actions-col-width, 0px));
     z-index: 2;
@@ -638,60 +758,89 @@
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap th:nth-child(8),
-.activity-list-page .activity-table-wrap th:nth-child(9) {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column {
     background: #f7f9fc;
     z-index: 3;
 }
 
-.activity-list-page .activity-table-wrap th:nth-child(7),
-.activity-list-page .activity-table-wrap th:nth-child(8) {
-    width: 120px;
-    max-width: 120px;
+.activity-list-page .activity-table-wrap .activity-status-column,
+.activity-list-page .activity-table-wrap .activity-run-status {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
     white-space: normal;
 }
 
-.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(7),
-.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(8),
-.activity-list-page .activity-table-wrap tbody tr:hover td:nth-child(9) {
+.activity-list-page .activity-table-wrap .activity-status-column .badge,
+.activity-list-page .activity-table-wrap .activity-run-status .badge {
+    display: inline-block;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.activity-list-page .activity-table-wrap th.activity-status-column span,
+.activity-list-page .activity-table-wrap th.activity-run-status span,
+.activity-list-page .activity-table-wrap th.invitation-status-column span {
+    display: block;
+    white-space: nowrap;
+}
+
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-status-column,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-action-column {
     background: #f8faff;
 }
 
 .activity-list-page .activity-actions {
     width: 100%;
-    align-items: stretch;
-    flex-direction: column;
-}
-
-.activity-list-page .activity-action-links,
-.activity-list-page .activity-actions form.activity-review-actions {
-    display: inline-flex;
-    width: max-content;
-    max-width: 100%;
     align-items: center;
+    justify-content: space-between;
     flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 6px;
+    gap: 8px;
 }
 
-.activity-list-page .activity-actions form.activity-review-actions {
+.activity-list-page .activity-table-wrap th.activity-action-column,
+.activity-list-page .activity-table-wrap td.activity-action-column {
+    width: 132px;
+    min-width: 132px;
+}
+
+.activity-select-column {
+    width: 42px;
+    min-width: 42px;
+    text-align: center !important;
+}
+
+.activity-select-checkbox {
+    width: 16px !important;
+    height: 16px;
+    min-height: 16px !important;
     margin: 0;
+    padding: 0;
+    accent-color: #2457c5;
+    vertical-align: middle;
+    cursor: pointer;
 }
 
-.activity-list-page .activity-review-actions-row {
-    display: inline-flex;
-    width: max-content;
-    max-width: 100%;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 6px;
+.activity-select-checkbox:disabled {
+    accent-color: #aab4c2;
+    cursor: not-allowed;
+    opacity: .55;
 }
 
-.activity-list-page .activity-actions .button,
-.activity-list-page .activity-action-links a {
-    flex: 0 0 auto;
-    white-space: nowrap;
+@media (max-width: 680px) {
+    .activity-bulk-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 14px 18px;
+    }
+
+    .activity-bulk-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
 }
 
 .activity-code {
@@ -755,7 +904,7 @@
 .activity-action-link {
     padding: 6px 7px;
     border-radius: 6px;
-    color: #315d9d;
+    color: #1d4ed8;
     font-size: .8rem;
     font-weight: 600;
 }
@@ -765,29 +914,28 @@
     text-decoration: none;
 }
 
+.activity-action-delete {
+    color: #c64752;
+}
+
 button.activity-action-link {
     background: none;
     border: 0;
-    padding: 0;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.875rem;
-    font-weight: 700;
-    transition: opacity 0.15s ease;
 }
 
-button.activity-action-link:hover,
 button.activity-action-link:focus-visible {
     text-decoration: underline;
     opacity: 0.75;
 }
 
 .activity-action-delete {
-    color: #ad4650;
+    color: #b91c1c;
 }
 
 .activity-action-delete:hover {
-    background: #fff0f0;
+    background: #fef2f2;
 }
 
 .activity-empty-state {
@@ -954,6 +1102,64 @@ button.activity-action-link:focus-visible {
     padding: 18px 30px;
     border-top: 1px solid #edf0f5;
     background: #fafbfd;
+}
+
+.activity-detail-page {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.activity-detail-page .activity-detail-card {
+    max-width: 100%;
+    min-width: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(31, 56, 94, 0.08);
+}
+
+.activity-detail-page .activity-tabs-nav {
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.activity-detail-page .activity-tab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.activity-detail-page .activity-detail-content {
+    min-width: 0;
+    padding-bottom: 24px;
+}
+
+.activity-detail-page .activity-tab-pane,
+.activity-detail-page .activity-detail-section {
+    min-width: 0;
+}
+
+.activity-detail-page .activity-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #edf0f5;
+    border-radius: 8px;
+}
+
+.activity-detail-page .activity-table-wrap table {
+    width: 100%;
+    min-width: 640px;
+}
+
+.activity-detail-page .activity-table-wrap td[colspan] {
+    padding: 32px 16px !important;
+    text-align: center !important;
+    white-space: normal;
+    color: #8a97ab !important;
+}
+
+.activity-detail-page .activity-detail-actions {
+    flex-wrap: wrap;
 }
 
 /* Activity forms */
@@ -1264,10 +1470,6 @@ button.activity-action-link:focus-visible {
     clip-path: inset(50%);
 }
 
-.activity-cancel-button {
-    margin-right: auto;
-}
-
 /* Activity Media Queries */
 @media (max-width: 1024px) {
     .activity-app-layout {
@@ -1358,6 +1560,24 @@ button.activity-action-link:focus-visible {
     .activity-table-wrap td {
         padding-right: 12px;
         padding-left: 12px;
+    }
+
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-run-status,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-status-column,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-action-column {
+        position: static;
+        right: auto;
+        box-shadow: none;
+    }
+
+    .activity-list-page .activity-table-wrap .activity-status-column,
+    .activity-list-page .activity-table-wrap .activity-run-status {
+        width: 140px;
+        min-width: 140px;
+        max-width: 140px;
     }
 
     .activity-detail-card > .activity-table-heading {
@@ -1510,4 +1730,117 @@ button.activity-action-link:focus-visible {
 }
 #invite-form-panel > .activity-partner-form {
     margin-top: 0.75rem;
+}
+/* .field is a column flexbox, so flex-basis: 260px on the combobox became a 260px height */
+.field > .multi-select-combobox {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.activity-form-grid .field {
+    gap: 6px;
+}
+
+.activity-form-grid .error-msg:empty,
+.activity-form-grid .field-hint:empty {
+    display: none;
+}
+
+/* Flatpickr date-time inputs */
+.date-input-group {
+    position: relative;
+}
+
+.date-input-group input {
+    width: 100%;
+    padding-right: 42px;
+    border: 1px solid #dce4ef;
+    border-radius: 8px;
+    background-color: #fbfcfe;
+    cursor: pointer;
+}
+
+.date-input-group input:focus,
+.date-input-group input.active {
+    border-color: #3b82f6;
+    outline: 0;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.date-input-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    display: flex;
+    color: #64748b;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.flatpickr-calendar {
+    z-index: 9999 !important;
+    border: 1px solid #dce4ef;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(28, 48, 76, 0.16);
+    font-family: inherit;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    border-color: #3b82f6;
+    background: #3b82f6;
+}
+
+.flatpickr-day.today:not(.selected) {
+    border-color: #3b82f6;
+}
+
+.flatpickr-day:hover {
+    background: #eff6ff;
+}
+
+.flatpickr-months .flatpickr-month,
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+span.flatpickr-weekday {
+    color: #233752;
+    fill: #233752;
+}
+
+.form-actions-footer {
+    display: flex;
+    justify-content: flex-end; /* Đẩy cụm nút về bên phải */
+    align-items: center;
+    gap: 0.75rem; /* Khoảng cách giữa 2 nút */
+    margin-top: 1.5rem;
+}
+
+/* Calendar header: keep month dropdown, year and arrows from overlapping */
+.flatpickr-calendar .flatpickr-current-month {
+    left: 12.5%;
+    display: flex;
+    width: 75%;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+}
+
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+    flex: 0 1 auto;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 2px 4px;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper {
+    flex: 0 0 auto;
+    width: 6ch;
+}
+
+.flatpickr-calendar .flatpickr-current-month input.cur-year {
+    font-size: 1rem;
 }

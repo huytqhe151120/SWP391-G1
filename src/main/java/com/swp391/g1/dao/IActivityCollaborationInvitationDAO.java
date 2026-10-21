@@ -18,8 +18,11 @@ public interface IActivityCollaborationInvitationDAO {
     /** Invitations of the given company, or of every company when the id is null. */
     List<ActivityCollaborationInvitationDTO> findByPartnerCompanyId(Integer partnerCompanyId);
 
-    /** PENDING -> CANCELLED for every invitation whose activity is already ONGOING. Returns the number changed. */
-    int cancelPendingOfOngoingActivities();
+    /** PENDING -> CANCELLED for every invitation whose activity is no longer UPCOMING. */
+    int cancelPendingForInactiveActivities();
+
+    /** Activities a partner company may view: pending/approved collaboration invitations or an ACTIVE collaboration. */
+    java.util.Set<Integer> findVisibleActivityIds(int partnerCompanyId);
 
     ActivityCollaborationInvitationDTO findById(int id);
 

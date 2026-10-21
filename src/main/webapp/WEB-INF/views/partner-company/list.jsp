@@ -22,12 +22,6 @@
             <h1>Công ty đối tác</h1>
             <p>Quản lý thông tin liên hệ và trạng thái các đơn vị đồng hành.</p>
         </div>
-        <div class="account-hero-actions">
-            <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies?action=create">
-                <span class="plus-icon" aria-hidden="true">+</span>
-                Thêm công ty
-            </a>
-        </div>
     </header>
 
     <c:if test="${not empty sessionScope.successMessage}">
@@ -45,12 +39,18 @@
                 <h2 id="company-table-title">Danh sách công ty</h2>
                 <p>Thông tin các công ty đối tác đã được ghi nhận</p>
             </div>
-            <span class="activity-count">
-                <c:choose>
-                    <c:when test="${empty partnerCompanies}">0 công ty</c:when>
-                    <c:otherwise><c:out value="${partnerCompanies.size()}"/> công ty</c:otherwise>
-                </c:choose>
-            </span>
+            <div class="activity-heading-actions">
+                <span class="activity-count">
+                    <c:choose>
+                        <c:when test="${empty partnerCompanies}">0 công ty</c:when>
+                        <c:otherwise><c:out value="${partnerCompanies.size()}"/> công ty</c:otherwise>
+                    </c:choose>
+                </span>
+                <a class="btn-create-activity" href="${pageContext.request.contextPath}/partner-companies?action=create">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+                    Thêm công ty
+                </a>
+            </div>
         </div>
         <div class="table-wrap activity-table-wrap">
             <table class="partner-company-table">

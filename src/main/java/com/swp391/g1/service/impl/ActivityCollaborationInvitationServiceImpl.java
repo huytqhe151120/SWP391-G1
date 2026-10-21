@@ -14,11 +14,14 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityCollaborationInvitationDTO;
 import com.swp391.g1.dto.response.ActivityPartnerCompanyDTO;
 import com.swp391.g1.model.Enum.CommonStatus;
+import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.PartnerCompany;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityCollaborationInvitationService;
+import com.swp391.g1.util.DateTimeUtil;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,7 +41,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (activityId <= 0) {
             return List.of();
         }
-        invitationDAO.cancelPendingOfOngoingActivities();
+        invitationDAO.cancelPendingForInactiveActivities();
         List<ActivityCollaborationInvitationDTO> invitations = invitationDAO.findByActivityId(activityId);
         PartnerStaff me = isPartnerStaffUser(user) ? partnerStaffDAO.findByAccountId(user.getId()) : null;
         Set<Integer> activeCompanyIds = activeCompanyIds(activityId);
@@ -58,7 +61,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (isPartnerStaffUser(user) && me == null) {
             return List.of();
         }
-        invitationDAO.cancelPendingOfOngoingActivities();
+        invitationDAO.cancelPendingForInactiveActivities();
         List<ActivityCollaborationInvitationDTO> invitations =
                 invitationDAO.findByPartnerCompanyId(me == null ? null : me.getCompanyId());
         java.util.Map<Integer, Set<Integer>> activeByActivity = new java.util.HashMap<>();
@@ -72,6 +75,15 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     }
 
     @Override
+    public java.util.Set<Integer> getVisibleActivityIds(CurrentUser user) {
+        if (!isPartnerStaffUser(user)) {
+            return null;
+        }
+        PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
+        return me == null ? Set.of() : invitationDAO.findVisibleActivityIds(me.getCompanyId());
+    }
+
+    @Override
     public List<ActivityPartnerCompanyDTO> getApprovedPartners(int activityId) {
         return activityId <= 0 ? List.of() : partnerCompanyLinkDAO.findByActivityId(activityId);
     }
@@ -82,6 +94,9 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (user == null || !AccessPolicy.canManageActivities(user)) {
             throw new SecurityException("Bạn không có quyền mời đối tác tham gia hoạt động.");
         }
+
+        requireUpcomingActivity(activityId);
+
         com.swp391.g1.model.ExtracurricularActivity activity =
                 activityId <= 0 ? null : activityDAO.findById(activityId);
         if (activity == null) {
@@ -107,8 +122,18 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             throw new IllegalArgumentException(
                     "Công ty đối tác này đã được mời hoặc đang hợp tác trong hoạt động.");
         }
-        invitationDAO.insert(activityId, companyId, staffId, String.valueOf(user.getId()),
-                IActivityCollaborationInvitationDAO.TYPE_COLLABORATION, note);
+        boolean inserted = invitationDAO.insert(
+                activityId,
+                companyId,
+                staffId,
+                String.valueOf(user.getId()),
+                IActivityCollaborationInvitationDAO.TYPE_COLLABORATION,
+                note);
+        if (!inserted) {
+            throw new IllegalArgumentException(
+                    "Không thể gửi lời mời. Hoạt động có thể đã bắt đầu "
+                            + "hoặc không còn ở trạng thái UPCOMING.");
+        }
     }
 
     @Override
@@ -116,6 +141,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (user == null || !AccessPolicy.canManageActivities(user)) {
             throw new SecurityException("Bạn không có quyền gửi lời mời ngừng hợp tác.");
         }
+        requireUpcomingActivity(activityId);
         String note = requireMessage(message);
         ActivityPartnerCompanyDTO link = activityPartnerCompanyId <= 0
                 ? null : partnerCompanyLinkDAO.findById(activityPartnerCompanyId);
@@ -128,20 +154,45 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (invitationDAO.existsPendingInvitation(activityId, link.getPartnerCompanyId())) {
             throw new IllegalArgumentException("Đối tác này đang có lời mời chờ phản hồi.");
         }
-        invitationDAO.insert(activityId, link.getPartnerCompanyId(), link.getPartnerStaffId(),
-                String.valueOf(user.getId()), IActivityCollaborationInvitationDAO.TYPE_TERMINATION, note);
+
+        boolean inserted = invitationDAO.insert(
+                activityId,
+                link.getPartnerCompanyId(),
+                link.getPartnerStaffId(),
+                String.valueOf(user.getId()),
+                IActivityCollaborationInvitationDAO.TYPE_TERMINATION,
+                note);
+        if (!inserted) {
+            throw new IllegalArgumentException(
+                    "Không thể gửi yêu cầu ngừng hợp tác. Hoạt động có thể đã bắt đầu "
+                            + "hoặc không còn ở trạng thái UPCOMING."
+            );
+        }
     }
 
     @Override
     public void respond(int invitationId, boolean accept, CurrentUser user) {
         ActivityCollaborationInvitationDTO invitation = requirePending(invitationId);
-        PartnerStaff me = isPartnerStaffUser(user) ? partnerStaffDAO.findByAccountId(user.getId()) : null;
+
+        // Kiểm tra hoạt động còn cho phép phản hồi lời mời không.
+        requireUpcomingActivity(invitation.getActivityId());
+
+        PartnerStaff me = isPartnerStaffUser(user)
+                ? partnerStaffDAO.findByAccountId(user.getId())
+                : null;
+
         if (!canRespond(invitation, user, me)) {
-            throw new SecurityException("Bạn không có quyền phản hồi lời mời này.");
+            throw new SecurityException(
+                    "Bạn không có quyền phản hồi lời mời này."
+            );
         }
-        boolean updated = accept ? invitationDAO.accept(invitationId) : invitationDAO.reject(invitationId);
+
+        boolean updated = accept
+                ? invitationDAO.accept(invitationId)
+                : invitationDAO.reject(invitationId);
         if (!updated) {
-            throw new IllegalArgumentException("Lời mời đã được xử lý trước đó.");
+            throw new IllegalArgumentException(
+                    "Không thể phản hồi lời mời vì lời mời đã được xử lý hoặc hoạt động đã bắt đầu.");
         }
     }
 
@@ -152,7 +203,8 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         }
         requirePending(invitationId);
         if (!invitationDAO.cancel(invitationId)) {
-            throw new IllegalArgumentException("Lời mời đã được xử lý trước đó.");
+            throw new IllegalArgumentException(
+                    "Không thể hủy lời mời vì lời mời đã được xử lý hoặc hoạt động đã bắt đầu.");
         }
     }
 
@@ -177,7 +229,8 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         }
         boolean updated = approved ? invitationDAO.revokeApproval(invitationId) : invitationDAO.revokeRejection(invitationId);
         if (!updated) {
-            throw new IllegalArgumentException("Lời mời đã được xử lý trước đó.");
+            throw new IllegalArgumentException(
+                    "Không thể hủy phản hồi vì lời mời đã thay đổi hoặc hoạt động đã bắt đầu.");
         }
     }
 
@@ -189,7 +242,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     }
 
     private ActivityCollaborationInvitationDTO requirePending(int invitationId) {
-        invitationDAO.cancelPendingOfOngoingActivities();
+        invitationDAO.cancelPendingForInactiveActivities();
         ActivityCollaborationInvitationDTO invitation = invitationId <= 0 ? null : invitationDAO.findById(invitationId);
         if (invitation == null) {
             throw new IllegalArgumentException("Không tìm thấy lời mời.");
@@ -261,6 +314,39 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             return id;
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(errorMessage, e);
+        }
+    }
+
+    /**
+     * Chỉ cho phép thao tác lời mời khi hoạt động còn UPCOMING
+     * và chưa đến thời điểm bắt đầu.
+     */
+    private void requireUpcomingActivity(int activityId) {
+        if (activityId <= 0) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+
+        ExtracurricularActivity activity = activityDAO.findById(activityId);
+
+        if (activity == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+
+        if (activity.getActivityStatus() == null
+                || !"UPCOMING".equalsIgnoreCase(
+                activity.getActivityStatus().toString())) {
+            throw new IllegalArgumentException(
+                    "Chỉ được thao tác lời mời khi hoạt động đang ở trạng thái UPCOMING."
+            );
+        }
+
+        LocalDateTime startTime = activity.getStartTime();
+        LocalDateTime now = DateTimeUtil.now();
+
+        if (startTime == null || !now.isBefore(startTime)) {
+            throw new IllegalArgumentException(
+                    "Không thể thao tác lời mời sau khi hoạt động bắt đầu."
+            );
         }
     }
 }

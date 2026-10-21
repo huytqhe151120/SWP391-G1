@@ -13,6 +13,4 @@ public interface IActivityDepartmentDAO {
 
     boolean exists(int activityId, int departmentId);
 
-    /** Removes assigned staff that no longer belong to the primary or any co-responsible department. */
-    int deleteStaffOutsideDepartments(int activityId);
 }
