@@ -30,6 +30,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
     private final IExtracurricularActivityDAO activityDAO;
     private final IActivityStaffDAO activityStaffDAO;
     private final ISemesterDAO semesterDAO = new SemesterDAOImpl();
+    private final com.swp391.g1.service.INotificationService notificationService = new NotificationServiceImpl();
 
     private static final String LOCKED_MESSAGE =
             "Không thể sửa hoặc xóa hoạt động đang diễn ra hoặc đã hoàn thành.";
@@ -352,23 +353,35 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     @Override
     public boolean submitForApproval(int id) {
-        return changeApprovalStatus(id, ApprovalStatus.PENDING,
+        ExtracurricularActivity submitted = changeApprovalStatus(id, ApprovalStatus.PENDING,
                 "Only draft or rejected activities can be submitted for approval.",
                 ApprovalStatus.DRAFT, ApprovalStatus.REJECTED);
+        if (submitted != null && submitted.getApprovalStatus() == ApprovalStatus.DRAFT) {
+            notificationService.notifyApprovalRequest(id, submitted.getName());
+        }
+        return submitted != null;
     }
 
     @Override
     public boolean approveActivity(int id) {
-        return changeApprovalStatus(id, ApprovalStatus.APPROVED,
+        ExtracurricularActivity approved = changeApprovalStatus(id, ApprovalStatus.APPROVED,
                 "Only activities pending approval can be approved.",
                 ApprovalStatus.PENDING);
+        if (approved != null) {
+            notificationService.notifyActivityApproved(id, approved.getName());
+        }
+        return approved != null;
     }
 
     @Override
     public boolean rejectActivity(int id) {
-        return changeApprovalStatus(id, ApprovalStatus.REJECTED,
+        ExtracurricularActivity rejected = changeApprovalStatus(id, ApprovalStatus.REJECTED,
                 "Only activities pending approval can be rejected.",
                 ApprovalStatus.PENDING);
+        if (rejected != null) {
+            notificationService.notifyActivityRejected(id, rejected.getName());
+        }
+        return rejected != null;
     }
 
     @Override
@@ -402,31 +415,36 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             );
         }
 
+        notificationService.notifyApprovalRevoked(id, activity.getName());
         return true;
     }
 
     @Override
     public boolean revokeRejection(int id) {
-        return changeApprovalStatus(id, ApprovalStatus.PENDING,
+        ExtracurricularActivity revoked = changeApprovalStatus(id, ApprovalStatus.PENDING,
                 "Chỉ có thể hủy từ chối hoạt động đang ở trạng thái bị từ chối.",
                 ApprovalStatus.REJECTED);
+        if (revoked != null) {
+            notificationService.notifyRejectionRevoked(id, revoked.getName());
+        }
+        return revoked != null;
     }
 
-    private boolean changeApprovalStatus(
+    private ExtracurricularActivity changeApprovalStatus(
             int id,
             ApprovalStatus target,
             String errorMessage,
             ApprovalStatus... allowedFrom) {
 
         if (id <= 0) {
-            return false;
+            return null;
         }
 
         // Bước 1: Lấy hoạt động từ database.
         ExtracurricularActivity activity = activityDAO.findById(id);
 
         if (activity == null) {
-            return false;
+            return null;
         }
 
         // Bước 2: Kiểm tra trạng thái duyệt hiện tại có hợp lệ không.
@@ -457,7 +475,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             );
         }
 
-        return true;
+        return activity;
     }
 
     /**

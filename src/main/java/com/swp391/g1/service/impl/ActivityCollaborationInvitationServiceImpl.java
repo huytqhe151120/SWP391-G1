@@ -19,6 +19,7 @@ import com.swp391.g1.model.PartnerCompany;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityCollaborationInvitationService;
+import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.util.DateTimeUtil;
 
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     private final IExtracurricularActivityDAO activityDAO = new ExtracurricularActivityDAOImpl();
     private final IPartnerCompanyDAO partnerCompanyDAO = new PartnerCompanyDAOImpl();
     private final IPartnerStaffDAO partnerStaffDAO = new PartnerStaffDAOImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     @Override
     public List<ActivityCollaborationInvitationDTO> getInvitations(int activityId, CurrentUser user) {
@@ -95,13 +97,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             throw new SecurityException("Bạn không có quyền mời đối tác tham gia hoạt động.");
         }
 
-        requireUpcomingActivity(activityId);
-
-        com.swp391.g1.model.ExtracurricularActivity activity =
-                activityId <= 0 ? null : activityDAO.findById(activityId);
-        if (activity == null) {
-            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
-        }
+        ExtracurricularActivity activity = requireUpcomingActivity(activityId);
         if (activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED) {
             throw new IllegalArgumentException("Chỉ có thể tạo lời mời cho hoạt động đã được duyệt.");
         }
@@ -122,18 +118,19 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             throw new IllegalArgumentException(
                     "Công ty đối tác này đã được mời hoặc đang hợp tác trong hoạt động.");
         }
-        boolean inserted = invitationDAO.insert(
+        int invitationId = invitationDAO.insert(
                 activityId,
                 companyId,
                 staffId,
                 String.valueOf(user.getId()),
                 IActivityCollaborationInvitationDAO.TYPE_COLLABORATION,
                 note);
-        if (!inserted) {
+        if (invitationId <= 0) {
             throw new IllegalArgumentException(
                     "Không thể gửi lời mời. Hoạt động có thể đã bắt đầu "
                             + "hoặc không còn ở trạng thái UPCOMING.");
         }
+        notificationService.notifyPartnerInvitationSent(invitationId, activity.getName(), company.getName());
     }
 
     @Override
@@ -141,7 +138,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
         if (user == null || !AccessPolicy.canManageActivities(user)) {
             throw new SecurityException("Bạn không có quyền gửi lời mời ngừng hợp tác.");
         }
-        requireUpcomingActivity(activityId);
+        ExtracurricularActivity activity = requireUpcomingActivity(activityId);
         String note = requireMessage(message);
         ActivityPartnerCompanyDTO link = activityPartnerCompanyId <= 0
                 ? null : partnerCompanyLinkDAO.findById(activityPartnerCompanyId);
@@ -155,19 +152,21 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             throw new IllegalArgumentException("Đối tác này đang có lời mời chờ phản hồi.");
         }
 
-        boolean inserted = invitationDAO.insert(
+        int invitationId = invitationDAO.insert(
                 activityId,
                 link.getPartnerCompanyId(),
                 link.getPartnerStaffId(),
                 String.valueOf(user.getId()),
                 IActivityCollaborationInvitationDAO.TYPE_TERMINATION,
                 note);
-        if (!inserted) {
+        if (invitationId <= 0) {
             throw new IllegalArgumentException(
                     "Không thể gửi yêu cầu ngừng hợp tác. Hoạt động có thể đã bắt đầu "
                             + "hoặc không còn ở trạng thái UPCOMING."
             );
         }
+        notificationService.notifyPartnerTerminationRequested(
+                invitationId, activity.getName(), link.getPartnerCompanyName());
     }
 
     @Override
@@ -194,6 +193,19 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             throw new IllegalArgumentException(
                     "Không thể phản hồi lời mời vì lời mời đã được xử lý hoặc hoạt động đã bắt đầu.");
         }
+        String action = accept ? "đã chấp nhận" : "đã từ chối";
+        boolean termination = isTermination(invitation);
+        String invitationLabel = termination ? "yêu cầu ngừng hợp tác" : "lời mời hợp tác";
+        String eventType = accept ? "PARTNER_INVITATION_ACCEPTED" : "PARTNER_INVITATION_REJECTED";
+        notificationService.notifyPartnerInvitationOwner(
+                invitationId,
+                eventType,
+                termination
+                        ? (accept ? "Đối tác đã chấp nhận yêu cầu ngừng hợp tác"
+                                : "Đối tác đã từ chối yêu cầu ngừng hợp tác")
+                        : (accept ? "Đối tác đã chấp nhận lời mời" : "Đối tác đã từ chối lời mời"),
+                "Công ty \"" + invitation.getPartnerCompanyName() + "\" " + action + " "
+                        + invitationLabel + " cho hoạt động \"" + invitation.getActivityName() + "\".");
     }
 
     @Override
@@ -232,6 +244,19 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
             throw new IllegalArgumentException(
                     "Không thể hủy phản hồi vì lời mời đã thay đổi hoặc hoạt động đã bắt đầu.");
         }
+        String invitationLabel = isTermination(invitation) ? "yêu cầu ngừng hợp tác" : "lời mời hợp tác";
+        boolean termination = isTermination(invitation);
+        notificationService.notifyPartnerInvitationOwner(
+                invitationId,
+                approved ? "PARTNER_INVITATION_APPROVAL_REVOKED" : "PARTNER_INVITATION_REJECTION_REVOKED",
+                termination
+                        ? (approved ? "Đối tác đã hủy chấp nhận yêu cầu ngừng hợp tác"
+                                : "Đối tác đã hủy từ chối yêu cầu ngừng hợp tác")
+                        : (approved ? "Đối tác đã hủy chấp nhận lời mời" : "Đối tác đã hủy từ chối lời mời"),
+                "Công ty \"" + invitation.getPartnerCompanyName() + "\" đã hủy phản hồi "
+                        + (approved ? "chấp nhận " : "từ chối ") + invitationLabel
+                        + " cho hoạt động \"" + invitation.getActivityName()
+                        + "\". Lời mời đã trở về trạng thái chờ phản hồi.");
     }
 
     private Set<Integer> activeCompanyIds(int activityId) {
@@ -321,7 +346,7 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
      * Chỉ cho phép thao tác lời mời khi hoạt động còn UPCOMING
      * và chưa đến thời điểm bắt đầu.
      */
-    private void requireUpcomingActivity(int activityId) {
+    private ExtracurricularActivity requireUpcomingActivity(int activityId) {
         if (activityId <= 0) {
             throw new IllegalArgumentException("Không tìm thấy hoạt động.");
         }
@@ -348,5 +373,6 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
                     "Không thể thao tác lời mời sau khi hoạt động bắt đầu."
             );
         }
+        return activity;
     }
 }

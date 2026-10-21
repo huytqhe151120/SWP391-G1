@@ -735,11 +735,14 @@
 
 .activity-list-page .activity-table-wrap table {
     width: 100%;
+    --activity-actions-col-width: 0px;
+    --activity-approval-col-width: 0px;
 }
 
 .activity-list-page .activity-table-wrap th.activity-action-column,
 .activity-list-page .activity-table-wrap td.activity-action-column {
     position: sticky;
+    text-align: left;
     right: 0;
     z-index: 2;
     background: #fff;

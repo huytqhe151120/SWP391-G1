@@ -9,6 +9,22 @@
         </span>
     </a>
     <div class="activity-header-account">
+        <c:if test="${not empty sessionScope['com.swp391.g1.auth.CURRENT_USER']}">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css">
+        <div class="notif-wrap">
+            <button type="button" id="notifBell" class="notif-bell" aria-label="Thông báo" aria-haspopup="true" aria-expanded="false">
+                🔔<span id="notifBadge" class="notif-badge" hidden>0</span>
+            </button>
+            <div id="notifPanel" class="notif-panel" hidden>
+                <div class="notif-head"><strong>Thông báo</strong>
+                    <button type="button" id="notifReadAll" class="notif-link">Đánh dấu tất cả đã đọc</button></div>
+                <div id="notifDropdownList" class="notif-dropdown-list"></div>
+                <div class="notif-foot"><a class="notif-link" href="${pageContext.request.contextPath}/notifications">Xem tất cả</a></div>
+            </div>
+        </div>
+        <script>window.APP_CTX = '${pageContext.request.contextPath}';</script>
+        <script src="${pageContext.request.contextPath}/assets/js/notification.js" defer></script>
+        </c:if>
         <span class="activity-header-user">${empty sessionScope['com.swp391.g1.auth.CURRENT_USER'] ? 'Khách' : sessionScope['com.swp391.g1.auth.CURRENT_USER'].username}</span>
         <c:choose>
             <c:when test="${not empty sessionScope['com.swp391.g1.auth.CURRENT_USER']}">

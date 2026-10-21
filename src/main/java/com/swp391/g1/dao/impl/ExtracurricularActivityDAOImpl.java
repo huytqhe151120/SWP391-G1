@@ -207,51 +207,55 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     """;
 
         try (Connection conn = DBContext.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                ExtracurricularActivityResponseDTO dto = new ExtracurricularActivityResponseDTO();
-                dto.setId(rs.getInt("id"));
-                dto.setCode(rs.getString("code"));
-                dto.setName(rs.getString("name"));
-                dto.setSemesterId(rs.getInt("semester_id"));
-                dto.setActivityTypeId(rs.getInt("activity_type_id"));
-                dto.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
-                dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
-                dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
-                dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
-                String nature = rs.getString("nature");
-                dto.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
-                dto.setSummaryRequired(rs.getBoolean("is_summary_required"));
-                dto.setMaxParticipants((Integer) rs.getObject("max_participants"));
-                dto.setAddress(rs.getString("address"));
-                dto.setDescription(rs.getString("description"));
-                dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
-                dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            if (accountId != null) {
+                stmt.setInt(1, accountId);
+            }
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ExtracurricularActivityResponseDTO dto = new ExtracurricularActivityResponseDTO();
+                    dto.setId(rs.getInt("id"));
+                    dto.setCode(rs.getString("code"));
+                    dto.setName(rs.getString("name"));
+                    dto.setSemesterId(rs.getInt("semester_id"));
+                    dto.setActivityTypeId(rs.getInt("activity_type_id"));
+                    dto.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
+                    dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
+                    dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
+                    dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
+                    String nature = rs.getString("nature");
+                    dto.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+                    dto.setSummaryRequired(rs.getBoolean("is_summary_required"));
+                    dto.setMaxParticipants((Integer) rs.getObject("max_participants"));
+                    dto.setAddress(rs.getString("address"));
+                    dto.setDescription(rs.getString("description"));
+                    dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
+                    dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
 
-                Timestamp startTime = rs.getTimestamp("start_time");
-                dto.setStartTime(startTime == null
-                        ? null : DateTimeUtil.fromUtc(startTime.toLocalDateTime()));
-                Timestamp endTime = rs.getTimestamp("end_time");
-                dto.setEndTime(endTime == null
-                        ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
-                dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+                    Timestamp startTime = rs.getTimestamp("start_time");
+                    dto.setStartTime(startTime == null
+                            ? null : DateTimeUtil.fromUtc(startTime.toLocalDateTime()));
+                    Timestamp endTime = rs.getTimestamp("end_time");
+                    dto.setEndTime(endTime == null
+                            ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
+                    dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
 
-                // Thông tin chi tiết JOIN từ các bảng liên quan
-                dto.setSemesterCode(rs.getString("semester_code"));
-                dto.setSemesterName(rs.getString("semester_name"));
-                dto.setActivityTypeCode(rs.getString("activity_type_code"));
-                dto.setActivityTypeName(rs.getString("activity_type_name"));
-                dto.setResponsibleDepartmentCode(rs.getString("dept_code"));
-                dto.setResponsibleDepartmentName(rs.getString("dept_name"));
-                dto.setResponsibleStaffCode(rs.getString("staff_code"));
-                dto.setResponsibleStaffName(rs.getString("staff_name"));
-                dto.setPartnerCompanyCode(rs.getString("company_code"));
-                dto.setPartnerCompanyName(rs.getString("company_name"));
-                dto.setPartnerStaffCode(rs.getString("partner_staff_code"));
-                dto.setPartnerStaffName(rs.getString("partner_staff_name"));
+                    // Thông tin chi tiết JOIN từ các bảng liên quan
+                    dto.setSemesterCode(rs.getString("semester_code"));
+                    dto.setSemesterName(rs.getString("semester_name"));
+                    dto.setActivityTypeCode(rs.getString("activity_type_code"));
+                    dto.setActivityTypeName(rs.getString("activity_type_name"));
+                    dto.setResponsibleDepartmentCode(rs.getString("dept_code"));
+                    dto.setResponsibleDepartmentName(rs.getString("dept_name"));
+                    dto.setResponsibleStaffCode(rs.getString("staff_code"));
+                    dto.setResponsibleStaffName(rs.getString("staff_name"));
+                    dto.setPartnerCompanyCode(rs.getString("company_code"));
+                    dto.setPartnerCompanyName(rs.getString("company_name"));
+                    dto.setPartnerStaffCode(rs.getString("partner_staff_code"));
+                    dto.setPartnerStaffName(rs.getString("partner_staff_name"));
 
-                list.add(dto);
+                    list.add(dto);
+                }
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Failed to query extracurricular activity list.", e);
