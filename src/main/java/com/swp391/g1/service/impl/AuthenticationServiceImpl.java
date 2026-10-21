@@ -7,6 +7,7 @@ import com.swp391.g1.dao.IAccountDAO;
 import com.swp391.g1.dao.impl.AccountDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Account;
+import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.service.AuthenticationException;
 import com.swp391.g1.service.AuthenticationResult;
 import com.swp391.g1.service.IAccountService;
@@ -65,8 +66,22 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         }
 
         CurrentUser currentUser = new CurrentUser(credentials.getId(), credentials.getUsername(),
-                credentials.getType(), credentials.getRole(), Instant.now());
+                credentials.getType(), credentials.getRole(), Instant.now(),
+                findProfileName(credentials.getId()));
         return AuthenticationResult.success(currentUser);
+    }
+
+    private String findProfileName(int accountId) {
+        try {
+            for (AccountProfile profile : accountDAO.findProfilesByAccountId(accountId)) {
+                if (profile.getName() != null && !profile.getName().isBlank()) {
+                    return profile.getName();
+                }
+            }
+        } catch (DataAccessException e) {
+            // The name is cosmetic; login must not fail because of it.
+        }
+        return null;
     }
 
     private static String normalize(String value) {
