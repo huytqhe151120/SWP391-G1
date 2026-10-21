@@ -18,6 +18,8 @@ public interface IRegistrationFormService {
 
     RegistrationForm getOpenFormById(int id, int studentId);
 
+    boolean hasStudentRegistered(int formId, int studentId);
+
     List<RegistrationApplication> getApplications(int formId);
 
     RegistrationApplication getApplicationById(int registrationId);

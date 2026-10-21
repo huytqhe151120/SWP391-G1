@@ -72,7 +72,9 @@ public class RegistrationFormServlet extends HttpServlet {
                 }
                 RegistrationForm f = service.getOpenFormById(id(req), student.getId());
                 if (f == null) {
-                    resp.sendError(404, "Form không còn mở hoặc bạn đã gửi đơn đăng ký.");
+                    String message = service.hasStudentRegistered(id(req), student.getId())
+                            ? "alreadyRegistered" : "registrationUnavailable";
+                    resp.sendRedirect(req.getContextPath() + "/registration-forms?action=student&msg=" + message);
                     return;
                 }
                 Map<String, String> saved = service.getSavedProfile(student.getId());
@@ -176,6 +178,12 @@ public class RegistrationFormServlet extends HttpServlet {
                     resp.sendRedirect(req.getContextPath() + "/registration-forms?action=student&msg=registered");
                     return;
                 }
+                if (error.startsWith("Không thể đăng ký:")) {
+                    String message = service.hasStudentRegistered(id(req), student.getId())
+                            ? "alreadyRegistered" : "registrationUnavailable";
+                    resp.sendRedirect(req.getContextPath() + "/registration-forms?action=student&msg=" + message);
+                    return;
+                }
                 req.setAttribute("error", error);
                 RegistrationForm f = service.getById(id(req));
                 if (f != null) {
@@ -258,6 +266,7 @@ public class RegistrationFormServlet extends HttpServlet {
                     return;
                 }
                 f.setFields(existing.getFields());
+                f.setRegistrationCount(existing.getRegistrationCount());
             }
             String openAt = req.getParameter("openAt");
             String closeAt = req.getParameter("closeAt");
@@ -315,8 +324,16 @@ public class RegistrationFormServlet extends HttpServlet {
 
     private void setFormPageAttributes(HttpServletRequest request, RegistrationForm form) {
         request.setAttribute("form", form);
-        request.setAttribute("activities", activityService.getAllActivities().stream()
+        List<Integer> usedActivityIds = service.getAll().stream()
+                .filter(existing -> existing.getId() != form.getId())
+                .map(RegistrationForm::getActivityId)
+                .toList();
+        var approvedActivities = activityService.getAllActivities().stream()
                 .filter(activity -> activity.getApprovalStatus() == ApprovalStatus.APPROVED)
+                .toList();
+        request.setAttribute("hasApprovedActivities", !approvedActivities.isEmpty());
+        request.setAttribute("activities", approvedActivities.stream()
+                .filter(activity -> !usedActivityIds.contains(activity.getId()))
                 .toList());
         request.setAttribute("minimumRegistrationTime",
                 DateTimeUtil.formatInput(DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)));

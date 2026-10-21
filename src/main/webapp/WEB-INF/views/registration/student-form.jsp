@@ -39,7 +39,7 @@
                             <h2><c:out value="${form.title}"/></h2>
                             <p>Thông tin đăng ký hoạt động</p>
                         </div>
-                        <span class="badge status-pill status-green">Đang mở</span>
+                        <span class="badge status-pill status-green">Đang mở đăng ký</span>
                     </div>
                     <div class="activity-form-content">
                         <h3 class="student-registration-activity-name"><c:out value="${form.activityName}"/></h3>

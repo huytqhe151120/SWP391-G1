@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <c:set var="activeNav" value="registration-forms" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -28,6 +29,12 @@
                 <c:if test="${param.msg eq 'registered'}">
                     <div class="alert alert-success activity-alert">Gửi đăng ký thành công.</div>
                 </c:if>
+                <c:if test="${param.msg eq 'alreadyRegistered'}">
+                    <div class="alert alert-error activity-alert">Bạn đã gửi đơn cho form này. Form đã được gỡ khỏi danh sách đăng ký.</div>
+                </c:if>
+                <c:if test="${param.msg eq 'registrationUnavailable'}">
+                    <div class="alert alert-error activity-alert">Form vừa đóng hoặc hết hạn, hoặc hoạt động không còn đủ điều kiện đăng ký. Vui lòng tải lại danh sách và chọn form khác.</div>
+                </c:if>
 
                 <c:choose>
                     <c:when test="${not empty forms}">
@@ -35,14 +42,14 @@
                             <c:forEach items="${forms}" var="f">
                                 <article class="card student-registration-card">
                                     <div class="student-registration-card-top">
-                                        <span class="badge status-pill status-green">Đang mở</span>
+                                        <span class="badge status-pill status-green">Đang mở đăng ký</span>
                                     </div>
                                     <h2><c:out value="${f.title}"/></h2>
                                     <h3><c:out value="${f.activityName}"/></h3>
                                     <p class="student-registration-description"><c:out value="${f.description}"/></p>
                                     <p class="student-registration-deadline">
                                         <strong>Hạn đăng ký:</strong>
-                                        <c:choose><c:when test="${not empty f.closeAt}"><c:out value="${f.closeAt}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
+                                        <c:choose><c:when test="${not empty f.closeAt}"><c:out value="${dt:format(f.closeAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
                                     </p>
                                     <a class="button button-primary student-registration-cta"
                                        href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${f.id}">

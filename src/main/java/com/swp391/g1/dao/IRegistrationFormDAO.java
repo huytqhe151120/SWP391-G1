@@ -24,6 +24,8 @@ public interface IRegistrationFormDAO {
 
     boolean isActivityApproved(int activityId);
 
+    boolean hasFormForActivity(int activityId, int exceptFormId);
+
     void synchronizeFormStatuses();
 
     boolean insert(RegistrationForm form);

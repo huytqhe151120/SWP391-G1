@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${form.id > 0}">Chỉnh sửa form đăng ký</c:when><c:otherwise>Tạo form đăng ký</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261021-11">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -51,7 +51,8 @@
                             <div class="form-grid activity-form-grid">
                                 <div class="field field-wide">
                                     <label for="activityId">Hoạt động <span class="required-mark">*</span></label>
-                                    <select id="activityId" name="activityId" required>
+                                    <select id="activityId" name="activityId" required
+                                            <c:if test="${form.registrationCount > 0}">disabled</c:if>>
                                         <option value="">-- Chọn hoạt động --</option>
                                         <c:forEach items="${activities}" var="a">
                                             <option value="${a.id}" <c:if test="${form.activityId == a.id}">selected</c:if>>
@@ -60,18 +61,25 @@
                                         </c:forEach>
                                     </select>
                                     <c:if test="${empty activities}">
-                                        <small class="field-hint">Chưa có hoạt động nào được duyệt để tạo form đăng ký.</small>
+                                        <small class="field-hint">
+                                            <c:choose>
+                                                <c:when test="${hasApprovedActivities}">Tất cả hoạt động đã duyệt đều đã có form đăng ký.</c:when>
+                                                <c:otherwise>Chưa có hoạt động nào được duyệt để tạo form đăng ký.</c:otherwise>
+                                            </c:choose>
+                                        </small>
                                     </c:if>
                                 </div>
                                 <div class="field field-wide">
                                     <label for="title">Tiêu đề form <span class="required-mark">*</span></label>
                                     <input id="title" name="title" type="text" maxlength="200" required
+                                           <c:if test="${form.registrationCount > 0}">disabled</c:if>
                                            value="<c:out value='${form.title}'/>"
                                            placeholder="Ví dụ: Đăng ký tham gia workshop">
                                 </div>
                                 <div class="field field-wide">
                                     <label for="description">Mô tả / hướng dẫn</label>
                                     <textarea id="description" name="description" rows="5" maxlength="4000"
+                                              <c:if test="${form.registrationCount > 0}">disabled</c:if>
                                               placeholder="Nhập thông tin sinh viên cần biết trước khi đăng ký..."><c:out value="${form.description}"/></textarea>
                                 </div>
                             </div>
@@ -83,22 +91,24 @@
                             <div class="form-grid activity-form-grid">
                                 <div class="field">
                                     <label for="openAt">Thời gian mở đăng ký</label>
-                                    <input id="openAt" name="openAt" type="datetime-local" min="${minimumRegistrationTime}" value="${form.openAt}">
+                                    <input id="openAt" name="openAt" type="datetime-local" min="${minimumRegistrationTime}"
+                                           value="${form.openAt}" <c:if test="${form.registrationCount > 0}">disabled</c:if>>
                                 </div>
                                 <div class="field">
                                     <label for="closeAt">Thời gian đóng đăng ký</label>
-                                    <input id="closeAt" name="closeAt" type="datetime-local" min="${minimumRegistrationTime}" value="${form.closeAt}">
+                                    <input id="closeAt" name="closeAt" type="datetime-local" min="${minimumRegistrationTime}"
+                                           value="${form.closeAt}" <c:if test="${form.registrationCount > 0}">disabled</c:if>>
                                 </div>
                                 <div class="field">
                                     <label for="status">Trạng thái</label>
-                                    <select id="status" name="status">
+                                    <select id="status" name="status"
+                                            <c:if test="${form.registrationCount > 0}">disabled</c:if>>
                                         <option value="DRAFT" <c:if test="${form.status eq 'DRAFT'}">selected</c:if>>Bản nháp</option>
                                         <option value="OPENING" <c:if test="${form.status eq 'OPENING'}">selected</c:if>>Đang mở đăng ký</option>
                                         <option value="CLOSED" <c:if test="${form.status eq 'CLOSED'}">selected</c:if>>Đã đóng đăng ký</option>
                                     </select>
                                 </div>
                             </div>
-
                             <c:if test="${form.registrationCount > 0}">
                                 <div class="alert activity-alert">Form đã có sinh viên đăng ký; không thể chỉnh sửa thông tin.</div>
                             </c:if>
@@ -106,9 +116,16 @@
 
                         <div class="form-actions activity-form-actions">
                             <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms">Hủy</a>
-                            <button class="button button-primary" type="submit">
-                                <c:choose><c:when test="${form.id > 0}">Lưu thay đổi</c:when><c:otherwise>Tạo form</c:otherwise></c:choose>
-                            </button>
+                            <c:choose>
+                                <c:when test="${form.registrationCount > 0}">
+                                    <span class="registration-edit-lock">Form đã có sinh viên đăng ký nên không thể chỉnh sửa.</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <button class="button button-primary" type="submit">
+                                        <c:choose><c:when test="${form.id > 0}">Lưu thay đổi</c:when><c:otherwise>Tạo form</c:otherwise></c:choose>
+                                    </button>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </form>
                 </section>

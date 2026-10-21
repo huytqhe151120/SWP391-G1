@@ -1330,6 +1330,12 @@ button.activity-action-link:focus-visible {
     min-width: 155px;
 }
 
+.registration-edit-lock {
+    color: #b33c48;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
 .multi-select-combobox {
     position: relative;
     flex: 1 1 260px;

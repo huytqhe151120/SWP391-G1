@@ -127,6 +127,20 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     @Override
+    public boolean hasFormForActivity(int activityId, int exceptFormId) {
+        String sql = "SELECT 1 FROM dbo.activity_registration_form WHERE activity_id=? AND id<>?";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            p.setInt(2, exceptFormId);
+            try (ResultSet r = p.executeQuery()) {
+                return r.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra form đã tạo cho hoạt động.", e);
+        }
+    }
+
+    @Override
     public void synchronizeFormStatuses() {
         String closeExpiredSql = "UPDATE dbo.activity_registration_form SET status='CLOSED',updated_at=SYSDATETIME() "
                 + "WHERE (status='OPENING' AND ((close_at IS NOT NULL AND close_at<=SYSDATETIME()) "
@@ -275,8 +289,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "OUTPUT INSERTED.id SELECT ?,?,?,?,?,?,SYSDATETIME() "
                 + "WHERE EXISTS(SELECT 1 FROM dbo.extracurricular_activity "
                 + "WHERE id=? AND approval_status='APPROVED') "
+                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration_form existing "
+                + "WHERE existing.activity_id=? ) "
                 + "AND (CAST(? AS datetime2) IS NULL OR CAST(? AS datetime2)>=SYSDATETIME()) "
-                + "AND (?<>'OPEN' OR CAST(? AS datetime2) IS NULL "
+                + "AND (?<>'OPENING' OR CAST(? AS datetime2) IS NULL "
                 + "OR CAST(? AS datetime2)>SYSDATETIME())";
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
@@ -285,11 +301,12 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 try (PreparedStatement p = c.prepareStatement(sql)) {
                     bindForm(p, f);
                     p.setInt(7, f.getActivityId());
-                    p.setTimestamp(8, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setInt(8, f.getActivityId());
                     p.setTimestamp(9, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
-                    p.setString(10, f.getStatus());
-                    p.setTimestamp(11, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(10, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setString(11, f.getStatus());
                     p.setTimestamp(12, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(13, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
                     try (ResultSet r = p.executeQuery()) {
                         if (!r.next()) {
                             c.rollback();
@@ -307,6 +324,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 throw e;
             }
         } catch (SQLException e) {
+            if (isUniqueConstraintViolation(e)) return false;
             throw new IllegalStateException("Không thể tạo form đăng ký.", e);
         }
     }
@@ -315,9 +333,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     public boolean update(RegistrationForm f) {
         String sql = "UPDATE dbo.activity_registration_form SET activity_id=?,title=?,description=?,open_at=?,close_at=?,status=?,updated_at=SYSDATETIME() "
                 + "WHERE id=? AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=?) "
+                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration_form existing "
+                + "WHERE existing.activity_id=? AND existing.id<>?) "
                 + "AND EXISTS(SELECT 1 FROM dbo.extracurricular_activity WHERE id=? AND approval_status='APPROVED') "
                 + "AND (CAST(? AS datetime2) IS NULL OR CAST(? AS datetime2)>=SYSDATETIME()) "
-                + "AND (?<>'OPEN' OR CAST(? AS datetime2) IS NULL "
+                + "AND (?<>'OPENING' OR CAST(? AS datetime2) IS NULL "
                 + "OR CAST(? AS datetime2)>SYSDATETIME())";
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
@@ -328,11 +348,13 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     p.setInt(7, f.getId());
                     p.setInt(8, f.getId());
                     p.setInt(9, f.getActivityId());
-                    p.setTimestamp(10, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
-                    p.setTimestamp(11, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
-                    p.setString(12, f.getStatus());
-                    p.setTimestamp(13, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
-                    p.setTimestamp(14, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setInt(10, f.getId());
+                    p.setInt(11, f.getActivityId());
+                    p.setTimestamp(12, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setTimestamp(13, f.getOpenAt() == null ? null : Timestamp.valueOf(f.getOpenAt()));
+                    p.setString(14, f.getStatus());
+                    p.setTimestamp(15, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
+                    p.setTimestamp(16, f.getCloseAt() == null ? null : Timestamp.valueOf(f.getCloseAt()));
                     changed = p.executeUpdate();
                 }
                 if (changed == 0) {
@@ -352,8 +374,16 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 throw e;
             }
         } catch (SQLException e) {
+            if (isUniqueConstraintViolation(e)) return false;
             throw new IllegalStateException("Không thể cập nhật form đăng ký.", e);
         }
+    }
+
+    private static boolean isUniqueConstraintViolation(SQLException exception) {
+        for (SQLException current = exception; current != null; current = current.getNextException()) {
+            if (current.getErrorCode() == 2601 || current.getErrorCode() == 2627) return true;
+        }
+        return false;
     }
 
     private static void bindForm(PreparedStatement p, RegistrationForm f) throws SQLException {

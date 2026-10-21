@@ -44,6 +44,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     @Override
+    public boolean hasStudentRegistered(int formId, int studentId) {
+        return formId > 0 && studentId > 0 && dao.hasStudentRegistered(formId, studentId);
+    }
+
+    @Override
     public List<RegistrationApplication> getApplications(int formId) {
         return formId > 0 ? dao.findApplications(formId) : List.of();
     }
@@ -71,6 +76,9 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (f.getActivityId() <= 0) return "Vui lòng chọn hoạt động.";
         if (!dao.isActivityApproved(f.getActivityId())) {
             return "Chỉ được tạo hoặc chỉnh sửa form cho hoạt động đã được duyệt.";
+        }
+        if (dao.hasFormForActivity(f.getActivityId(), f.getId())) {
+            return "Hoạt động này đã có form đăng ký. Mỗi hoạt động chỉ được tạo một form.";
         }
         if (f.getTitle() == null || f.getTitle().isBlank()) return "Vui lòng nhập tiêu đề form.";
         if (f.getTitle().trim().length() > 200) return "Tiêu đề không được vượt quá 200 ký tự.";
@@ -101,6 +109,9 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (saved) return null;
         if (!dao.isActivityApproved(f.getActivityId())) {
             return "Không thể lưu form vì hoạt động chưa được duyệt.";
+        }
+        if (dao.hasFormForActivity(f.getActivityId(), f.getId())) {
+            return "Hoạt động này đã có form đăng ký. Mỗi hoạt động chỉ được tạo một form.";
         }
         now = DateTimeUtil.now();
         if (f.getOpenAt() != null && f.getOpenAt().isBefore(now)) {

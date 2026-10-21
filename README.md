@@ -71,9 +71,9 @@ DBContext
 
 `DBContext` loads the connection settings from `src/main/resources/ConnectDB.properties` and opens connections with `java.sql.DriverManager`. Database credentials are developer-local and must never be committed to the repository or documented in the README.
 
-Before using custom registration form fields and saved profile answers, apply `src/main/resources/db/registration-form-fields.sql` and `src/main/resources/db/registration-form-status.sql` to the configured SQL Server database.
+Before using custom registration form fields and saved profile answers, apply `src/main/resources/db/registration-form-fields.sql`, `src/main/resources/db/registration-form-status.sql`, and `src/main/resources/db/registration-form-activity-limit.sql` to the configured SQL Server database.
 
-Registration forms in `DRAFT` with a future opening time are automatically opened when that time arrives; `OPENING` forms are automatically closed at their closing time or when the linked activity starts, is cancelled, or is no longer approved. The scheduler reconciles missed transitions at startup and every minute. Only forms linked to approved, upcoming activities can be opened or used for student registration. A manually closed form can be reopened while its closing deadline and activity are still in the future.
+Each activity is limited to one registration form. Registration forms in `DRAFT` with a future opening time are automatically opened when that time arrives; `OPENING` forms are automatically closed at their closing time or when the linked activity starts, is cancelled, or is no longer approved. The scheduler reconciles missed transitions at startup and every minute. Only forms linked to approved, upcoming activities can be opened or used for student registration. A manually closed form can be reopened while its closing deadline and activity are still in the future.
 
 Students submit their ID, student code, name, class, and email with each activity registration. STAFF/ADMIN can review submitted applications from a form's detail page; an application can move from `SUBMITTED` to `APPROVED` and be returned to `SUBMITTED` with the undo-approval action.
 
