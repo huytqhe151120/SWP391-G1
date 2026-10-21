@@ -59,13 +59,6 @@
                 </span>Hoạt động ngoại khóa
             </a>
 
-            <a class="<%= "my-activities".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/activities?filter=my"
-               <%= "my-activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-                <span class="activity-nav-icon" aria-hidden="true">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                </span>Hoạt động của tôi
-            </a>
-
             <span class="activity-nav-group">Hỏi đáp &amp; Kết quả</span>
             <a class="<%= "student-qa".equals(navActive) || "qa".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-qa"
                <%= "student-qa".equals(navActive) || "qa".equals(navActive) ? "aria-current=\"page\"" : "" %>>
