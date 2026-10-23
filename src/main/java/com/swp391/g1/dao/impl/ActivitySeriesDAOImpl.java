@@ -370,11 +370,11 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
         String sql = """
             INSERT INTO extracurricular_activity
                 (code, name, activity_type_id, responsible_department_id, responsible_staff_id,
-                 description, registration_form_required, activity_status, approval_status,
-                 activity_type_id, start_time, end_time, series_id, occurrence_no,
+                 description, registration_form_required, is_summary_required, activity_status, approval_status,
+                 start_time, end_time, series_id, occurrence_no,
                  occurrence_start_date, semester_id, approved_via_series, created_at)
             OUTPUT INSERTED.id
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'UPCOMING', 'DRAFT', ?, ?, ?, ?, ?, ?, ?, 0, SYSDATETIME())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UPCOMING', 'DRAFT', ?, ?, ?, ?, ?, ?, ?, 0, SYSDATETIME())
             """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, code);
@@ -384,7 +384,7 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
             ps.setInt(5, responsibleStaffId);
             ps.setString(6, description);
             ps.setBoolean(7, registrationFormRequired);
-            ps.setInt(8, activityTypeId);
+            ps.setBoolean(8, false);
             ps.setTimestamp(9, Timestamp.valueOf(startTimeUtc));
             ps.setTimestamp(10, Timestamp.valueOf(endTimeUtc));
             ps.setInt(11, seriesId);

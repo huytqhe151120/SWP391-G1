@@ -2,10 +2,13 @@ package com.swp391.g1.service.impl;
 
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.IActivitySeriesDAO;
+import com.swp391.g1.dao.ISemesterDAO;
 import com.swp391.g1.dao.impl.ActivitySeriesDAOImpl;
+import com.swp391.g1.dao.impl.SemesterDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.ActivitySeries;
 import com.swp391.g1.model.Enum;
+import com.swp391.g1.model.Semester;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivitySeriesService;
 import com.swp391.g1.util.DateTimeUtil;
@@ -21,9 +24,11 @@ import java.util.Objects;
 public class ActivitySeriesServiceImpl implements IActivitySeriesService {
 
     private final IActivitySeriesDAO seriesDAO;
+    private final ISemesterDAO semesterDAO;
 
     public ActivitySeriesServiceImpl() {
         this.seriesDAO = new ActivitySeriesDAOImpl();
+        this.semesterDAO = new SemesterDAOImpl();
     }
 
     @Override
@@ -91,12 +96,16 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         // OQ-09: Nếu series đã APPROVED, chỉ cho phép thay đổi description.
         // Các trường ảnh hưởng đến recurrence không được thay đổi.
         if (existing.getApprovalStatus() == Enum.ApprovalStatus.APPROVED) {
-            if (!Objects.equals(series.getDescription(), existing.getDescription())) {
-                // description change is allowed; fall through
-            } else if (series.isRegistrationFormRequired() != existing.isRegistrationFormRequired()) {
+            // OQ-09: APPROVED series may change description only.
+            // Reject any change to identity fields.
+            if (!Objects.equals(series.getSeriesCode(), existing.getSeriesCode())) {
+                throw new IllegalStateException("Không thể thay đổi mã chuỗi trên chuỗi hoạt động đã duyệt.");
+            }
+            if (!Objects.equals(series.getName(), existing.getName())) {
+                throw new IllegalStateException("Không thể thay đổi tên chuỗi trên chuỗi hoạt động đã duyệt.");
+            }
+            if (series.isRegistrationFormRequired() != existing.isRegistrationFormRequired()) {
                 throw new IllegalStateException("Chuỗi hoạt động đã được duyệt (APPROVED) không cho phép thay đổi registration_form_required.");
-            } else {
-                throw new IllegalStateException("Chuỗi hoạt động đã được duyệt (APPROVED) chỉ cho phép thay đổi mô tả (description).");
             }
 
             // Enforce: recurrence-affecting fields must match existing
@@ -132,6 +141,8 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
             }
 
             // Override all non-description fields with existing values to be safe
+            series.setSeriesCode(existing.getSeriesCode());
+            series.setName(existing.getName());
             series.setActivityTypeId(existing.getActivityTypeId());
             series.setResponsibleDepartmentId(existing.getResponsibleDepartmentId());
             series.setResponsibleStaffId(existing.getResponsibleStaffId());
@@ -201,6 +212,23 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         ActivitySeries series = seriesDAO.findById(seriesId);
         if (series == null) {
             throw new IllegalArgumentException("Không tìm thấy chuỗi hoạt động.");
+        }
+
+        // Validate semester_id: extracurricular_activity.semester_id is NOT NULL with FK → semester(id).
+        if (series.getSemesterId() == null) {
+            throw new IllegalArgumentException("Phải chọn học kỳ cho chuỗi hoạt động trước khi tạo sự kiện lặp.");
+        }
+        Semester semester = semesterDAO.findById(series.getSemesterId());
+        if (semester == null) {
+            throw new IllegalArgumentException("Học kỳ không tồn tại.");
+        }
+
+        // Reject duplicate generation: a series with existing occurrences must not be re-generated.
+        int existingOccurrences = seriesDAO.countOccurrencesBySeriesId(seriesId);
+        if (existingOccurrences > 0) {
+            throw new IllegalStateException(
+                    "Không thể tạo sự kiện lặp lại: chuỗi hoạt động id=" + seriesId
+                            + " đã có " + existingOccurrences + " occurrence đã được tạo.");
         }
 
         List<LocalDate> occurrenceDates;
@@ -330,6 +358,9 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         }
         if (series.getMaxOccurrences() != null && series.getMaxOccurrences() < 1) {
             throw new IllegalArgumentException("Số lần tối đa phải lớn hơn hoặc bằng 1.");
+        }
+        if (series.getSeriesEndDate() == null && series.getMaxOccurrences() == null) {
+            throw new IllegalArgumentException("Phải cung cấp ngày kết thúc chuỗi hoặc số sự kiện tối đa.");
         }
         if (series.getOccurrenceDurationMinutes() == null || series.getOccurrenceDurationMinutes() <= 0) {
             throw new IllegalArgumentException("Thời lượng occurrence phải lớn hơn 0.");
