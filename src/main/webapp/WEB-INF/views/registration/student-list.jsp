@@ -35,6 +35,9 @@
                 <c:if test="${param.msg eq 'registrationUnavailable'}">
                     <div class="alert alert-error activity-alert">Form vừa đóng hoặc hết hạn, hoặc hoạt động không còn đủ điều kiện đăng ký. Vui lòng tải lại danh sách và chọn form khác.</div>
                 </c:if>
+                <c:if test="${param.msg eq 'capacityReached'}">
+                    <div class="alert alert-error activity-alert">Hoạt động vừa hết chỗ. Các đơn chờ xử lý và đã duyệt đều giữ chỗ; vui lòng chọn hoạt động khác.</div>
+                </c:if>
 
                 <c:choose>
                     <c:when test="${not empty forms}">
@@ -51,6 +54,15 @@
                                         <strong>Hạn đăng ký:</strong>
                                         <c:choose><c:when test="${not empty f.closeAt}"><c:out value="${dt:format(f.closeAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose>
                                     </p>
+                                    <p class="student-registration-deadline">
+                                        <strong>Số chỗ:</strong>
+                                        <c:choose>
+                                            <c:when test="${not empty f.maxParticipants}">
+                                                Còn <c:out value="${f.maxParticipants - f.reservedSeatCount}"/> / <c:out value="${f.maxParticipants}"/>
+                                            </c:when>
+                                            <c:otherwise>Không giới hạn</c:otherwise>
+                                        </c:choose>
+                                    </p>
                                     <a class="button button-primary student-registration-cta"
                                        href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${f.id}">
                                         Xem và đăng ký
@@ -63,7 +75,7 @@
                         <section class="card student-registration-empty">
                             <span class="empty-state-mark" aria-hidden="true">✓</span>
                             <h2>Chưa có hoạt động mở đăng ký</h2>
-                            <p>Các form đăng ký sẽ xuất hiện tại đây khi ban tổ chức mở đăng ký cho hoạt động đã được duyệt.</p>
+                            <p>Các form của hoạt động đã được duyệt sẽ xuất hiện khi đang mở đăng ký và còn chỗ.</p>
                         </section>
                     </c:otherwise>
                 </c:choose>

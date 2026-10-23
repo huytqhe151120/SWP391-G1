@@ -76,6 +76,17 @@
                                     <dt>Số lượng đăng ký</dt>
                                     <dd><span class="registration-count"><c:out value="${form.registrationCount}"/></span></dd>
                                 </div>
+                                <div class="detail-item">
+                                    <dt>Số chỗ đang giữ</dt>
+                                    <dd>
+                                        <c:choose>
+                                            <c:when test="${not empty form.maxParticipants}">
+                                                <c:out value="${form.reservedSeatCount}"/> / <c:out value="${form.maxParticipants}"/>
+                                            </c:when>
+                                            <c:otherwise><c:out value="${form.reservedSeatCount}"/> / Không giới hạn</c:otherwise>
+                                        </c:choose>
+                                    </dd>
+                                </div>
                             </dl>
                         </section>
 
@@ -116,9 +127,10 @@
                                     <table class="registration-table registration-applications-table">
                                         <thead>
                                         <tr>
-                                            <th>Sinh viên (ID / Mã sinh viên)</th>
+                                            <th>Sinh viên (Mã sinh viên)</th>
                                             <th>Lớp</th>
                                             <th>Email</th>
+                                            <th>Thời gian gửi</th>
                                             <th class="registration-sticky-status">Trạng thái</th>
                                             <th class="registration-sticky-actions">Chi tiết</th>
                                         </tr>
@@ -128,10 +140,11 @@
                                             <tr>
                                                 <td>
                                                     <strong><c:out value="${application.studentName}"/></strong>
-                                                    <div class="muted">ID: <c:out value="${application.studentId}"/> · Mã sinh viên: <c:out value="${application.studentCode}"/></div>
+                                                    <div class="muted">Mã sinh viên: <c:out value="${application.studentCode}"/></div>
                                                 </td>
                                                 <td><c:out value="${application.classCode}" default="—"/></td>
                                                 <td><c:out value="${application.email}" default="—"/></td>
+                                                <td><c:out value="${dt:format(application.submittedAt)}"/></td>
                                                 <td class="registration-sticky-status">
                                                     <c:choose>
                                                         <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
@@ -144,7 +157,7 @@
                                         </c:forEach>
                                         <c:if test="${empty applications}">
                                             <tr>
-                                                <td class="empty-state registration-empty-state" colspan="5">
+                                                <td class="empty-state registration-empty-state" colspan="6">
                                                     <strong>Chưa có sinh viên gửi đơn</strong>
                                                     <span>Đơn đăng ký sẽ xuất hiện tại đây sau khi sinh viên gửi form.</span>
                                                 </td>

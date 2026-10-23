@@ -44,6 +44,15 @@
                     <div class="activity-form-content">
                         <h3 class="student-registration-activity-name"><c:out value="${form.activityName}"/></h3>
                         <p class="student-registration-detail-description"><c:out value="${form.description}"/></p>
+                        <p class="student-registration-deadline">
+                            <strong>Số chỗ:</strong>
+                            <c:choose>
+                                <c:when test="${not empty form.maxParticipants}">
+                                    Còn <c:out value="${form.maxParticipants - form.reservedSeatCount}"/> / <c:out value="${form.maxParticipants}"/>
+                                </c:when>
+                                <c:otherwise>Không giới hạn</c:otherwise>
+                            </c:choose>
+                        </p>
                         <c:if test="${not empty savedProfile}">
                             <p>Thông tin đã lưu trong hồ sơ được điền sẵn; bạn có thể cập nhật trước khi gửi.</p>
                         </c:if>
@@ -53,11 +62,7 @@
                             <div class="form-grid activity-form-grid">
                                 <div class="field field-wide">
                                     <h3>Thông tin sinh viên</h3>
-                                    <p>Kiểm tra và bổ sung thông tin dưới đây. ID được lấy tự động từ hồ sơ của bạn.</p>
-                                </div>
-                                <div class="field">
-                                    <label for="studentId">ID sinh viên</label>
-                                    <input id="studentId" type="text" value="<c:out value='${student.id}'/>" readonly>
+                                    <p>Kiểm tra và bổ sung thông tin dưới đây trước khi gửi đăng ký.</p>
                                 </div>
                                 <div class="field">
                                     <label for="studentCode">Mã sinh viên <span class="required-mark">*</span></label>

@@ -32,6 +32,7 @@
                 <c:if test="${param.msg eq 'rejected'}"><div class="alert alert-error activity-alert">Đã từ chối đơn đăng ký.</div></c:if>
                 <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt; đơn trở về trạng thái chờ xử lý.</div></c:if>
                 <c:if test="${param.msg eq 'reviewError'}"><div class="alert alert-error activity-alert">Trạng thái đơn đã thay đổi hoặc không thể cập nhật.</div></c:if>
+                <c:if test="${param.msg eq 'fifoError'}"><div class="alert alert-error activity-alert">Không thể xử lý đơn này vì còn đơn chờ xử lý được gửi trước. Hãy xử lý các đơn theo thứ tự gửi.</div></c:if>
 
                 <section class="card activity-table-card registration-table-card">
                     <div class="activity-table-heading">
@@ -41,7 +42,7 @@
                         <table class="registration-table registration-applications-list-table">
                             <thead>
                             <tr>
-                                <th>Sinh viên (ID / Mã sinh viên)</th>
+                                <th>Sinh viên (Mã sinh viên)</th>
                                 <th>Lớp</th>
                                 <th>Email</th>
                                 <th>Thời gian gửi</th>
@@ -52,7 +53,7 @@
                             <tbody>
                             <c:forEach items="${applications}" var="application">
                                 <tr>
-                                    <td><strong><c:out value="${application.studentName}"/></strong><div class="muted">ID: <c:out value="${application.studentId}"/> · Mã sinh viên: <c:out value="${application.studentCode}"/></div></td>
+                                    <td><strong><c:out value="${application.studentName}"/></strong><div class="muted">Mã sinh viên: <c:out value="${application.studentCode}"/></div></td>
                                     <td><c:out value="${application.classCode}" default="—"/></td>
                                     <td><c:out value="${application.email}" default="—"/></td>
                                     <td><c:out value="${dt:format(application.submittedAt)}"/></td>

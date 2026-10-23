@@ -55,6 +55,26 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     @Override
+    public boolean isAtCapacity(int formId) {
+        return formId > 0 && dao.isAtCapacity(formId);
+    }
+
+    @Override
+    public boolean isOpenFormAtCapacity(int formId) {
+        return formId > 0 && dao.isOpenFormAtCapacity(formId);
+    }
+
+    @Override
+    public boolean isActivityEligibleForApplicationReview(int formId) {
+        return formId > 0 && dao.isActivityEligibleForApplicationReview(formId);
+    }
+
+    @Override
+    public boolean hasEarlierPendingApplication(int registrationId) {
+        return registrationId > 0 && dao.hasEarlierPendingApplication(registrationId);
+    }
+
+    @Override
     public List<RegistrationApplication> getApplications(int formId) {
         return formId > 0 ? dao.findApplications(formId) : List.of();
     }
@@ -67,29 +87,54 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     @Override
     public String reviewApplication(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        return dao.reviewApplication(registrationId, "SUBMITTED", "APPROVED")
-                ? null : "Chỉ có thể duyệt đơn đang chờ xử lý.";
+        if (dao.reviewApplication(registrationId, "SUBMITTED", "APPROVED")) return null;
+        if (dao.hasEarlierPendingApplication(registrationId)) {
+            return "Không thể duyệt đơn này vì còn đơn chờ xử lý được gửi trước.";
+        }
+        RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && "SUBMITTED".equals(application.getStatus())
+                && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
+            return "Không thể duyệt đơn vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
+        }
+        return "Chỉ có thể duyệt đơn đang chờ xử lý.";
     }
 
     @Override
     public String rejectApplication(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        return dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED")
-                ? null : "Chỉ có thể từ chối đơn đang chờ xử lý.";
+        if (dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED")) return null;
+        if (dao.hasEarlierPendingApplication(registrationId)) {
+            return "Không thể từ chối đơn này vì còn đơn chờ xử lý được gửi trước.";
+        }
+        return "Chỉ có thể từ chối đơn đang chờ xử lý.";
     }
 
     @Override
     public String undoApplicationRejection(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        return dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED")
-                ? null : "Chỉ có thể hủy từ chối đơn đã bị từ chối.";
+        if (dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED")) return null;
+        RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && "REJECTED".equals(application.getStatus())
+                && dao.isAtCapacity(application.getFormId())) {
+            return "Không thể khôi phục đơn vì hoạt động đã đủ số lượng tối đa.";
+        }
+        if (application != null && "REJECTED".equals(application.getStatus())
+                && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
+            return "Không thể đưa đơn trở lại hàng chờ vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
+        }
+        return "Chỉ có thể hủy từ chối đơn đã bị từ chối.";
     }
 
     @Override
     public String undoApplicationApproval(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        return dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED")
-                ? null : "Chỉ có thể hủy duyệt đơn đã được duyệt.";
+        if (dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED")) return null;
+        RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && "APPROVED".equals(application.getStatus())
+                && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
+            return "Không thể hủy duyệt vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
+        }
+        return "Chỉ có thể hủy duyệt đơn đã được duyệt.";
     }
 
     public String save(RegistrationForm f) {
@@ -203,6 +248,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (formId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
         if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
         if (dao.registerStudent(formId, studentId, note == null ? "" : note.trim())) return null;
+        if (dao.isOpenFormAtCapacity(formId)) return "Không thể đăng ký: hoạt động đã đủ số lượng tối đa.";
         return "Không thể đăng ký: form đã đóng, hoạt động chưa được duyệt hoặc bạn đã đăng ký trước đó.";
     }
 
@@ -246,6 +292,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         String personalInfoError = appendPersonalInfo(studentId, personalInfo, answerList);
         if (personalInfoError != null) return personalInfoError;
         if (dao.registerStudentWithAnswers(formId, studentId, note == null ? "" : note.trim(), answerList)) return null;
+        if (dao.isOpenFormAtCapacity(formId)) return "Không thể đăng ký: hoạt động đã đủ số lượng tối đa.";
         return "Không thể đăng ký: form đã đóng, hoạt động chưa được duyệt hoặc bạn đã đăng ký trước đó.";
     }
 

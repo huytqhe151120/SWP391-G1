@@ -22,6 +22,14 @@ public interface IRegistrationFormService {
 
     boolean hasStudentRegistered(int formId, int studentId);
 
+    boolean isAtCapacity(int formId);
+
+    boolean isOpenFormAtCapacity(int formId);
+
+    boolean isActivityEligibleForApplicationReview(int formId);
+
+    boolean hasEarlierPendingApplication(int registrationId);
+
     List<RegistrationApplication> getApplications(int formId);
 
     RegistrationApplication getApplicationById(int registrationId);

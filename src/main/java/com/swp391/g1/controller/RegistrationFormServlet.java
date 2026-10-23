@@ -74,7 +74,8 @@ public class RegistrationFormServlet extends HttpServlet {
                 RegistrationForm f = service.getOpenFormById(id(req), student.getId());
                 if (f == null) {
                     String message = service.hasStudentRegistered(id(req), student.getId())
-                            ? "alreadyRegistered" : "registrationUnavailable";
+                            ? "alreadyRegistered"
+                            : service.isOpenFormAtCapacity(id(req)) ? "capacityReached" : "registrationUnavailable";
                     resp.sendRedirect(req.getContextPath() + "/registration-forms?action=student&msg=" + message);
                     return;
                 }
@@ -211,8 +212,14 @@ public class RegistrationFormServlet extends HttpServlet {
                     return;
                 }
                 if (error.startsWith("Không thể đăng ký:")) {
-                    String message = service.hasStudentRegistered(id(req), student.getId())
-                            ? "alreadyRegistered" : "registrationUnavailable";
+                    String message;
+                    if (service.hasStudentRegistered(id(req), student.getId())) {
+                        message = "alreadyRegistered";
+                    } else if (service.isOpenFormAtCapacity(id(req))) {
+                        message = "capacityReached";
+                    } else {
+                        message = "registrationUnavailable";
+                    }
                     resp.sendRedirect(req.getContextPath() + "/registration-forms?action=student&msg=" + message);
                     return;
                 }
@@ -271,7 +278,8 @@ public class RegistrationFormServlet extends HttpServlet {
                             case "undoApplicationRejection" -> "rejectionUndone";
                             default -> "approvalUndone";
                         }
-                        : "reviewError";
+                        : error.contains("đã đủ số lượng tối đa") ? "capacityError"
+                                : error.contains("được gửi trước") ? "fifoError" : "reviewError";
                 resp.sendRedirect(req.getContextPath() + "/registration-forms?action=application&id="
                         + application.getId() + "&msg=" + message);
                 return;

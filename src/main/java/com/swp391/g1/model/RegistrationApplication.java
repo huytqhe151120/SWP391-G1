@@ -15,6 +15,7 @@ public class RegistrationApplication {
     private String note;
     private String status;
     private LocalDateTime submittedAt;
+    private LocalDateTime pendingSince;
     private List<RegistrationFormField> answers = new ArrayList<>();
 
     public int getId() { return id; }
@@ -46,6 +47,9 @@ public class RegistrationApplication {
 
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+
+    public LocalDateTime getPendingSince() { return pendingSince; }
+    public void setPendingSince(LocalDateTime pendingSince) { this.pendingSince = pendingSince; }
 
     public List<RegistrationFormField> getAnswers() { return answers; }
     public void setAnswers(List<RegistrationFormField> answers) {

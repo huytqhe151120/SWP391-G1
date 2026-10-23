@@ -31,6 +31,8 @@
                 <c:if test="${param.msg eq 'rejectionUndone'}"><div class="alert alert-success activity-alert">Đã hủy từ chối; đơn trở về trạng thái chờ duyệt.</div></c:if>
                 <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt đơn; đơn đang chờ xử lý.</div></c:if>
                 <c:if test="${param.msg eq 'reviewError'}"><div class="alert alert-error activity-alert">Trạng thái đơn đã thay đổi hoặc không thể cập nhật.</div></c:if>
+                <c:if test="${param.msg eq 'fifoError'}"><div class="alert alert-error activity-alert">Không thể xử lý đơn này vì còn đơn chờ xử lý được gửi trước. Hãy xử lý các đơn theo thứ tự gửi.</div></c:if>
+                <c:if test="${param.msg eq 'capacityError'}"><div class="alert alert-error activity-alert">Không thể khôi phục đơn: hoạt động đã đủ số lượng tối đa. Đơn bị từ chối vẫn được giữ nguyên.</div></c:if>
 
                 <section class="card activity-form-card activity-detail-card registration-detail-card">
                     <div class="activity-table-heading">
@@ -49,7 +51,7 @@
                         <section class="activity-detail-section">
                             <h3>Thông tin sinh viên</h3>
                             <dl class="detail-grid activity-detail-grid">
-                                <div class="detail-item"><dt>ID / Mã sinh viên</dt><dd>ID: <c:out value="${application.studentId}"/> · Mã sinh viên: <c:out value="${application.studentCode}" default="—"/></dd></div>
+                                <div class="detail-item"><dt>Mã sinh viên</dt><dd><c:out value="${application.studentCode}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Họ và tên</dt><dd><c:out value="${application.studentName}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Lớp</dt><dd><c:out value="${application.classCode}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Email</dt><dd><c:out value="${application.email}" default="—"/></dd></div>

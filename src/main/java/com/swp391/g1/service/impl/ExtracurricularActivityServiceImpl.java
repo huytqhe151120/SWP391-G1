@@ -117,6 +117,9 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (isLocked(existing)) {
             throw new IllegalArgumentException(LOCKED_MESSAGE);
         }
+        if (existing == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động cần cập nhật.");
+        }
         if (existing != null) {
             // Partner information is managed separately in the "Đối tác hoạt động" step.
             entity.setPartnerCompanyId(existing.getPartnerCompanyId());
@@ -132,6 +135,13 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         // Bước 5: Giữ nguyên thông tin đối tác vì thông tin này được quản lý riêng.
         entity.setPartnerCompanyId(existing.getPartnerCompanyId());
         entity.setPartnerStaffId(existing.getPartnerStaffId());
+
+        if (!Objects.equals(existing.getMaxParticipants(), entity.getMaxParticipants())
+                && entity.getMaxParticipants() != null
+                && entity.getMaxParticipants() < activityDAO.countReservedApplications(entity.getId())) {
+            throw new IllegalArgumentException(
+                    "Không thể giảm số lượng tối đa thấp hơn số đơn đang chờ xử lý và đã duyệt đang giữ chỗ.");
+        }
 
         // Bước 6: Nếu nội dung không thay đổi thì không cần cập nhật.
         if (!hasContentChanged(existing, entity)) {
@@ -154,6 +164,12 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
         // Bước 9: Nếu cập nhật thất bại, thông báo lỗi.
         if (!updated) {
+            if (!Objects.equals(existing.getMaxParticipants(), entity.getMaxParticipants())
+                    && entity.getMaxParticipants() != null
+                    && entity.getMaxParticipants() < activityDAO.countReservedApplications(entity.getId())) {
+                throw new IllegalArgumentException(
+                        "Không thể giảm số lượng tối đa thấp hơn số đơn đang chờ xử lý và đã duyệt đang giữ chỗ.");
+            }
             throw new IllegalArgumentException(
                     "Không thể sửa hoạt động vì hoạt động đã bắt đầu "
                             + "hoặc trạng thái duyệt đã thay đổi. Vui lòng tải lại trang."

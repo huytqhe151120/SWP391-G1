@@ -491,7 +491,9 @@
 }
 
 .registration-title-cell strong {
+    display: block;
     color: #233752;
+    overflow-wrap: anywhere;
 }
 
 .registration-title-cell .muted {
@@ -503,6 +505,7 @@
     line-height: 1.45;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
 }
 
 .registration-table .registration-sticky-status,

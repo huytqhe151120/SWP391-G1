@@ -276,6 +276,21 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     }
 
     @Override
+    public int countReservedApplications(int activityId) {
+        String sql = "SELECT COUNT(*) FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=? AND r.status IN ('SUBMITTED','APPROVED')";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to count reserved activity registrations.", e);
+        }
+    }
+
+    @Override
     public Integer insert(ExtracurricularActivity activity) {
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
@@ -371,15 +386,21 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql = "UPDATE extracurricular_activity SET "
+        String sql = "UPDATE a WITH (UPDLOCK,HOLDLOCK) SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
                 + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
                 + "registration_form_required = ?, max_participants = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?")
-                + " WHERE id = ? AND activity_status = 'UPCOMING' "
-                + "AND start_time IS NOT NULL AND start_time > ? "
-                + "AND approval_status = ?";
+                + " FROM dbo.extracurricular_activity a "
+                + " WHERE a.id = ? AND a.activity_status = 'UPCOMING' "
+                + "AND a.start_time IS NOT NULL AND a.start_time > ? "
+                + "AND a.approval_status = ? "
+                + "AND (? IS NULL OR ? >= (SELECT COUNT(*) FROM dbo.activity_registration r WITH (UPDLOCK,HOLDLOCK) "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=a.id "
+                + "AND r.status IN ('SUBMITTED','APPROVED')) "
+                + "OR (? IS NOT NULL AND a.max_participants = ?))";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -416,7 +437,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             }
             ps.setInt(next++, activity.getId());
             ps.setTimestamp(next++, Timestamp.valueOf(now));
-            ps.setString(next, expectedApprovalStatus.name());
+            ps.setString(next++, expectedApprovalStatus.name());
+            setMaxParticipants(ps, next++, activity);
+            setMaxParticipants(ps, next++, activity);
+            setMaxParticipants(ps, next++, activity);
+            setMaxParticipants(ps, next, activity);
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

@@ -14,6 +14,8 @@ public class RegistrationForm {
     private LocalDateTime closeAt;
     private String status;
     private int registrationCount;
+    private int reservedSeatCount;
+    private Integer maxParticipants;
     private List<RegistrationFormField> fields = new ArrayList<>();
 
     public int getId() {
@@ -86,6 +88,22 @@ public class RegistrationForm {
 
     public void setRegistrationCount(int registrationCount) {
         this.registrationCount = registrationCount;
+    }
+
+    public int getReservedSeatCount() {
+        return reservedSeatCount;
+    }
+
+    public void setReservedSeatCount(int reservedSeatCount) {
+        this.reservedSeatCount = reservedSeatCount;
+    }
+
+    public Integer getMaxParticipants() {
+        return maxParticipants;
+    }
+
+    public void setMaxParticipants(Integer maxParticipants) {
+        this.maxParticipants = maxParticipants;
     }
 
     public List<RegistrationFormField> getFields() {

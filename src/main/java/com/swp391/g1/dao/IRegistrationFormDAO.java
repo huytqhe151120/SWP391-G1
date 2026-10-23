@@ -28,6 +28,14 @@ public interface IRegistrationFormDAO {
 
     boolean isActivityUpcoming(int activityId);
 
+    boolean isAtCapacity(int formId);
+
+    boolean isOpenFormAtCapacity(int formId);
+
+    boolean isActivityEligibleForApplicationReview(int formId);
+
+    boolean hasEarlierPendingApplication(int registrationId);
+
     boolean hasFormForActivity(int activityId, int exceptFormId);
 
     void synchronizeFormStatuses();
