@@ -149,11 +149,13 @@
                                 <td class="freeze freeze-message">
                                     <c:choose>
                                         <c:when test="${empty inv.message}">—</c:when>
-                                        <c:otherwise>
-                                            <button type="button" class="button button-sm invitation-message-view"
-                                                    data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
-                                                    data-message="<c:out value='${inv.message}'/>">Xem</button>
-                                        </c:otherwise>
+                                            <c:when test="${empty inv.message}">—</c:when>
+                                            <c:otherwise>
+                                                <button type="button" class="button button-sm action-btn action-btn--view activity-message-view"
+                                                        data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
+                                                        data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
+                                                </button>
+                                            </c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td class="freeze freeze-status invitation-status-column">
@@ -167,7 +169,8 @@
                                 </td>
                                 <td class="freeze freeze-actions">
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}#tab-partner">
+                                        <a class="activity-action-link action-btn action-btn--view" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">
+                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                             Chi tiết
                                         </a>
                                         <c:if test="${inv.canRespond || inv.canRevoke}">

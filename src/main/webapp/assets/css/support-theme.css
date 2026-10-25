@@ -34,7 +34,7 @@
     position: relative !important;
     top: auto !important;
     z-index: 2 !important;
-    width: min(1440px, calc(100% - 64px)) !important;
+    width: min(1680px, calc(100% - clamp(24px, 4vw, 64px))) !important;
     min-height: 76px !important;
     height: auto !important;
     margin: 24px auto 0 !important;
@@ -69,8 +69,8 @@
 .qa-management-page .container,
 .answer-question-page .container,
 .organizer-inbox-page .container {
-    width: min(1180px, calc(100% - 40px)) !important;
-    max-width: 1180px !important;
+    width: min(1440px, calc(100% - clamp(24px, 4vw, 64px))) !important;
+    max-width: 1440px !important;
     margin: 0 auto !important;
     padding: 38px 0 56px !important;
 }
@@ -149,8 +149,8 @@
 /* Both private chat screens. */
 .student-chat-page, .organizer-chat-page { display: block !important; }
 .student-chat-page .chat-wrapper, .organizer-chat-page .chat-wrapper {
-    width: min(980px, calc(100% - 40px)) !important;
-    max-width: 980px !important;
+    width: min(1200px, calc(100% - clamp(24px, 4vw, 64px))) !important;
+    max-width: 1200px !important;
     min-height: calc(100dvh - 132px) !important;
     margin: 24px auto 0 !important;
     overflow: hidden !important;
@@ -168,7 +168,7 @@
 .student-chat-page .char-note, .organizer-chat-page .char-note, .student-chat-page .empty-chat, .organizer-chat-page .empty-chat { color: var(--support-muted) !important; }
 
 /* Student Q&A uses the same navy masthead and restrained blue accent. */
-.student-qa-page .qa-page { width: min(1180px, calc(100% - 40px)) !important; padding-top: 38px !important; }
+.student-qa-page .qa-page { width: min(1440px, calc(100% - clamp(24px, 4vw, 64px))) !important; max-width: 1440px !important; padding-top: 38px !important; }
 .student-qa-page .intro { padding: 30px 34px; border-radius: 16px; background: linear-gradient(115deg, #132b4f 0%, #1e477b 62%, #2862a2 100%); color: white; box-shadow: 0 14px 32px rgb(26 61 107 / 16%); }
 .student-qa-page .intro .eyebrow, .student-qa-page .intro-copy { color: #d3e0f1 !important; }
 .student-qa-page .intro h1 { font-size: clamp(2rem, 4vw, 3.4rem) !important; }

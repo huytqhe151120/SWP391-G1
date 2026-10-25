@@ -36,9 +36,6 @@
             <c:if test="${canManageAccounts}">
                 <p><a class="button" href="${pageContext.request.contextPath}/accounts">Quản lý tài khoản</a></p>
             </c:if>
-            <form method="post" action="${pageContext.request.contextPath}/logout">
-                <button class="button" type="submit">Đăng xuất</button>
-            </form>
         </section>
     </main>
         </div>

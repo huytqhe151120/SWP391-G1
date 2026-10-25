@@ -38,6 +38,9 @@ import java.util.Set;
         urlPatterns = {"/activities", "/activities/staffs-by-department"})
 public class ExtracurricularActivityServlet extends HttpServlet {
 
+    private static final String ACTIVITY_FORM_DATA = "activityFormData";
+    private static final String ACTIVITY_FORM_ERROR = "activityFormError";
+
     private static final DateTimeFormatter FILTER_DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
 
@@ -390,14 +393,16 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        ExtracurricularActivityRequestDTO formData =
-                (ExtracurricularActivityRequestDTO) request.getAttribute("formData");
+        restoreActivityFormFlash(request);
+        ExtracurricularActivityRequestDTO formData = (ExtracurricularActivityRequestDTO)
+                request.getAttribute("formData");
         loadDropdownData(request, parseId(formData == null ? null : formData.getResponsibleDepartmentId()));
         request.getRequestDispatcher("/WEB-INF/views/activity/create.jsp").forward(request, response);
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        restoreActivityFormFlash(request);
         String idStr = request.getParameter("id");
         if (idStr != null && !idStr.trim().isEmpty()) {
             int id = Integer.parseInt(idStr);
@@ -429,6 +434,39 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             }
         }
         response.sendRedirect(request.getContextPath() + "/activities");
+    }
+
+    private void restoreActivityFormFlash(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return;
+        }
+        Object formData = session.getAttribute(ACTIVITY_FORM_DATA);
+        Object errorMessage = session.getAttribute(ACTIVITY_FORM_ERROR);
+        if (formData != null) {
+            request.setAttribute("formData", formData);
+            session.removeAttribute(ACTIVITY_FORM_DATA);
+        }
+        if (errorMessage != null) {
+            request.setAttribute("errorMessage", errorMessage);
+            session.removeAttribute(ACTIVITY_FORM_ERROR);
+        }
+    }
+
+    private void redirectToActivityForm(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            HttpSession session,
+            ExtracurricularActivityRequestDTO dto,
+            String errorMessage,
+            String action) throws IOException {
+        session.setAttribute(ACTIVITY_FORM_DATA, dto);
+        session.setAttribute(ACTIVITY_FORM_ERROR, errorMessage);
+        String destination = request.getContextPath() + "/activities?action=" + action;
+        if ("edit".equals(action)) {
+            destination += "&id=" + dto.getId();
+        }
+        response.sendRedirect(destination);
     }
 
     private void showDetail(HttpServletRequest request, HttpServletResponse response)
@@ -603,14 +641,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 session.setAttribute("successMessage", "Tạo mới hoạt động thành công!");
                 response.sendRedirect(request.getContextPath() + "/activities");
             } else {
-                request.setAttribute("errorMessage", "Không thể tạo hoạt động. Vui lòng thử lại.");
-                request.setAttribute("formData", dto);
-                showCreateForm(request, response);
+                redirectToActivityForm(request, response, session, dto,
+                        "Không thể tạo hoạt động. Vui lòng thử lại.", "create");
             }
         } catch (Exception e) {
-            request.setAttribute("errorMessage", e.getMessage());
-            request.setAttribute("formData", dto);
-            showCreateForm(request, response);
+            redirectToActivityForm(request, response, session, dto, e.getMessage(), "create");
         }
     }
 
@@ -633,14 +668,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 session.setAttribute("successMessage", "Cập nhật hoạt động thành công! Hoạt động đã duyệt mà có thay đổi nội dung sẽ chuyển về Bản nháp và cần Gửi duyệt lại.");
                 response.sendRedirect(request.getContextPath() + "/activities");
             } else {
-                request.setAttribute("errorMessage", "Cập nhật không thành công. Vui lòng kiểm tra lại.");
-                request.setAttribute("formData", dto);
-                showEditForm(request, response);
+                redirectToActivityForm(request, response, session, dto,
+                        "Cập nhật không thành công. Vui lòng kiểm tra lại.", "edit");
             }
         } catch (Exception e) {
-            request.setAttribute("errorMessage", e.getMessage());
-            request.setAttribute("formData", dto);
-            showEditForm(request, response);
+            redirectToActivityForm(request, response, session, dto, e.getMessage(), "edit");
         }
     }
 

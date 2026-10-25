@@ -38,8 +38,8 @@
 }
 
 .activity-app-shell {
-    width: min(1440px, calc(100% - 48px));
-    margin: 24px auto 42px;
+    width: min(1680px, calc(100% - clamp(24px, 4vw, 64px)));
+    margin: clamp(16px, 2vw, 28px) auto 42px;
 }
 
 .activity-app-header {
@@ -146,10 +146,59 @@
     color: #fff;
 }
 
+.activity-sidebar-account {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #dfe8f6;
+    display: grid;
+    gap: 10px;
+}
+
+.activity-sidebar-user {
+    display: grid;
+    gap: 2px;
+    padding: 0 12px;
+    min-width: 0;
+}
+
+.activity-sidebar-user strong {
+    color: #183f7a;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.activity-sidebar-user span {
+    color: #64758d;
+    font-size: 0.78rem;
+}
+
+.activity-sidebar-account form {
+    margin: 0;
+}
+
+.activity-sidebar-logout {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #dfe8f6;
+    border-radius: 9px;
+    background: #f0f4fa;
+    color: #36537f;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.activity-sidebar-logout:hover {
+    background: #edf5ff;
+    color: #183f7a;
+}
+
 .activity-app-layout {
     display: grid;
-    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(210px, clamp(220px, 19vw, 280px)) minmax(0, 1fr);
+    gap: clamp(16px, 2vw, 28px);
     align-items: start;
 }
 
@@ -229,6 +278,7 @@
 /* Embedded content area: keeps legacy pages inside the shell column */
 .activity-app-main {
     min-width: 0;
+    max-width: 100%;
 }
 
 .activity-app-layout .activity-app-main > .page,
@@ -729,11 +779,14 @@
 
 .activity-list-page .activity-table-wrap table {
     width: 100%;
+    --activity-actions-col-width: 0px;
+    --activity-approval-col-width: 0px;
 }
 
 .activity-list-page .activity-table-wrap th.activity-action-column,
 .activity-list-page .activity-table-wrap td.activity-action-column {
     position: sticky;
+    text-align: left;
     right: 0;
     z-index: 2;
     background: #fff;
@@ -1151,11 +1204,30 @@ button.activity-action-link:focus-visible {
     min-width: 640px;
 }
 
-.activity-detail-page .activity-table-wrap td[colspan] {
+.activity-detail-page .activity-table-wrap td[colspan]:not(.activity-empty-state) {
     padding: 32px 16px !important;
     text-align: center !important;
     white-space: normal;
     color: #8a97ab !important;
+}
+
+.activity-detail-page .activity-table-wrap td.activity-empty-state {
+    height: 220px;
+    white-space: normal;
+}
+
+.activity-detail-page .activity-table-wrap th.activity-index-column {
+    width: 60px;
+}
+
+.activity-detail-page .activity-table-wrap th.activity-action-column,
+.activity-detail-page .activity-table-wrap td.activity-action-column {
+    width: auto;
+    min-width: 132px;
+}
+
+.activity-detail-page .activity-actions {
+    justify-content: flex-start;
 }
 
 .activity-detail-page .activity-detail-actions {
@@ -1164,7 +1236,7 @@ button.activity-action-link:focus-visible {
 
 /* Activity forms */
 .activity-form-page {
-    max-width: 1120px;
+    max-width: none;
     font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
     letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
@@ -1476,6 +1548,11 @@ button.activity-action-link:focus-visible {
         grid-template-columns: 1fr;
     }
 
+    .activity-list-page {
+        width: 100%;
+        max-width: none;
+    }
+
     .activity-side-nav {
         position: static;
     }
@@ -1490,9 +1567,11 @@ button.activity-action-link:focus-visible {
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
     .activity-app-shell {
-        width: min(100% - 20px, 1440px);
+        width: min(1680px, calc(100% - clamp(20px, 5vw, 32px)));
+        margin-top: 12px;
+        margin-bottom: 24px;
     }
 
     .activity-app-header {
@@ -1517,12 +1596,13 @@ button.activity-action-link:focus-visible {
     }
 
     .activity-side-nav .activity-nav-menu {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
     }
 
     .activity-list-page {
-        width: min(100% - 28px, 1440px);
-        margin: 20px auto;
+        width: 100%;
+        max-width: none;
+        margin: 0;
     }
 
     .activity-hero {
@@ -1596,6 +1676,18 @@ button.activity-action-link:focus-visible {
 
     .activity-detail-actions {
         padding: 16px 20px;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .activity-detail-actions > .button,
+    .activity-detail-actions form,
+    .activity-detail-actions form .button {
+        width: 100%;
+    }
+
+    .activity-detail-grid {
+        grid-template-columns: 1fr;
     }
 
     .activity-form-card > .activity-table-heading {
@@ -1606,8 +1698,19 @@ button.activity-action-link:focus-visible {
         padding: 4px 20px 23px;
     }
 
+    .activity-form-grid {
+        grid-template-columns: 1fr;
+    }
+
     .activity-form-actions {
+        align-items: stretch;
+        flex-direction: column;
         padding: 15px 20px;
+    }
+
+    .activity-form-actions > .button {
+        width: 100%;
+        min-width: 0;
     }
 }
 
@@ -1739,6 +1842,12 @@ button.activity-action-link:focus-visible {
 
 .activity-form-grid .field {
     gap: 6px;
+}
+
+.activity-form-grid .error-msg {
+    color: #dc2626;
+    font-size: .81rem;
+    line-height: 1.4;
 }
 
 .activity-form-grid .error-msg:empty,
