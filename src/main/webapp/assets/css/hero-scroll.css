@@ -1,0 +1,21 @@
+/* Hero co dần + mờ/blur nội dung + fade mép trên vùng cuộn khi cuộn.
+   Dùng chung cho các trang danh sách: gắn class "hero-scroll" lên .activity-app-shell. */
+.hero-scroll .activity-hero {
+    position: relative;
+    overflow: hidden;
+    /* Bỏ min-height mặc định (190px) để max-height do JS điều khiển mới co được hero */
+    min-height: 0;
+    will-change: max-height;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+.hero-scroll .activity-hero > * {
+    will-change: opacity, filter;
+}
+/* Vùng cuộn tan dần ở mép trên -> nối liền mạch với khoảng dưới header khi cuộn.
+   Độ mờ (--scroll-fade) do JS đặt theo vị trí cuộn: ở đầu = 0 (không cắt đỉnh hero). */
+.hero-scroll .activity-app-main {
+    --scroll-fade: 0px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade));
+    mask-image: linear-gradient(to bottom, transparent 0, #000 var(--scroll-fade));
+}

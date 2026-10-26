@@ -9,14 +9,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lời mời hợp tác | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=13">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=25">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 <main class="page activity-list-page">
     <header class="activity-hero">
@@ -151,7 +152,7 @@
                                         <c:when test="${empty inv.message}">—</c:when>
                                             <c:when test="${empty inv.message}">—</c:when>
                                             <c:otherwise>
-                                                <button type="button" class="button button-sm action-btn action-btn--view activity-message-view"
+                                                <button type="button" class="button button-sm action-btn action-btn--view invitation-message-view"
                                                         data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
                                                         data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
                                                 </button>
@@ -169,7 +170,7 @@
                                 </td>
                                 <td class="freeze freeze-actions">
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link action-btn action-btn--view" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">
+                                        <a class="activity-action-link action-btn action-btn--view" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}">
                                             <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                             Chi tiết
                                         </a>
@@ -267,6 +268,7 @@
     <div style="text-align: right;"><button type="button" class="button" id="invitation-message-modal-close">Đóng</button></div>
 </dialog>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
-<script src="${pageContext.request.contextPath}/assets/js/partner-invitation.js?v=3"></script>
+<script src="${pageContext.request.contextPath}/assets/js/partner-invitation.js?v=8"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>
