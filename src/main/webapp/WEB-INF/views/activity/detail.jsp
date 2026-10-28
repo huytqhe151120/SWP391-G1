@@ -9,16 +9,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261021-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
-        <main class="page activity-list-page activity-form-page activity-detail-page">
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+        <main class="activity-app-main page activity-list-page activity-form-page activity-detail-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
@@ -774,5 +775,6 @@
     <div style="text-align: right;"><button type="button" class="button" id="activity-message-modal-close">Đóng</button></div>
 </dialog>
 <script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

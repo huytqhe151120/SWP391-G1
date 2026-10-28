@@ -1,0 +1,527 @@
+/* Home Page CSS - SWP391-G1 - Layout matching Image with original Navy & Blue Palette */
+
+.home-page-layout {
+    --home-navy: #132b4f;
+    --home-navy-mid: #1e477b;
+    --home-blue: #2457c5;
+    --home-blue-dark: #173f83;
+    --home-ink: #182840;
+    --home-muted: #62728a;
+    --home-border: #dfe7f2;
+    --home-bg-light: #f4f7fb;
+
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    color: var(--home-ink);
+}
+
+/* ======================================================== */
+/* 1. HERO SECTION (Layout matching Image 1, original color)*/
+/* ======================================================== */
+.home-hero-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(350px, 0.82fr);
+    gap: 36px;
+    align-items: center;
+    padding: 38px 40px;
+    background: #ffffff;
+    border: 1px solid var(--home-border);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(19, 43, 79, 0.05);
+}
+
+.home-pill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #edf5ff;
+    border: 1px solid #d0e2ff;
+    border-radius: 9999px;
+    color: var(--home-blue);
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.home-hero-title {
+    margin: 0 0 16px 0;
+    font-size: clamp(2.3rem, 3.6vw, 3.2rem);
+    font-weight: 850;
+    line-height: 1.14;
+    letter-spacing: -0.035em;
+    color: var(--home-navy);
+}
+
+.home-title-highlight {
+    color: var(--home-blue);
+}
+
+.home-hero-subtitle {
+    margin: 0 0 26px 0;
+    font-size: 1.02rem;
+    line-height: 1.62;
+    color: var(--home-muted);
+    max-width: 520px;
+}
+
+/* Search bar */
+.home-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 530px;
+    padding: 6px 8px 6px 18px;
+    background: #ffffff;
+    border: 1px solid #cbd8e8;
+    border-radius: 9999px;
+    box-shadow: 0 8px 24px rgba(19, 43, 79, 0.06);
+    margin-bottom: 32px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-search-bar:focus-within {
+    border-color: var(--home-blue);
+    box-shadow: 0 8px 26px rgba(36, 87, 197, 0.16);
+}
+
+.home-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.home-search-icon {
+    color: #8da0b8;
+    display: grid;
+    place-items: center;
+}
+
+.home-search-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.94rem;
+    color: var(--home-ink);
+    background: transparent;
+}
+
+.home-search-input::placeholder {
+    color: #94a5bd;
+}
+
+.home-search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    background: var(--home-blue);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(36, 87, 197, 0.26);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.home-search-btn:hover {
+    background: var(--home-blue-dark);
+    transform: translateY(-1px);
+}
+
+/* Stats Row */
+.home-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    padding-top: 6px;
+}
+
+.home-stat-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-stat-num {
+    font-size: 1.8rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+    color: var(--home-navy);
+}
+
+.home-stat-lbl {
+    font-size: 0.8rem;
+    font-weight: 550;
+    color: var(--home-muted);
+    margin-top: 2px;
+}
+
+/* ======================================================== */
+/* 2. FEATURED EVENT CARD (Right Column)                    */
+/* ======================================================== */
+.home-hero-card-col {
+    display: flex;
+    justify-content: center;
+}
+
+.home-featured-box {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid var(--home-border);
+    overflow: hidden;
+    box-shadow: 0 16px 36px rgba(19, 43, 79, 0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.home-featured-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 42px rgba(19, 43, 79, 0.12);
+}
+
+.home-featured-top {
+    padding: 36px 28px 40px;
+    background: linear-gradient(135deg, #132b4f 0%, #1e477b 58%, #2862a2 100%);
+    color: #ffffff;
+}
+
+.home-featured-badge {
+    display: inline-block;
+    padding: 4px 11px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(6px);
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #dbeafe;
+    margin-bottom: 24px;
+}
+
+.home-featured-title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+}
+
+.home-featured-body {
+    padding: 22px 26px;
+    background: #ffffff;
+}
+
+.home-featured-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.home-featured-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--home-muted);
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+
+.home-featured-item svg {
+    color: var(--home-blue);
+}
+
+.home-featured-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.home-featured-price strong {
+    font-size: 1.35rem;
+    font-weight: 850;
+    color: var(--home-navy);
+}
+
+.home-featured-price span {
+    font-size: 0.8rem;
+    color: var(--home-muted);
+    margin-left: 3px;
+}
+
+.home-featured-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 22px;
+    border-radius: 9999px;
+    background: var(--home-blue);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 750;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(36, 87, 197, 0.24);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.home-featured-btn:hover {
+    background: var(--home-blue-dark);
+    color: #ffffff;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* ======================================================== */
+/* 3. UPCOMING EVENTS BLOCK (Layout matching Image 1)       */
+/* ======================================================== */
+.home-upcoming-block {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.home-upcoming-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.home-block-title {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+    color: var(--home-navy);
+}
+
+.home-category-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.home-tab-pill {
+    padding: 7px 18px;
+    border-radius: 9999px;
+    border: none;
+    background: #edf3fa;
+    color: #36537f;
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+}
+
+.home-tab-pill:hover {
+    background: #e2eaf5;
+    color: var(--home-navy);
+}
+
+.home-tab-pill.active {
+    background: var(--home-navy);
+    color: #ffffff;
+}
+
+/* 3-Column Events Grid */
+.home-events-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.home-event-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid var(--home-border);
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(19, 43, 79, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.home-event-card:hover {
+    transform: translateY(-3px);
+    border-color: #cbd8e8;
+    box-shadow: 0 14px 30px rgba(19, 43, 79, 0.08);
+}
+
+.home-card-header {
+    position: relative;
+    height: 140px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Gradients for cards */
+.home-header-tech {
+    background: linear-gradient(135deg, #1e477b 0%, #2457c5 100%);
+}
+
+.home-header-cultural {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+}
+
+.home-header-sports {
+    background: linear-gradient(135deg, #0d9488 0%, #10b981 100%);
+}
+
+.home-header-workshop {
+    background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
+}
+
+.home-date-chip {
+    align-self: flex-end;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 46px;
+    background: #ffffff;
+    border-radius: 9px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.home-date-num {
+    font-size: 1.05rem;
+    font-weight: 850;
+    color: var(--home-navy);
+    line-height: 1.1;
+}
+
+.home-date-mon {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--home-muted);
+}
+
+.home-cat-chip {
+    align-self: flex-start;
+    padding: 4px 11px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 750;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(4px);
+}
+
+.home-card-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 20px;
+}
+
+.home-card-title {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 750;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: var(--home-navy);
+}
+
+.home-card-snippet {
+    margin: 0 0 16px 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--home-muted);
+    flex: 1;
+}
+
+.home-card-meta-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+    font-size: 0.8rem;
+}
+
+.home-card-loc {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--home-muted);
+    font-weight: 550;
+}
+
+.home-card-badge-pts {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #edf5ff;
+    color: var(--home-blue);
+    font-weight: 750;
+}
+
+.home-card-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 38px;
+    border-radius: 9px;
+    border: 1px solid #cbd8e8;
+    background: #ffffff;
+    color: #1e3a66;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.home-event-card:hover .home-card-action-btn {
+    background: var(--home-blue);
+    border-color: var(--home-blue);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+/* ======================================================== */
+/* 4. RESPONSIVE BREAKPOINTS                                */
+/* ======================================================== */
+@media (max-width: 1080px) {
+    .home-hero-card {
+        grid-template-columns: 1fr;
+    }
+    .home-events-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .home-hero-card {
+        padding: 24px 20px;
+    }
+    .home-hero-title {
+        font-size: 2.1rem;
+    }
+    .home-stats-row {
+        gap: 20px;
+    }
+    .home-events-grid {
+        grid-template-columns: 1fr;
+    }
+}
