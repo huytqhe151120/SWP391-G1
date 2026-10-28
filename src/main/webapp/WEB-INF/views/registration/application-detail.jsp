@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
-<c:set var="activeNav" value="registration-forms" scope="request"/>
+<c:set var="activeNav" value="${isStudent ? 'activities' : 'registration-forms'}" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -21,7 +21,7 @@
                 <header class="activity-hero">
                     <div class="activity-hero-copy">
                         <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐĂNG KÝ</span>
-                        <h1>Chi tiết đơn sinh viên</h1>
+                        <h1><c:out value="${isStudent ? 'Chi tiết đơn đăng ký của tôi' : 'Chi tiết đơn sinh viên'}"/></h1>
                         <p><c:out value="${form.title}"/> · <c:out value="${form.activityName}"/></p>
                     </div>
                 </header>
@@ -76,21 +76,21 @@
                     </div>
 
                     <div class="form-actions activity-form-actions">
-                        <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=applications&amp;id=${form.id}">Quay lại danh sách đơn</a>
-                        <c:choose>
+                        <c:choose><c:when test="${isStudent}"><a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=myApplications">Quay lại đơn đăng ký của tôi</a></c:when><c:otherwise><a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${form.id}&amp;tab=applications">Quay lại danh sách đơn</a></c:otherwise></c:choose>
+                        <c:if test="${not isStudent}"><c:choose>
                             <c:when test="${application.status eq 'SUBMITTED'}">
                                 <div class="registration-review-actions">
-                                <form method="post" action="${pageContext.request.contextPath}/registration-forms">
-                                    <input type="hidden" name="action" value="approveApplication">
-                                    <input type="hidden" name="registrationId" value="${application.id}">
-                                    <button class="button registration-review-button registration-review-button--approve" type="submit">Duyệt đơn</button>
-                                </form>
-                                <form method="post" action="${pageContext.request.contextPath}/registration-forms"
-                                      onsubmit="return confirm('Từ chối đơn đăng ký này?')">
-                                    <input type="hidden" name="action" value="rejectApplication">
-                                    <input type="hidden" name="registrationId" value="${application.id}">
-                                    <button class="button registration-review-button registration-review-button--reject" type="submit">Từ chối đơn</button>
-                                </form>
+                                    <form method="post" action="${pageContext.request.contextPath}/registration-forms">
+                                        <input type="hidden" name="action" value="approveApplication">
+                                        <input type="hidden" name="registrationId" value="${application.id}">
+                                        <button class="button registration-review-button registration-review-button--approve" type="submit">Duyệt đơn</button>
+                                    </form>
+                                    <form method="post" action="${pageContext.request.contextPath}/registration-forms"
+                                          onsubmit="return confirm('Từ chối đơn đăng ký này?')">
+                                        <input type="hidden" name="action" value="rejectApplication">
+                                        <input type="hidden" name="registrationId" value="${application.id}">
+                                        <button class="button registration-review-button registration-review-button--reject" type="submit">Từ chối đơn</button>
+                                    </form>
                                 </div>
                             </c:when>
                             <c:when test="${application.status eq 'APPROVED'}">
@@ -109,7 +109,7 @@
                                     <button class="button registration-review-button registration-review-button--undo-rejection" type="submit">Hủy từ chối</button>
                                 </form>
                             </c:when>
-                        </c:choose>
+                        </c:choose></c:if>
                     </div>
                 </section>
             </main>

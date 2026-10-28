@@ -34,7 +34,8 @@ public class Enum {
     public enum RegistrationApplicationStatus {
         SUBMITTED, // Chờ xử lý
         APPROVED, // Đã duyệt
-        REJECTED // Đã từ chối
+        REJECTED, // Đã từ chối
+        CANCELLED // Đã hủy
     }
 
     // Participation nature of an activity

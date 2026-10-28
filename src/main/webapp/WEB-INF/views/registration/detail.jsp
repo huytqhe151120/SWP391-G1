@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Chi tiết form đăng ký | SWP391-G1</title>
+    <title>Chi tiết đợt đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-13">
 </head>
@@ -22,11 +22,14 @@
                 <header class="activity-hero">
                     <div class="activity-hero-copy">
                         <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐĂNG KÝ</span>
-                        <h1>Chi tiết form đăng ký</h1>
+                        <h1>Chi tiết đợt đăng ký</h1>
                         <p><c:out value="${form.title}"/></p>
                     </div>
                 </header>
 
+                <c:if test="${not empty requestScope.errorMessage}">
+                    <div class="alert alert-error activity-alert"><c:out value="${requestScope.errorMessage}"/></div>
+                </c:if>
                 <c:if test="${not empty sessionScope.errorMessage}">
                     <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
                     <c:remove var="errorMessage" scope="session"/>
@@ -39,7 +42,7 @@
                             <p>Chi tiết nội dung và tình trạng đăng ký của form.</p>
                         </div>
                         <div class="registration-detail-actions">
-                            <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms">Danh sách form</a>
+                            <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=list">Danh sách form</a>
                             <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${form.id}">Chỉnh sửa</a>
                         </div>
                     </div>
@@ -57,62 +60,62 @@
 
                     <div class="activity-detail-content registration-detail-tab-content">
                         <div id="tab-form-info" class="activity-tab-pane active" role="tabpanel" aria-labelledby="btn-tab-form-info">
-                        <section class="activity-detail-section">
-                            <h3>Thông tin cơ bản</h3>
-                            <dl class="detail-grid activity-detail-grid">
-                                <div class="detail-item">
-                                    <dt>Tiêu đề form</dt>
-                                    <dd><c:out value="${form.title}"/></dd>
-                                </div>
-                                <div class="detail-item">
-                                    <dt>Hoạt động</dt>
-                                    <dd><c:out value="${form.activityName}"/></dd>
-                                </div>
-                                <div class="detail-item">
-                                    <dt>Trạng thái</dt>
-                                    <dd><span class="badge status-pill ${st:css(form.status)}">${st:label(form.status)}</span></dd>
-                                </div>
-                                <div class="detail-item">
-                                    <dt>Số lượng đăng ký</dt>
-                                    <dd><span class="registration-count"><c:out value="${form.registrationCount}"/></span></dd>
-                                </div>
-                                <div class="detail-item">
-                                    <dt>Số chỗ đang giữ</dt>
-                                    <dd>
-                                        <c:choose>
-                                            <c:when test="${not empty form.maxParticipants}">
-                                                <c:out value="${form.reservedSeatCount}"/> / <c:out value="${form.maxParticipants}"/>
-                                            </c:when>
-                                            <c:otherwise><c:out value="${form.reservedSeatCount}"/> / Không giới hạn</c:otherwise>
-                                        </c:choose>
-                                    </dd>
-                                </div>
-                            </dl>
-                        </section>
+                            <section class="activity-detail-section">
+                                <h3>Thông tin cơ bản</h3>
+                                <dl class="detail-grid activity-detail-grid">
+                                    <div class="detail-item">
+                                        <dt>Tiêu đề form</dt>
+                                        <dd><c:out value="${form.title}"/></dd>
+                                    </div>
+                                    <div class="detail-item">
+                                        <dt>Hoạt động</dt>
+                                        <dd><c:out value="${form.activityName}"/></dd>
+                                    </div>
+                                    <div class="detail-item">
+                                        <dt>Trạng thái</dt>
+                                        <dd><span class="badge status-pill ${st:css(form.status)}">${st:label(form.status)}</span></dd>
+                                    </div>
+                                    <div class="detail-item">
+                                        <dt>Số lượng đăng ký</dt>
+                                        <dd><span class="registration-count"><c:out value="${form.registrationCount}"/></span></dd>
+                                    </div>
+                                    <div class="detail-item">
+                                        <dt>Số chỗ đang giữ</dt>
+                                        <dd>
+                                            <c:choose>
+                                                <c:when test="${not empty form.maxParticipants}">
+                                                    <c:out value="${form.reservedSeatCount}"/> / <c:out value="${form.maxParticipants}"/>
+                                                </c:when>
+                                                <c:otherwise><c:out value="${form.reservedSeatCount}"/> / Không giới hạn</c:otherwise>
+                                            </c:choose>
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </section>
 
-                        <section class="activity-detail-section">
-                            <h3>Thời gian đăng ký</h3>
-                            <dl class="detail-grid activity-detail-grid">
-                                <div class="detail-item">
-                                    <dt>Mở đăng ký</dt>
-                                    <dd><c:choose><c:when test="${not empty form.openAt}"><c:out value="${dt:format(form.openAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose></dd>
-                                </div>
-                                <div class="detail-item">
-                                    <dt>Đóng đăng ký</dt>
-                                    <dd><c:choose><c:when test="${not empty form.closeAt}"><c:out value="${dt:format(form.closeAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose></dd>
-                                </div>
-                            </dl>
-                        </section>
+                            <section class="activity-detail-section">
+                                <h3>Thời gian đăng ký</h3>
+                                <dl class="detail-grid activity-detail-grid">
+                                    <div class="detail-item">
+                                        <dt>Mở đăng ký</dt>
+                                        <dd><c:choose><c:when test="${not empty form.openAt}"><c:out value="${dt:format(form.openAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose></dd>
+                                    </div>
+                                    <div class="detail-item">
+                                        <dt>Đóng đăng ký</dt>
+                                        <dd><c:choose><c:when test="${not empty form.closeAt}"><c:out value="${dt:format(form.closeAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose></dd>
+                                    </div>
+                                </dl>
+                            </section>
 
-                        <section class="activity-detail-section">
-                            <h3>Mô tả và hướng dẫn</h3>
-                            <dl class="detail-grid activity-detail-grid">
-                                <div class="detail-item field-wide">
-                                    <dt>Nội dung</dt>
-                                    <dd class="activity-detail-description"><c:out value="${form.description}" default="Chưa có mô tả"/></dd>
-                                </div>
-                            </dl>
-                        </section>
+                            <section class="activity-detail-section">
+                                <h3>Mô tả và hướng dẫn</h3>
+                                <dl class="detail-grid activity-detail-grid">
+                                    <div class="detail-item field-wide">
+                                        <dt>Nội dung</dt>
+                                        <dd class="activity-detail-description"><c:out value="${form.description}" default="Chưa có mô tả"/></dd>
+                                    </div>
+                                </dl>
+                            </section>
                         </div>
 
                         <div id="tab-form-applications" class="activity-tab-pane" role="tabpanel" aria-labelledby="btn-tab-form-applications">
@@ -175,5 +178,25 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
+<script>
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab === 'applications') {
+            const tabBtn = document.getElementById('btn-tab-form-applications');
+            const tabPane = document.getElementById('tab-form-applications');
+            const infoBtn = document.getElementById('btn-tab-form-info');
+            const infoPane = document.getElementById('tab-form-info');
+            if (tabBtn && tabPane && infoBtn && infoPane) {
+                infoBtn.classList.remove('active');
+                infoBtn.setAttribute('aria-selected', 'false');
+                infoPane.classList.remove('active');
+                tabBtn.classList.add('active');
+                tabBtn.setAttribute('aria-selected', 'true');
+                tabPane.classList.add('active');
+            }
+        }
+    })();
+</script>
 </body>
 </html>

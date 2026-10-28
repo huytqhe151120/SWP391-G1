@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><c:choose><c:when test="${form.id > 0}">Chỉnh sửa form đăng ký</c:when><c:otherwise>Tạo form đăng ký</c:otherwise></c:choose> | SWP391-G1</title>
+    <title><c:choose><c:when test="${form.id > 0}">Chỉnh sửa đợt đăng ký</c:when><c:otherwise>Tạo đợt đăng ký</c:otherwise></c:choose> | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261021-11">
 </head>
 <body>
@@ -19,7 +19,7 @@
                 <header class="activity-hero">
                     <div class="activity-hero-copy">
                         <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ FORM ĐĂNG KÝ</span>
-                        <h1><c:choose><c:when test="${form.id > 0}">Chỉnh sửa form đăng ký</c:when><c:otherwise>Tạo form đăng ký</c:otherwise></c:choose></h1>
+                        <h1><c:choose><c:when test="${form.id > 0}">Chỉnh sửa đợt đăng ký</c:when><c:otherwise>Tạo đợt đăng ký</c:otherwise></c:choose></h1>
                         <p>Tạo form cho sinh viên đăng ký tham gia hoạt động ngoại khóa.</p>
                     </div>
                     <a class="button activity-create-button" href="${pageContext.request.contextPath}/registration-forms">
@@ -35,7 +35,7 @@
                 <section class="card activity-form-card">
                     <div class="activity-table-heading">
                         <div>
-                            <h2>Thông tin form đăng ký</h2>
+                            <h2>Thông tin đợt đăng ký</h2>
                             <p>Form chỉ hiển thị sinh viên khi được mở, đúng thời hạn và hoạt động đã được duyệt.</p>
                         </div>
                     </div>
@@ -63,7 +63,7 @@
                                     <c:if test="${empty activities}">
                                         <small class="field-hint">
                                             <c:choose>
-                                                <c:when test="${hasEligibleApprovedActivities}">Tất cả hoạt động đã duyệt và chưa diễn ra đều đã có form đăng ký.</c:when>
+                                                <c:when test="${hasEligibleApprovedActivities}">Tất cả hoạt động đã duyệt và chưa diễn ra đều đã có đợt đăng ký.</c:when>
                                                 <c:otherwise>Chưa có hoạt động nào vừa được duyệt vừa ở trạng thái chưa diễn ra để tạo form.</c:otherwise>
                                             </c:choose>
                                         </small>
@@ -85,8 +85,8 @@
                             </div>
 
                             <div class="activity-form-section">
-                                <h3>Thời gian và trạng thái</h3>
-                                <p>Form bản nháp có thời gian mở sẽ tự động mở đúng hạn; form đang mở tự động đóng khi hết hạn. Để trống nếu không giới hạn thời gian.</p>
+                                <h3>Thời gian đăng ký</h3>
+                                <p>Thời gian mở/đóng sẽ tự động được set dựa trên thời gian hoạt động. Để trống nếu không giới hạn thời gian.</p>
                             </div>
                             <div class="form-grid activity-form-grid">
                                 <div class="field">
@@ -98,15 +98,6 @@
                                     <label for="closeAt">Thời gian đóng đăng ký</label>
                                     <input id="closeAt" name="closeAt" type="datetime-local" min="${minimumRegistrationTime}"
                                            value="${form.closeAt}" <c:if test="${form.registrationCount > 0}">disabled</c:if>>
-                                </div>
-                                <div class="field">
-                                    <label for="status">Trạng thái</label>
-                                    <select id="status" name="status"
-                                            <c:if test="${form.registrationCount > 0}">disabled</c:if>>
-                                        <option value="DRAFT" <c:if test="${form.status eq 'DRAFT'}">selected</c:if>>Bản nháp</option>
-                                        <option value="OPENING" <c:if test="${form.status eq 'OPENING'}">selected</c:if>>Đang mở đăng ký</option>
-                                        <option value="CLOSED" <c:if test="${form.status eq 'CLOSED'}">selected</c:if>>Đã đóng đăng ký</option>
-                                    </select>
                                 </div>
                             </div>
                         </div>

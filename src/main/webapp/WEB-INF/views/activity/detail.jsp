@@ -54,15 +54,15 @@
                                 Xem form và đơn đăng ký
                             </a>
                         </c:when>
-                        <c:when test="${activity.approvalStatus == 'APPROVED'}">
+                        <c:when test="${activity.approvalStatus == 'APPROVED' and activity.registrationFormRequired}">
                             <a class="button button-primary"
                                href="${pageContext.request.contextPath}/registration-forms?action=create&amp;activityId=${activity.id}">
                                 Tạo form đăng ký
                             </a>
                         </c:when>
-                        <c:otherwise>
+                        <c:when test="${activity.approvalStatus != 'APPROVED'}">
                             <span class="field-hint">Chỉ có thể tạo form đăng ký sau khi hoạt động được duyệt.</span>
-                        </c:otherwise>
+                        </c:when>
                     </c:choose>
                 </c:if>
             </div>

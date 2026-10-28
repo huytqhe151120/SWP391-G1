@@ -17,6 +17,9 @@ public class RegistrationApplication {
     private LocalDateTime submittedAt;
     private LocalDateTime pendingSince;
     private List<RegistrationFormField> answers = new ArrayList<>();
+    private String formTitle;
+    private String activityName;
+    private String activityStatus;
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -54,5 +57,29 @@ public class RegistrationApplication {
     public List<RegistrationFormField> getAnswers() { return answers; }
     public void setAnswers(List<RegistrationFormField> answers) {
         this.answers = answers == null ? new ArrayList<>() : answers;
+    }
+
+    public String getActivityName() {
+        return activityName;
+    }
+
+    public void setActivityName(String activityName) {
+        this.activityName = activityName;
+    }
+
+    public String getFormTitle() {
+        return formTitle;
+    }
+
+    public void setFormTitle(String formTitle) {
+        this.formTitle = formTitle;
+    }
+
+    public String getActivityStatus() {
+        return activityStatus;
+    }
+
+    public void setActivityStatus(String activityStatus) {
+        this.activityStatus = activityStatus;
     }
 }

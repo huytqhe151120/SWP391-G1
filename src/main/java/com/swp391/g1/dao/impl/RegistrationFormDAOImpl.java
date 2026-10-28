@@ -5,6 +5,7 @@ import com.swp391.g1.dao.IRegistrationFormDAO;
 import com.swp391.g1.model.RegistrationApplication;
 import com.swp391.g1.model.RegistrationForm;
 import com.swp391.g1.model.RegistrationFormField;
+import com.swp391.g1.util.DateTimeUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -89,7 +90,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     public List<RegistrationForm> findOpenFormsForStudent(int studentId) {
         String sql = SELECT + " WHERE f.status='OPENING' AND (f.open_at IS NULL OR f.open_at <= SYSDATETIME()) "
                 + "AND (f.close_at IS NULL OR f.close_at > SYSDATETIME()) AND a.approval_status='APPROVED' "
-                + "AND a.activity_status='UPCOMING' AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
+                + "AND a.activity_status='UPCOMING' AND a.is_public=1 AND a.nature='REQUIRE_REGISTRATION' "
+                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
                 + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=f.id AND r.student_id=?) "
                 + "AND (a.max_participants IS NULL OR (SELECT COUNT(*) FROM dbo.activity_registration occupied "
                 + "WHERE occupied.form_id=f.id AND occupied.status IN ('SUBMITTED','APPROVED')) < a.max_participants) "
@@ -135,7 +137,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     @Override
     public RegistrationForm findByActivityId(int activityId) {
         try (Connection c = DBContext.getConnection();
-                PreparedStatement p = c.prepareStatement(SELECT + " WHERE f.activity_id=?")) {
+             PreparedStatement p = c.prepareStatement(SELECT + " WHERE f.activity_id=?")) {
             p.setInt(1, activityId);
             RegistrationForm form;
             try (ResultSet r = p.executeQuery()) {
@@ -598,41 +600,6 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     @Override
-    public boolean updateStatus(int id, String status) {
-        String sql = "UPDATE dbo.activity_registration_form SET status=?,updated_at=SYSDATETIME() "
-                + "WHERE id=? AND (?<>'OPENING' OR ("
-                + "EXISTS(SELECT 1 FROM dbo.extracurricular_activity a "
-                + "WHERE a.id=activity_registration_form.activity_id AND a.approval_status='APPROVED' "
-                + "AND a.activity_status='UPCOMING' "
-                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME())) "
-                + "AND (open_at IS NULL OR open_at<=SYSDATETIME()) "
-                + "AND (close_at IS NULL OR close_at>SYSDATETIME())))";
-        try (Connection c = DBContext.getConnection()) {
-            c.setAutoCommit(false);
-            try {
-                if (!lockActivityForForm(c, id)) {
-                    c.rollback();
-                    return false;
-                }
-                try (PreparedStatement p = c.prepareStatement(sql)) {
-                    p.setString(1, status);
-                    p.setInt(2, id);
-                    p.setString(3, status);
-                    boolean changed = p.executeUpdate() > 0;
-                    if (changed) c.commit();
-                    else c.rollback();
-                    return changed;
-                }
-            } catch (SQLException | RuntimeException e) {
-                c.rollback();
-                throw e;
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException("Không thể cập nhật trạng thái form đăng ký.", e);
-        }
-    }
-
-    @Override
     public boolean delete(int id) {
         String sql = "DELETE FROM dbo.activity_registration_form WHERE id=? AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=?)";
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
@@ -654,6 +621,22 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
             }
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể kiểm tra đăng ký.", e);
+        }
+    }
+
+    @Override
+    public boolean hasStudentRegisteredForActivity(int activityId, int studentId) {
+        String sql = "SELECT 1 FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=? AND r.student_id=? AND r.status<>'CANCELLED'";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            p.setInt(2, studentId);
+            try (ResultSet r = p.executeQuery()) {
+                return r.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra đăng ký hoạt động.", e);
         }
     }
 
@@ -754,7 +737,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
     @Override
     public boolean registerStudentWithAnswers(int formId, int studentId, String note,
-            List<RegistrationFormField> answers) {
+                                              List<RegistrationFormField> answers) {
         String sql = "INSERT INTO dbo.activity_registration(form_id,student_id,note,status,submitted_at,pending_since) "
                 + "OUTPUT INSERTED.id SELECT f.id,?,?, 'SUBMITTED',SYSDATETIME(),SYSDATETIME() FROM dbo.activity_registration_form f "
                 + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
@@ -835,4 +818,153 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
         return profile;
     }
+
+    @Override
+    public java.time.LocalDateTime findActivityStartTime(int activityId) {
+        String sql = "SELECT start_time FROM dbo.extracurricular_activity WHERE id=?";
+        try (Connection c=DBContext.getConnection(); PreparedStatement p=c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            try (ResultSet r=p.executeQuery()) {
+                if (!r.next() || r.getTimestamp(1)==null) return null;
+                return DateTimeUtil.fromUtc(r.getTimestamp(1).toLocalDateTime());
+            }
+        } catch (SQLException e) { throw new IllegalStateException("Không thể đọc thời gian bắt đầu hoạt động.", e); }
+    }
+
+    @Override
+    public boolean setActivityPublic(int activityId, boolean isPublic) {
+        String sql = "UPDATE dbo.extracurricular_activity SET is_public=? WHERE id=?";
+        try (Connection c=DBContext.getConnection(); PreparedStatement p=c.prepareStatement(sql)) {
+            p.setBoolean(1,isPublic); p.setInt(2,activityId); return p.executeUpdate()==1;
+        } catch (SQLException e) { throw new IllegalStateException("Không thể cập nhật hiển thị hoạt động.",e); }
+    }
+
+    @Override
+    public List<RegistrationApplication> findApplicationsForStudent(int studentId) {
+        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,s.email,r.note,r.status,r.submitted_at,r.pending_since, f.title AS form_title, a.name AS activity_name, a.activity_status "
+                + "FROM dbo.activity_registration r LEFT JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "LEFT JOIN dbo.extracurricular_activity a ON a.id=f.activity_id JOIN dbo.student s ON s.id=r.student_id "
+                + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id WHERE r.student_id=? ORDER BY r.submitted_at DESC,r.id DESC";
+        List<RegistrationApplication> result = new ArrayList<>();
+        try (Connection c=DBContext.getConnection(); PreparedStatement p=c.prepareStatement(sql)) {
+            p.setInt(1,studentId); try(ResultSet r=p.executeQuery()) { while(r.next()) {
+                RegistrationApplication app=mapApplication(r);
+                app.setFormTitle(r.getString("form_title"));
+                app.setActivityName(r.getString("activity_name"));
+                app.setActivityStatus(r.getString("activity_status"));
+                result.add(app);
+            }}
+            return result;
+        } catch(SQLException e) { throw new IllegalStateException("Không thể tải đơn đăng ký của sinh viên.",e); }
+    }
+
+    @Override
+    public boolean registerStudentQuick(int activityId, int studentId, String note) {
+        String sql = "INSERT INTO dbo.activity_registration(form_id,student_id,note,status,submitted_at) "
+                + "OUTPUT INSERTED.id SELECT f.id,?,?, 'APPROVED',SYSDATETIME() FROM dbo.activity_registration_form f "
+                + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
+                + "WHERE f.activity_id=? AND a.approval_status='APPROVED' "
+                + "AND a.activity_status='UPCOMING' AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
+                + "AND (a.max_participants IS NULL OR (SELECT COUNT(*) FROM dbo.activity_registration occupied WITH (UPDLOCK,HOLDLOCK) "
+                + "WHERE occupied.form_id=f.id AND occupied.status IN ('SUBMITTED','APPROVED')) < a.max_participants) "
+                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration x WITH (UPDLOCK,HOLDLOCK) "
+                + "WHERE x.form_id=f.id AND x.student_id=?)";
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                if (!lockActivityForForm(c, activityId)) {
+                    c.rollback();
+                    return false;
+                }
+                try (PreparedStatement p = c.prepareStatement(sql)) {
+                    p.setInt(1, studentId);
+                    p.setString(2, note);
+                    p.setInt(3, activityId);
+                    p.setInt(4, studentId);
+                    try (ResultSet r = p.executeQuery()) {
+                        if (!r.next()) {
+                            c.rollback();
+                            return false;
+                        }
+                    }
+                }
+                c.commit();
+                return true;
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể đăng ký nhanh.", e);
+        }
+    }
+
+    @Override
+    public boolean cancelRegistration(int registrationId) {
+        String sql = "UPDATE dbo.activity_registration SET status='CANCELLED' WHERE id=? AND status IN ('SUBMITTED','APPROVED')";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, registrationId);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể hủy đăng ký.", e);
+        }
+    }
+
+    @Override
+    public String getCancelRestrictionReason(int registrationId) {
+        String sql = "SELECT r.status, a.activity_status, a.start_time, a.end_time "
+                + "FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
+                + "WHERE r.id=?";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, registrationId);
+            try (ResultSet r = p.executeQuery()) {
+                if (!r.next()) return null;
+                String regStatus = r.getString("status");
+                String activityStatus = r.getString("activity_status");
+                java.sql.Timestamp startTime = r.getTimestamp("start_time");
+                java.sql.Timestamp endTime = r.getTimestamp("end_time");
+
+                if ("REJECTED".equals(regStatus)) {
+                    return "Đơn đã bị từ chối. Không thể hủy.";
+                }
+                if ("CANCELLED".equals(regStatus)) {
+                    return "Đơn đã hủy rồi. Không thể hủy.";
+                }
+
+                if ("ONGOING".equals(activityStatus)) {
+                    return "Hoạt động đang diễn ra. Không thể hủy đăng ký.";
+                }
+                if ("COMPLETED".equals(activityStatus)) {
+                    return "Hoạt động đã kết thúc. Không thể hủy đăng ký.";
+                }
+                if ("CANCELLED".equals(activityStatus)) {
+                    return "Hoạt động đã bị hủy. Không thể hủy đăng ký.";
+                }
+
+                if (startTime != null && startTime.toLocalDateTime().isBefore(java.time.LocalDateTime.now())) {
+                    return "Hoạt động đã bắt đầu. Không thể hủy đăng ký.";
+                }
+
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kiểm tra điều kiện hủy đăng ký.", e);
+        }
+    }
+
+    @Override
+    public boolean reactivateRegistration(int formId, int studentId) {
+        String sql = "UPDATE dbo.activity_registration SET status='SUBMITTED',submitted_at=SYSDATETIME(),pending_since=SYSDATETIME() "
+                + "WHERE form_id=? AND student_id=? AND status='CANCELLED'";
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, formId);
+            p.setInt(2, studentId);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể kích hoạt lại đăng ký.", e);
+        }
+    }
+
 }

@@ -30,6 +30,8 @@ import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.Locale;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,11 +80,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         boolean requiresManagementPermission =
                 (isGetRequest
                         && ("create".equals(action) || "edit".equals(action)))
-                || ("POST".equalsIgnoreCase(request.getMethod())
+                        || ("POST".equalsIgnoreCase(request.getMethod())
                         && ("create".equals(action) || "update".equals(action) || "delete".equals(action)))
-                || ("POST".equalsIgnoreCase(request.getMethod())
+                        || ("POST".equalsIgnoreCase(request.getMethod())
                         && ("inviteCollaborator".equals(action) || "cancelInvitation".equals(action)
-                                || "terminatePartner".equals(action)));
+                        || "terminatePartner".equals(action)));
         if (requiresManagementPermission
                 && !AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -224,8 +226,15 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         Set<Integer> visibleActivityIds =
                 invitationService.getVisibleActivityIds(AuthContext.getCurrentUser(request));
         List<ExtracurricularActivityResponseDTO> allActivities = new ArrayList<>();
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        boolean studentView = currentUser != null && "STUDENT".equals(currentUser.getType());
+        Map<Integer, com.swp391.g1.model.RegistrationForm> activityFormsByActivity = new HashMap<>();
         for (ExtracurricularActivityResponseDTO activity :
-                activityService.getActivitiesVisibleTo(AuthContext.getCurrentUser(request))) {
+                activityService.getActivitiesVisibleTo(currentUser)) {
+            if (studentView && (!activity.isPublic()
+                    || activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED)) {
+                continue;
+            }
             if (visibleActivityIds != null && !visibleActivityIds.contains(activity.getId())) {
                 continue;
             }
@@ -258,8 +267,14 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 continue;
             }
             allActivities.add(activity);
+            if (studentView && activity.isRegistrationFormRequired()) {
+                com.swp391.g1.model.RegistrationForm registrationForm = registrationFormService.getByActivityId(activity.getId());
+                if (registrationForm != null) activityFormsByActivity.put(activity.getId(), registrationForm);
+            }
         }
 
+        request.setAttribute("isStudent", studentView);
+        request.setAttribute("activityFormsByActivity", activityFormsByActivity);
         boolean filtered = !normalizedKeyword.isEmpty() || semesterId > 0 || activityTypeId > 0
                 || departmentId > 0 || !activityStatus.isEmpty() || !approvalStatus.isEmpty()
                 || startDate != null || endDate != null;
@@ -351,8 +366,8 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     }
 
     private String buildFilterQuery(String keyword, int semesterId, int activityTypeId,
-            int departmentId, String activityStatus, String approvalStatus,
-            LocalDate startDate, LocalDate endDate) {
+                                    int departmentId, String activityStatus, String approvalStatus,
+                                    LocalDate startDate, LocalDate endDate) {
         StringBuilder query = new StringBuilder();
         appendParam(query, "keyword", keyword);
         appendParam(query, "semesterId", semesterId > 0 ? String.valueOf(semesterId) : "");
@@ -969,7 +984,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     }
 
     private void setAssignmentResult(HttpSession session, int completed, int requested,
-            String staffLabel, String actionLabel, String firstError) {
+                                     String staffLabel, String actionLabel, String firstError) {
         if (completed == requested) {
             session.setAttribute("successMessage",
                     "Đã " + actionLabel + " " + completed + " " + staffLabel + ".");

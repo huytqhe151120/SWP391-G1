@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quản lý form đăng ký | SWP391-G1</title>
+    <title>Quản lý đợt đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261023-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
@@ -24,13 +24,13 @@
                 <header class="activity-hero">
                     <div class="activity-hero-copy">
                         <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐĂNG KÝ</span>
-                        <h1>Form đăng ký hoạt động</h1>
+                        <h1>Đăng ký tham gia hoạt động</h1>
                         <p>Tạo và theo dõi các form để sinh viên đăng ký tham gia hoạt động.</p>
                     </div>
                 </header>
 
                 <c:if test="${param.msg eq 'saved'}">
-                    <div class="alert alert-success activity-alert">Đã lưu form đăng ký.</div>
+                    <div class="alert alert-success activity-alert">Đã lưu đợt đăng ký.</div>
                 </c:if>
                 <c:if test="${param.msg eq 'deleted'}">
                     <div class="alert alert-success activity-alert">Đã xóa form.</div>
@@ -38,18 +38,19 @@
                 <c:if test="${param.msg eq 'deleteError'}">
                     <div class="alert alert-error activity-alert">Không thể xóa form đã có sinh viên đăng ký.</div>
                 </c:if>
-                <c:if test="${param.msg eq 'statusUpdated'}">
-                    <div class="alert alert-success activity-alert">Đã cập nhật trạng thái form.</div>
+                <c:if test="${param.msg eq 'editError'}">
+                    <div class="alert alert-error activity-alert">Form đã có sinh viên đăng ký nên không thể chỉnh sửa.</div>
                 </c:if>
-                <c:if test="${param.msg eq 'statusError'}">
-                    <div class="alert alert-error activity-alert"><c:out value="${param.error}" default="Không thể cập nhật trạng thái form."/></div>
+                <c:if test="${not empty sessionScope.errorMessage}">
+                    <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
+                    <c:remove var="errorMessage" scope="session"/>
                 </c:if>
 
                 <section class="card activity-table-card registration-table-card">
                     <div class="activity-table-heading">
                         <div>
                             <h2>Danh sách form</h2>
-                            <p>Thông tin các form đăng ký hoạt động đã tạo</p>
+                            <p>Thông tin các đợt đăng ký hoạt động đã tạo</p>
                         </div>
                         <div class="activity-heading-actions">
                             <span class="activity-count"><c:out value="${fn:length(forms)}"/> form</span>
@@ -59,7 +60,7 @@
                         </div>
                     </div>
                     <div class="table-wrap activity-table-wrap registration-table-wrap" tabindex="0"
-                         aria-label="Danh sách form đăng ký, cuộn ngang để xem thêm thông tin">
+                         aria-label="Danh sách đợt đăng ký, cuộn ngang để xem thêm thông tin">
                         <table class="registration-table">
                             <thead>
                             <tr>
@@ -106,15 +107,6 @@
                                                         <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></span>
                                                         Chỉnh sửa
                                                     </a>
-                                                    <form method="post" action="${pageContext.request.contextPath}/registration-forms">
-                                                        <input type="hidden" name="action" value="status">
-                                                        <input type="hidden" name="id" value="${f.id}">
-                                                        <input type="hidden" name="status" value="${f.status eq 'OPENING' ? 'CLOSED' : 'OPENING'}">
-                                                        <button class="action-menu-item ${f.status eq 'OPENING' ? 'action-menu-item--undo' : 'action-menu-item--approve'}" type="submit">
-                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><c:choose><c:when test="${f.status eq 'OPENING'}"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></c:when><c:otherwise><path d="m5 12 4 4L19 6"/></c:otherwise></c:choose></svg></span>
-                                                            <c:choose><c:when test="${f.status eq 'OPENING'}">Đóng đăng ký</c:when><c:when test="${f.status eq 'CLOSED'}">Mở lại đăng ký</c:when><c:otherwise>Mở đăng ký</c:otherwise></c:choose>
-                                                        </button>
-                                                    </form>
                                                     <form method="post" action="${pageContext.request.contextPath}/registration-forms"
                                                           onsubmit="return confirm('Bạn chắc chắn muốn xóa form này?')">
                                                         <input type="hidden" name="action" value="delete">
@@ -133,9 +125,9 @@
                             <c:if test="${empty forms}">
                                 <tr><td class="empty-state registration-empty-state" colspan="6">
                                     <span class="empty-state-mark" aria-hidden="true">+</span>
-                                    <strong>Chưa có form đăng ký nào</strong>
-                                    <span>Tạo form cho một hoạt động đã được duyệt để sinh viên có thể đăng ký.</span>
-                                    <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=create">Tạo form đầu tiên</a>
+                                    <strong>Chưa có đợt đăng ký nào</strong>
+                                    <span>Tạo đợt đăng ký cho hoạt động đã được duyệt; danh sách sinh viên sẽ nằm trong chi tiết đợt.</span>
+                                    <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=create">Tạo đợt đăng ký đầu tiên</a>
                                 </td></tr>
                             </c:if>
                             </tbody>

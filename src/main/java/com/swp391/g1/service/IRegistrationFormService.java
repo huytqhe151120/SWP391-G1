@@ -32,6 +32,8 @@ public interface IRegistrationFormService {
 
     List<RegistrationApplication> getApplications(int formId);
 
+    List<RegistrationApplication> getApplicationsForStudent(int studentId);
+
     RegistrationApplication getApplicationById(int registrationId);
 
     String reviewApplication(int registrationId);
@@ -44,16 +46,22 @@ public interface IRegistrationFormService {
 
     String save(RegistrationForm form);
 
-    String updateStatus(int id, String status);
-
     void synchronizeFormStatuses();
 
     String delete(int id);
 
     String register(int formId, int studentId, String note);
 
+    String registerQuick(int activityId, int studentId, String note);
+
     String registerWithAnswers(int formId, int studentId, String note, List<RegistrationFormField> answers,
-            Map<String, String> personalInfo);
+                               Map<String, String> personalInfo);
+
+    String cancelRegistration(int registrationId);
+
+    String getCancelRestrictionReason(int registrationId);
+
+    String reactivateRegistration(int formId, int studentId);
 
     Map<String, String> getSavedProfile(int studentId);
 }

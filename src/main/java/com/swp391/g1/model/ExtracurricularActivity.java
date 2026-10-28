@@ -22,6 +22,11 @@ public class ExtracurricularActivity {
     private LocalDateTime startTime; //[cite: 1]
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
+    private boolean isPublic = true;
+
+    public boolean isPublic() { return isPublic; }
+
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
 
     public boolean isRegistrationFormRequired() {
         return registrationFormRequired;

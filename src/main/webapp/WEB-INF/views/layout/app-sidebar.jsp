@@ -14,18 +14,18 @@
 <aside class="activity-side-nav" aria-label="Điều hướng hệ thống">
     <nav class="activity-nav-menu">
         <a class="<%= "home".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/home"
-           <%= "home".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "home".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">⌂</span>Trang chủ
         </a>
         <span class="activity-nav-group">Quản lý</span>
         <a class="<%= "activities".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/activities"
-           <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">◷</span>Hoạt động ngoại khóa
         </a>
         <% if (navAdmin || navStaff) { %>
         <a class="<%= "registration-forms".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/registration-forms"
-           <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">✓</span>Quản lý form đăng ký
+                <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">✓</span>Đăng ký tham gia
         </a>
         <% } %>
         <a class="<%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"
@@ -33,32 +33,25 @@
             <span class="activity-nav-icon" aria-hidden="true">✉</span>Lời mời hợp tác
         </a>
         <a class="<%= "students".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student"
-           <%= "students".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "students".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">♙</span>Sinh viên
         </a>
         <a class="<%= "staff".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/staff"
-           <%= "staff".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "staff".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">♧</span>Nhân viên
         </a>
         <a class="<%= "partner-companies".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-companies"
-           <%= "partner-companies".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "partner-companies".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">▦</span>Công ty đối tác
         </a>
         <a class="<%= "partner-staff".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-staffs"
-           <%= "partner-staff".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "partner-staff".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">♧</span>Nhân viên đối tác
         </a>
         <% if (navAdmin) { %>
         <a class="<%= "accounts".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/accounts"
-           <%= "accounts".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                <%= "accounts".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">⚙</span>Tài khoản
-        </a>
-        <% } %>
-        <% if (navStudent) { %>
-        <span class="activity-nav-group">Hoạt động dành cho sinh viên</span>
-        <a class="<%= "registration-forms".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/registration-forms?action=student"
-           <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">✓</span>Đăng ký hoạt động
         </a>
         <% } %>
         <% if (navAdmin || navStaff) { %>

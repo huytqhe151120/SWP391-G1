@@ -80,6 +80,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     @Override
+    public List<RegistrationApplication> getApplicationsForStudent(int studentId) {
+        return studentId > 0 ? dao.findApplicationsForStudent(studentId) : List.of();
+    }
+
+    @Override
     public RegistrationApplication getApplicationById(int registrationId) {
         return registrationId > 0 ? dao.findApplicationById(registrationId) : null;
     }
@@ -154,6 +159,12 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             return "Mô tả không được vượt quá 4.000 ký tự.";
         if (f.getOpenAt() != null && f.getCloseAt() != null && !f.getCloseAt().isAfter(f.getOpenAt()))
             return "Thời gian đóng đăng ký phải lớn hơn thời gian mở đăng ký.";
+        LocalDateTime activityStartTime = dao.findActivityStartTime(f.getActivityId());
+        if (activityStartTime == null) return "Hoạt động chưa có thời gian bắt đầu hợp lệ.";
+        if (f.getOpenAt() != null && !f.getOpenAt().isBefore(activityStartTime))
+            return "Thời gian mở đăng ký phải trước thời gian bắt đầu hoạt động.";
+        if (f.getCloseAt() != null && !f.getCloseAt().isBefore(activityStartTime))
+            return "Thời gian đóng đăng ký phải trước thời gian bắt đầu hoạt động.";
         LocalDateTime now = DateTimeUtil.now();
         RegistrationForm existingForm = f.getId() > 0 ? getById(f.getId()) : null;
         boolean openingTimeUnchanged = existingForm != null
@@ -164,28 +175,29 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             return "Thời gian đóng đăng ký phải ở tương lai.";
         f.setTitle(f.getTitle().trim());
         f.setDescription(f.getDescription() == null ? "" : f.getDescription().trim());
-        if (f.getStatus() == null) return "Vui lòng chọn trạng thái form.";
-        try {
-            RegistrationFormStatus.valueOf(f.getStatus());
-        } catch (IllegalArgumentException e) {
-            return "Trạng thái form không hợp lệ.";
-        }
-        if (RegistrationFormStatus.DRAFT.name().equals(f.getStatus())
-                && f.getOpenAt() != null && !f.getOpenAt().isAfter(now)) {
-            return "Form bản nháp không thể có thời gian mở đã qua; hãy chọn trạng thái phù hợp hoặc đặt thời gian mở mới.";
-        }
-        if (RegistrationFormStatus.OPENING.name().equals(f.getStatus())
-                && f.getOpenAt() != null && f.getOpenAt().isAfter(now)) {
-            return "Chưa đến thời gian mở đăng ký. Hãy lưu form ở trạng thái Bản nháp để form tự mở đúng hạn.";
-        }
-        if (RegistrationFormStatus.OPENING.name().equals(f.getStatus())
-                && f.getCloseAt() != null && !f.getCloseAt().isAfter(now)) {
-            return "Form mở đăng ký phải có thời gian đóng trong tương lai.";
+        
+        // Auto-set status based on openAt/closeAt times
+        if (f.getOpenAt() == null && f.getCloseAt() == null) {
+            f.setStatus(RegistrationFormStatus.DRAFT.name());
+        } else if (f.getOpenAt() != null && f.getOpenAt().isAfter(now)) {
+            f.setStatus(RegistrationFormStatus.DRAFT.name());
+        } else if (f.getOpenAt() != null && !f.getOpenAt().isAfter(now)
+                && (f.getCloseAt() == null || f.getCloseAt().isAfter(now))) {
+            f.setStatus(RegistrationFormStatus.OPENING.name());
+        } else if (f.getCloseAt() != null && !f.getCloseAt().isAfter(now)) {
+            f.setStatus(RegistrationFormStatus.CLOSED.name());
+        } else {
+            f.setStatus(RegistrationFormStatus.DRAFT.name());
         }
         String fieldError = validateFields(f.getFields());
         if (fieldError != null) return fieldError;
         boolean saved = f.getId() > 0 ? dao.update(f) : dao.insert(f);
-        if (saved) return null;
+        if (saved) {
+            if (!dao.setActivityPublic(f.getActivityId(), true)) {
+                return "Form đã lưu nhưng không thể cập nhật trạng thái hiển thị hoạt động. Vui lòng tải lại và kiểm tra.";
+            }
+            return null;
+        }
         if (!dao.isActivityApproved(f.getActivityId())) {
             return "Không thể lưu form vì hoạt động chưa được duyệt.";
         }
@@ -207,34 +219,6 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
                 : "Không thể tạo form đăng ký. Vui lòng kiểm tra dữ liệu và thử lại.";
     }
 
-    public String updateStatus(int id, String status) {
-        if (id <= 0) return "Form đăng ký không hợp lệ.";
-        if (status == null) return "Trạng thái form không hợp lệ.";
-        try {
-            RegistrationFormStatus.valueOf(status);
-        } catch (IllegalArgumentException e) {
-            return "Trạng thái form không hợp lệ.";
-        }
-        if (RegistrationFormStatus.OPENING.name().equals(status)) {
-            RegistrationForm form = getById(id);
-            if (form == null) return "Không tìm thấy form đăng ký.";
-            if (!dao.isActivityApproved(form.getActivityId())) {
-                return "Chỉ được mở form khi hoạt động đã được duyệt.";
-            }
-            if (!dao.isActivityUpcoming(form.getActivityId())) {
-                return "Không thể mở form vì hoạt động không còn ở trạng thái Chưa diễn ra.";
-            }
-            LocalDateTime now = DateTimeUtil.now();
-            if (form.getOpenAt() != null && form.getOpenAt().isAfter(now)) {
-                return "Chưa đến thời gian mở đăng ký. Hãy giữ form ở trạng thái Bản nháp để tự mở đúng hạn.";
-            }
-            if (form.getCloseAt() != null && !form.getCloseAt().isAfter(now)) {
-                return "Không thể mở form vì thời gian đóng đăng ký đã qua.";
-            }
-        }
-        return dao.updateStatus(id, status) ? null : "Không tìm thấy form đăng ký.";
-    }
-
     public String delete(int id) {
         return dao.delete(id) ? null : "Không thể xóa form đã có đăng ký. Hãy chuyển form sang bản nháp thay vì xóa.";
     }
@@ -253,8 +237,22 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     @Override
+    public String registerQuick(int activityId, int studentId, String note) {
+        if (activityId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
+        if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
+        RegistrationForm form = getByActivityId(activityId);
+        if (form == null) return "Không tìm thấy form đăng ký cho hoạt động này.";
+        if (dao.hasStudentRegisteredForActivity(activityId, studentId)) {
+            if (dao.reactivateRegistration(form.getId(), studentId)) return null;
+            return "Bạn đã đăng ký hoạt động này.";
+        }
+        if (dao.registerStudentQuick(activityId, studentId, note == null ? "" : note.trim())) return null;
+        return "Không thể đăng ký: hoạt động đã đủ số lượng tối đa, chưa được duyệt hoặc đã bắt đầu.";
+    }
+
+    @Override
     public String registerWithAnswers(int formId, int studentId, String note, List<RegistrationFormField> answers,
-            Map<String, String> personalInfo) {
+                                      Map<String, String> personalInfo) {
         if (formId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
         if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
 
@@ -301,6 +299,28 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         return studentId > 0 ? dao.findSavedProfile(studentId) : Map.of();
     }
 
+    @Override
+    public String cancelRegistration(int registrationId) {
+        if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
+        String restrictionReason = dao.getCancelRestrictionReason(registrationId);
+        if (restrictionReason != null) return restrictionReason;
+        if (dao.cancelRegistration(registrationId)) return null;
+        return "Không thể hủy đăng ký.";
+    }
+
+    @Override
+    public String getCancelRestrictionReason(int registrationId) {
+        if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
+        return dao.getCancelRestrictionReason(registrationId);
+    }
+
+    @Override
+    public String reactivateRegistration(int formId, int studentId) {
+        if (formId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
+        if (dao.reactivateRegistration(formId, studentId)) return null;
+        return "Không thể kích hoạt lại đăng ký.";
+    }
+
     private static String validateFields(List<RegistrationFormField> fields) {
         if (fields == null) return null;
         Map<String, Boolean> keys = new HashMap<>();
@@ -315,7 +335,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             }
             if (field.getFieldType() == null
                     || !List.of("TEXT", "TEXTAREA", "NUMBER", "DATE", "EMAIL", "PHONE", "SELECT", "CHECKBOX")
-                            .contains(field.getFieldType())) {
+                    .contains(field.getFieldType())) {
                 return "Loại trường đăng ký không hợp lệ.";
             }
             if ("SELECT".equals(field.getFieldType()) && parseOptions(field).isEmpty()) {
@@ -326,7 +346,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     private static String appendPersonalInfo(int studentId, Map<String, String> personalInfo,
-            List<RegistrationFormField> answers) {
+                                             List<RegistrationFormField> answers) {
         if (personalInfo == null) return "Vui lòng nhập đầy đủ thông tin sinh viên.";
         String studentCode = value(personalInfo, "studentCode");
         String studentName = value(personalInfo, "studentName");

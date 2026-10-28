@@ -28,6 +28,12 @@ public interface IRegistrationFormDAO {
 
     boolean isActivityUpcoming(int activityId);
 
+    java.time.LocalDateTime findActivityStartTime(int activityId);
+
+    boolean setActivityPublic(int activityId, boolean isPublic);
+
+    List<RegistrationApplication> findApplicationsForStudent(int studentId);
+
     boolean isAtCapacity(int formId);
 
     boolean isOpenFormAtCapacity(int formId);
@@ -44,18 +50,26 @@ public interface IRegistrationFormDAO {
 
     boolean update(RegistrationForm form);
 
-    boolean updateStatus(int id, String status);
-
     boolean delete(int id);
 
     boolean registerStudent(int formId, int studentId, String note);
 
+    boolean registerStudentQuick(int activityId, int studentId, String note);
+
     boolean hasStudentRegistered(int formId, int studentId);
 
+    boolean hasStudentRegisteredForActivity(int activityId, int studentId);
+
     boolean registerStudentWithAnswers(int formId, int studentId, String note,
-            List<RegistrationFormField> answers);
+                                       List<RegistrationFormField> answers);
 
     boolean reviewApplication(int registrationId, String expectedStatus, String newStatus);
+
+    boolean cancelRegistration(int registrationId);
+
+    String getCancelRestrictionReason(int registrationId);
+
+    boolean reactivateRegistration(int formId, int studentId);
 
     Map<String, String> findSavedProfile(int studentId);
 }

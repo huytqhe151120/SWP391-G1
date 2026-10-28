@@ -357,7 +357,13 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (!isEmpty(dto.getEndTime())) {
             entity.setEndTime(LocalDateTime.parse(dto.getEndTime().trim()));
         }
-        entity.setRegistrationFormRequired("true".equalsIgnoreCase(dto.getRegistrationFormRequired()));
+        // Force registrationFormRequired to false when nature is not REQUIRE_REGISTRATION
+        boolean requiresForm = "true".equalsIgnoreCase(dto.getRegistrationFormRequired());
+        if (entity.getNature() != ActivityNature.REQUIRE_REGISTRATION) {
+            requiresForm = false;
+        }
+        entity.setRegistrationFormRequired(requiresForm);
+        entity.setPublic(dto.getIsPublic() == null || dto.getIsPublic().isEmpty() ? true : "true".equalsIgnoreCase(dto.getIsPublic()));
 
         return entity;
     }
