@@ -25,6 +25,12 @@
            <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">◷</span>Hoạt động ngoại khóa
         </a>
+        <% if (navAdmin) { %>
+        <a class="<%= "checklist".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/checklist"
+           <%= "checklist".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">☑</span>Checklist công việc
+        </a>
+        <% } %>
         <a class="<%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"
                 <%= "partner-invitations".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">✉</span>Lời mời hợp tác

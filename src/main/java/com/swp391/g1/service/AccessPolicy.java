@@ -83,6 +83,11 @@ public final class AccessPolicy {
         return user != null;
     }
 
+    /** Checklist access is temporarily limited to administrators. */
+    public static boolean canViewChecklist(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE);
+    }
+
     /** ADMIN organizers and STAFF can access their resolved 1-to-1 inbox. */
     public static boolean canUseSupportInbox(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
