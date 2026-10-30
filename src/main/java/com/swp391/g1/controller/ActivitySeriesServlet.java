@@ -2,10 +2,22 @@ package com.swp391.g1.controller;
 
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.ActivitySeries;
+import com.swp391.g1.model.ActivityType;
+import com.swp391.g1.model.Department;
 import com.swp391.g1.model.Enum;
+import com.swp391.g1.model.Semester;
+import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.AccessPolicy;
+import com.swp391.g1.service.IDepartmentService;
 import com.swp391.g1.service.IActivitySeriesService;
+import com.swp391.g1.service.IActivityTypeService;
+import com.swp391.g1.service.IStaffService;
+import com.swp391.g1.service.ISemesterService;
 import com.swp391.g1.service.impl.ActivitySeriesServiceImpl;
+import com.swp391.g1.service.impl.ActivityTypeServiceImpl;
+import com.swp391.g1.service.impl.DepartmentServiceImpl;
+import com.swp391.g1.service.impl.SemesterServiceImpl;
+import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.ServletException;
@@ -26,6 +38,10 @@ import java.util.List;
 public class ActivitySeriesServlet extends HttpServlet {
 
     private final IActivitySeriesService seriesService = new ActivitySeriesServiceImpl();
+    private final IActivityTypeService activityTypeService = new ActivityTypeServiceImpl();
+    private final IDepartmentService departmentService = new DepartmentServiceImpl();
+    private final ISemesterService semesterService = new SemesterServiceImpl();
+    private final IStaffService staffService = new StaffServiceImpl();
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
@@ -151,6 +167,7 @@ public class ActivitySeriesServlet extends HttpServlet {
 
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        loadDropdownData(request, 0);
         request.getRequestDispatcher("/WEB-INF/views/activity-series/create.jsp")
                 .forward(request, response);
     }
@@ -168,8 +185,22 @@ public class ActivitySeriesServlet extends HttpServlet {
             return;
         }
         request.setAttribute("series", series);
+        loadDropdownData(request, series.getResponsibleDepartmentId());
         request.getRequestDispatcher("/WEB-INF/views/activity-series/edit.jsp")
                 .forward(request, response);
+    }
+
+    private void loadDropdownData(HttpServletRequest request, int departmentId) {
+        request.setAttribute("semesters", semesterService.getAllSemesters());
+        request.setAttribute("activityTypes", activityTypeService.getActiveActivityTypes());
+        request.setAttribute("departments", departmentService.getAllDepartments());
+        List<Staff> staffs;
+        if (departmentId > 0) {
+            staffs = staffService.getStaffsByDepartmentId(departmentId);
+        } else {
+            staffs = staffService.getAllStaffs();
+        }
+        request.setAttribute("staffs", staffs);
     }
 
     // =========================================================================
@@ -177,11 +208,23 @@ public class ActivitySeriesServlet extends HttpServlet {
     // =========================================================================
 
     private void createSeries(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+            throws ServletException, IOException {
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
         HttpSession session = request.getSession();
         try {
             ActivitySeries series = buildSeriesFromRequest(request);
+            if (series.getResponsibleDepartmentId() > 0 && series.getResponsibleStaffId() > 0) {
+                Staff staff = staffService.getStaffById(series.getResponsibleStaffId());
+                Department dept = departmentService.getDepartmentById(series.getResponsibleDepartmentId());
+                if (staff == null || dept == null) {
+                    throw new IllegalArgumentException("Phòng ban hoặc nhân viên phụ trách không tồn tại.");
+                }
+                List<Staff> staffsInDept = staffService.getStaffsByDepartmentId(series.getResponsibleDepartmentId());
+                boolean staffBelongsToDept = staffsInDept.stream().anyMatch(s -> s.getId() == series.getResponsibleStaffId());
+                if (!staffBelongsToDept) {
+                    throw new IllegalArgumentException("Nhân viên phụ trách không thuộc phòng ban đã chọn.");
+                }
+            }
             boolean success = seriesService.createSeries(series, currentUser);
             if (success) {
                 session.setAttribute("successMessage", "Tạo chuỗi hoạt động thành công!");
@@ -191,16 +234,22 @@ public class ActivitySeriesServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/activity-series?action=create");
             }
         } catch (IllegalArgumentException e) {
-            session.setAttribute("errorMessage", e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/activity-series?action=create");
+            loadDropdownData(request, parseId(request.getParameter("responsibleDepartmentId")));
+            request.setAttribute("errorMessage", e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/activity-series/create.jsp")
+                    .forward(request, response);
+            return;
         } catch (Exception e) {
-            session.setAttribute("errorMessage", "Lỗi tạo chuỗi hoạt động: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/activity-series?action=create");
+            loadDropdownData(request, parseId(request.getParameter("responsibleDepartmentId")));
+            request.setAttribute("errorMessage", "Lỗi tạo chuỗi hoạt động: " + e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/activity-series/create.jsp")
+                    .forward(request, response);
+            return;
         }
     }
 
     private void updateSeries(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+            throws ServletException, IOException {
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
         HttpSession session = request.getSession();
         int id = parseId(request.getParameter("id"));
@@ -212,6 +261,18 @@ public class ActivitySeriesServlet extends HttpServlet {
         try {
             ActivitySeries series = buildSeriesFromRequest(request);
             series.setId(id);
+            if (series.getResponsibleDepartmentId() > 0 && series.getResponsibleStaffId() > 0) {
+                Staff staff = staffService.getStaffById(series.getResponsibleStaffId());
+                Department dept = departmentService.getDepartmentById(series.getResponsibleDepartmentId());
+                if (staff == null || dept == null) {
+                    throw new IllegalArgumentException("Phòng ban hoặc nhân viên phụ trách không tồn tại.");
+                }
+                List<Staff> staffsInDept = staffService.getStaffsByDepartmentId(series.getResponsibleDepartmentId());
+                boolean staffBelongsToDept = staffsInDept.stream().anyMatch(s -> s.getId() == series.getResponsibleStaffId());
+                if (!staffBelongsToDept) {
+                    throw new IllegalArgumentException("Nhân viên phụ trách không thuộc phòng ban đã chọn.");
+                }
+            }
             boolean success = seriesService.updateSeries(series, currentUser);
             if (success) {
                 session.setAttribute("successMessage", "Cập nhật chuỗi hoạt động thành công!");
@@ -221,14 +282,23 @@ public class ActivitySeriesServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/activity-series?action=edit&id=" + id);
             }
         } catch (IllegalArgumentException e) {
-            session.setAttribute("errorMessage", e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/activity-series?action=edit&id=" + id);
+            loadDropdownData(request, parseId(request.getParameter("responsibleDepartmentId")));
+            request.setAttribute("errorMessage", e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/activity-series/edit.jsp")
+                    .forward(request, response);
+            return;
         } catch (IllegalStateException e) {
-            session.setAttribute("errorMessage", e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/activity-series?action=edit&id=" + id);
+            loadDropdownData(request, parseId(request.getParameter("responsibleDepartmentId")));
+            request.setAttribute("errorMessage", e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/activity-series/edit.jsp")
+                    .forward(request, response);
+            return;
         } catch (Exception e) {
-            session.setAttribute("errorMessage", "Lỗi cập nhật chuỗi hoạt động: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/activity-series?action=edit&id=" + id);
+            loadDropdownData(request, parseId(request.getParameter("responsibleDepartmentId")));
+            request.setAttribute("errorMessage", "Lỗi cập nhật chuỗi hoạt động: " + e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/activity-series/edit.jsp")
+                    .forward(request, response);
+            return;
         }
     }
 

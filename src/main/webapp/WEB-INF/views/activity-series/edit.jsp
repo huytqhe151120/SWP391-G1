@@ -58,40 +58,55 @@
                     <div class="field form-group-custom">
                         <label for="seriesCode">Mã chuỗi <span class="required-mark">*</span></label>
                         <input id="seriesCode" name="seriesCode" type="text" required
-                               value="${series.seriesCode}" ${approved ? 'disabled' : ''}/>
+                               value="${not empty param.seriesCode ? param.seriesCode : series.seriesCode}" ${approved ? 'disabled' : ''}/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="name">Tên chuỗi <span class="required-mark">*</span></label>
                         <input id="name" name="name" type="text" required
-                               value="${series.name}" ${approved ? 'disabled' : ''}/>
+                               value="${not empty param.name ? param.name : series.name}" ${approved ? 'disabled' : ''}/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="activityTypeId">Mã loại hoạt động <span class="required-mark">*</span></label>
-                        <input id="activityTypeId" name="activityTypeId" type="number" min="1" required
-                               value="${series.activityTypeId}" ${approved ? 'disabled' : ''}/>
+                        <select id="activityTypeId" name="activityTypeId" data-required ${approved ? 'disabled' : ''}>
+                            <option value="">-- Chọn loại hoạt động --</option>
+                            <c:forEach var="type" items="${activityTypes}">
+                                <option value="${type.id}" ${not empty param.activityTypeId ? param.activityTypeId == type.id : series.activityTypeId == type.id} ${approved ? 'disabled' : ''}>
+                                    <c:out value="${type.code}"/> - <c:out value="${type.name}"/></option>
+                            </c:forEach>
+                        </select>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="responsibleDepartmentId">Mã phòng ban phụ trách <span class="required-mark">*</span></label>
-                        <input id="responsibleDepartmentId" name="responsibleDepartmentId" type="number" min="1" required
-                               value="${series.responsibleDepartmentId}" ${approved ? 'disabled' : ''}/>
+                        <select id="responsibleDepartmentId" name="responsibleDepartmentId" data-required ${approved ? 'disabled' : ''}>
+                            <option value="">-- Chọn phòng ban --</option>
+                            <c:forEach var="dept" items="${departments}">
+                                <option value="${dept.id}" ${not empty param.responsibleDepartmentId ? param.responsibleDepartmentId == dept.id : series.responsibleDepartmentId == dept.id} ${approved ? 'disabled' : ''}>
+                                    <c:out value="${dept.code}"/> - <c:out value="${dept.name}"/></option>
+                            </c:forEach>
+                        </select>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="responsibleStaffId">Mã nhân viên phụ trách <span class="required-mark">*</span></label>
-                        <input id="responsibleStaffId" name="responsibleStaffId" type="number" min="1" required
-                               value="${series.responsibleStaffId}" ${approved ? 'disabled' : ''}/>
+                        <select id="responsibleStaffId" name="responsibleStaffId" data-required ${approved ? 'disabled' : ''}>
+                            <option value="">-- Chọn nhân viên --</option>
+                            <c:forEach var="staff" items="${staffs}">
+                                <option value="${staff.id}" ${not empty param.responsibleStaffId ? param.responsibleStaffId == staff.id : series.responsibleStaffId == staff.id} ${approved ? 'disabled' : ''}>
+                                    <c:out value="${staff.code}"/> - <c:out value="${staff.name}"/></option>
+                            </c:forEach>
+                        </select>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field field-wide">
                         <label for="description">Mô tả</label>
-                        <textarea id="description" name="description" rows="3">${series.description}</textarea>
+                        <textarea id="description" name="description" rows="3">${not empty param.description ? param.description : series.description}</textarea>
                     </div>
                     <div class="checkbox-inline">
                         <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true"
-                               ${series.registrationFormRequired ? 'checked' : ''} ${approved ? 'disabled' : ''}/>
+                               ${not empty param.registrationFormRequired ? param.registrationFormRequired == 'true' : series.registrationFormRequired ? 'checked' : ''} ${approved ? 'disabled' : ''}/>
                         <label for="registrationFormRequired">Bắt buộc điền form đăng ký</label>
                     </div>
                 </div>
@@ -106,55 +121,59 @@
                         <label for="recurrenceMode">Chế độ lặp <span class="required-mark">*</span></label>
                         <select id="recurrenceMode" name="recurrenceMode" data-required required ${approved ? 'disabled' : ''}>
                             <option value="">-- Chọn chế độ --</option>
-                            <option value="MONTHLY" ${series.recurrenceMode == 'MONTHLY' ? 'selected' : ''}>Theo tháng (MONTHLY)</option>
-                            <option value="YEARLY" ${series.recurrenceMode == 'YEARLY' ? 'selected' : ''}>Theo năm (YEARLY)</option>
+                            <option value="MONTHLY" ${not empty param.recurrenceMode ? param.recurrenceMode == 'MONTHLY' : series.recurrenceMode == 'MONTHLY'} ? 'selected' : ''}>Theo tháng (MONTHLY)</option>
+                            <option value="YEARLY" ${not empty param.recurrenceMode ? param.recurrenceMode == 'YEARLY' : series.recurrenceMode == 'YEARLY'} ? 'selected' : ''}>Theo năm (YEARLY)</option>
                         </select>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="recurrenceInterval">Khoảng cách lặp <span class="required-mark">*</span></label>
-                        <input id="recurrenceInterval" name="recurrenceInterval" type="number" min="1" value="1" required
-                               value="${series.recurrenceInterval}" ${approved ? 'disabled' : ''}
+                        <input id="recurrenceInterval" name="recurrenceInterval" type="number" min="1" required
+                               value="${not empty param.recurrenceInterval ? param.recurrenceInterval : series.recurrenceInterval}" ${approved ? 'disabled' : ''}
                                placeholder="Ví dụ: 1 (lặp mỗi 1 tháng/năm)"/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="seriesStartDate">Ngày bắt đầu chuỗi <span class="required-mark">*</span></label>
                         <input id="seriesStartDate" name="seriesStartDate" type="date" required
-                               value="${series.seriesStartDate}" ${approved ? 'disabled' : ''}/>
+                               value="${not empty param.seriesStartDate ? param.seriesStartDate : series.seriesStartDate}" ${approved ? 'disabled' : ''}/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="seriesEndDate">Ngày kết thúc chuỗi</label>
                         <input id="seriesEndDate" name="seriesEndDate" type="date"
-                               value="${series.seriesEndDate}" ${approved ? 'disabled' : ''}/>
+                               value="${not empty param.seriesEndDate ? param.seriesEndDate : series.seriesEndDate}" ${approved ? 'disabled' : ''}/>
                         <small class="text-danger error-msg">Ngày kết thúc không được trước ngày bắt đầu.</small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="maxOccurrences">Số sự kiện tối đa</label>
                         <input id="maxOccurrences" name="maxOccurrences" type="number" min="1"
-                               value="${series.maxOccurrences}" ${approved ? 'disabled' : ''}
+                               value="${not empty param.maxOccurrences ? param.maxOccurrences : series.maxOccurrences}" ${approved ? 'disabled' : ''}
                                placeholder="Không giới hạn"/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="occurrenceDurationMinutes">Thời lượng sự kiện (phút) <span class="required-mark">*</span></label>
                         <input id="occurrenceDurationMinutes" name="occurrenceDurationMinutes" type="number" min="1" required
-                               value="${series.occurrenceDurationMinutes}" ${approved ? 'disabled' : ''}
+                               value="${not empty param.occurrenceDurationMinutes ? param.occurrenceDurationMinutes : series.occurrenceDurationMinutes}" ${approved ? 'disabled' : ''}
                                placeholder="Ví dụ: 90"/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="timeOfDay">Giờ trong ngày <span class="required-mark">*</span></label>
                         <input id="timeOfDay" name="timeOfDay" type="time" required
-                               value="${series.timeOfDay}" ${approved ? 'disabled' : ''}/>
+                               value="${not empty param.timeOfDay ? param.timeOfDay : series.timeOfDay}" ${approved ? 'disabled' : ''}/>
                         <small class="text-danger error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="semesterId">Mã học kỳ</label>
-                        <input id="semesterId" name="semesterId" type="number" min="1"
-                               value="${series.semesterId}" ${approved ? 'disabled' : ''}
-                               placeholder="ID học kỳ (tùy chọn)"/>
+                        <select id="semesterId" name="semesterId" ${approved ? 'disabled' : ''}>
+                            <option value="">-- Chọn học kỳ (tùy chọn) --</option>
+                            <c:forEach var="sem" items="${semesters}">
+                                <option value="${sem.id}" ${not empty param.semesterId ? param.semesterId == sem.id : series.semesterId == sem.id} ${approved ? 'disabled' : ''}>
+                                    <c:out value="${sem.code}"/> - <c:out value="${sem.name}"/></option>
+                            </c:forEach>
+                        </select>
                         <small class="text-danger error-msg"></small>
                     </div>
                 </div>

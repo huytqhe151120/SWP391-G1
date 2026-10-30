@@ -3,14 +3,20 @@ package com.swp391.g1.service.impl;
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.IActivitySeriesDAO;
 import com.swp391.g1.dao.ISemesterDAO;
+import com.swp391.g1.service.impl.ActivityTypeServiceImpl;
+import com.swp391.g1.service.impl.DepartmentServiceImpl;
 import com.swp391.g1.dao.impl.ActivitySeriesDAOImpl;
 import com.swp391.g1.dao.impl.SemesterDAOImpl;
+import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.ActivitySeries;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.Semester;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivitySeriesService;
+import com.swp391.g1.service.IActivityTypeService;
+import com.swp391.g1.service.IDepartmentService;
+import com.swp391.g1.service.IStaffService;
 import com.swp391.g1.util.DateTimeUtil;
 import com.swp391.g1.util.RecurrenceGenerator;
 
@@ -25,10 +31,16 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
 
     private final IActivitySeriesDAO seriesDAO;
     private final ISemesterDAO semesterDAO;
+    private final IActivityTypeService activityTypeService;
+    private final IDepartmentService departmentService;
+    private final IStaffService staffService;
 
     public ActivitySeriesServiceImpl() {
         this.seriesDAO = new ActivitySeriesDAOImpl();
         this.semesterDAO = new SemesterDAOImpl();
+        this.activityTypeService = new ActivityTypeServiceImpl();
+        this.departmentService = new DepartmentServiceImpl();
+        this.staffService = new StaffServiceImpl();
     }
 
     @Override
@@ -335,11 +347,34 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         if (series.getActivityTypeId() <= 0) {
             throw new IllegalArgumentException("Loại hoạt động không hợp lệ.");
         }
+        ActivityType activityType = activityTypeService.getActivityTypeById(series.getActivityTypeId());
+        if (activityType == null) {
+            throw new IllegalArgumentException("Loại hoạt động không tồn tại.");
+        }
         if (series.getResponsibleDepartmentId() <= 0) {
             throw new IllegalArgumentException("Phòng ban phụ trách không hợp lệ.");
         }
+        Department department = departmentService.getDepartmentById(series.getResponsibleDepartmentId());
+        if (department == null) {
+            throw new IllegalArgumentException("Phòng ban phụ trách không tồn tại.");
+        }
         if (series.getResponsibleStaffId() <= 0) {
             throw new IllegalArgumentException("Nhân viên phụ trách không hợp lệ.");
+        }
+        Staff staff = staffService.getStaffById(series.getResponsibleStaffId());
+        if (staff == null) {
+            throw new IllegalArgumentException("Nhân viên phụ trách không tồn tại.");
+        }
+        List<Staff> staffsInDept = staffService.getStaffsByDepartmentId(series.getResponsibleDepartmentId());
+        boolean staffBelongsToDept = staffsInDept.stream().anyMatch(s -> s.getId() == series.getResponsibleStaffId());
+        if (!staffBelongsToDept) {
+            throw new IllegalArgumentException("Nhân viên phụ trách không thuộc phòng ban đã chọn.");
+        }
+        if (series.getSemesterId() != null) {
+            Semester semester = semesterDAO.findById(series.getSemesterId());
+            if (semester == null) {
+                throw new IllegalArgumentException("Học kỳ không tồn tại.");
+            }
         }
         if (series.getRecurrenceMode() == null) {
             throw new IllegalArgumentException("Chế độ lặp không được để trống (MONTHLY hoặc YEARLY).");
@@ -350,7 +385,7 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         if (series.getSeriesStartDate() == null) {
             throw new IllegalArgumentException("Ngày bắt đầu chuỗi không được để trống.");
         }
-        if (!series.getSeriesStartDate().isAfter(LocalDate.now())) {
+        if (!isUpdate && !series.getSeriesStartDate().isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Ngày bắt đầu chuỗi phải là ngày trong tương lai.");
         }
         if (series.getSeriesEndDate() != null && series.getSeriesEndDate().isBefore(series.getSeriesStartDate())) {
