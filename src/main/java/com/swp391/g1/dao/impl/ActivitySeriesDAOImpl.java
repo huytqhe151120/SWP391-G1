@@ -4,6 +4,7 @@ import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.IActivitySeriesDAO;
 import com.swp391.g1.model.ActivitySeries;
 import com.swp391.g1.model.Enum;
+import com.swp391.g1.model.ExtracurricularActivity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -351,6 +352,52 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
             throw new IllegalStateException("Failed to count occurrences by series id.", e);
         }
         return 0;
+    }
+
+    @Override
+    public List<ExtracurricularActivity> findOccurrencesBySeriesId(int seriesId) throws SQLException {
+        List<ExtracurricularActivity> list = new ArrayList<>();
+        String sql = "SELECT * FROM extracurricular_activity WHERE series_id = ? ORDER BY occurrence_start_date, occurrence_no";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, seriesId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ExtracurricularActivity activity = new ExtracurricularActivity();
+                    activity.setId(rs.getInt("id"));
+                    activity.setSemesterId(rs.getInt("semester_id"));
+                    activity.setCode(rs.getString("code"));
+                    activity.setName(rs.getString("name"));
+                    activity.setActivityTypeId(rs.getInt("activity_type_id"));
+                    activity.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
+                    activity.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
+                    activity.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
+                    activity.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
+                    String nature = rs.getString("nature");
+                    activity.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+                    activity.setSummaryRequired(rs.getBoolean("is_summary_required"));
+                    activity.setMaxParticipants((Integer) rs.getObject("max_participants"));
+                    activity.setAddress(rs.getString("address"));
+                    activity.setDescription(rs.getString("description"));
+                    String activityStatus = rs.getString("activity_status");
+                    activity.setActivityStatus(activityStatus == null ? null : Enum.ActivityStatus.valueOf(activityStatus));
+                    String approvalStatus = rs.getString("approval_status");
+                    activity.setApprovalStatus(approvalStatus == null ? null : Enum.ApprovalStatus.valueOf(approvalStatus));
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    activity.setCreatedAt(createdAt == null ? null : createdAt.toLocalDateTime());
+                    activity.setActivityTypeId(rs.getInt("activity_type_id"));
+                    Timestamp startTime = rs.getTimestamp("start_time");
+                    activity.setStartTime(startTime == null ? null : startTime.toLocalDateTime());
+                    Timestamp endTime = rs.getTimestamp("end_time");
+                    activity.setEndTime(endTime == null ? null : endTime.toLocalDateTime());
+                    activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+                    list.add(activity);
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find occurrences by series id.", e);
+        }
+        return list;
     }
 
     public Integer insertOccurrence(Connection conn,

@@ -10,6 +10,7 @@ import com.swp391.g1.dao.impl.SemesterDAOImpl;
 import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.ActivitySeries;
+import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.Semester;
 import com.swp391.g1.service.AccessPolicy;
@@ -409,6 +410,14 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         if (series.getTimeOfDay() == null) {
             throw new IllegalArgumentException("Thời gian trong ngày không được để trống.");
         }
+    }
+
+    @Override
+    public List<ExtracurricularActivity> getOccurrencesBySeriesId(int seriesId) {
+        if (seriesId <= 0) {
+            return List.of();
+        }
+        return seriesDAO.findOccurrencesBySeriesId(seriesId);
     }
 
 }

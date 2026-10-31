@@ -1,6 +1,7 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.model.ActivitySeries;
+import com.swp391.g1.model.ExtracurricularActivity;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -26,4 +27,6 @@ public interface IActivitySeriesDAO extends IGenericDAO<ActivitySeries, Integer>
                              java.time.LocalDate occurrenceStartDate) throws SQLException;
 
     int countOccurrencesBySeriesId(int seriesId);
+
+    List<ExtracurricularActivity> findOccurrencesBySeriesId(int seriesId) throws SQLException;
 }

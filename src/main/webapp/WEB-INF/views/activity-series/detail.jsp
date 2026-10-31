@@ -7,15 +7,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết chuỗi hoạt động | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
+<div class="activity-app-shell hero-scroll">
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
 
-    <div class="activity-app-layout">
+    <div class="activity-app-main-wrapper">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
-        <main class="page activity-list-page activity-form-page activity-detail-page">
+        <main class="activity-app-main page activity-list-page activity-form-page activity-detail-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ CHUỖI HOẠT ĐỘNG</span>
@@ -57,7 +58,7 @@
             <div class="detail-item"><dt>Giờ trong ngày</dt><dd><c:out value="${series.timeOfDay}"/></dd></div>
             <div class="detail-item"><dt>Mã học kỳ</dt><dd><c:out value="${series.semesterId}"/></dd></div>
             <div class="detail-item"><dt>Mô tả</dt><dd><c:out value="${series.description}"/></dd></div>
-            <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><c:out value="${series.approvalStatus}"/></dd></div>
+            <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><span class="badge ${series.approvalStatus == 'APPROVED' ? 'status-green' : series.approvalStatus == 'REJECTED' ? 'status-red' : series.approvalStatus == 'PENDING' ? 'status-yellow' : 'status-gray'}"><c:out value="${series.approvalStatus}"/></span></dd></div>
             <div class="detail-item"><dt>Tạo lúc</dt><dd><c:out value="${series.createdAt}"/></dd></div>
             <div class="detail-item"><dt>Cập nhật lúc</dt><dd><c:out value="${series.updatedAt}"/></dd></div>
         </dl>
@@ -88,5 +89,7 @@
         </main>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261016-1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

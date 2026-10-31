@@ -9,15 +9,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cập nhật chuỗi hoạt động | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
+<div class="activity-app-shell hero-scroll">
     <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
 
-    <div class="activity-app-layout">
+    <div class="activity-app-main-wrapper">
         <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
-        <main class="page activity-list-page activity-form-page">
+        <main class="activity-app-main page activity-list-page activity-form-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ CHUỖI HOẠT ĐỘNG</span>
@@ -59,13 +60,13 @@
                         <label for="seriesCode">Mã chuỗi <span class="required-mark">*</span></label>
                         <input id="seriesCode" name="seriesCode" type="text" required
                                value="${not empty param.seriesCode ? param.seriesCode : series.seriesCode}" ${approved ? 'disabled' : ''}/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="name">Tên chuỗi <span class="required-mark">*</span></label>
                         <input id="name" name="name" type="text" required
                                value="${not empty param.name ? param.name : series.name}" ${approved ? 'disabled' : ''}/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="activityTypeId">Mã loại hoạt động <span class="required-mark">*</span></label>
@@ -76,7 +77,7 @@
                                     <c:out value="${type.code}"/> - <c:out value="${type.name}"/></option>
                             </c:forEach>
                         </select>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="responsibleDepartmentId">Mã phòng ban phụ trách <span class="required-mark">*</span></label>
@@ -87,7 +88,7 @@
                                     <c:out value="${dept.code}"/> - <c:out value="${dept.name}"/></option>
                             </c:forEach>
                         </select>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="responsibleStaffId">Mã nhân viên phụ trách <span class="required-mark">*</span></label>
@@ -98,7 +99,7 @@
                                     <c:out value="${staff.code}"/> - <c:out value="${staff.name}"/></option>
                             </c:forEach>
                         </select>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field field-wide">
                         <label for="description">Mô tả</label>
@@ -124,46 +125,46 @@
                             <option value="MONTHLY" ${not empty param.recurrenceMode ? param.recurrenceMode == 'MONTHLY' : series.recurrenceMode == 'MONTHLY'} ? 'selected' : ''}>Theo tháng (MONTHLY)</option>
                             <option value="YEARLY" ${not empty param.recurrenceMode ? param.recurrenceMode == 'YEARLY' : series.recurrenceMode == 'YEARLY'} ? 'selected' : ''}>Theo năm (YEARLY)</option>
                         </select>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="recurrenceInterval">Khoảng cách lặp <span class="required-mark">*</span></label>
                         <input id="recurrenceInterval" name="recurrenceInterval" type="number" min="1" required
                                value="${not empty param.recurrenceInterval ? param.recurrenceInterval : series.recurrenceInterval}" ${approved ? 'disabled' : ''}
                                placeholder="Ví dụ: 1 (lặp mỗi 1 tháng/năm)"/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="seriesStartDate">Ngày bắt đầu chuỗi <span class="required-mark">*</span></label>
                         <input id="seriesStartDate" name="seriesStartDate" type="date" required
                                value="${not empty param.seriesStartDate ? param.seriesStartDate : series.seriesStartDate}" ${approved ? 'disabled' : ''}/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="seriesEndDate">Ngày kết thúc chuỗi</label>
                         <input id="seriesEndDate" name="seriesEndDate" type="date"
                                value="${not empty param.seriesEndDate ? param.seriesEndDate : series.seriesEndDate}" ${approved ? 'disabled' : ''}/>
-                        <small class="text-danger error-msg">Ngày kết thúc không được trước ngày bắt đầu.</small>
+                        <small class="error-msg">Ngày kết thúc không được trước ngày bắt đầu.</small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="maxOccurrences">Số sự kiện tối đa</label>
                         <input id="maxOccurrences" name="maxOccurrences" type="number" min="1"
                                value="${not empty param.maxOccurrences ? param.maxOccurrences : series.maxOccurrences}" ${approved ? 'disabled' : ''}
                                placeholder="Không giới hạn"/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="occurrenceDurationMinutes">Thời lượng sự kiện (phút) <span class="required-mark">*</span></label>
                         <input id="occurrenceDurationMinutes" name="occurrenceDurationMinutes" type="number" min="1" required
                                value="${not empty param.occurrenceDurationMinutes ? param.occurrenceDurationMinutes : series.occurrenceDurationMinutes}" ${approved ? 'disabled' : ''}
                                placeholder="Ví dụ: 90"/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="timeOfDay">Giờ trong ngày <span class="required-mark">*</span></label>
                         <input id="timeOfDay" name="timeOfDay" type="time" required
                                value="${not empty param.timeOfDay ? param.timeOfDay : series.timeOfDay}" ${approved ? 'disabled' : ''}/>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
                         <label for="semesterId">Mã học kỳ</label>
@@ -174,7 +175,7 @@
                                     <c:out value="${sem.code}"/> - <c:out value="${sem.name}"/></option>
                             </c:forEach>
                         </select>
-                        <small class="text-danger error-msg"></small>
+                        <small class="error-msg"></small>
                     </div>
                 </div>
             </div>
@@ -207,6 +208,6 @@
         </main>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/activity-form.js?v=20261020-9"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261016-1"></script>
 </body>
 </html>
