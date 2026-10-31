@@ -341,6 +341,9 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         if (series.getSeriesCode() == null || series.getSeriesCode().trim().isEmpty()) {
             throw new IllegalArgumentException("Mã chuỗi hoạt động không được để trống.");
         }
+        if (series.getSeriesCode().trim().length() > 46) {
+            throw new IllegalArgumentException("Mã chuỗi hoạt động không được vượt quá 46 ký tự.");
+        }
         if (series.getName() == null || series.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Tên chuỗi hoạt động không được để trống.");
         }
@@ -393,6 +396,9 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         }
         if (series.getMaxOccurrences() != null && series.getMaxOccurrences() < 1) {
             throw new IllegalArgumentException("Số lần tối đa phải lớn hơn hoặc bằng 1.");
+        }
+        if (series.getMaxOccurrences() != null && series.getMaxOccurrences() > 999) {
+            throw new IllegalArgumentException("Số lần tối đa không được vượt quá 999.");
         }
         if (series.getSeriesEndDate() == null && series.getMaxOccurrences() == null) {
             throw new IllegalArgumentException("Phải cung cấp ngày kết thúc chuỗi hoặc số sự kiện tối đa.");
