@@ -10,17 +10,13 @@ import java.util.Map;
 public interface IRegistrationFormService {
     List<RegistrationForm> getAll();
 
-    List<RegistrationForm> getOpenForms();
-
-    List<RegistrationForm> getOpenFormsForStudent(int studentId);
-
     RegistrationForm getById(int id);
 
     RegistrationForm getByActivityId(int activityId);
 
     RegistrationForm getOpenFormById(int id, int studentId);
 
-    boolean hasStudentRegistered(int formId, int studentId);
+    String getRegistrationStatus(int formId, int studentId);
 
     boolean isAtCapacity(int formId);
 
@@ -50,8 +46,6 @@ public interface IRegistrationFormService {
 
     String delete(int id);
 
-    String register(int formId, int studentId, String note);
-
     String registerQuick(int activityId, int studentId, String note);
 
     String registerWithAnswers(int formId, int studentId, String note, List<RegistrationFormField> answers,
@@ -59,9 +53,7 @@ public interface IRegistrationFormService {
 
     String cancelRegistration(int registrationId);
 
-    String getCancelRestrictionReason(int registrationId);
-
-    String reactivateRegistration(int formId, int studentId);
-
     Map<String, String> getSavedProfile(int studentId);
+
+    String saveQuickForm(RegistrationForm f);
 }

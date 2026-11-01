@@ -1,9 +1,11 @@
 package com.swp391.g1.service.impl;
 
-import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
-import com.swp391.g1.dao.IExtracurricularActivityDAO;
 import com.swp391.g1.dao.IActivityStaffDAO;
+import com.swp391.g1.dao.IExtracurricularActivityDAO;
+import com.swp391.g1.dao.ISemesterDAO;
 import com.swp391.g1.dao.impl.ActivityStaffDAOImpl;
+import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
+import com.swp391.g1.dao.impl.SemesterDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
@@ -11,8 +13,6 @@ import com.swp391.g1.model.Enum.ActivityNature;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.ExtracurricularActivity;
-import com.swp391.g1.dao.ISemesterDAO;
-import com.swp391.g1.dao.impl.SemesterDAOImpl;
 import com.swp391.g1.model.Semester;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IExtracurricularActivityService;
@@ -90,16 +90,28 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
 
     @Override
     public boolean createActivity(ExtracurricularActivityRequestDTO dto) throws Exception {
-        // Validate input data (no need to check ID for creation)
+        // Bước 1: Validate dữ liệu đầu vào
         validateRequestDTO(dto, false);
-        // Map from RequestDTO to Entity
+
+        // Bước 2: Chuyển RequestDTO thành Entity
         ExtracurricularActivity entity = mapToEntity(dto);
-        // Set default values for ApprovalStatus and ActivityStatus
+
+        // Bước 3: Thiết lập trạng thái mặc định
         entity.setApprovalStatus(ApprovalStatus.DRAFT);
         entity.setActivityStatus(ActivityStatus.UPCOMING);
-        // Call DAO to insert the new activity
+
+        // Bước 4: Thêm hoạt động vào database
         Integer generatedId = activityDAO.insert(entity);
-        return generatedId != null && generatedId > 0;
+
+        // Bước 5: Kiểm tra thêm thành công
+        if (generatedId == null || generatedId <= 0) {
+            return false;
+        }
+
+        // Bước 6: Cập nhật trạng thái công khai
+        activityDAO.refreshPublic(generatedId);
+
+        return true;
     }
 
     @Override
@@ -143,8 +155,25 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                     "Không thể giảm số lượng tối đa thấp hơn số đơn đang chờ xử lý và đã duyệt đang giữ chỗ.");
         }
 
+        // Prevent changing nature or registrationFormRequired when there are registrations
+        int reservedCount = activityDAO.countReservedApplications(entity.getId());
+        if (reservedCount > 0) {
+            if (!Objects.equals(existing.getNature(), entity.getNature())) {
+                throw new IllegalArgumentException(
+                        "Không thể thay đổi tính chất hoạt động khi đã có sinh viên đăng ký.");
+            }
+            if (existing.isRegistrationFormRequired() != entity.isRegistrationFormRequired()) {
+                throw new IllegalArgumentException(
+                        "Không thể thay đổi yêu cầu form đăng ký khi đã có sinh viên đăng ký.");
+            }
+        }
+
         // Bước 6: Nếu nội dung không thay đổi thì không cần cập nhật.
         if (!hasContentChanged(existing, entity)) {
+
+            // Đồng bộ lại trạng thái công khai
+            activityDAO.refreshPublic(entity.getId());
+
             return true;
         }
 
@@ -170,11 +199,15 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 throw new IllegalArgumentException(
                         "Không thể giảm số lượng tối đa thấp hơn số đơn đang chờ xử lý và đã duyệt đang giữ chỗ.");
             }
+
             throw new IllegalArgumentException(
                     "Không thể sửa hoạt động vì hoạt động đã bắt đầu "
                             + "hoặc trạng thái duyệt đã thay đổi. Vui lòng tải lại trang."
             );
         }
+
+        // Bước 10: Đồng bộ trạng thái công khai sau khi cập nhật thành công
+        activityDAO.refreshPublic(entity.getId());
 
         return true;
     }
@@ -477,6 +510,11 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                     "Không thể thay đổi trạng thái duyệt: hoạt động đã bắt đầu "
                             + "hoặc trạng thái đã thay đổi. Vui lòng tải lại trang."
             );
+        }
+
+        if (target == ApprovalStatus.APPROVED) {
+            // Hoạt động đăng ký nhanh: tạo sẵn form mặc định để staff chỉnh thời gian
+            new com.swp391.g1.dao.impl.RegistrationFormDAOImpl().ensureQuickForm(id);
         }
 
         return true;

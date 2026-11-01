@@ -822,3 +822,9 @@
         min-width: 1105px;
     }
 }
+
+.field input[readonly] {
+    background: #f1f5f9;
+    color: #334155;
+    cursor: not-allowed;
+}

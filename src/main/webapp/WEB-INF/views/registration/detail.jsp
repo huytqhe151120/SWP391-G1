@@ -42,8 +42,11 @@
                             <p>Chi tiết nội dung và tình trạng đăng ký của form.</p>
                         </div>
                         <div class="registration-detail-actions">
-                            <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=list">Danh sách form</a>
-                            <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${form.id}">Chỉnh sửa</a>
+                            <a class="button button-back" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${form.activityId}">Quay lại hoạt động</a>
+                            <a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=list">Danh sách form</a>
+
+                                <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${form.id}&amp;from=detail">Chỉnh sửa</a>
+
                         </div>
                     </div>
 
@@ -152,6 +155,8 @@
                                                     <c:choose>
                                                         <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
                                                         <c:when test="${application.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
+                                                        <c:when test="${application.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Sinh viên đã hủy</span></c:when>
+                                                        <c:when test="${application.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Sinh viên đã rút đơn</span></c:when>
                                                         <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
                                                     </c:choose>
                                                 </td>

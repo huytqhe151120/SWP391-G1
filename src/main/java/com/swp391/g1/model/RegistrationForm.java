@@ -17,6 +17,7 @@ public class RegistrationForm {
     private int reservedSeatCount;
     private Integer maxParticipants;
     private List<RegistrationFormField> fields = new ArrayList<>();
+    private boolean quick;
 
     public int getId() {
         return id;
@@ -112,6 +113,14 @@ public class RegistrationForm {
 
     public void setFields(List<RegistrationFormField> fields) {
         this.fields = fields == null ? new ArrayList<>() : fields;
+    }
+
+    public boolean isQuick() {
+        return quick;
+    }
+
+    public void setQuick(boolean quick) {
+        this.quick = quick;
     }
 
 }

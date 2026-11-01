@@ -19,11 +19,13 @@
                     thái tại đây.
                 </div>
             </c:if>
-            <c:if test="${not empty requestScope.successMessage}">
-                <div class="alert alert-success activity-alert"><c:out value="${requestScope.successMessage}"/></div>
+            <c:if test="${not empty sessionScope.successMessage}">
+                <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
+                <c:remove var="successMessage" scope="session"/>
             </c:if>
-            <c:if test="${not empty requestScope.errorMessage}">
-                <div class="alert alert-error activity-alert"><c:out value="${requestScope.errorMessage}"/></div>
+            <c:if test="${not empty sessionScope.errorMessage}">
+                <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
+                <c:remove var="errorMessage" scope="session"/>
             </c:if>
             <section class="card activity-table-card">
                 <div class="activity-table-wrap">
@@ -47,19 +49,33 @@
                                         class="badge status-pill status-pending">Chờ duyệt</span></c:when><c:when
                                         test="${app.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when><c:when
                                         test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-rejected">Bị từ chối</span></c:when><c:when
-                                        test="${app.status eq 'CANCELLED'}"><span class="badge status-pill status-red">Đã hủy</span></c:when><c:otherwise><span
+                                        test="${app.status eq 'CANCELLED'}"><span class="badge status-pill status-red">Đã hủy</span></c:when><c:when
+                                        test="${app.status eq 'WITHDRAWN'}"><span class="badge status-pill status-muted">Đã rút đơn</span></c:when><c:otherwise><span
                                         class="badge status-pill status-muted"><c:out value="${app.status}"/></span></c:otherwise></c:choose>
                                 </td>
                                 <td>
                                     <a class="button button-secondary"
                                        href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${app.id}">Xem
                                         đơn</a>
-                                    <c:if test="${(app.status eq 'SUBMITTED' or app.status eq 'APPROVED') and app.activityStatus ne 'CANCELLED'}">
-                                        <form action="${pageContext.request.contextPath}/registration-forms" method="post" style="display:inline" onsubmit="return confirm('Bạn có chắc muốn hủy đăng ký này?');">
-                                            <input type="hidden" name="action" value="cancelRegistration">
-                                            <input type="hidden" name="id" value="${app.id}">
-                                            <button type="submit" class="button button-revoke">Hủy</button>
-                                        </form>
+                                    <c:if test="${app.status eq 'SUBMITTED' or app.status eq 'APPROVED'}">
+                                        <c:choose>
+                                            <c:when test="${app.canCancel}">
+                                                <c:set var="confirmText" value="${app.status eq 'SUBMITTED'
+                                                    ? 'Bạn có chắc muốn rút đơn đăng ký này? Bạn vẫn có thể đăng ký lại nếu hoạt động còn mở.'
+                                                    : (app.quick ? 'Bạn có chắc muốn hủy đăng ký hoạt động này?'
+                                                    : 'Sau khi hủy, bạn sẽ không thể đăng ký lại hoạt động này. Bạn có chắc muốn hủy?')}"/>
+                                                <form action="${pageContext.request.contextPath}/registration-forms"
+                                                      method="post"
+                                                      style="display:inline"
+                                                      onsubmit="return confirm('${confirmText}');">
+                                                    <input type="hidden" name="action" value="cancelRegistration">
+                                                    <input type="hidden" name="id" value="${app.id}">
+                                                    <button type="submit" class="button button-revoke">
+                                                            ${app.status eq 'SUBMITTED' ? 'Rút đơn' : 'Hủy đăng ký'}</button>
+                                                </form>
+                                            </c:when>
+                                            <c:otherwise><span class="field-hint">Đã quá hạn hủy</span></c:otherwise>
+                                        </c:choose>
                                     </c:if>
                                 </td>
                             </tr>

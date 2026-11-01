@@ -54,6 +54,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final IActivityPartnerStaffService activityPartnerStaffService;
     private final IActivityCollaborationInvitationService invitationService;
     private final IRegistrationFormService registrationFormService;
+    private final IStudentService studentService = new StudentServiceImpl();
 
     public ExtracurricularActivityServlet() {
         this.activityPartnerStaffService = new ActivityPartnerStaffServiceImpl();
@@ -267,12 +268,26 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 continue;
             }
             allActivities.add(activity);
-            if (studentView && activity.isRegistrationFormRequired()) {
+            if (studentView && (activity.isRegistrationFormRequired()
+                    || "REQUIRE_REGISTRATION".equals(String.valueOf(activity.getNature())))) {
                 com.swp391.g1.model.RegistrationForm registrationForm = registrationFormService.getByActivityId(activity.getId());
                 if (registrationForm != null) activityFormsByActivity.put(activity.getId(), registrationForm);
             }
         }
 
+        Map<Integer, com.swp391.g1.model.RegistrationApplication> registrationsByActivity = new HashMap<>();
+        if (studentView) {
+            com.swp391.g1.model.Student myStudent = studentService.getStudentByAccountId(currentUser.getId());
+            if (myStudent != null) {
+                for (com.swp391.g1.model.RegistrationApplication myApp
+                        : registrationFormService.getApplicationsForStudent(myStudent.getId())) {
+                    if (!"WITHDRAWN".equals(myApp.getStatus())) {
+                        registrationsByActivity.putIfAbsent(myApp.getActivityId(), myApp);
+                    }
+                }
+            }
+        }
+        request.setAttribute("registrationsByActivity", registrationsByActivity);
         request.setAttribute("isStudent", studentView);
         request.setAttribute("activityFormsByActivity", activityFormsByActivity);
         boolean filtered = !normalizedKeyword.isEmpty() || semesterId > 0 || activityTypeId > 0
@@ -464,6 +479,12 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                     invitationService.getVisibleActivityIds(AuthContext.getCurrentUser(request));
             if (activity != null && visibleActivityIds != null && !visibleActivityIds.contains(id)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xem hoạt động này.");
+                return;
+            }
+            if (activity != null && AccessPolicy.hasType(currentUser, "STUDENT")
+                    && (!activity.isPublic()
+                    || activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED)) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
             if (activity != null) {

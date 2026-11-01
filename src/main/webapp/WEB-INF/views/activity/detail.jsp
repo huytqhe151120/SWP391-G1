@@ -43,7 +43,7 @@
             </div>
             <div class="activity-detail-header-actions">
                 <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
-                    <a class="button button-primary"
+                    <a class="button button-primary-outline"
                        href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
                 </c:if>
                 <c:if test="${canManageActivities}">

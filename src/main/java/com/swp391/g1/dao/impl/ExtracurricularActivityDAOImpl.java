@@ -821,14 +821,27 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     }
 
     @Override
-    public boolean setPublic(int activityId, boolean isPublic) {
-        String sql = "UPDATE dbo.extracurricular_activity SET is_public=? WHERE id=?";
+    public boolean refreshPublic(int activityId) {
+        String sql = """
+                UPDATE dbo.extracurricular_activity
+                SET is_public = CASE
+                    WHEN nature <> 'REQUIRE_REGISTRATION' THEN 1
+                    WHEN registration_form_required = 0 THEN 1
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM dbo.activity_registration_form
+                        WHERE activity_id = ?
+                    ) THEN 1
+                    ELSE 0
+                END
+                WHERE id = ?
+                """;
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setBoolean(1, isPublic);
+            p.setInt(1, activityId);
             p.setInt(2, activityId);
-            return p.executeUpdate() == 1;
+            return p.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new IllegalStateException("Không thể cập nhật trạng thái hiển thị hoạt động.", e);
+            throw new IllegalStateException("Không thể cập nhật trạng thái công khai của hoạt động.", e);
         }
     }
 

@@ -23,25 +23,28 @@ public class Enum {
         REJECTED // Đã từ chối
     }
 
-    // Registration form status
+    // Participation nature of an activity
+    public enum ActivityNature {
+        REQUIRE_REGISTRATION, // Cần đăng ký
+        VOLUNTARY, // Tự nguyện
+        MANDATORY // Bắt buộc
+    }
+
+    // Status for registration form
     public enum RegistrationFormStatus {
-        DRAFT, // Bản nháp
+        DRAFT, // Chưa mở
         OPENING, // Đang mở đăng ký
         CLOSED // Đã đóng đăng ký
     }
 
-    // Student application review status
+    // Status for student application review
     public enum RegistrationApplicationStatus {
         SUBMITTED, // Chờ xử lý
         APPROVED, // Đã duyệt
         REJECTED, // Đã từ chối
-        CANCELLED // Đã hủy
+        CANCELLED, // Đã hủy (đơn đã duyệt, không đăng ký lại được)
+        WITHDRAWN // Đã rút đơn (đăng ký lại được)
+
     }
 
-    // Participation nature of an activity
-    public enum ActivityNature {
-        REQUIRE_REGISTRATION, // Yêu cầu đăng ký
-        VOLUNTARY, // Tự nguyện
-        MANDATORY // Bắt buộc
-    }
 }

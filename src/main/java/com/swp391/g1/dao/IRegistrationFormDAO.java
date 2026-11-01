@@ -10,10 +10,6 @@ import java.util.Map;
 public interface IRegistrationFormDAO {
     List<RegistrationForm> findAll();
 
-    List<RegistrationForm> findOpenForms();
-
-    List<RegistrationForm> findOpenFormsForStudent(int studentId);
-
     RegistrationForm findById(int id);
 
     RegistrationForm findByActivityId(int activityId);
@@ -28,9 +24,11 @@ public interface IRegistrationFormDAO {
 
     boolean isActivityUpcoming(int activityId);
 
-    java.time.LocalDateTime findActivityStartTime(int activityId);
+    boolean isActivityFormRequired(int activityId);
 
-    boolean setActivityPublic(int activityId, boolean isPublic);
+    boolean isQuickRegistrationForm(int formId);
+
+    java.time.LocalDateTime findActivityStartTime(int activityId);
 
     List<RegistrationApplication> findApplicationsForStudent(int studentId);
 
@@ -52,13 +50,9 @@ public interface IRegistrationFormDAO {
 
     boolean delete(int id);
 
-    boolean registerStudent(int formId, int studentId, String note);
+    String registerStudentQuick(int activityId, int studentId, String note);
 
-    boolean registerStudentQuick(int activityId, int studentId, String note);
-
-    boolean hasStudentRegistered(int formId, int studentId);
-
-    boolean hasStudentRegisteredForActivity(int activityId, int studentId);
+    String getRegistrationStatus(int formId, int studentId);
 
     boolean registerStudentWithAnswers(int formId, int studentId, String note,
                                        List<RegistrationFormField> answers);
@@ -69,7 +63,12 @@ public interface IRegistrationFormDAO {
 
     String getCancelRestrictionReason(int registrationId);
 
-    boolean reactivateRegistration(int formId, int studentId);
-
     Map<String, String> findSavedProfile(int studentId);
+
+    /** Tạo form đăng ký nhanh mặc định cho hoạt động (nếu chưa có); mở lại nếu thời gian còn hợp lệ. */
+    void ensureQuickForm(int activityId);
+
+    /** Staff chỉnh mô tả và thời gian của form đăng ký nhanh. */
+    boolean updateQuickForm(int formId, String description, java.time.LocalDateTime openAt,
+                            java.time.LocalDateTime closeAt, String status);
 }

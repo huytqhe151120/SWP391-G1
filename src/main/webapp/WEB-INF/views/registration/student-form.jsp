@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<c:set var="activeNav" value="registration-forms" scope="request"/>
+<c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Gửi đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-11">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -23,7 +23,7 @@
                         <h1>Đăng ký tham gia</h1>
                         <p>Kiểm tra thông tin hoạt động và gửi đăng ký của bạn.</p>
                     </div>
-                    <a class="button activity-create-button" href="${pageContext.request.contextPath}/registration-forms?action=student">
+                    <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
                         <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
                         Danh sách hoạt động
                     </a>
@@ -62,27 +62,27 @@
                             <div class="form-grid activity-form-grid">
                                 <div class="field field-wide">
                                     <h3>Thông tin sinh viên</h3>
-                                    <p>Kiểm tra và bổ sung thông tin dưới đây trước khi gửi đăng ký.</p>
+                                    <p>Thông tin dưới đây được lấy từ hồ sơ của bạn và không thể chỉnh sửa tại đây.</p>
                                 </div>
                                 <div class="field">
-                                    <label for="studentCode">Mã sinh viên <span class="required-mark">*</span></label>
-                                    <input id="studentCode" name="studentCode" type="text" maxlength="50"
-                                           value="<c:out value='${personalInfo.studentCode}'/>" required>
+                                    <label for="studentCode">Mã sinh viên</label>
+                                    <input id="studentCode" type="text" maxlength="50"
+                                           value="<c:out value='${personalInfo.studentCode}'/>" readonly aria-readonly="true">
                                 </div>
                                 <div class="field">
-                                    <label for="studentName">Họ và tên <span class="required-mark">*</span></label>
-                                    <input id="studentName" name="studentName" type="text" maxlength="255"
-                                           value="<c:out value='${personalInfo.studentName}'/>" required>
+                                    <label for="studentName">Họ và tên</label>
+                                    <input id="studentName" type="text" maxlength="255"
+                                           value="<c:out value='${personalInfo.studentName}'/>" readonly aria-readonly="true">
                                 </div>
                                 <div class="field">
-                                    <label for="classCode">Lớp <span class="required-mark">*</span></label>
-                                    <input id="classCode" name="classCode" type="text" maxlength="50"
-                                           value="<c:out value='${personalInfo.classCode}'/>" required>
+                                    <label for="classCode">Lớp</label>
+                                    <input id="classCode" type="text" maxlength="50"
+                                           value="<c:out value='${personalInfo.classCode}'/>" readonly aria-readonly="true">
                                 </div>
                                 <div class="field">
-                                    <label for="email">Email <span class="required-mark">*</span></label>
-                                    <input id="email" name="email" type="email" maxlength="255"
-                                           value="<c:out value='${personalInfo.email}'/>" required>
+                                    <label for="email">Email</label>
+                                    <input id="email" type="email" maxlength="255"
+                                           value="<c:out value='${personalInfo.email}'/>" readonly aria-readonly="true">
                                 </div>
                                 <c:forEach items="${form.fields}" var="field">
                                     <div class="field field-wide">
@@ -145,7 +145,7 @@
                                 </div>
                             </div>
                             <div class="form-actions activity-form-actions student-registration-actions">
-                                <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=student">Quay lại</a>
+                                <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/activities">Quay lại</a>
                                 <button class="button button-primary" type="submit">Gửi đăng ký</button>
                             </div>
                         </form>

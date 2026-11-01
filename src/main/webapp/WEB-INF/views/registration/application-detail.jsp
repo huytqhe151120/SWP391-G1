@@ -43,6 +43,9 @@
                         <c:choose>
                             <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
                             <c:when test="${application.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
+                            <c:when test="${application.status eq 'CANCELLED'}"><span
+                                    class="badge status-pill status-gray">Sinh viên đã hủy</span></c:when>
+                            <c:when test="${application.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Sinh viên đã rút đơn</span></c:when>
                             <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
                         </c:choose>
                     </div>
@@ -76,7 +79,9 @@
                     </div>
 
                     <div class="form-actions activity-form-actions">
-                        <c:choose><c:when test="${isStudent}"><a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=myApplications">Quay lại đơn đăng ký của tôi</a></c:when><c:otherwise><a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${form.id}&amp;tab=applications">Quay lại danh sách đơn</a></c:otherwise></c:choose>
+                        <c:choose><c:when test="${isStudent}"><a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=myApplications">Quay lại đơn đăng ký của tôi</a></c:when><c:otherwise>
+                            <a class="button button-secondary" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${form.activityId}">Quay lại hoạt động</a>
+                            <a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${form.id}&amp;tab=applications">Quay lại danh sách đơn</a></c:otherwise></c:choose>
                         <c:if test="${not isStudent}"><c:choose>
                             <c:when test="${application.status eq 'SUBMITTED'}">
                                 <div class="registration-review-actions">
@@ -93,7 +98,7 @@
                                     </form>
                                 </div>
                             </c:when>
-                            <c:when test="${application.status eq 'APPROVED'}">
+                            <c:when test="${application.status eq 'APPROVED' and not form.quick}">
                                 <form method="post" action="${pageContext.request.contextPath}/registration-forms"
                                       onsubmit="return confirm('Hủy duyệt đơn này và chuyển về trạng thái chờ xử lý?')">
                                     <input type="hidden" name="action" value="undoApplicationApproval">

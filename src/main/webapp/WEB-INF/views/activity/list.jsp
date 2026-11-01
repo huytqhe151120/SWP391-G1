@@ -280,29 +280,47 @@
                                                     Chi tiết
                                                 </a>
                                                 <c:if test="${isStudent and activity['public'] and activity.approvalStatus eq 'APPROVED' and activity.activityStatus eq 'UPCOMING' and activity.nature eq 'REQUIRE_REGISTRATION'}">
-                                                    <c:if test="${activity.registrationFormRequired}">
-                                                        <c:set var="activityForm"
-                                                               value="${activityFormsByActivity[activity.id]}"/>
-                                                        <c:choose>
-                                                            <c:when test="${not empty activityForm and activityForm.status == 'OPENING'}">
-                                                                <a class="button button-primary"
-                                                                   href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${activityForm.id}">Đăng
-                                                                    ký</a>
-                                                            </c:when>
-                                                        </c:choose>
-                                                    </c:if>
-                                                    <c:if test="${not activity.registrationFormRequired}">
-                                                        <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
-                                                        <c:choose>
-                                                            <c:when test="${empty activityForm}">
-                                                                <form action="${pageContext.request.contextPath}/registration-forms" method="post" style="display:inline">
-                                                                    <input type="hidden" name="action" value="registerQuick">
-                                                                    <input type="hidden" name="activityId" value="${activity.id}">
-                                                                    <button type="submit" class="button button-primary">Đăng ký nhanh</button>
-                                                                </form>
-                                                            </c:when>
-                                                        </c:choose>
-                                                    </c:if>
+                                                    <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
+                                                    <c:choose>
+                                                        <%-- Sinh viên đã có đơn (chưa hủy): hiện trạng thái, không hiện nút đăng ký --%>
+                                                        <c:when test="${not empty myReg}">
+                                                            <c:choose>
+                                                                <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
+                                                                <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
+                                                                <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Đã rút đơn</span></c:when>
+                                                                <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
+                                                                <c:when test="${myReg.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span></c:when>
+                                                                <c:otherwise><span class="badge status-pill status-muted"><c:out value="${myReg.status}"/></span></c:otherwise>
+                                                            </c:choose>
+                                                        </c:when>
+                                                        <%-- Chưa đăng ký: giữ nguyên hai khối nút cũ --%>
+                                                        <c:otherwise>
+                                                            <c:if test="${activity.registrationFormRequired}">
+                                                                <c:set var="activityForm"
+                                                                       value="${activityFormsByActivity[activity.id]}"/>
+                                                                <c:choose>
+                                                                    <c:when test="${not empty activityForm and activityForm.status == 'OPENING'}">
+                                                                        <a class="button button-primary"
+                                                                           href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${activityForm.id}">Đăng
+                                                                            ký</a>
+                                                                    </c:when>
+                                                                </c:choose>
+                                                            </c:if>
+                                                            <c:if test="${not activity.registrationFormRequired}">
+                                                                <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
+                                                                <c:if test="${empty activityForm or activityForm.status == 'OPENING'}">
+                                                                    <form action="${pageContext.request.contextPath}/registration-forms" method="post" style="display:inline">
+                                                                        <input type="hidden" name="action" value="registerQuick">
+                                                                        <input type="hidden" name="activityId" value="${activity.id}">
+                                                                        <button type="submit" class="button button-primary">Đăng ký nhanh</button>
+                                                                    </form>
+                                                                    <c:if test="${not empty activityForm.closeAt}">
+                                                                        <small class="field-hint">Đăng ký đến <c:out value="${dt:format(activityForm.closeAt)}"/></small>
+                                                                    </c:if>
+                                                                </c:if>
+                                                            </c:if>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:if>
                                                 <c:if test="${isStudent and activity['public'] and activity.approvalStatus eq 'APPROVED' and activity.activityStatus eq 'UPCOMING' and activity.nature eq 'REQUIRE_REGISTRATION' and activity.registrationFormRequired}">
                                                     <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>

@@ -49,6 +49,14 @@
                                 <p>Chọn hoạt động và cung cấp nội dung hướng dẫn đăng ký.</p>
                             </div>
                             <div class="form-grid activity-form-grid">
+                                <c:if test="${form.quick}">
+                                    <div class="field field-wide">
+                                        <label>Hoạt động</label>
+                                        <p><strong><c:out value="${form.activityName}"/></strong></p>
+                                        <small class="field-hint">Đăng ký nhanh: sinh viên bấm Đăng ký và được duyệt tự động, không điền form. Bạn chỉ chỉnh mô tả và thời gian đăng ký.</small>
+                                    </div>
+                                </c:if>
+                                <c:if test="${not form.quick}">
                                 <div class="field field-wide">
                                     <label for="activityId">Hoạt động <span class="required-mark">*</span></label>
                                     <select id="activityId" name="activityId" required
@@ -76,10 +84,11 @@
                                            value="<c:out value='${form.title}'/>"
                                            placeholder="Ví dụ: Đăng ký tham gia workshop">
                                 </div>
+                                </c:if>
                                 <div class="field field-wide">
                                     <label for="description">Mô tả / hướng dẫn</label>
                                     <textarea id="description" name="description" rows="5" maxlength="4000"
-                                              <c:if test="${form.registrationCount > 0}">disabled</c:if>
+                                              <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>
                                               placeholder="Nhập thông tin sinh viên cần biết trước khi đăng ký..."><c:out value="${form.description}"/></textarea>
                                 </div>
                             </div>
@@ -91,13 +100,13 @@
                             <div class="form-grid activity-form-grid">
                                 <div class="field">
                                     <label for="openAt">Thời gian mở đăng ký</label>
-                                    <input id="openAt" name="openAt" type="datetime-local" min="${minimumRegistrationTime}"
-                                           value="${form.openAt}" <c:if test="${form.registrationCount > 0}">disabled</c:if>>
+                                    <input id="openAt" name="openAt" type="datetime-local" min="${form.quick ? '' : minimumRegistrationTime}"
+                                           value="${form.openAt}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
                                 </div>
                                 <div class="field">
                                     <label for="closeAt">Thời gian đóng đăng ký</label>
-                                    <input id="closeAt" name="closeAt" type="datetime-local" min="${minimumRegistrationTime}"
-                                           value="${form.closeAt}" <c:if test="${form.registrationCount > 0}">disabled</c:if>>
+                                    <input id="closeAt" name="closeAt" type="datetime-local" min="${form.quick ? '' : minimumRegistrationTime}"
+                                           value="${form.closeAt}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
                                 </div>
                             </div>
                         </div>
@@ -105,7 +114,7 @@
                         <div class="form-actions activity-form-actions">
                             <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms">Hủy</a>
                             <c:choose>
-                                <c:when test="${form.registrationCount > 0}">
+                                <c:when test="${form.registrationCount > 0 and not form.quick}">
                                     <span>Không thể chỉnh sửa form đã có sinh viên đăng ký.</span>
                                 </c:when>
                                 <c:otherwise>

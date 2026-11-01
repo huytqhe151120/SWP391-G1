@@ -37,5 +37,5 @@ public interface IExtracurricularActivityDAO extends IGenericDAO<Extracurricular
     // The supplied synchronization time is UTC and all status updates run in one transaction.
     void synchronizeActivityStatuses(java.time.LocalDateTime now);
 
-    boolean setPublic(int activityId, boolean isPublic);
+    boolean refreshPublic(int activityId);
 }

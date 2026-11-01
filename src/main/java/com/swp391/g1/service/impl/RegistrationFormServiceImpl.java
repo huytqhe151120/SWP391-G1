@@ -26,15 +26,6 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         return dao.findAll();
     }
 
-    public List<RegistrationForm> getOpenForms() {
-        return dao.findOpenForms();
-    }
-
-    @Override
-    public List<RegistrationForm> getOpenFormsForStudent(int studentId) {
-        return studentId > 0 ? dao.findOpenFormsForStudent(studentId) : List.of();
-    }
-
     public RegistrationForm getById(int id) {
         return id > 0 ? dao.findById(id) : null;
     }
@@ -50,8 +41,8 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     }
 
     @Override
-    public boolean hasStudentRegistered(int formId, int studentId) {
-        return formId > 0 && studentId > 0 && dao.hasStudentRegistered(formId, studentId);
+    public String getRegistrationStatus(int formId, int studentId) {
+        return formId > 0 && studentId > 0 ? dao.getRegistrationStatus(formId, studentId) : null;
     }
 
     @Override
@@ -92,11 +83,14 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     @Override
     public String reviewApplication(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
+        RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
+            return "Không thể duyệt đơn đăng ký nhanh (không cần duyệt).";
+        }
         if (dao.reviewApplication(registrationId, "SUBMITTED", "APPROVED")) return null;
         if (dao.hasEarlierPendingApplication(registrationId)) {
             return "Không thể duyệt đơn này vì còn đơn chờ xử lý được gửi trước.";
         }
-        RegistrationApplication application = dao.findApplicationById(registrationId);
         if (application != null && "SUBMITTED".equals(application.getStatus())
                 && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
             return "Không thể duyệt đơn vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
@@ -107,6 +101,10 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     @Override
     public String rejectApplication(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
+        RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
+            return "Không thể từ chối đơn đăng ký nhanh (không cần duyệt).";
+        }
         if (dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED")) return null;
         if (dao.hasEarlierPendingApplication(registrationId)) {
             return "Không thể từ chối đơn này vì còn đơn chờ xử lý được gửi trước.";
@@ -117,8 +115,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     @Override
     public String undoApplicationRejection(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        if (dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED")) return null;
         RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
+            return "Không thể thao tác trên đơn đăng ký nhanh.";
+        }
+        if (dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED")) return null;
         if (application != null && "REJECTED".equals(application.getStatus())
                 && dao.isAtCapacity(application.getFormId())) {
             return "Không thể khôi phục đơn vì hoạt động đã đủ số lượng tối đa.";
@@ -133,8 +134,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     @Override
     public String undoApplicationApproval(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        if (dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED")) return null;
         RegistrationApplication application = dao.findApplicationById(registrationId);
+        if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
+            return "Không thể thao tác trên đơn đăng ký nhanh.";
+        }
+        if (dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED")) return null;
         if (application != null && "APPROVED".equals(application.getStatus())
                 && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
             return "Không thể hủy duyệt vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
@@ -149,6 +153,10 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         }
         if (!dao.isActivityUpcoming(f.getActivityId())) {
             return "Chỉ được tạo hoặc chỉnh sửa form đăng ký cho hoạt động ở trạng thái Chưa diễn ra.";
+        }
+        // Reject if activity doesn't require registration form
+        if (!dao.isActivityFormRequired(f.getActivityId())) {
+            return "Hoạt động này không yêu cầu form đăng ký (đăng ký nhanh).";
         }
         if (dao.hasFormForActivity(f.getActivityId(), f.getId())) {
             return "Hoạt động này đã có form đăng ký. Mỗi hoạt động chỉ được tạo một form.";
@@ -193,9 +201,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (fieldError != null) return fieldError;
         boolean saved = f.getId() > 0 ? dao.update(f) : dao.insert(f);
         if (saved) {
-            if (!dao.setActivityPublic(f.getActivityId(), true)) {
-                return "Form đã lưu nhưng không thể cập nhật trạng thái hiển thị hoạt động. Vui lòng tải lại và kiểm tra.";
-            }
+            new com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl().refreshPublic(f.getActivityId());
             return null;
         }
         if (!dao.isActivityApproved(f.getActivityId())) {
@@ -219,8 +225,48 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
                 : "Không thể tạo form đăng ký. Vui lòng kiểm tra dữ liệu và thử lại.";
     }
 
+    public String saveQuickForm(RegistrationForm f) {
+        RegistrationForm existing = f.getId() > 0 ? getById(f.getId()) : null;
+        if (existing == null || !existing.isQuick()) return "Không tìm thấy form đăng ký nhanh.";
+        if (f.getDescription() != null && f.getDescription().length() > 4000)
+            return "Mô tả không được vượt quá 4.000 ký tự.";
+        if (f.getOpenAt() != null && f.getCloseAt() != null && !f.getCloseAt().isAfter(f.getOpenAt()))
+            return "Thời gian đóng đăng ký phải lớn hơn thời gian mở đăng ký.";
+        LocalDateTime activityStartTime = dao.findActivityStartTime(existing.getActivityId());
+        if (activityStartTime != null) {
+            if (f.getOpenAt() != null && !f.getOpenAt().isBefore(activityStartTime))
+                return "Thời gian mở đăng ký phải trước thời gian bắt đầu hoạt động.";
+            if (f.getCloseAt() != null && !f.getCloseAt().isBefore(activityStartTime))
+                return "Thời gian đóng đăng ký phải trước thời gian bắt đầu hoạt động.";
+        }
+        LocalDateTime now = DateTimeUtil.now();
+        String status;
+        if (f.getOpenAt() != null && f.getOpenAt().isAfter(now)) {
+            status = RegistrationFormStatus.DRAFT.name();
+        } else if (f.getCloseAt() != null && !f.getCloseAt().isAfter(now)) {
+            status = RegistrationFormStatus.CLOSED.name();
+        } else {
+            status = RegistrationFormStatus.OPENING.name();
+        }
+        String description = f.getDescription() == null ? "" : f.getDescription().trim();
+        if (!dao.updateQuickForm(existing.getId(), description, f.getOpenAt(), f.getCloseAt(), status)) {
+            return "Không thể lưu form đăng ký nhanh. Vui lòng tải lại trang và thử lại.";
+        }
+        return null;
+    }
+
     public String delete(int id) {
-        return dao.delete(id) ? null : "Không thể xóa form đã có đăng ký. Hãy chuyển form sang bản nháp thay vì xóa.";
+        RegistrationForm form = dao.findById(id);
+        if (form == null) return "Không tìm thấy form đăng ký.";
+        if (form.isQuick()) {
+            return "Form của hoạt động đăng ký nhanh do hệ thống quản lý nên không thể xóa.";
+        }
+        if (!dao.delete(id)) {
+            return "Không thể xóa form vì còn đơn đăng ký đang chờ, đã duyệt, đã từ chối hoặc đã hủy. "
+                    + "Hãy chuyển form sang bản nháp thay vì xóa.";
+        }
+        new com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl().refreshPublic(form.getActivityId());
+        return null;
     }
 
     @Override
@@ -228,26 +274,19 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         dao.synchronizeFormStatuses();
     }
 
-    public String register(int formId, int studentId, String note) {
-        if (formId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
-        if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
-        if (dao.registerStudent(formId, studentId, note == null ? "" : note.trim())) return null;
-        if (dao.isOpenFormAtCapacity(formId)) return "Không thể đăng ký: hoạt động đã đủ số lượng tối đa.";
-        return "Không thể đăng ký: form đã đóng, hoạt động chưa được duyệt hoặc bạn đã đăng ký trước đó.";
-    }
-
     @Override
     public String registerQuick(int activityId, int studentId, String note) {
         if (activityId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
         if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
-        RegistrationForm form = getByActivityId(activityId);
-        if (form == null) return "Không tìm thấy form đăng ký cho hoạt động này.";
-        if (dao.hasStudentRegisteredForActivity(activityId, studentId)) {
-            if (dao.reactivateRegistration(form.getId(), studentId)) return null;
-            return "Bạn đã đăng ký hoạt động này.";
-        }
-        if (dao.registerStudentQuick(activityId, studentId, note == null ? "" : note.trim())) return null;
-        return "Không thể đăng ký: hoạt động đã đủ số lượng tối đa, chưa được duyệt hoặc đã bắt đầu.";
+        String result = dao.registerStudentQuick(activityId, studentId, note == null ? "" : note.trim());
+        return switch (result) {
+            case "OK" -> null;
+            case "ALREADY" -> "Bạn đã đăng ký hoạt động này.";
+            case "FULL" -> "Không thể đăng ký: hoạt động đã đủ số lượng tối đa.";
+            case "UNAVAILABLE" -> "Không thể đăng ký: hoạt động chưa được duyệt, đã bắt đầu hoặc không cho phép đăng ký nhanh.";
+            case "CANCELLED_BEFORE" -> "Bạn đã hủy đăng ký hoạt động này sau khi được duyệt nên không thể đăng ký lại. Vui lòng liên hệ ban tổ chức nếu cần.";
+            default -> "Không thể đăng ký: lỗi không xác định.";
+        };
     }
 
     @Override
@@ -302,24 +341,13 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     @Override
     public String cancelRegistration(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        String restrictionReason = dao.getCancelRestrictionReason(registrationId);
-        if (restrictionReason != null) return restrictionReason;
         if (dao.cancelRegistration(registrationId)) return null;
-        return "Không thể hủy đăng ký.";
+        // If UPDATE affected 0 rows, check the reason
+        String restrictionReason = dao.getCancelRestrictionReason(registrationId);
+        return restrictionReason != null ? restrictionReason : "Không thể hủy đăng ký.";
     }
 
-    @Override
-    public String getCancelRestrictionReason(int registrationId) {
-        if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
-        return dao.getCancelRestrictionReason(registrationId);
-    }
 
-    @Override
-    public String reactivateRegistration(int formId, int studentId) {
-        if (formId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
-        if (dao.reactivateRegistration(formId, studentId)) return null;
-        return "Không thể kích hoạt lại đăng ký.";
-    }
 
     private static String validateFields(List<RegistrationFormField> fields) {
         if (fields == null) return null;

@@ -20,6 +20,10 @@ public class RegistrationApplication {
     private String formTitle;
     private String activityName;
     private String activityStatus;
+    private int activityId;
+    private boolean canCancel;
+    private boolean quick;
+
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -81,5 +85,29 @@ public class RegistrationApplication {
 
     public void setActivityStatus(String activityStatus) {
         this.activityStatus = activityStatus;
+    }
+
+    public int getActivityId() {
+        return activityId;
+    }
+
+    public void setActivityId(int activityId) {
+        this.activityId = activityId;
+    }
+
+    public boolean isCanCancel() {
+        return canCancel;
+    }
+
+    public void setCanCancel(boolean canCancel) {
+        this.canCancel = canCancel;
+    }
+
+    public boolean isQuick() {
+        return quick;
+    }
+
+    public void setQuick(boolean quick) {
+        this.quick = quick;
     }
 }

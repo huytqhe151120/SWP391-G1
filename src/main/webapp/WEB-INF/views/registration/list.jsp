@@ -35,9 +35,6 @@
                 <c:if test="${param.msg eq 'deleted'}">
                     <div class="alert alert-success activity-alert">Đã xóa form.</div>
                 </c:if>
-                <c:if test="${param.msg eq 'deleteError'}">
-                    <div class="alert alert-error activity-alert">Không thể xóa form đã có sinh viên đăng ký.</div>
-                </c:if>
                 <c:if test="${param.msg eq 'editError'}">
                     <div class="alert alert-error activity-alert">Form đã có sinh viên đăng ký nên không thể chỉnh sửa.</div>
                 </c:if>
@@ -99,6 +96,7 @@
                                                 <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                                 Chi tiết
                                             </a>
+
                                             <details class="action-menu">
                                                 <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
                                                 <div class="action-menu__items">
@@ -107,6 +105,7 @@
                                                         <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></span>
                                                         Chỉnh sửa
                                                     </a>
+                                                    <c:if test="${not f.quick and f.registrationCount == 0}">
                                                     <form method="post" action="${pageContext.request.contextPath}/registration-forms"
                                                           onsubmit="return confirm('Bạn chắc chắn muốn xóa form này?')">
                                                         <input type="hidden" name="action" value="delete">
@@ -116,8 +115,10 @@
                                                             Xóa
                                                         </button>
                                                     </form>
+                                                    </c:if>
                                                 </div>
                                             </details>
+
                                         </div>
                                     </td>
                                 </tr>
