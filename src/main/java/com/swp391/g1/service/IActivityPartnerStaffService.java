@@ -11,6 +11,8 @@ public interface IActivityPartnerStaffService {
 
     List<PartnerStaff> getAvailablePartnerStaffsForActivity(int activityId, CurrentUser user);
 
+    boolean canManagePartnerStaff(int activityId, CurrentUser user);
+
     boolean canAssignPartnerStaff(int activityId, CurrentUser user);
 
     boolean assignPartnerStaff(int activityId, int partnerStaffId, CurrentUser user);

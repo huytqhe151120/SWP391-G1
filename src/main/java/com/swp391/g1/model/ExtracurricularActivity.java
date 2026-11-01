@@ -1,5 +1,4 @@
 package com.swp391.g1.model;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class ExtracurricularActivity {
@@ -11,8 +10,9 @@ public class ExtracurricularActivity {
     private int responsibleStaffId; //[cite: 1]
     private Integer partnerCompanyId; // Nullable[cite: 1]
     private Integer partnerStaffId; // Nullable[cite: 1]
-    private BigDecimal bonusPoint; //[cite: 1]
-    private BigDecimal penaltyPoint; //[cite: 1]
+    private Enum.ActivityNature nature;
+    private boolean summaryRequired;
+    private Integer maxParticipants;
     private String address; //[cite: 1]
     private String description; //[cite: 1]
     private Enum.ActivityStatus activityStatus; //[cite: 1]
@@ -100,20 +100,28 @@ public class ExtracurricularActivity {
         this.partnerStaffId = partnerStaffId;
     }
 
-    public BigDecimal getBonusPoint() {
-        return bonusPoint;
+    public Enum.ActivityNature getNature() {
+        return nature;
     }
 
-    public void setBonusPoint(BigDecimal bonusPoint) {
-        this.bonusPoint = bonusPoint;
+    public void setNature(Enum.ActivityNature nature) {
+        this.nature = nature;
     }
 
-    public BigDecimal getPenaltyPoint() {
-        return penaltyPoint;
+    public boolean isSummaryRequired() {
+        return summaryRequired;
     }
 
-    public void setPenaltyPoint(BigDecimal penaltyPoint) {
-        this.penaltyPoint = penaltyPoint;
+    public void setSummaryRequired(boolean summaryRequired) {
+        this.summaryRequired = summaryRequired;
+    }
+
+    public Integer getMaxParticipants() {
+        return maxParticipants;
+    }
+
+    public void setMaxParticipants(Integer maxParticipants) {
+        this.maxParticipants = maxParticipants;
     }
 
     public String getAddress() {

@@ -8,12 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Công ty đối tác | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-company.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 <main class="page activity-list-page">
     <header class="activity-hero">
@@ -21,12 +22,6 @@
             <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
             <h1>Công ty đối tác</h1>
             <p>Quản lý thông tin liên hệ và trạng thái các đơn vị đồng hành.</p>
-        </div>
-        <div class="account-hero-actions">
-            <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies?action=create">
-                <span class="plus-icon" aria-hidden="true">+</span>
-                Thêm công ty
-            </a>
         </div>
     </header>
 
@@ -45,12 +40,18 @@
                 <h2 id="company-table-title">Danh sách công ty</h2>
                 <p>Thông tin các công ty đối tác đã được ghi nhận</p>
             </div>
-            <span class="activity-count">
-                <c:choose>
-                    <c:when test="${empty partnerCompanies}">0 công ty</c:when>
-                    <c:otherwise><c:out value="${partnerCompanies.size()}"/> công ty</c:otherwise>
-                </c:choose>
-            </span>
+            <div class="activity-heading-actions">
+                <span class="activity-count">
+                    <c:choose>
+                        <c:when test="${empty partnerCompanies}">0 công ty</c:when>
+                        <c:otherwise><c:out value="${partnerCompanies.size()}"/> công ty</c:otherwise>
+                    </c:choose>
+                </span>
+                <a class="btn-create-activity" href="${pageContext.request.contextPath}/partner-companies?action=create">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+                    Thêm công ty
+                </a>
+            </div>
         </div>
         <div class="table-wrap activity-table-wrap">
             <table class="partner-company-table">
@@ -113,5 +114,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/partner-company.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

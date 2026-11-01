@@ -22,4 +22,11 @@ public class Enum {
         APPROVED, // Đã duyệt
         REJECTED // Đã từ chối
     }
+
+    // Participation nature of an activity
+    public enum ActivityNature {
+        REQUIRE_REGISTRATION,
+        VOLUNTARY,
+        MANDATORY
+    }
 }

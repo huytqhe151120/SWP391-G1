@@ -8,12 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nhân viên đối tác | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 <main class="page activity-list-page">
     <header class="activity-hero">
@@ -21,12 +22,6 @@
             <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
             <h1>Nhân viên đối tác</h1>
             <p>Quản lý thông tin và công ty của các nhân viên đối tác.</p>
-        </div>
-        <div class="account-hero-actions">
-            <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs?action=create">
-                <span class="plus-icon" aria-hidden="true">+</span>
-                Thêm nhân viên
-            </a>
         </div>
     </header>
 
@@ -45,12 +40,18 @@
                 <h2 id="staff-table-title">Danh sách nhân viên</h2>
                 <p>Thông tin nhân viên thuộc các công ty đối tác</p>
             </div>
-            <span class="activity-count">
-                <c:choose>
-                    <c:when test="${empty partnerStaffs}">0 nhân viên</c:when>
-                    <c:otherwise><c:out value="${partnerStaffs.size()}"/> nhân viên</c:otherwise>
-                </c:choose>
-            </span>
+            <div class="activity-heading-actions">
+                <span class="activity-count">
+                    <c:choose>
+                        <c:when test="${empty partnerStaffs}">0 nhân viên</c:when>
+                        <c:otherwise><c:out value="${partnerStaffs.size()}"/> nhân viên</c:otherwise>
+                    </c:choose>
+                </span>
+                <a class="btn-create-activity" href="${pageContext.request.contextPath}/partner-staffs?action=create">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+                    Thêm nhân viên
+                </a>
+            </div>
         </div>
         <form class="partner-staff-filter" method="get" action="${pageContext.request.contextPath}/partner-staffs">
             <label for="companyFilter">Lọc theo công ty</label>
@@ -128,5 +129,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/partner-staff.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

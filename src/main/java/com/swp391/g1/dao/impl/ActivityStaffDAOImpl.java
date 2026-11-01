@@ -10,7 +10,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ActivityStaffDAOImpl implements IActivityStaffDAO {
 
@@ -66,13 +68,54 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
     }
 
     @Override
+    public Map<Integer, String> findDepartmentLabelsByStaff(int activityId) {
+        Map<Integer, String> labels = new LinkedHashMap<>();
+        String sql = """
+                SELECT DISTINCT sa.staff_id, d.code, d.name,
+                       CASE WHEN d.id = ea.responsible_department_id THEN 0 ELSE 1 END AS priority
+                FROM extracurricular_activity ea
+                JOIN staff_assignment sa ON sa.department_id = ea.responsible_department_id
+                     OR sa.department_id IN (SELECT ad.department_id FROM activity_department ad
+                                             WHERE ad.activity_id = ea.id)
+                JOIN department d ON d.id = sa.department_id
+                WHERE ea.id = ?
+                ORDER BY sa.staff_id, priority, d.code
+                """;
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String label = rs.getString("code") + " - " + rs.getString("name");
+                    labels.merge(rs.getInt("staff_id"), label, (a, b) -> a + ", " + b);
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find department labels for activity " + activityId, e);
+        }
+        return labels;
+    }
+
+    @Override
     public boolean insert(int activityId, int staffId) {
-        String sql = "INSERT INTO activity_staff (activity_id, staff_id, assigned_on) VALUES (?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
+        String sql = """
+                INSERT INTO activity_staff (activity_id, staff_id, assigned_on)
+                SELECT ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM extracurricular_activity
+                    WHERE id = ?
+                      AND activity_status = 'UPCOMING'
+                      AND start_time > SYSUTCDATETIME()
+                )
+                """;
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             ps.setInt(2, staffId);
+            ps.setInt(3, activityId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to assign staff to activity.", e);
@@ -81,7 +124,15 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
 
     @Override
     public boolean delete(int activityId, int staffId) {
-        String sql = "DELETE FROM activity_staff WHERE activity_id = ? AND staff_id = ?";
+        String sql = """
+                DELETE ast
+                FROM activity_staff ast
+                INNER JOIN extracurricular_activity ea ON ea.id = ast.activity_id
+                WHERE ast.activity_id = ?
+                  AND ast.staff_id = ?
+                  AND ea.activity_status = 'UPCOMING'
+                  AND ea.start_time > SYSUTCDATETIME()
+                """;
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {

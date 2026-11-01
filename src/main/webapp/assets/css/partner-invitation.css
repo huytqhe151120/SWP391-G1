@@ -1,11 +1,20 @@
 /* Partner Invitation CSS - SWP391-G1 */
 @import "base.css";
-@import "activity.css";
+@import "activity.css?v=20261022-4";
+
+/* Hiệu ứng cuộn hero dùng chung ở hero-scroll.css (class .hero-scroll trên shell) */
+
+/* Khoảng cách giữa hero và bảng giống trang danh sách hoạt động (16px giữa các khối) */
+.activity-list-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
 /* Partner invitation list: frozen right-hand columns */
 .partner-invitation-table {
     --freeze-status-width: 180px;
-    --freeze-actions-width: 220px;
+    --freeze-actions-width: 150px;
     min-width: 1100px;
     width: 100%;
 }
@@ -67,8 +76,12 @@
     display: inline-block;
     white-space: nowrap;
 }
-.partner-invitation-table .inline-form {
-    display: inline;
+.partner-invitation-table .activity-actions {
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    gap: 8px;
 }
 
 @media (max-width: 760px) {

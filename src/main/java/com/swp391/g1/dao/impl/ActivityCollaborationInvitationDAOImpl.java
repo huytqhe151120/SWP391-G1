@@ -131,17 +131,18 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
-    public int cancelPendingOfOngoingActivities() {
+    public int cancelPendingForInactiveActivities() {
         String sql = "UPDATE activity_collaboration_invitation SET approval_status = ? "
                 + "WHERE approval_status = ? AND activity_id IN "
-                + "(SELECT id FROM extracurricular_activity WHERE activity_status = 'ONGOING')";
+                + "(SELECT id FROM extracurricular_activity "
+                + "WHERE activity_status IN ('ONGOING', 'COMPLETED', 'CANCELLED'))";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, CANCELLED);
             ps.setString(2, PENDING);
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to cancel pending invitations of ongoing activities.", e);
+            throw new IllegalStateException("Failed to cancel pending invitations for inactive activities.", e);
         }
     }
 
@@ -196,16 +197,21 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
     }
 
     @Override
-    public boolean insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
-                          String invitationType, String message) {
-        String insertSql = "INSERT INTO activity_collaboration_invitation "
-                + "(activity_id, partner_company_id, partner_staff_id, approval_status, invitation_type, message, created_by) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        String reuseSql = "UPDATE activity_partner_company SET partner_staff_id = ?, invitation_id = ?, "
-                + "collaboration_status = 'INACTIVE' WHERE activity_id = ? AND partner_company_id = ?";
-        String linkSql = "INSERT INTO activity_partner_company "
-                + "(activity_id, partner_company_id, partner_staff_id, invitation_id, collaboration_status) "
-                + "VALUES (?, ?, ?, ?, 'INACTIVE')";
+    public int insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
+                      String invitationType, String message) {
+        String insertSql = """
+                INSERT INTO activity_collaboration_invitation
+                    (activity_id, partner_company_id, partner_staff_id, approval_status,
+                     invitation_type, message, created_by)
+                SELECT ?, ?, ?, ?, ?, ?, ?
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM extracurricular_activity
+                    WHERE id = ?
+                      AND activity_status = 'UPCOMING'
+                      AND start_time > SYSUTCDATETIME()
+                )
+                """;
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -218,42 +224,29 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                     ps.setString(5, invitationType);
                     ps.setString(6, message);
                     ps.setString(7, createdBy);
-                    ps.executeUpdate();
+                    ps.setInt(8, activityId);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return 0;
+                    }
                     try (ResultSet keys = ps.getGeneratedKeys()) {
                         if (!keys.next()) {
                             conn.rollback();
-                            return false;
+                            return 0;
                         }
                         invitationId = keys.getInt(1);
                     }
                 }
-                if (TYPE_COLLABORATION.equals(invitationType)) {
-                    int reused;
-                    try (PreparedStatement ps = conn.prepareStatement(reuseSql)) {
-                        ps.setInt(1, partnerStaffId);
-                        ps.setInt(2, invitationId);
-                        ps.setInt(3, activityId);
-                        ps.setInt(4, partnerCompanyId);
-                        reused = ps.executeUpdate();
-                    }
-                    if (reused == 0) {
-                        try (PreparedStatement ps = conn.prepareStatement(linkSql)) {
-                            ps.setInt(1, activityId);
-                            ps.setInt(2, partnerCompanyId);
-                            ps.setInt(3, partnerStaffId);
-                            ps.setInt(4, invitationId);
-                            ps.executeUpdate();
-                        }
-                    }
-                }
                 conn.commit();
-                return true;
+                return invitationId;
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to create collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to create collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 
@@ -288,13 +281,29 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
      * a TERMINATION invitation only changes the collaboration when it is approved.
      */
     private boolean changeStatus(int id, String fromStatus, String toStatus) {
-        String updateInvitation = "UPDATE activity_collaboration_invitation SET approval_status = ? "
-                + "WHERE id = ? AND approval_status = ?";
+        String updateInvitation = """
+                UPDATE i
+                SET approval_status = ?
+                FROM activity_collaboration_invitation i
+                JOIN extracurricular_activity a ON a.id = i.activity_id
+                WHERE i.id = ?
+                  AND i.approval_status = ?
+                  AND a.activity_status = 'UPCOMING'
+                  AND a.start_time > SYSUTCDATETIME()
+                """;
         String selectType = "SELECT invitation_type FROM activity_collaboration_invitation WHERE id = ?";
         String updateOwnLink = "UPDATE activity_partner_company SET collaboration_status = ? WHERE invitation_id = ?";
+        String reuseLink = """
+                UPDATE apc SET partner_staff_id = i.partner_staff_id, invitation_id = i.id,
+                       collaboration_status = 'ACTIVE'
+                FROM activity_partner_company apc
+                JOIN activity_collaboration_invitation i ON i.activity_id = apc.activity_id
+                     AND i.partner_company_id = apc.partner_company_id
+                WHERE i.id = ?
+                """;
         String createLink = "INSERT INTO activity_partner_company "
                 + "(activity_id, partner_company_id, partner_staff_id, invitation_id, collaboration_status) "
-                + "SELECT activity_id, partner_company_id, partner_staff_id, id, ? "
+                + "SELECT activity_id, partner_company_id, partner_staff_id, id, 'ACTIVE' "
                 + "FROM activity_collaboration_invitation WHERE id = ? AND partner_staff_id IS NOT NULL";
         String deactivateCompanyLink = """
                 UPDATE apc SET collaboration_status = 'INACTIVE'
@@ -336,24 +345,30 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                         executeById(conn, deactivateCompanyLink, id);
                     }
                 } else {
-                    String collaborationStatus = APPROVED.equals(toStatus) ? "ACTIVE" : "INACTIVE";
                     if (APPROVED.equals(fromStatus)) {
                         executeById(conn, deleteStaff, id);
                     }
-                    int linked;
-                    try (PreparedStatement ps = conn.prepareStatement(updateOwnLink)) {
-                        ps.setString(1, collaborationStatus);
-                        ps.setInt(2, id);
-                        linked = ps.executeUpdate();
-                    }
-                    if (linked == 0) {
-                        try (PreparedStatement ps = conn.prepareStatement(createLink)) {
-                            ps.setString(1, collaborationStatus);
-                            ps.setInt(2, id);
-                            if (ps.executeUpdate() == 0) {
-                                conn.rollback();
-                                return false;
+                    if (APPROVED.equals(toStatus)) {
+                        // Chỉ thêm đối tác vào hoạt động sau khi lời mời được duyệt
+                        int linked;
+                        try (PreparedStatement ps = conn.prepareStatement(reuseLink)) {
+                            ps.setInt(1, id);
+                            linked = ps.executeUpdate();
+                        }
+                        if (linked == 0) {
+                            try (PreparedStatement ps = conn.prepareStatement(createLink)) {
+                                ps.setInt(1, id);
+                                if (ps.executeUpdate() == 0) {
+                                    conn.rollback();
+                                    return false;
+                                }
                             }
+                        }
+                    } else {
+                        try (PreparedStatement ps = conn.prepareStatement(updateOwnLink)) {
+                            ps.setString(1, "INACTIVE");
+                            ps.setInt(2, id);
+                            ps.executeUpdate();
                         }
                     }
                 }
@@ -364,7 +379,9 @@ public class ActivityCollaborationInvitationDAOImpl implements IActivityCollabor
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Failed to update collaboration invitation: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "Failed to update collaboration invitation: "
+                            + e.getMessage(), e);
         }
     }
 
