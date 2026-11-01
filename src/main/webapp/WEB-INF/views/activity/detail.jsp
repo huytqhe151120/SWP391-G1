@@ -42,14 +42,10 @@
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
             <div class="activity-detail-header-actions">
-                <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
-                    <a class="button button-primary-outline"
-                       href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
-                </c:if>
                 <c:if test="${canManageActivities}">
                     <c:choose>
                         <c:when test="${not empty registrationForm}">
-                            <a class="button button-primary"
+                            <a class="button button-primary-outline"
                                href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}">
                                 Xem form và đơn đăng ký
                             </a>
@@ -64,6 +60,10 @@
                             <span class="field-hint">Chỉ có thể tạo form đăng ký sau khi hoạt động được duyệt.</span>
                         </c:when>
                     </c:choose>
+                </c:if>
+                <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
+                    <a class="button button-primary"
+                       href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
                 </c:if>
             </div>
         </div>
