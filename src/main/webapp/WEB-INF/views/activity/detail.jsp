@@ -46,18 +46,18 @@
                     <c:choose>
                         <c:when test="${not empty registrationForm}">
                             <a class="button button-primary-outline"
-                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}">
-                                Xem form và đơn đăng ký
+                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}&amp;from=activity">
+                                Xem đợt đăng ký
                             </a>
                         </c:when>
                         <c:when test="${activity.approvalStatus == 'APPROVED' and activity.registrationFormRequired}">
-                            <a class="button button-primary"
+                            <a class="button button-primary-outline"
                                href="${pageContext.request.contextPath}/registration-forms?action=create&amp;activityId=${activity.id}">
-                                Tạo form đăng ký
+                                Tạo đợt đăng ký
                             </a>
                         </c:when>
                         <c:when test="${activity.approvalStatus != 'APPROVED'}">
-                            <span class="field-hint">Chỉ có thể tạo form đăng ký sau khi hoạt động được duyệt.</span>
+                            <span class="field-hint">Chỉ có thể tạo đợt đăng ký sau khi hoạt động được duyệt.</span>
                         </c:when>
                     </c:choose>
                 </c:if>

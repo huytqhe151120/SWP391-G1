@@ -218,8 +218,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         int departmentId = parseId(request.getParameter("departmentId"));
         String activityStatus = parseEnumName(request.getParameter("activityStatus"),
                 com.swp391.g1.model.Enum.ActivityStatus.values());
-        String approvalStatus = parseEnumName(request.getParameter("approvalStatus"),
-                com.swp391.g1.model.Enum.ApprovalStatus.values());
+        String nature = trimToEmpty(request.getParameter("nature"));
         LocalDate startDate = parseDate(request.getParameter("startDate"));
         LocalDate endDate = parseDate(request.getParameter("endDate"));
         String normalizedKeyword = normalizeText(keyword);
@@ -229,7 +228,14 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         List<ExtracurricularActivityResponseDTO> allActivities = new ArrayList<>();
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
         boolean studentView = currentUser != null && "STUDENT".equals(currentUser.getType());
+        LocalDateTime now = DateTimeUtil.now();
+        String activityReturnUrl = request.getRequestURI()
+                + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
+        request.setAttribute("activityReturnUrl", activityReturnUrl);
+        request.setAttribute("activityReturnUrlParameter",
+                URLEncoder.encode(activityReturnUrl, StandardCharsets.UTF_8));
         Map<Integer, com.swp391.g1.model.RegistrationForm> activityFormsByActivity = new HashMap<>();
+        Set<Integer> activitiesAvailableForRegistration = new LinkedHashSet<>();
         for (ExtracurricularActivityResponseDTO activity :
                 activityService.getActivitiesVisibleTo(currentUser)) {
             if (studentView && (!activity.isPublic()
@@ -256,7 +262,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             if (!activityStatus.isEmpty() && !activityStatus.equals(String.valueOf(activity.getActivityStatus()))) {
                 continue;
             }
-            if (!approvalStatus.isEmpty() && !approvalStatus.equals(String.valueOf(activity.getApprovalStatus()))) {
+            if (!nature.isEmpty() && !nature.equals(String.valueOf(activity.getNature()))) {
                 continue;
             }
             if (startDate != null && (activity.getStartTime() == null
@@ -271,7 +277,12 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             if (studentView && (activity.isRegistrationFormRequired()
                     || "REQUIRE_REGISTRATION".equals(String.valueOf(activity.getNature())))) {
                 com.swp391.g1.model.RegistrationForm registrationForm = registrationFormService.getByActivityId(activity.getId());
-                if (registrationForm != null) activityFormsByActivity.put(activity.getId(), registrationForm);
+                if (registrationForm != null) {
+                    activityFormsByActivity.put(activity.getId(), registrationForm);
+                }
+                if (isRegistrationAvailable(activity, registrationForm, now)) {
+                    activitiesAvailableForRegistration.add(activity.getId());
+                }
             }
         }
 
@@ -281,21 +292,20 @@ public class ExtracurricularActivityServlet extends HttpServlet {
             if (myStudent != null) {
                 for (com.swp391.g1.model.RegistrationApplication myApp
                         : registrationFormService.getApplicationsForStudent(myStudent.getId())) {
-                    if (!"WITHDRAWN".equals(myApp.getStatus())) {
-                        registrationsByActivity.putIfAbsent(myApp.getActivityId(), myApp);
-                    }
+                    registrationsByActivity.putIfAbsent(myApp.getActivityId(), myApp);
                 }
             }
         }
         request.setAttribute("registrationsByActivity", registrationsByActivity);
         request.setAttribute("isStudent", studentView);
         request.setAttribute("activityFormsByActivity", activityFormsByActivity);
+        request.setAttribute("activitiesAvailableForRegistration", activitiesAvailableForRegistration);
         boolean filtered = !normalizedKeyword.isEmpty() || semesterId > 0 || activityTypeId > 0
-                || departmentId > 0 || !activityStatus.isEmpty() || !approvalStatus.isEmpty()
+                || departmentId > 0 || !activityStatus.isEmpty() || !nature.isEmpty()
                 || startDate != null || endDate != null;
         request.setAttribute("keyword", keyword);
         request.setAttribute("selectedActivityStatus", activityStatus);
-        request.setAttribute("selectedApprovalStatus", approvalStatus);
+        request.setAttribute("selectedNature", nature);
         request.setAttribute("selectedSemesterId", semesterId);
         request.setAttribute("selectedActivityTypeId", activityTypeId);
         request.setAttribute("selectedDepartmentId", departmentId);
@@ -305,12 +315,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         request.setAttribute("activeFilterCount",
                 (normalizedKeyword.isEmpty() ? 0 : 1) + (semesterId > 0 ? 1 : 0)
                         + (activityTypeId > 0 ? 1 : 0) + (departmentId > 0 ? 1 : 0)
-                        + (activityStatus.isEmpty() ? 0 : 1) + (approvalStatus.isEmpty() ? 0 : 1)
+                        + (activityStatus.isEmpty() ? 0 : 1) + (nature.isEmpty() ? 0 : 1)
                         + (startDate != null ? 1 : 0) + (endDate != null ? 1 : 0));
         request.setAttribute("filterQuery", buildFilterQuery(keyword, semesterId, activityTypeId,
-                departmentId, activityStatus, approvalStatus, startDate, endDate));
+                departmentId, activityStatus, nature, startDate, endDate));
         request.setAttribute("activityStatuses", com.swp391.g1.model.Enum.ActivityStatus.values());
-        request.setAttribute("approvalStatuses", com.swp391.g1.model.Enum.ApprovalStatus.values());
         request.setAttribute("semesters", semesterService.getAllSemesters());
         request.setAttribute("activityTypes", activityTypeService.getActiveActivityTypes());
         request.setAttribute("departments", departmentService.getAllDepartments());
@@ -324,7 +333,6 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
         List<ExtracurricularActivityResponseDTO> pageActivities =
                 new ArrayList<>(allActivities.subList(fromIndex, toIndex));
-        LocalDateTime now = DateTimeUtil.now();
         Set<Integer> activitiesBeforeStart = new LinkedHashSet<>();
         for (ExtracurricularActivityResponseDTO activity : pageActivities) {
             if (isUpcomingBeforeStart(activity, now)) {
@@ -381,7 +389,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     }
 
     private String buildFilterQuery(String keyword, int semesterId, int activityTypeId,
-                                    int departmentId, String activityStatus, String approvalStatus,
+                                    int departmentId, String activityStatus, String nature,
                                     LocalDate startDate, LocalDate endDate) {
         StringBuilder query = new StringBuilder();
         appendParam(query, "keyword", keyword);
@@ -389,7 +397,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         appendParam(query, "activityTypeId", activityTypeId > 0 ? String.valueOf(activityTypeId) : "");
         appendParam(query, "departmentId", departmentId > 0 ? String.valueOf(departmentId) : "");
         appendParam(query, "activityStatus", activityStatus);
-        appendParam(query, "approvalStatus", approvalStatus);
+        appendParam(query, "nature", nature);
         appendParam(query, "startDate", formatDate(startDate));
         appendParam(query, "endDate", formatDate(endDate));
         return query.toString();
@@ -529,6 +537,27 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 && activity.getActivityStatus() == com.swp391.g1.model.Enum.ActivityStatus.UPCOMING
                 && activity.getStartTime() != null
                 && now.isBefore(activity.getStartTime());
+    }
+
+    private boolean isRegistrationAvailable(ExtracurricularActivityResponseDTO activity,
+                                            com.swp391.g1.model.RegistrationForm form,
+                                            LocalDateTime now) {
+        if (activity.getNature() != com.swp391.g1.model.Enum.ActivityNature.REQUIRE_REGISTRATION
+                || activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED
+                || activity.getActivityStatus() != com.swp391.g1.model.Enum.ActivityStatus.UPCOMING
+                || !activity.isPublic()
+                || (activity.getStartTime() != null && !now.isBefore(activity.getStartTime()))) {
+            return false;
+        }
+        if (form == null) {
+            return !activity.isRegistrationFormRequired()
+                    && (activity.getStartTime() == null || now.isBefore(activity.getStartTime().minusHours(1)));
+        }
+        return "OPENING".equals(form.getStatus())
+                && (form.getOpenAt() == null || !now.isBefore(form.getOpenAt()))
+                && (form.getCloseAt() == null || now.isBefore(form.getCloseAt()))
+                && (form.getMaxParticipants() == null
+                || form.getReservedSeatCount() < form.getMaxParticipants());
     }
 
     private void deleteActivity(HttpServletRequest request, HttpServletResponse response)

@@ -42,6 +42,10 @@
                     <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
                     <c:remove var="errorMessage" scope="session"/>
                 </c:if>
+                <c:if test="${not empty sessionScope.successMessage}">
+                    <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
+                    <c:remove var="successMessage" scope="session"/>
+                </c:if>
 
                 <section class="card activity-table-card registration-table-card">
                     <div class="activity-table-heading">

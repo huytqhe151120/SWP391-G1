@@ -828,3 +828,11 @@
     color: #334155;
     cursor: not-allowed;
 }
+
+.student-registration-form-page .field-wide h3 {
+    padding-left: 0;
+}
+
+.student-registration-form-page .field-wide h3::before {
+    display: none;
+}

@@ -499,7 +499,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
             }
         } catch (SQLException e) {
             if (isUniqueConstraintViolation(e)) return false;
-            throw new IllegalStateException("Không thể tạo form đăng ký.", e);
+            throw new IllegalStateException("Không thể tạo đợt đăng ký.", e);
         }
     }
 
@@ -938,7 +938,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 throw e;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("Không thể tạo form đăng ký nhanh.", e);
+            throw new IllegalStateException("Không thể tạo đợt đăng ký nhanh.", e);
         }
     }
 

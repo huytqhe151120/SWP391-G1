@@ -22,6 +22,12 @@
                 <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">◷</span>Hoạt động ngoại khóa
         </a>
+        <% if (navStudent) { %>
+        <a class="<%= "registration-forms".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/registration-forms?action=myApplications"
+                <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">✓</span>Đơn đăng ký
+        </a>
+        <% } %>
         <% if (navAdmin || navStaff) { %>
         <a class="<%= "registration-forms".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/registration-forms"
                 <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>

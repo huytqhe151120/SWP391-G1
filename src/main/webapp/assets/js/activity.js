@@ -306,8 +306,10 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     function syncStickyColumnWidths() {
         var actionsCells = table.querySelectorAll("tr td.activity-action-column, tr th.activity-action-column");
         var approvalCells = table.querySelectorAll("tr td.activity-status-column, tr th.activity-status-column");
+        var deadlineCells = table.querySelectorAll("tr td.activity-registration-deadline, tr th.activity-registration-deadline");
         var actionsWidth = 0;
         var approvalWidth = 0;
+        var deadlineWidth = 0;
 
         actionsCells.forEach(function (cell) {
             actionsWidth = Math.max(actionsWidth, cell.getBoundingClientRect().width);
@@ -315,9 +317,15 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         approvalCells.forEach(function (cell) {
             approvalWidth = Math.max(approvalWidth, cell.getBoundingClientRect().width);
         });
+        deadlineCells.forEach(function (cell) {
+            deadlineWidth = Math.max(deadlineWidth, cell.getBoundingClientRect().width);
+        });
         if (actionsWidth > 0 && approvalWidth > 0) {
             table.style.setProperty("--activity-actions-col-width", actionsWidth + "px");
             table.style.setProperty("--activity-approval-col-width", approvalWidth + "px");
+        }
+        if (deadlineWidth > 0) {
+            table.style.setProperty("--activity-deadline-col-width", deadlineWidth + "px");
         }
     }
 

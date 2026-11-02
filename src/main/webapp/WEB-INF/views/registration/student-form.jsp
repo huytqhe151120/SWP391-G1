@@ -23,7 +23,7 @@
                         <h1>Đăng ký tham gia</h1>
                         <p>Kiểm tra thông tin hoạt động và gửi đăng ký của bạn.</p>
                     </div>
-                    <a class="button activity-create-button" href="${pageContext.request.contextPath}/activities">
+                    <a class="button activity-create-button" href="<c:out value='${returnTo}'/>">
                         <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
                         Danh sách hoạt động
                     </a>
@@ -42,7 +42,6 @@
                         <span class="badge status-pill status-green">Đang mở đăng ký</span>
                     </div>
                     <div class="activity-form-content">
-                        <h3 class="student-registration-activity-name"><c:out value="${form.activityName}"/></h3>
                         <p class="student-registration-detail-description"><c:out value="${form.description}"/></p>
                         <p class="student-registration-deadline">
                             <strong>Số chỗ:</strong>
@@ -59,6 +58,7 @@
                         <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                             <input type="hidden" name="action" value="register">
                             <input type="hidden" name="id" value="${form.id}">
+                            <input type="hidden" name="returnTo" value="<c:out value='${returnTo}'/>">
                             <div class="form-grid activity-form-grid">
                                 <div class="field field-wide">
                                     <h3>Thông tin sinh viên</h3>
@@ -145,7 +145,7 @@
                                 </div>
                             </div>
                             <div class="form-actions activity-form-actions student-registration-actions">
-                                <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/activities">Quay lại</a>
+                                <a class="button activity-cancel-button" href="<c:out value='${returnTo}'/>">Quay lại</a>
                                 <button class="button button-primary" type="submit">Gửi đăng ký</button>
                             </div>
                         </form>

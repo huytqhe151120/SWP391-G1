@@ -34,6 +34,10 @@
                     <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
                     <c:remove var="errorMessage" scope="session"/>
                 </c:if>
+                <c:if test="${not empty sessionScope.successMessage}">
+                    <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
+                    <c:remove var="successMessage" scope="session"/>
+                </c:if>
 
                 <section class="card activity-form-card activity-detail-card registration-detail-card">
                     <div class="activity-table-heading">
@@ -42,7 +46,7 @@
                             <p>Chi tiết nội dung và tình trạng đăng ký của form.</p>
                         </div>
                         <div class="registration-detail-actions">
-                            <a class="button button-back" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${form.activityId}">Quay lại hoạt động</a>
+                            <a class="button button-back" href="<c:out value='${returnTo}'/>">Quay lại</a>
                             <a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=list">Danh sách form</a>
 
                                 <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${form.id}&amp;from=detail">Chỉnh sửa</a>

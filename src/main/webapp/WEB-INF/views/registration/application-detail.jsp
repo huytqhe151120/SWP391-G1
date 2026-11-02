@@ -21,7 +21,7 @@
                 <header class="activity-hero">
                     <div class="activity-hero-copy">
                         <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐĂNG KÝ</span>
-                        <h1><c:out value="${isStudent ? 'Chi tiết đơn đăng ký của tôi' : 'Chi tiết đơn sinh viên'}"/></h1>
+                        <h1><c:out value="${isStudent ? 'Chi tiết đơn đăng ký' : 'Chi tiết đơn sinh viên'}"/></h1>
                         <p><c:out value="${form.title}"/> · <c:out value="${form.activityName}"/></p>
                     </div>
                 </header>
@@ -79,7 +79,7 @@
                     </div>
 
                     <div class="form-actions activity-form-actions">
-                        <c:choose><c:when test="${isStudent}"><a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=myApplications">Quay lại đơn đăng ký của tôi</a></c:when><c:otherwise>
+                        <c:choose><c:when test="${isStudent}"><a class="button button-secondary" href="<c:out value='${returnTo}'/>">Quay lại</a></c:when><c:otherwise>
                             <a class="button button-secondary" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${form.activityId}">Quay lại hoạt động</a>
                             <a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${form.id}&amp;tab=applications">Quay lại danh sách đơn</a></c:otherwise></c:choose>
                         <c:if test="${not isStudent}"><c:choose>

@@ -22,9 +22,9 @@
                         <h1><c:choose><c:when test="${form.id > 0}">Chỉnh sửa đợt đăng ký</c:when><c:otherwise>Tạo đợt đăng ký</c:otherwise></c:choose></h1>
                         <p>Tạo form cho sinh viên đăng ký tham gia hoạt động ngoại khóa.</p>
                     </div>
-                    <a class="button activity-create-button" href="${pageContext.request.contextPath}/registration-forms">
+                    <a class="button activity-create-button" href="<c:out value='${returnTo}'/>">
                         <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
-                        Danh sách form
+                        Quay lại
                     </a>
                 </header>
 
@@ -42,6 +42,7 @@
                     <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                         <input type="hidden" name="action" value="save">
                         <input type="hidden" name="id" value="${form.id}">
+                        <input type="hidden" name="returnTo" value="<c:out value='${returnTo}'/>">
 
                         <div class="activity-form-content">
                             <div class="activity-form-section">
@@ -112,7 +113,7 @@
                         </div>
 
                         <div class="form-actions activity-form-actions">
-                            <a class="button activity-cancel-button" href="${pageContext.request.contextPath}/registration-forms">Hủy</a>
+                            <a class="button activity-cancel-button" href="<c:out value='${returnTo}'/>">Hủy</a>
                             <c:choose>
                                 <c:when test="${form.registrationCount > 0 and not form.quick}">
                                     <span>Không thể chỉnh sửa form đã có sinh viên đăng ký.</span>

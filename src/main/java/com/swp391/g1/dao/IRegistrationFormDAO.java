@@ -65,7 +65,7 @@ public interface IRegistrationFormDAO {
 
     Map<String, String> findSavedProfile(int studentId);
 
-    /** Tạo form đăng ký nhanh mặc định cho hoạt động (nếu chưa có); mở lại nếu thời gian còn hợp lệ. */
+    /** Tạo đợt đăng ký nhanh mặc định cho hoạt động (nếu chưa có); mở lại nếu thời gian còn hợp lệ. */
     void ensureQuickForm(int activityId);
 
     /** Staff chỉnh mô tả và thời gian của form đăng ký nhanh. */

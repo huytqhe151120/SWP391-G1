@@ -222,7 +222,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         }
         return f.getId() > 0
                 ? "Không thể sửa form vì đã có sinh viên đăng ký hoặc form không còn tồn tại."
-                : "Không thể tạo form đăng ký. Vui lòng kiểm tra dữ liệu và thử lại.";
+                : "Không thể tạo đợt đăng ký. Vui lòng kiểm tra dữ liệu và thử lại.";
     }
 
     public String saveQuickForm(RegistrationForm f) {
@@ -283,6 +283,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             case "OK" -> null;
             case "ALREADY" -> "Bạn đã đăng ký hoạt động này.";
             case "FULL" -> "Không thể đăng ký: hoạt động đã đủ số lượng tối đa.";
+            case "NOT_OPEN" -> "Không thể đăng ký: đợt đăng ký chưa đến thời gian mở hoặc đã đóng.";
             case "UNAVAILABLE" -> "Không thể đăng ký: hoạt động chưa được duyệt, đã bắt đầu hoặc không cho phép đăng ký nhanh.";
             case "CANCELLED_BEFORE" -> "Bạn đã hủy đăng ký hoạt động này sau khi được duyệt nên không thể đăng ký lại. Vui lòng liên hệ ban tổ chức nếu cần.";
             default -> "Không thể đăng ký: lỗi không xác định.";

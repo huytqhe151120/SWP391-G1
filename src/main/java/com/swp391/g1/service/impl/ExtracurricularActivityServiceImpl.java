@@ -55,7 +55,10 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             return List.of();
         }
         if (!AccessPolicy.hasType(user, "STAFF")) {
-            return getAllActivities();
+            // Students only see APPROVED activities
+            return getAllActivities().stream()
+                    .filter(activity -> activity.getApprovalStatus() == ApprovalStatus.APPROVED)
+                    .toList();
         }
         if (!AccessPolicy.canUseStaffActivityScope(user) || user.getId() <= 0) {
             return List.of();

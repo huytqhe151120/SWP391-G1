@@ -758,9 +758,24 @@
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
+.activity-list-page .activity-table-wrap th.activity-registration-deadline,
+.activity-list-page .activity-table-wrap td.activity-registration-deadline {
+    position: sticky;
+    right: calc(var(--activity-approval-col-width, 0px) + var(--activity-actions-col-width, 0px));
+    z-index: 3;
+    background: #fff;
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+
+.activity-list-page .activity-table-wrap th.activity-student-run-status,
+.activity-list-page .activity-table-wrap td.activity-student-run-status {
+    right: calc(var(--activity-deadline-col-width, 150px) + var(--activity-approval-col-width, 0px) + var(--activity-actions-col-width, 0px));
+}
+
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
-.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
+.activity-list-page .activity-table-wrap th.activity-registration-deadline {
     background: #f7f9fc;
     z-index: 3;
 }
@@ -771,6 +786,11 @@
     min-width: 140px;
     max-width: 140px;
     white-space: normal;
+}
+
+.activity-list-page .activity-table-wrap .activity-registration-deadline {
+    min-width: 150px;
+    white-space: nowrap;
 }
 
 .activity-list-page .activity-table-wrap .activity-status-column .badge,
@@ -789,7 +809,8 @@
 
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-run-status,
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-status-column,
-.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-action-column {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-action-column,
+.activity-list-page .activity-table-wrap tbody tr:hover td.activity-registration-deadline {
     background: #f8faff;
 }
 
@@ -1575,7 +1596,9 @@ button.activity-action-link:focus-visible {
     .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
     .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-status-column,
     .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-action-column {
+    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-action-column,
+    .activity-list-page .activity-table-wrap th.activity-registration-deadline,
+    .activity-list-page .activity-table-wrap td.activity-registration-deadline {
         position: static;
         right: auto;
         box-shadow: none;

@@ -4,12 +4,13 @@ public class Enum {
     // Status for entities
     public enum CommonStatus {
         ACTIVE, // Đang hoạt động
-        INACTIVE // Không hoạt động
+        INACTIVE, // Không hoạt động
+        BLOCKED // Đã bị khóa
     }
 
     // Status for activity
     public enum ActivityStatus {
-        UPCOMING, // Sắp diễn ra
+        UPCOMING, // Chưa diễn ra
         ONGOING, // Đang diễn ra
         COMPLETED, // Đã hoàn thành
         CANCELLED // Đã hủy
@@ -39,12 +40,11 @@ public class Enum {
 
     // Status for student application review
     public enum RegistrationApplicationStatus {
-        SUBMITTED, // Chờ xử lý
-        APPROVED, // Đã duyệt
+        SUBMITTED, // Chờ duyệt
+        APPROVED, // Đã đăng ký
         REJECTED, // Đã từ chối
-        CANCELLED, // Đã hủy (đơn đã duyệt, không đăng ký lại được)
-        WITHDRAWN // Đã rút đơn (đăng ký lại được)
-
+        CANCELLED, // Sinh viên đã hủy (không đăng ký lại được)
+        WITHDRAWN // Sinh viên đã rút đơn (đăng ký lại được)
     }
 
 }

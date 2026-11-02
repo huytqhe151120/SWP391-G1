@@ -9,8 +9,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Hoạt động ngoại khóa</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261102-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=5">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -43,11 +43,6 @@
                         <p>Thông tin các hoạt động ngoại khóa đã được ghi nhận</p>
                     </div>
                     <div class="activity-heading-actions">
-                        <c:if test="${isStudent}">
-                            <a class="button button-secondary"
-                               href="${pageContext.request.contextPath}/registration-forms?action=myApplications">Đơn
-                                đăng ký của tôi</a>
-                        </c:if>
                         <span class="activity-count"><c:out value="${totalActivityCount}"/> hoạt động</span>
                         <c:if test="${canManageActivities}">
                             <a class="btn-create-activity"
@@ -116,13 +111,12 @@
                             </select>
                         </div>
                         <div class="activity-filter-field">
-                            <label for="filter-approval-status">Trạng thái duyệt</label>
-                            <select id="filter-approval-status" name="approvalStatus">
+                            <label for="filter-nature">Tính chất</label>
+                            <select id="filter-nature" name="nature">
                                 <option value="">Tất cả</option>
-                                <c:forEach var="status" items="${approvalStatuses}">
-                                    <option value="${status}" ${selectedApprovalStatus == status.name() ? 'selected'
-                                        : ''}>${st:label(status)}</option>
-                                </c:forEach>
+                                <option value="REQUIRE_REGISTRATION" ${selectedNature == 'REQUIRE_REGISTRATION' ? 'selected' : ''}>Cần đăng ký</option>
+                                <option value="VOLUNTARY" ${selectedNature == 'VOLUNTARY' ? 'selected' : ''}>Tự nguyện</option>
+                                <option value="MANDATORY" ${selectedNature == 'MANDATORY' ? 'selected' : ''}>Bắt buộc</option>
                             </select>
                         </div>
                         <div class="activity-filter-field">
@@ -188,10 +182,19 @@
                             <th scope="col">Tính chất</th>
                             <th scope="col">Tối đa</th>
                             <th scope="col">Thời gian</th>
-                            <th scope="col" class="activity-run-status"><span>Trạng thái</span><span>hoạt động</span>
+                            <th scope="col" class="activity-run-status ${isStudent ? 'activity-student-run-status' : ''}"><span>Trạng thái</span><span>hoạt động</span>
                             </th>
-                            <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>duyệt HĐ</span>
-                            </th>
+                            <c:if test="${isStudent}">
+                                <th scope="col" class="activity-registration-deadline">Hạn đăng ký</th>
+                            </c:if>
+                            <c:if test="${not isStudent}">
+                                <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>duyệt HĐ</span>
+                                </th>
+                            </c:if>
+                            <c:if test="${isStudent}">
+                                <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>đăng ký</span>
+                                </th>
+                            </c:if>
                             <th scope="col" class="activity-action-column">Thao tác</th>
                         </tr>
                         </thead>
@@ -199,7 +202,7 @@
                         <c:choose>
                             <c:when test="${empty activities}">
                                 <tr>
-                                    <td class="empty-state activity-empty-state" colspan="12">
+                                    <td class="empty-state activity-empty-state" colspan="${isStudent ? 13 : 12}">
                                         <span class="empty-state-mark" aria-hidden="true">+</span>
                                         <c:choose>
                                             <c:when test="${filtered}">
@@ -263,64 +266,165 @@
                                                 <c:otherwise>Chưa xác định</c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td class="activity-run-status"><span
+                                        <td class="activity-run-status ${isStudent ? 'activity-student-run-status' : ''}"><span
                                                 class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span>
                                         </td>
-                                        <td class="activity-status-column"><span
-                                                class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span>
-                                        </td>
+                                        <c:if test="${isStudent}">
+                                            <td class="activity-registration-deadline">
+                                                <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
+                                                <c:choose>
+                                                    <c:when test="${not empty activityForm and not empty activityForm.closeAt}">
+                                                        <c:out value="${dt:format(activityForm.closeAt)}"/>
+                                                    </c:when>
+                                                    <c:otherwise>—</c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                        </c:if>
+                                        <c:if test="${not isStudent}">
+                                            <td class="activity-status-column"><span
+                                                    class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span>
+                                            </td>
+                                        </c:if>
+                                        <c:if test="${isStudent}">
+                                            <td class="activity-status-column">
+                                                <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
+                                                <c:choose>
+                                                    <c:when test="${not empty myReg}">
+                                                        <c:choose>
+                                                            <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
+                                                            <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
+                                                            <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
+                                                            <c:when test="${myReg.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span></c:when>
+                                                            <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Đã rút đơn</span></c:when>
+                                                            <c:otherwise><span class="badge status-pill status-muted"><c:out value="${myReg.status}"/></span></c:otherwise>
+                                                        </c:choose>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <c:choose>
+                                                            <c:when test="${activity.nature eq 'REQUIRE_REGISTRATION'}">
+                                                                <span class="badge status-pill status-muted">Chưa đăng ký</span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <span class="badge status-pill status-gray">Không yêu cầu</span>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                        </c:if>
                                         <td class="activity-action-column">
                                             <div class="actions activity-actions">
-                                                <a class="activity-action-link action-btn action-btn--view"
-                                                   href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">
-                                                    <span class="action-btn__icon" aria-hidden="true"><svg
-                                                            viewBox="0 0 24 24"><path
-                                                            d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle
-                                                            cx="12" cy="12" r="3"/></svg></span>
-                                                    Chi tiết
-                                                </a>
-                                                <c:if test="${isStudent and activity['public'] and activity.approvalStatus eq 'APPROVED' and activity.activityStatus eq 'UPCOMING' and activity.nature eq 'REQUIRE_REGISTRATION'}">
+                                                <c:if test="${isStudent}">
+                                                    <a class="activity-action-link action-btn action-btn--view"
+                                                       href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">
+                                                        <span class="action-btn__icon" aria-hidden="true"><svg
+                                                                viewBox="0 0 24 24"><path
+                                                                d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle
+                                                                cx="12" cy="12" r="3"/></svg></span>
+                                                        Chi tiết
+                                                    </a>
+                                                    <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
                                                     <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
-                                                    <c:choose>
-                                                        <%-- Sinh viên đã có đơn (chưa hủy): hiện trạng thái, không hiện nút đăng ký --%>
-                                                        <c:when test="${not empty myReg}">
-                                                            <c:choose>
-                                                                <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
-                                                                <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
-                                                                <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Đã rút đơn</span></c:when>
-                                                                <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
-                                                                <c:when test="${myReg.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span></c:when>
-                                                                <c:otherwise><span class="badge status-pill status-muted"><c:out value="${myReg.status}"/></span></c:otherwise>
-                                                            </c:choose>
-                                                        </c:when>
-                                                        <%-- Chưa đăng ký: giữ nguyên hai khối nút cũ --%>
-                                                        <c:otherwise>
-                                                            <c:if test="${activity.registrationFormRequired}">
-                                                                <c:set var="activityForm"
-                                                                       value="${activityFormsByActivity[activity.id]}"/>
+                                                    <c:set var="canRegister" value="${activitiesAvailableForRegistration.contains(activity.id) and empty myReg}"/>
+                                                    <c:if test="${not empty myReg or canRegister}">
+                                                        <details class="action-menu">
+                                                            <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
+                                                            <div class="action-menu__items">
                                                                 <c:choose>
-                                                                    <c:when test="${not empty activityForm and activityForm.status == 'OPENING'}">
-                                                                        <a class="button button-primary"
-                                                                           href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${activityForm.id}">Đăng
-                                                                            ký</a>
+                                                                    <c:when test="${myReg.status eq 'WITHDRAWN'}">
+                                                                        <a class="action-menu-item action-menu-item--view"
+                                                                           href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${myReg.id}&amp;returnTo=${activityReturnUrlParameter}">
+                                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/><path d="M10 14h6"/><path d="M10 18h6"/></svg></span>
+                                                                            Xem đơn đã rút
+                                                                        </a>
+                                                                        <c:if test="${activitiesAvailableForRegistration.contains(activity.id)}">
+                                                                            <c:choose>
+                                                                                <c:when test="${myReg.quick}">
+                                                                                    <form action="${pageContext.request.contextPath}/registration-forms" method="post">
+                                                                                        <input type="hidden" name="action" value="registerQuick">
+                                                                                        <input type="hidden" name="activityId" value="${activity.id}">
+                                                                                        <input type="hidden" name="returnTo" value="<c:out value='${activityReturnUrl}'/>">
+                                                                                        <button type="submit" class="action-menu-item action-menu-item--submit">
+                                                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+                                                                                            Đăng ký lại
+                                                                                        </button>
+                                                                                    </form>
+                                                                                </c:when>
+                                                                                <c:otherwise>
+                                                                                    <a class="action-menu-item action-menu-item--submit"
+                                                                                       href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${myReg.formId}&amp;returnTo=${activityReturnUrlParameter}">
+                                                                                        <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+                                                                                        Đăng ký lại
+                                                                                    </a>
+                                                                                </c:otherwise>
+                                                                            </c:choose>
+                                                                        </c:if>
                                                                     </c:when>
+                                                                    <c:when test="${not empty myReg}">
+                                                                        <a class="action-menu-item action-menu-item--view"
+                                                                           href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${myReg.id}&amp;returnTo=${activityReturnUrlParameter}">
+                                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/><path d="M10 14h6"/><path d="M10 18h6"/></svg></span>
+                                                                            Xem đơn
+                                                                        </a>
+                                                                        <c:if test="${myReg.canCancel and (myReg.status eq 'SUBMITTED' or myReg.status eq 'APPROVED')}">
+                                                                            <c:choose>
+                                                                                <c:when test="${myReg.status eq 'SUBMITTED'}">
+                                                                                    <c:set var="cancelConfirm" value="Bạn có chắc muốn rút đơn đăng ký này? Bạn vẫn có thể đăng ký lại nếu hoạt động còn mở."/>
+                                                                                    <c:set var="cancelLabel" value="Rút đơn"/>
+                                                                                </c:when>
+                                                                                <c:when test="${myReg.quick}">
+                                                                                    <c:set var="cancelConfirm" value="Bạn có chắc muốn hủy đăng ký hoạt động này?"/>
+                                                                                    <c:set var="cancelLabel" value="Hủy đăng ký"/>
+                                                                                </c:when>
+                                                                                <c:otherwise>
+                                                                                    <c:set var="cancelConfirm" value="Sau khi hủy, bạn sẽ không thể đăng ký lại hoạt động này. Bạn có chắc muốn hủy?"/>
+                                                                                    <c:set var="cancelLabel" value="Hủy đăng ký"/>
+                                                                                </c:otherwise>
+                                                                            </c:choose>
+                                                                            <form action="${pageContext.request.contextPath}/registration-forms"
+                                                                                  method="post" data-confirm="<c:out value='${cancelConfirm}'/>">
+                                                                                <input type="hidden" name="action" value="cancelRegistration">
+                                                                                <input type="hidden" name="id" value="${myReg.id}">
+                                                                                <input type="hidden" name="returnTo" value="<c:out value='${activityReturnUrl}'/>">
+                                                                                <button type="submit" class="action-menu-item action-menu-item--undo">
+                                                                                    <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M5.5 13a8 8 0 1 0 2-7L3 11"/></svg></span>
+                                                                                    <c:out value="${cancelLabel}"/>
+                                                                                </button>
+                                                                            </form>
+                                                                        </c:if>
+                                                                    </c:when>
+                                                                    <c:when test="${activity.registrationFormRequired}">
+                                                                        <a class="action-menu-item action-menu-item--submit"
+                                                                           href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${activityForm.id}&amp;returnTo=${activityReturnUrlParameter}">
+                                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+                                                                            Đăng ký
+                                                                        </a>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <form action="${pageContext.request.contextPath}/registration-forms" method="post">
+                                                                            <input type="hidden" name="action" value="registerQuick">
+                                                                            <input type="hidden" name="activityId" value="${activity.id}">
+                                                                            <input type="hidden" name="returnTo" value="<c:out value='${activityReturnUrl}'/>">
+                                                                            <button type="submit" class="action-menu-item action-menu-item--submit">
+                                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+                                                                                Đăng ký nhanh
+                                                                            </button>
+                                                                        </form>
+                                                                    </c:otherwise>
                                                                 </c:choose>
-                                                            </c:if>
-                                                            <c:if test="${not activity.registrationFormRequired}">
-                                                                <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
-                                                                <c:if test="${empty activityForm or activityForm.status == 'OPENING'}">
-                                                                    <form action="${pageContext.request.contextPath}/registration-forms" method="post" style="display:inline">
-                                                                        <input type="hidden" name="action" value="registerQuick">
-                                                                        <input type="hidden" name="activityId" value="${activity.id}">
-                                                                        <button type="submit" class="button button-primary">Đăng ký nhanh</button>
-                                                                    </form>
-                                                                    <c:if test="${not empty activityForm.closeAt}">
-                                                                        <small class="field-hint">Đăng ký đến <c:out value="${dt:format(activityForm.closeAt)}"/></small>
-                                                                    </c:if>
-                                                                </c:if>
-                                                            </c:if>
-                                                        </c:otherwise>
-                                                    </c:choose>
+                                                            </div>
+                                                        </details>
+                                                    </c:if>
+                                                </c:if>
+                                                <c:if test="${not isStudent}">
+                                                    <a class="activity-action-link action-btn action-btn--view"
+                                                       href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${activity.id}">
+                                                        <span class="action-btn__icon" aria-hidden="true"><svg
+                                                                viewBox="0 0 24 24"><path
+                                                                d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle
+                                                                cx="12" cy="12" r="3"/></svg></span>
+                                                        Chi tiết
+                                                    </a>
                                                 </c:if>
                                                 <c:if test="${isStudent and activity['public'] and activity.approvalStatus eq 'APPROVED' and activity.activityStatus eq 'UPCOMING' and activity.nature eq 'REQUIRE_REGISTRATION' and activity.registrationFormRequired}">
                                                     <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
@@ -526,6 +630,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261102-1"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
-<c:set var="activeNav" value="activities" scope="request"/>
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đơn đăng ký của tôi</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261026-1"><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261026-1"></head><body><div class="activity-app-shell">
+<c:set var="activeNav" value="registration-forms" scope="request"/>
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đơn đăng ký</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261026-1"><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261026-1"></head><body><div class="activity-app-shell">
 <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
 <div class="activity-app-layout">
     <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
@@ -10,7 +10,7 @@
         <main class="page activity-list-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy"><span class="eyebrow">SINH VIÊN / THEO DÕI ĐĂNG KÝ</span>
-                    <h1>Đơn đăng ký của tôi</h1>
+                    <h1>Đơn đăng ký</h1>
                     <p>Theo dõi các hoạt động bạn đã gửi đơn và kết quả xét duyệt.</p></div>
                 <a class="button button-secondary" href="${pageContext.request.contextPath}/activities">Khám phá hoạt
                     động</a></header>
@@ -46,16 +46,16 @@
                                 <td><c:choose><c:when test="${not empty app.submittedAt}"><c:out
                                         value="${dt:format(app.submittedAt)}"/></c:when><c:otherwise>—</c:otherwise></c:choose></td>
                                 <td><c:choose><c:when test="${app.status eq 'SUBMITTED'}"><span
-                                        class="badge status-pill status-pending">Chờ duyệt</span></c:when><c:when
+                                        class="badge status-pill status-yellow">Chờ duyệt</span></c:when><c:when
                                         test="${app.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when><c:when
-                                        test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-rejected">Bị từ chối</span></c:when><c:when
+                                        test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span></c:when><c:when
                                         test="${app.status eq 'CANCELLED'}"><span class="badge status-pill status-red">Đã hủy</span></c:when><c:when
                                         test="${app.status eq 'WITHDRAWN'}"><span class="badge status-pill status-muted">Đã rút đơn</span></c:when><c:otherwise><span
                                         class="badge status-pill status-muted"><c:out value="${app.status}"/></span></c:otherwise></c:choose>
                                 </td>
                                 <td>
                                     <a class="button button-secondary"
-                                       href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${app.id}">Xem
+                                       href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${app.id}&amp;returnTo=${applicationsReturnUrlParameter}">Xem
                                         đơn</a>
                                     <c:if test="${app.status eq 'SUBMITTED' or app.status eq 'APPROVED'}">
                                         <c:choose>
@@ -70,6 +70,7 @@
                                                       onsubmit="return confirm('${confirmText}');">
                                                     <input type="hidden" name="action" value="cancelRegistration">
                                                     <input type="hidden" name="id" value="${app.id}">
+                                                    <input type="hidden" name="returnTo" value="<c:out value='${applicationsReturnUrl}'/>">
                                                     <button type="submit" class="button button-revoke">
                                                             ${app.status eq 'SUBMITTED' ? 'Rút đơn' : 'Hủy đăng ký'}</button>
                                                 </form>
