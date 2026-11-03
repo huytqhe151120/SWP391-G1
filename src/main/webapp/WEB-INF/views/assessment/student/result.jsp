@@ -39,7 +39,7 @@
                 <h2>Trang thai bai lam</h2>
                 <p>Xem ket qua va nhan xet cua cac cau hoi tu luan.</p>
             </div>
-            <a class="button" href="${pageContext.request.contextPath}/activities">Quay lai</a>
+            <a class="button" href="${pageContext.request.contextPath}/activities?action=detail&id=${activityId}">Quay lai</a>
         </div>
 
         <div class="field">

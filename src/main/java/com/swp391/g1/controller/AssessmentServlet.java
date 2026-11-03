@@ -287,6 +287,8 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         var attempt = assessmentService.startAttempt(assessmentId, student.getId());
+        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentById(assessmentId, user);
+        request.setAttribute("activityId", assessment.getActivityId());
         var questions = new com.swp391.g1.dao.impl.AssessmentQuestionDAOImpl()
                 .findByAssessmentId(assessmentId);
         for (var q : questions) {
@@ -490,7 +492,13 @@ public class AssessmentServlet extends HttpServlet {
     private void handleSaveAnswers(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int attemptId = parseId(request.getParameter("attemptId"));
-        int studentId = parseId(request.getParameter("studentId"));
+
+        com.swp391.g1.model.Student student = getCurrentStudent(user);
+        if (student == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Khong tim thay thong tin sinh vien.");
+            return;
+        }
+        int studentId = student.getId();
 
         Map<Integer, Object> answers = new HashMap<>();
         for (String key : request.getParameterMap().keySet()) {
@@ -514,7 +522,14 @@ public class AssessmentServlet extends HttpServlet {
     private void handleSubmitAttempt(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int attemptId = parseId(request.getParameter("attemptId"));
-        int studentId = parseId(request.getParameter("studentId"));
+
+        com.swp391.g1.model.Student student = getCurrentStudent(user);
+        if (student == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Khong tim thay thong tin sinh vien.");
+            return;
+        }
+        int studentId = student.getId();
+
         HttpSession session = request.getSession();
         session.setAttribute("successMessage", "Da nop bai thanh cong.");
 
@@ -554,6 +569,8 @@ public class AssessmentServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Chua co bai lam.");
             return;
         }
+        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentById(assessmentId, user);
+        request.setAttribute("activityId", assessment.getActivityId());
         var answers = assessmentService.getAttemptAnswers(attempt.getId(), student.getId());
         request.setAttribute("attempt", attempt);
         request.setAttribute("answers", answers);

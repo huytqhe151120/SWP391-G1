@@ -37,7 +37,7 @@
         <form action="${pageContext.request.contextPath}/assessment" method="post">
             <input type="hidden" name="action" value="submitAttempt"/>
             <input type="hidden" name="attemptId" value="${attempt.id}"/>
-            <input type="hidden" name="studentId" value="${attempt.studentId}"/>
+
             <input type="hidden" name="assessmentId" value="${assessmentId}"/>
 
             <c:forEach var="q" items="${questions}">
@@ -69,7 +69,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="button button-primary" onclick="return confirm('Ban chac chan muon nop bai? Sau khi nop khong the sua doi.')">Nop bai</button>
-                <a class="button" href="${pageContext.request.contextPath}/activities?action=detail&id=${param.activityId}">Huy</a>
+                <a class="button" href="${pageContext.request.contextPath}/activities?action=detail&id=${activityId}">Huy</a>
             </div>
         </form>
     </section>
