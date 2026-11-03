@@ -43,7 +43,8 @@ public final class StatusUtil {
             case "CANCELLED", "REJECTED", "CLOSED" -> "status-red";
             case "OPENING" -> "status-green";
             case "DRAFT" -> "status-yellow";
-            case "WITHDRAWN", "INACTIVE" -> "status-muted";
+            case "WITHDRAWN" -> "status-blue";
+            case "INACTIVE" -> "status-muted";
             case "BLOCKED" -> "status-red";
             default -> "status-gray";
         };

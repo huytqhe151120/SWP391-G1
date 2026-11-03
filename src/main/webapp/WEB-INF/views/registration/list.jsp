@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý đợt đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261023-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261103-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
@@ -77,7 +77,17 @@
                             <c:forEach items="${forms}" var="f">
                                 <tr>
                                     <td class="registration-title-cell">
-                                        <strong><c:out value="${f.title}"/></strong>
+                                        <div class="registration-title-line">
+                                            <strong>
+                                                <c:choose>
+                                                    <c:when test="${f.quick}"><c:out value="${f.activityName}"/></c:when>
+                                                    <c:otherwise><c:out value="${f.title}"/></c:otherwise>
+                                                </c:choose>
+                                            </strong>
+                                            <c:if test="${f.quick}">
+                                                <span class="registration-quick-badge">Đăng ký nhanh</span>
+                                            </c:if>
+                                        </div>
                                         <div class="muted"><c:out value="${f.description}"/></div>
                                     </td>
                                     <td><c:out value="${f.activityName}"/></td>

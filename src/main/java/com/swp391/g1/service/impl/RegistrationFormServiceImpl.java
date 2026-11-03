@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -292,9 +293,10 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
 
     @Override
     public String registerWithAnswers(int formId, int studentId, String note, List<RegistrationFormField> answers,
-                                      Map<String, String> personalInfo) {
+                                      Map<String, String> personalInfo, boolean attendanceCommitment) {
         if (formId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
         if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
+        if (!attendanceCommitment) return "Vui lòng xác nhận cam kết tham dự hoạt động.";
 
         RegistrationForm form = getById(formId);
         if (form == null) return "Không tìm thấy form đăng ký.";
@@ -329,6 +331,8 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
 
         String personalInfoError = appendPersonalInfo(studentId, personalInfo, answerList);
         if (personalInfoError != null) return personalInfoError;
+        answerList.add(personalAnswer("application_attendance_commitment",
+                "Tôi cam kết tham dự đầy đủ và đúng giờ.", "true"));
         if (dao.registerStudentWithAnswers(formId, studentId, note == null ? "" : note.trim(), answerList)) return null;
         if (dao.isOpenFormAtCapacity(formId)) return "Không thể đăng ký: hoạt động đã đủ số lượng tối đa.";
         return "Không thể đăng ký: form đã đóng, hoạt động chưa được duyệt hoặc bạn đã đăng ký trước đó.";
@@ -352,6 +356,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
 
     private static String validateFields(List<RegistrationFormField> fields) {
         if (fields == null) return null;
+        if (fields.size() > 10) return "Mỗi form chỉ được có tối đa 10 câu hỏi bổ sung.";
         Map<String, Boolean> keys = new HashMap<>();
         for (RegistrationFormField field : fields) {
             if (field == null || field.getFieldKey() == null
@@ -363,12 +368,24 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
                 return "Tên trường phải có nội dung và không vượt quá 200 ký tự.";
             }
             if (field.getFieldType() == null
-                    || !List.of("TEXT", "TEXTAREA", "NUMBER", "DATE", "EMAIL", "PHONE", "SELECT", "CHECKBOX")
+                    || !List.of("TEXT", "TEXTAREA", "NUMBER", "DATE", "EMAIL", "PHONE",
+                    "SELECT", "CHECKBOX", "MULTISELECT")
                     .contains(field.getFieldType())) {
                 return "Loại trường đăng ký không hợp lệ.";
             }
-            if ("SELECT".equals(field.getFieldType()) && parseOptions(field).isEmpty()) {
-                return "Trường chọn cần có ít nhất một lựa chọn.";
+            if ("SELECT".equals(field.getFieldType()) || "MULTISELECT".equals(field.getFieldType())) {
+                String[] rawOptions = field.getOptions() == null
+                        ? new String[0] : field.getOptions().split("\\R", -1);
+                List<String> options = parseOptions(field);
+                if (options.isEmpty()) return "Câu hỏi lựa chọn cần có ít nhất một đáp án.";
+                if (rawOptions.length > 10) return "Mỗi câu hỏi chỉ được có tối đa 10 đáp án.";
+                if (Arrays.stream(rawOptions).anyMatch(option -> option.isBlank())) {
+                    return "Vui lòng nhập đầy đủ các đáp án lựa chọn.";
+                }
+                if (options.stream().anyMatch(option -> option.length() > 200)) {
+                    return "Mỗi đáp án không được vượt quá 200 ký tự.";
+                }
+                if (options.size() != rawOptions.length) return "Đáp án lựa chọn không được trùng nhau.";
             }
         }
         return null;
@@ -381,6 +398,8 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         String studentName = value(personalInfo, "studentName");
         String classCode = value(personalInfo, "classCode");
         String email = value(personalInfo, "email");
+        String phoneNumber = value(personalInfo, "phoneNumber");
+        String dob = value(personalInfo, "dob");
         if (studentCode.isBlank() || studentCode.length() > 50) {
             return "Mã sinh viên là bắt buộc và không được vượt quá 50 ký tự.";
         }
@@ -395,7 +414,8 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         }
         for (RegistrationFormField answer : answers) {
             if (List.of("application_student_id", "application_student_code", "application_student_name",
-                    "application_class_code", "application_email").contains(answer.getFieldKey())) {
+                    "application_class_code", "application_email", "application_phone_number",
+                    "application_dob", "application_attendance_commitment").contains(answer.getFieldKey())) {
                 return "Form có trường trùng với thông tin hồ sơ sinh viên.";
             }
         }
@@ -404,6 +424,8 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         answers.add(personalAnswer("application_student_name", "Họ và tên", studentName));
         answers.add(personalAnswer("application_class_code", "Lớp", classCode));
         answers.add(personalAnswer("application_email", "Email", email));
+        answers.add(personalAnswer("application_phone_number", "Số điện thoại", phoneNumber));
+        answers.add(personalAnswer("application_dob", "Ngày sinh", dob));
         return null;
     }
 
@@ -441,6 +463,9 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
                 return value.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+");
             case "SELECT":
                 return parseOptions(field).contains(value);
+            case "MULTISELECT":
+                return value.lines().map(String::trim).filter(option -> !option.isEmpty())
+                        .allMatch(parseOptions(field)::contains);
             case "CHECKBOX":
                 return "true".equals(value) || "false".equals(value);
             default:

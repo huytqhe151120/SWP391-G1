@@ -49,7 +49,7 @@ public interface IRegistrationFormService {
     String registerQuick(int activityId, int studentId, String note);
 
     String registerWithAnswers(int formId, int studentId, String note, List<RegistrationFormField> answers,
-                               Map<String, String> personalInfo);
+                               Map<String, String> personalInfo, boolean attendanceCommitment);
 
     String cancelRegistration(int registrationId);
 

@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <c:set var="activeNav" value="registration-forms" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -8,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${form.id > 0}">Chỉnh sửa đợt đăng ký</c:when><c:otherwise>Tạo đợt đăng ký</c:otherwise></c:choose> | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261021-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261103-5">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -94,6 +96,71 @@
                                 </div>
                             </div>
 
+                            <c:if test="${not form.quick}">
+                                <section class="registration-builder-section" id="question-builder">
+                                    <div class="activity-form-section registration-builder-heading">
+                                        <div>
+                                            <h3>Câu hỏi bổ sung <span class="registration-question-count" data-question-count></span></h3>
+                                            <p>Mỗi câu hỏi có thể là tự luận, chọn một hoặc chọn nhiều đáp án.</p>
+                                        </div>
+                                    </div>
+                                    <div class="registration-question-list" data-question-list>
+                                        <c:forEach items="${form.fields}" var="field" varStatus="question">
+                                            <article class="registration-question-card" data-question-card>
+                                                <input type="hidden" name="questionRequired_${question.index}"
+                                                       value="${field.required ? 'true' : 'false'}" data-required-value>
+                                                <input type="hidden" name="choiceCount_${question.index}"
+                                                       value="${field.optionCount}" data-choice-count>
+                                                <div class="registration-question-card-heading">
+                                                    <span class="registration-question-number" data-question-number>Câu ${question.count}</span>
+                                                    <select name="questionType_${question.index}" aria-label="Loại câu hỏi" data-question-type>
+                                                        <option value="TEXTAREA" ${field.fieldType eq 'TEXTAREA' or field.fieldType eq 'TEXT' ? 'selected' : ''}>Tự luận</option>
+                                                        <option value="SELECT" ${field.fieldType eq 'SELECT' ? 'selected' : ''}>Dropdown (chọn 1)</option>
+                                                        <option value="MULTISELECT" ${field.fieldType eq 'MULTISELECT' or field.fieldType eq 'CHECKBOX' ? 'selected' : ''}>Nhiều lựa chọn</option>
+                                                    </select>
+                                                    <label class="registration-question-required">
+                                                        <input type="checkbox" data-required-toggle
+                                                               <c:if test="${field.required}">checked</c:if>>
+                                                        Bắt buộc
+                                                    </label>
+                                                    <button class="registration-remove-question" type="button" data-remove-question
+                                                            aria-label="Xóa câu hỏi">×</button>
+                                                </div>
+                                                <label class="registration-question-label">
+                                                    Nội dung câu hỏi
+                                                    <input name="questionLabel_${question.index}" type="text" maxlength="200"
+                                                           value="<c:out value='${field.label}'/>" required>
+                                                </label>
+                                                <div class="registration-choice-editor" data-choice-editor>
+                                                    <div class="registration-choice-list" data-choice-list>
+                                                        <c:forEach items="${field.optionList}" var="option" varStatus="choice">
+                                                            <label class="registration-choice-row">
+                                                                <span class="registration-choice-marker" data-choice-marker>${choice.count}.</span>
+                                                                <input name="choice_${question.index}_${choice.index}" type="text" maxlength="200"
+                                                                       value="<c:out value='${option}'/>" required>
+                                                                <button type="button" data-remove-choice aria-label="Xóa lựa chọn">×</button>
+                                                            </label>
+                                                        </c:forEach>
+                                                    </div>
+                                                    <button class="registration-add-choice" type="button" data-add-choice>+ Thêm lựa chọn</button>
+                                                    <small data-choice-limit></small>
+                                                </div>
+                                            </article>
+                                        </c:forEach>
+                                    </div>
+                                    <div class="registration-add-question-panel">
+                                        <strong>Thêm câu hỏi</strong>
+                                        <div>
+                                            <button type="button" data-add-question="TEXTAREA">+ Tự luận</button>
+                                            <button type="button" data-add-question="SELECT">+ Dropdown (chọn 1)</button>
+                                            <button type="button" data-add-question="MULTISELECT">+ Nhiều lựa chọn</button>
+                                        </div>
+                                        <small>Tối đa 10 câu hỏi và 10 đáp án cho mỗi câu hỏi.</small>
+                                    </div>
+                                    <input type="hidden" name="questionCount" value="${fn:length(form.fields)}" data-question-total>
+                                </section>
+                            </c:if>
+
                             <div class="activity-form-section">
                                 <h3>Thời gian đăng ký</h3>
                                 <p>Thời gian mở/đóng sẽ tự động được set dựa trên thời gian hoạt động. Để trống nếu không giới hạn thời gian.</p>
@@ -131,5 +198,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/registration-form-builder.js?v=20261103-1"></script>
 </body>
 </html>

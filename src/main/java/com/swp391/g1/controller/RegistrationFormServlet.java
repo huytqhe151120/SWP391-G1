@@ -24,10 +24,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,7 @@ import java.util.Map;
 @WebServlet("/registration-forms")
 public class RegistrationFormServlet extends HttpServlet {
 
+    private static final DateTimeFormatter DATE_OF_BIRTH_DISPLAY = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final IRegistrationFormService service = new RegistrationFormServiceImpl();
     private final IStudentService studentService = new StudentServiceImpl();
     private final ExtracurricularActivityServiceImpl activityService = new ExtracurricularActivityServiceImpl();
@@ -76,22 +80,36 @@ public class RegistrationFormServlet extends HttpServlet {
                 String returnTo = safeReturnTo(req, req.getContextPath() + "/activities");
                 RegistrationForm f = service.getOpenFormById(id(req), student.getId());
                 if (f == null) {
-                    String regStatus = service.getRegistrationStatus(id(req), student.getId());
-                    String message = "CANCELLED".equals(regStatus) ? "cancelledBefore"
-                            : (regStatus != null && !"WITHDRAWN".equals(regStatus)) ? "alreadyRegistered"
-                            : service.isOpenFormAtCapacity(id(req)) ? "capacityReached" : "registrationUnavailable";
+                    RegistrationForm formCheck = service.getById(id(req));
+                    String message;
+                    if (formCheck != null && "DRAFT".equals(formCheck.getStatus())) {
+                        message = "formNotOpen";
+                    } else if (formCheck != null && "CLOSED".equals(formCheck.getStatus())) {
+                        message = "formClosed";
+                    } else {
+                        String regStatus = service.getRegistrationStatus(id(req), student.getId());
+                        message = "CANCELLED".equals(regStatus) ? "cancelledBefore"
+                                : (regStatus != null && !"WITHDRAWN".equals(regStatus)) ? "alreadyRegistered"
+                                : service.isOpenFormAtCapacity(id(req)) ? "capacityReached" : "registrationUnavailable";
+                    }
                     req.getSession().setAttribute("errorMessage", registrationMessage(message));
                     resp.sendRedirect(returnTo);
                     return;
                 }
                 Map<String, String> saved = service.getSavedProfile(student.getId());
                 for (RegistrationFormField field : f.getFields()) {
-                    field.setValue(saved.get(field.getFieldKey()));
+                    String savedValue = saved.get(field.getFieldKey());
+                    field.setValue(savedValue);
+                    if ("MULTISELECT".equals(field.getFieldType()) && savedValue != null
+                            && !savedValue.isBlank()) {
+                        field.setSelectedOptions(Arrays.asList(savedValue.split("\\R")));
+                    }
                 }
                 req.setAttribute("student", student);
                 req.setAttribute("personalInfo", personalInfo(student));
                 req.setAttribute("savedProfile", saved);
                 req.setAttribute("form", f);
+                req.setAttribute("activity", activityService.getActivityById(f.getActivityId()));
                 req.setAttribute("returnTo", returnTo);
                 req.getRequestDispatcher("/WEB-INF/views/registration/student-form.jsp").forward(req, resp);
                 return;
@@ -107,8 +125,10 @@ public class RegistrationFormServlet extends HttpServlet {
                     resp.sendError(404);
                     return;
                 }
+                RegistrationForm form = service.getById(application.getFormId());
                 req.setAttribute("application", application);
-                req.setAttribute("form", service.getById(application.getFormId()));
+                req.setAttribute("form", form);
+                setApplicationQuestionFields(req, form, application);
                 req.setAttribute("isStudent", true);
                 req.setAttribute("returnTo", safeReturnTo(req,
                         req.getContextPath() + "/registration-forms?action=myApplications"));
@@ -207,7 +227,9 @@ public class RegistrationFormServlet extends HttpServlet {
                     return;
                 }
                 req.setAttribute("application", application);
-                req.setAttribute("form", service.getById(application.getFormId()));
+                RegistrationForm form = service.getById(application.getFormId());
+                req.setAttribute("form", form);
+                setApplicationQuestionFields(req, form, application);
                 req.getRequestDispatcher("/WEB-INF/views/registration/application-detail.jsp").forward(req, resp);
                 return;
             }
@@ -240,7 +262,15 @@ public class RegistrationFormServlet extends HttpServlet {
                 if (form == null) { resp.sendError(404); return; }
                 List<RegistrationFormField> answers = new ArrayList<>();
                 for (RegistrationFormField field : form.getFields()) {
-                    String value = req.getParameter("field_" + field.getFieldKey());
+                    String[] values = req.getParameterValues("field_" + field.getFieldKey());
+                    String value;
+                    if ("MULTISELECT".equals(field.getFieldType())) {
+                        List<String> selected = values == null ? List.of() : Arrays.asList(values);
+                        field.setSelectedOptions(selected);
+                        value = String.join("\n", selected);
+                    } else {
+                        value = values == null || values.length == 0 ? null : values[0];
+                    }
                     if ("CHECKBOX".equals(field.getFieldType())) {
                         value = "true".equals(value) ? "true" : "false";
                     }
@@ -249,7 +279,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 }
                 Map<String, String> submittedInfo = personalInfo(student);
                 error = service.registerWithAnswers(id(req), student.getId(), req.getParameter("note"), answers,
-                        submittedInfo);
+                        submittedInfo, "true".equals(req.getParameter("attendanceCommitment")));
                 if (error == null) {
                     req.getSession().setAttribute("successMessage", "Đăng ký thành công.");
                     resp.sendRedirect(returnTo);
@@ -259,7 +289,15 @@ public class RegistrationFormServlet extends HttpServlet {
                 RegistrationForm f = service.getById(id(req));
                 if (f != null) {
                     for (RegistrationFormField field : f.getFields()) {
-                        String value = req.getParameter("field_" + field.getFieldKey());
+                        String[] values = req.getParameterValues("field_" + field.getFieldKey());
+                        String value;
+                        if ("MULTISELECT".equals(field.getFieldType())) {
+                            List<String> selected = values == null ? List.of() : Arrays.asList(values);
+                            field.setSelectedOptions(selected);
+                            value = String.join("\n", selected);
+                        } else {
+                            value = values == null || values.length == 0 ? null : values[0];
+                        }
                         field.setValue("CHECKBOX".equals(field.getFieldType())
                                 ? ("true".equals(value) ? "true" : "false")
                                 : value);
@@ -269,6 +307,9 @@ public class RegistrationFormServlet extends HttpServlet {
                 req.setAttribute("personalInfo", submittedInfo);
                 req.setAttribute("savedProfile", service.getSavedProfile(student.getId()));
                 req.setAttribute("form", f);
+                req.setAttribute("activity", f == null ? null : activityService.getActivityById(f.getActivityId()));
+                req.setAttribute("attendanceCommitment",
+                        "true".equals(req.getParameter("attendanceCommitment")));
                 req.setAttribute("returnTo", returnTo);
                 req.getRequestDispatcher("/WEB-INF/views/registration/student-form.jsp").forward(req, resp);
                 return;
@@ -381,6 +422,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 invalidForm.setActivityId(parseInt(req.getParameter("activityId")));
                 invalidForm.setTitle(req.getParameter("title"));
                 invalidForm.setDescription(req.getParameter("description"));
+                invalidForm.setFields(readQuestionFields(req));
                 req.setAttribute("error", error);
                 req.setAttribute("returnTo", safeReturnTo(req, req.getContextPath() + "/registration-forms"));
                 setFormPageAttributes(req, invalidForm);
@@ -392,6 +434,7 @@ public class RegistrationFormServlet extends HttpServlet {
             f.setActivityId(parseInt(req.getParameter("activityId")));
             f.setTitle(req.getParameter("title"));
             f.setDescription(req.getParameter("description"));
+            f.setFields(readQuestionFields(req));
             if (f.getId() > 0) {
                 RegistrationForm existing = service.getById(f.getId());
                 if (existing == null) {
@@ -434,7 +477,6 @@ public class RegistrationFormServlet extends HttpServlet {
                     resp.sendRedirect(safeReturnTo(req, req.getContextPath() + "/registration-forms"));
                     return;
                 }
-                f.setFields(existing.getFields());
                 f.setRegistrationCount(existing.getRegistrationCount());
             }
             String openAt = req.getParameter("openAt");
@@ -514,6 +556,48 @@ public class RegistrationFormServlet extends HttpServlet {
         return raw != null && !raw.isBlank() && parsed == null;
     }
 
+    private static List<RegistrationFormField> readQuestionFields(HttpServletRequest request) {
+        int questionCount = parseInt(request.getParameter("questionCount"));
+        if (questionCount < 0 || questionCount > 10) {
+            List<RegistrationFormField> overflow = new ArrayList<>();
+            for (int i = 0; i < 11; i++) {
+                RegistrationFormField field = new RegistrationFormField();
+                field.setFieldKey("question_" + (i + 1));
+                field.setLabel("Câu hỏi " + (i + 1));
+                field.setFieldType("TEXTAREA");
+                overflow.add(field);
+            }
+            return overflow;
+        }
+
+        List<RegistrationFormField> fields = new ArrayList<>();
+        for (int i = 0; i < questionCount; i++) {
+            RegistrationFormField field = new RegistrationFormField();
+            field.setFieldKey("question_" + (i + 1));
+            field.setLabel(request.getParameter("questionLabel_" + i));
+            String type = request.getParameter("questionType_" + i);
+            field.setFieldType(type == null ? "" : type);
+            field.setRequired("true".equals(request.getParameter("questionRequired_" + i)));
+            field.setSortOrder(i);
+
+            if ("SELECT".equals(type) || "MULTISELECT".equals(type)) {
+                int choiceCount = parseInt(request.getParameter("choiceCount_" + i));
+                if (choiceCount < 0 || choiceCount > 20) {
+                    field.setOptions("");
+                } else {
+                    List<String> choices = new ArrayList<>();
+                    for (int choice = 0; choice < choiceCount; choice++) {
+                        String value = request.getParameter("choice_" + i + "_" + choice);
+                        choices.add(value == null ? "" : value.trim());
+                    }
+                    field.setOptions(String.join("\n", choices));
+                }
+            }
+            fields.add(field);
+        }
+        return fields;
+    }
+
     private void setFormPageAttributes(HttpServletRequest request, RegistrationForm form) {
         request.setAttribute("form", form);
         List<Integer> usedActivityIds = service.getAll().stream()
@@ -534,13 +618,39 @@ public class RegistrationFormServlet extends HttpServlet {
                 DateTimeUtil.formatInput(DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)));
     }
 
+    private static void setApplicationQuestionFields(HttpServletRequest request, RegistrationForm form,
+                                                     RegistrationApplication application) {
+        List<RegistrationFormField> questions = form == null ? List.of() : form.getFields().stream()
+                .filter(field -> field.getFieldKey() != null && field.getFieldKey().startsWith("question_"))
+                .toList();
+        if (questions.isEmpty()) {
+            questions = application.getAnswers().stream()
+                    .filter(answer -> answer.getFieldKey() != null
+                            && answer.getFieldKey().startsWith("question_"))
+                    .toList();
+        }
+        request.setAttribute("questionFields", questions);
+    }
+
     private static Map<String, String> personalInfo(Student student) {
         Map<String, String> values = new HashMap<>();
         values.put("studentCode", student.getCode());
         values.put("studentName", student.getName());
         values.put("classCode", student.getMainClassCode());
         values.put("email", student.getEmail());
+        values.put("phoneNumber", student.getPhoneNumber());
+        values.put("dob", student.getDob());
+        values.put("dobDisplay", formatDateOfBirth(student.getDob()));
         return values;
+    }
+
+    private static String formatDateOfBirth(String dob) {
+        if (dob == null || dob.isBlank()) return "";
+        try {
+            return LocalDate.parse(dob).format(DATE_OF_BIRTH_DISPLAY);
+        } catch (DateTimeParseException e) {
+            return dob;
+        }
     }
 
     private static String registrationMessage(String code) {
@@ -549,6 +659,8 @@ public class RegistrationFormServlet extends HttpServlet {
             case "capacityReached" -> "Hoạt động đã đủ số lượng đăng ký.";
             case "cancelledBefore" ->
                     "Bạn đã hủy đăng ký hoạt động này sau khi được duyệt nên không thể đăng ký lại. Vui lòng liên hệ ban tổ chức nếu cần.";
+            case "formNotOpen" -> "Đợt đăng ký chưa mở. Vui lòng quay lại sau khi thời gian mở đăng ký bắt đầu.";
+            case "formClosed" -> "Đợt đăng ký đã đóng.";
             default -> "Hoạt động hiện chưa mở đăng ký hoặc đã đóng.";
         };
     }

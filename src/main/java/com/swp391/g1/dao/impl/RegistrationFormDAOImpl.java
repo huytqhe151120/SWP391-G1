@@ -309,7 +309,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_code,s.code) AS student_code,"
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
-                + "COALESCE(submitted.email,s.email) AS email,r.note,r.status,r.submitted_at "
+                + "COALESCE(submitted.email,s.email) AS email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at "
                 + ",r.pending_since "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
@@ -340,7 +340,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_code,s.code) AS student_code,"
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
-                + "COALESCE(submitted.email,s.email) AS email,r.note,r.status,r.submitted_at "
+                + "COALESCE(submitted.email,s.email) AS email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at "
                 + ",r.pending_since "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
@@ -374,6 +374,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         application.setStudentName(r.getString("student_name"));
         application.setClassCode(r.getString("class_code"));
         application.setEmail(r.getString("email"));
+        application.setPhoneNumber(r.getString("phone_number"));
         application.setNote(r.getString("note"));
         application.setStatus(r.getString("status"));
         Timestamp submittedAt = r.getTimestamp("submitted_at");
@@ -849,7 +850,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
     @Override
     public List<RegistrationApplication> findApplicationsForStudent(int studentId) {
-        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,s.email,r.note,r.status,r.submitted_at,r.pending_since, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
+        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
                 + "CASE WHEN a.activity_status='UPCOMING' AND (a.start_time IS NULL OR a.start_time>DATEADD(HOUR,24,SYSUTCDATETIME())) THEN 1 ELSE 0 END AS can_cancel, "
                 + "CASE WHEN a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=0 THEN 1 ELSE 0 END AS quick_registration "
                 + "FROM dbo.activity_registration r LEFT JOIN dbo.activity_registration_form f ON f.id=r.form_id "

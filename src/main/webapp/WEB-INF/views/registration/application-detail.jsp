@@ -37,8 +37,8 @@
                 <section class="card activity-form-card activity-detail-card registration-detail-card">
                     <div class="activity-table-heading">
                         <div>
-                            <h2><c:out value="${application.studentName}"/></h2>
-                            <p>Đơn #<c:out value="${application.id}"/></p>
+                            <h2><c:out value="${application.studentName}"/> <span class="badge status-pill status-blue">Đơn #<c:out value="${application.id}"/></span></h2>
+                            <p>Thời gian gửi: <c:out value="${dt:format(application.submittedAt)}"/></p>
                         </div>
                         <c:choose>
                             <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
@@ -58,21 +58,40 @@
                                 <div class="detail-item"><dt>Họ và tên</dt><dd><c:out value="${application.studentName}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Lớp</dt><dd><c:out value="${application.classCode}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Email</dt><dd><c:out value="${application.email}" default="—"/></dd></div>
-                                <div class="detail-item"><dt>Thời gian gửi</dt><dd><c:out value="${dt:format(application.submittedAt)}"/></dd></div>
+                                <div class="detail-item"><dt>Số điện thoại</dt><dd><c:out value="${application.phoneNumber}" default="—"/></dd></div>
                             </dl>
                         </section>
 
                         <section class="activity-detail-section">
-                            <h3>Câu trả lời trong đơn</h3>
+                            <h3>Thông tin bổ sung</h3>
                             <dl class="detail-grid activity-detail-grid">
-                                <c:forEach items="${application.answers}" var="answer">
-                                    <div class="detail-item">
-                                        <dt><c:out value="${answer.label}"/></dt>
-                                        <dd><c:out value="${answer.value}" default="—"/></dd>
+                                <c:set var="hasSupplementaryAnswers" value="false"/>
+                                <c:forEach items="${questionFields}" var="field" varStatus="question">
+                                    <c:set var="hasSupplementaryAnswers" value="true"/>
+                                    <div class="detail-item field-wide">
+                                        <dt>Câu <c:out value="${question.count}"/>: <c:out value="${field.label}"/></dt>
+                                        <dd class="activity-detail-description">
+                                            <c:set var="questionAnswer" value="${field.value}"/>
+                                            <c:forEach items="${application.answers}" var="answer">
+                                                <c:if test="${answer.fieldKey eq field.fieldKey}">
+                                                    <c:set var="questionAnswer" value="${answer.value}"/>
+                                                </c:if>
+                                            </c:forEach>
+                                            <c:choose>
+                                                <c:when test="${not empty questionAnswer}"><c:out value="${questionAnswer}"/></c:when>
+                                                <c:otherwise>—</c:otherwise>
+                                            </c:choose>
+                                        </dd>
                                     </div>
                                 </c:forEach>
+                                <c:if test="${not hasSupplementaryAnswers}">
+                                    <div class="detail-item field-wide"><dd>Không có câu trả lời bổ sung.</dd></div>
+                                </c:if>
                                 <c:if test="${not empty application.note}">
                                     <div class="detail-item field-wide"><dt>Ghi chú</dt><dd class="activity-detail-description"><c:out value="${application.note}"/></dd></div>
+                                </c:if>
+                                <c:if test="${empty application.note}">
+                                    <div class="detail-item field-wide"><dt>Ghi chú</dt><dd>—</dd></div>
                                 </c:if>
                             </dl>
                         </section>

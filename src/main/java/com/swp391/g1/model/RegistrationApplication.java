@@ -12,6 +12,7 @@ public class RegistrationApplication {
     private String studentName;
     private String classCode;
     private String email;
+    private String phoneNumber;
     private String note;
     private String status;
     private LocalDateTime submittedAt;
@@ -45,6 +46,9 @@ public class RegistrationApplication {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }

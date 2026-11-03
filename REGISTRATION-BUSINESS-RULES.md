@@ -10,6 +10,9 @@ Trước khi sử dụng form đăng ký, custom form fields, thông tin hồ s�
 - `src/main/resources/db/registration-form-status.sql`
 - `src/main/resources/db/registration-form-activity-limit.sql`
 - `src/main/resources/db/registration-application-status.sql`
+- `src/main/resources/db/registration-form-multiselect.sql`
+
+Migration `registration-form-multiselect.sql` cập nhật constraint của trường form để chấp nhận kiểu câu hỏi `MULTISELECT`.
 
 ## Tạo và quản lý form
 

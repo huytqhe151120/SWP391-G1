@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Hoạt động ngoại khóa</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261102-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=5">
 </head>
 <body>
@@ -192,7 +192,11 @@
                                 </th>
                             </c:if>
                             <c:if test="${isStudent}">
-                                <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>đăng ký</span>
+                                <th scope="col" class="activity-order-status-column"><span>Trạng thái</span><span>đơn</span>
+                                </th>
+                            </c:if>
+                            <c:if test="${isStudent}">
+                                <th scope="col" class="activity-registration-status-column"><span>Trạng thái</span><span>đăng ký</span>
                                 </th>
                             </c:if>
                             <th scope="col" class="activity-action-column">Thao tác</th>
@@ -202,7 +206,7 @@
                         <c:choose>
                             <c:when test="${empty activities}">
                                 <tr>
-                                    <td class="empty-state activity-empty-state" colspan="${isStudent ? 13 : 12}">
+                                    <td class="empty-state activity-empty-state" colspan="${isStudent ? 14 : 12}">
                                         <span class="empty-state-mark" aria-hidden="true">+</span>
                                         <c:choose>
                                             <c:when test="${filtered}">
@@ -286,29 +290,26 @@
                                             </td>
                                         </c:if>
                                         <c:if test="${isStudent}">
-                                            <td class="activity-status-column">
+                                            <td class="activity-order-status-column">
+                                                <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
+                                                <c:choose>
+                                                    <c:when test="${not empty activityForm}">
+                                                        <span class="badge status-pill ${st:css(activityForm.status)}">${st:label(activityForm.status)}</span>
+                                                    </c:when>
+                                                    <c:otherwise>—</c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                        </c:if>
+                                        <c:if test="${isStudent}">
+                                            <td class="activity-registration-status-column">
                                                 <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
                                                 <c:choose>
-                                                    <c:when test="${not empty myReg}">
-                                                        <c:choose>
-                                                            <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
-                                                            <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
-                                                            <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
-                                                            <c:when test="${myReg.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span></c:when>
-                                                            <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Đã rút đơn</span></c:when>
-                                                            <c:otherwise><span class="badge status-pill status-muted"><c:out value="${myReg.status}"/></span></c:otherwise>
-                                                        </c:choose>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <c:choose>
-                                                            <c:when test="${activity.nature eq 'REQUIRE_REGISTRATION'}">
-                                                                <span class="badge status-pill status-muted">Chưa đăng ký</span>
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                <span class="badge status-pill status-gray">Không yêu cầu</span>
-                                                            </c:otherwise>
-                                                        </c:choose>
-                                                    </c:otherwise>
+                                                    <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
+                                                    <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
+                                                    <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
+                                                    <c:when test="${myReg.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
+                                                    <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill status-blue">Đã rút đơn</span></c:when>
+                                                    <c:otherwise><span class="badge status-pill status-gray">Chưa đăng ký</span></c:otherwise>
                                                 </c:choose>
                                             </td>
                                         </c:if>
@@ -326,11 +327,17 @@
                                                     <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
                                                     <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
                                                     <c:set var="canRegister" value="${activitiesAvailableForRegistration.contains(activity.id) and empty myReg}"/>
-                                                    <c:if test="${not empty myReg or canRegister}">
+                                                    <c:if test="${not empty myReg or canRegister or (not empty activityForm and activityForm.status == 'DRAFT')}">
                                                         <details class="action-menu">
                                                             <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
                                                             <div class="action-menu__items">
                                                                 <c:choose>
+                                                                    <c:when test="${not empty activityForm and activityForm.status == 'DRAFT' and empty myReg}">
+                                                                        <span class="action-menu-item" style="color: #77849a; cursor: default;">
+                                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/></svg></span>
+                                                                            Đăng ký (chưa mở)
+                                                                        </span>
+                                                                    </c:when>
                                                                     <c:when test="${myReg.status eq 'WITHDRAWN'}">
                                                                         <a class="action-menu-item action-menu-item--view"
                                                                            href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${myReg.id}&amp;returnTo=${activityReturnUrlParameter}">
@@ -425,19 +432,6 @@
                                                                 cx="12" cy="12" r="3"/></svg></span>
                                                         Chi tiết
                                                     </a>
-                                                </c:if>
-                                                <c:if test="${isStudent and activity['public'] and activity.approvalStatus eq 'APPROVED' and activity.activityStatus eq 'UPCOMING' and activity.nature eq 'REQUIRE_REGISTRATION' and activity.registrationFormRequired}">
-                                                    <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
-                                                    <c:if test="${not empty activityForm and activityForm.status != 'OPENING'}">
-                                                        <c:choose>
-                                                            <c:when test="${activityForm.status == 'DRAFT'}">
-                                                                <span class="badge status-pill status-yellow">Chưa mở</span>
-                                                            </c:when>
-                                                            <c:when test="${activityForm.status == 'CLOSED'}">
-                                                                <span class="badge status-pill status-red">Đã đóng</span>
-                                                            </c:when>
-                                                        </c:choose>
-                                                    </c:if>
                                                 </c:if>
                                                 <c:if test="${(canManageActivities && (activitiesBeforeStart.contains(activity.id) || activity.activityStatus == 'CANCELLED')) || (canManageActivities && activitiesBeforeStart.contains(activity.id) && (activity.approvalStatus == 'DRAFT' || activity.approvalStatus == 'REJECTED')) || (canApproveActivities && activitiesBeforeStart.contains(activity.id) && (activity.approvalStatus == 'PENDING' || activity.approvalStatus == 'APPROVED' || activity.approvalStatus == 'REJECTED'))}">
                                                     <details class="action-menu">
@@ -630,6 +624,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261102-1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261104-1"></script>
 </body>
 </html>

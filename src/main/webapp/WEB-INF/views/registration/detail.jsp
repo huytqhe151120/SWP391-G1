@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <c:set var="activeNav" value="registration-forms" scope="request"/>
@@ -42,7 +43,7 @@
                 <section class="card activity-form-card activity-detail-card registration-detail-card">
                     <div class="activity-table-heading">
                         <div>
-                            <h2>Thông tin form</h2>
+                            <h2>Thông tin chi tiết form</h2>
                             <p>Chi tiết nội dung và tình trạng đăng ký của form.</p>
                         </div>
                         <div class="registration-detail-actions">
@@ -57,7 +58,7 @@
                     <div class="activity-tabs-nav registration-detail-tabs" role="tablist">
                         <button type="button" class="activity-tab-btn active" id="btn-tab-form-info"
                                 data-tab="tab-form-info" role="tab" aria-selected="true" aria-controls="tab-form-info">
-                            Thông tin form
+                            Thông tin chi tiết form
                         </button>
                         <button type="button" class="activity-tab-btn" id="btn-tab-form-applications"
                                 data-tab="tab-form-applications" role="tab" aria-selected="false" aria-controls="tab-form-applications">
@@ -81,10 +82,6 @@
                                     <div class="detail-item">
                                         <dt>Trạng thái</dt>
                                         <dd><span class="badge status-pill ${st:css(form.status)}">${st:label(form.status)}</span></dd>
-                                    </div>
-                                    <div class="detail-item">
-                                        <dt>Số lượng đăng ký</dt>
-                                        <dd><span class="registration-count"><c:out value="${form.registrationCount}"/></span></dd>
                                     </div>
                                     <div class="detail-item">
                                         <dt>Số chỗ đang giữ</dt>
@@ -121,6 +118,45 @@
                                         <dt>Nội dung</dt>
                                         <dd class="activity-detail-description"><c:out value="${form.description}" default="Chưa có mô tả"/></dd>
                                     </div>
+                                </dl>
+                            </section>
+
+                            <section class="activity-detail-section">
+                                <h3>Câu hỏi bổ sung</h3>
+                                <dl class="detail-grid activity-detail-grid">
+                                    <c:set var="hasQuestions" value="false"/>
+                                    <c:set var="questionNumber" value="0"/>
+                                    <c:forEach items="${form.fields}" var="field">
+                                        <c:if test="${not empty field.fieldKey and fn:startsWith(field.fieldKey, 'question_')}">
+                                            <c:set var="hasQuestions" value="true"/>
+                                            <c:set var="questionNumber" value="${questionNumber + 1}"/>
+                                            <div class="detail-item field-wide">
+                                                <dt>Câu <c:out value="${questionNumber}"/>: <c:out value="${field.label}"/>
+                                                    <c:if test="${field.required}"><span class="required-mark">*</span></c:if>
+                                                </dt>
+                                                <dd>
+                                                    <c:choose>
+                                                        <c:when test="${field.fieldType eq 'SELECT'}">Dropdown — chọn một đáp án</c:when>
+                                                        <c:when test="${field.fieldType eq 'MULTISELECT' or field.fieldType eq 'CHECKBOX'}">Chọn nhiều đáp án</c:when>
+                                                        <c:otherwise>Tự luận</c:otherwise>
+                                                    </c:choose>
+                                                    <c:if test="${not empty field.optionList}">
+                                                        <ul class="registration-detail-question-options">
+                                                            <c:forEach items="${field.optionList}" var="option">
+                                                                <li><c:out value="${option}"/></li>
+                                                            </c:forEach>
+                                                        </ul>
+                                                    </c:if>
+                                                </dd>
+                                            </div>
+                                        </c:if>
+                                    </c:forEach>
+                                    <c:if test="${not hasQuestions}">
+                                        <div class="detail-item field-wide">
+                                            <dt>Câu hỏi</dt>
+                                            <dd>Form này không có câu hỏi bổ sung.</dd>
+                                        </div>
+                                    </c:if>
                                 </dl>
                             </section>
                         </div>
