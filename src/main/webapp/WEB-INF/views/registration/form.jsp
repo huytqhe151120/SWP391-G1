@@ -163,17 +163,18 @@
 
                             <div class="activity-form-section">
                                 <h3>Thời gian đăng ký</h3>
-                                <p>Thời gian mở/đóng sẽ tự động được set dựa trên thời gian hoạt động. Để trống nếu không giới hạn thời gian.</p>
+                                <p>Thời gian mở và đóng là bắt buộc. Hạn đóng phải trước giờ bắt đầu hoạt động ít nhất 24 giờ.</p>
                             </div>
                             <div class="form-grid activity-form-grid">
                                 <div class="field">
-                                    <label for="openAt">Thời gian mở đăng ký</label>
-                                    <input id="openAt" name="openAt" type="datetime-local" min="${form.quick ? '' : minimumRegistrationTime}"
+                                    <label for="openAt">Thời gian mở đăng ký <span class="required-mark">*</span></label>
+                                    <input id="openAt" name="openAt" type="datetime-local" required
+                                           <c:if test="${not form.quick and form.id == 0}">min="${minimumRegistrationTime}"</c:if>
                                            value="${form.openAt}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
                                 </div>
                                 <div class="field">
-                                    <label for="closeAt">Thời gian đóng đăng ký</label>
-                                    <input id="closeAt" name="closeAt" type="datetime-local" min="${form.quick ? '' : minimumRegistrationTime}"
+                                    <label for="closeAt">Thời gian đóng đăng ký <span class="required-mark">*</span></label>
+                                    <input id="closeAt" name="closeAt" type="datetime-local" required
                                            value="${form.closeAt}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
                                 </div>
                             </div>

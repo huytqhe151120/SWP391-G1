@@ -57,7 +57,12 @@ public interface IRegistrationFormDAO {
     boolean registerStudentWithAnswers(int formId, int studentId, String note,
                                        List<RegistrationFormField> answers);
 
-    boolean reviewApplication(int registrationId, String expectedStatus, String newStatus);
+    boolean reviewApplication(int registrationId, String expectedStatus, String newStatus,
+                              String rejectionReason);
+
+    boolean rejectApplications(int formId, List<Integer> registrationIds, String reason);
+
+    boolean approveApplications(int formId, List<Integer> registrationIds);
 
     boolean cancelRegistration(int registrationId);
 

@@ -10,6 +10,7 @@ Trước khi sử dụng form đăng ký, custom form fields, thông tin hồ s�
 - `src/main/resources/db/registration-form-status.sql`
 - `src/main/resources/db/registration-form-activity-limit.sql`
 - `src/main/resources/db/registration-application-status.sql`
+- `src/main/resources/db/registration-application-rejection-reason.sql`
 - `src/main/resources/db/registration-form-multiselect.sql`
 
 Migration `registration-form-multiselect.sql` cập nhật constraint của trường form để chấp nhận kiểu câu hỏi `MULTISELECT`.
@@ -19,6 +20,7 @@ Migration `registration-form-multiselect.sql` cập nhật constraint của trư
 - Mỗi hoạt động chỉ có tối đa một form đăng ký.
 - Chỉ hoạt động đã được duyệt và còn ở trạng thái `UPCOMING` mới được tạo form hoặc mở form đăng ký.
 - Form có ba trạng thái: `DRAFT` (bản nháp), `OPENING` (đang mở đăng ký) và `CLOSED` (đã đóng).
+- Thời gian mở và đóng là bắt buộc; hạn đóng phải cách thời điểm bắt đầu hoạt động ít nhất 24 giờ.
 - Form `DRAFT` được lên lịch với thời điểm mở trong tương lai sẽ tự chuyển sang `OPENING` khi đến hạn. Form đang `OPENING` tự đóng khi hết hạn đăng ký hoặc khi hoạt động bắt đầu, bị hủy hay không còn đủ điều kiện. Bộ lập lịch đồng bộ khi ứng dụng khởi động và mỗi phút.
 - Không thể mở form trước thời điểm mở hoặc sau thời điểm đóng. Form đã đóng có thể được mở lại nếu hoạt động vẫn đủ điều kiện và hạn đăng ký chưa qua.
 - Khi sửa form, không thể chỉnh sửa form đã có đơn đăng ký. Việc giữ nguyên thời điểm mở cũ đã qua được chấp nhận để chỉnh sửa các thông tin khác; không thể đặt thời điểm mở mới trong quá khứ hoặc lưu bản nháp với thời điểm mở đã qua.
@@ -26,6 +28,7 @@ Migration `registration-form-multiselect.sql` cập nhật constraint của trư
 ## Gửi đơn và sức chứa
 
 - Sinh viên chỉ gửi được đơn khi form thực sự đang `OPENING`, thời gian đăng ký còn hiệu lực, hoạt động đã được duyệt và đang `UPCOMING`, và hoạt động còn chỗ.
+- Mã sinh viên, họ tên, lớp, email, số điện thoại và ngày sinh lấy từ hồ sơ; các thông tin này bắt buộc và không thể sửa trong form đăng ký. Sinh viên cần cập nhật hồ sơ nếu thiếu số điện thoại hoặc ngày sinh.
 - `max_participants` là giới hạn tùy chọn: giá trị rỗng nghĩa là không giới hạn; nếu có giá trị thì phải lớn hơn 0.
 - Các đơn `SUBMITTED` (chờ xử lý) và `APPROVED` (đã duyệt) đều giữ một chỗ. Đơn `REJECTED` (đã từ chối) không giữ chỗ.
 - Đơn chỉ được tính là gửi thành công sau khi giao dịch lưu đơn và các câu trả lời hoàn tất. Thời điểm `submitted_at` được lưu trong cơ sở dữ liệu lúc gửi thành công; nếu nhiều đơn có cùng thời điểm, ID đơn dùng để xác định thứ tự.
@@ -38,6 +41,7 @@ Migration `registration-form-multiselect.sql` cập nhật constraint của trư
 
 - Trạng thái đơn gồm `SUBMITTED`, `APPROVED` và `REJECTED`. Nhân viên có thể duyệt hoặc từ chối đơn đang `SUBMITTED`; duyệt giữ nguyên chỗ đã có, từ chối giải phóng chỗ.
 - Các đơn chờ được sắp xếp theo `submitted_at` tăng dần, sau đó theo ID tăng dần. Backend chỉ cho phép duyệt hoặc từ chối đơn chờ sớm nhất của form; có đơn chờ cũ hơn thì thao tác trên đơn mới hơn bị từ chối, bất kể thứ tự hiển thị ở giao diện.
+- Khi staff từ chối đơn, phải nhập lý do (tối đa 1000 ký tự); lý do được lưu theo đơn và hiển thị trong chi tiết đơn cho sinh viên. Staff có thể chọn nhiều đơn đầu hàng đợi để duyệt cùng lúc hoặc từ chối bằng một lý do chung; thao tác theo lô là nguyên tử, nếu một đơn không còn hợp lệ thì không đơn nào bị cập nhật.
 - Hủy duyệt chuyển `APPROVED` về `SUBMITTED`, không giải phóng chỗ. Hủy từ chối chuyển `REJECTED` về `SUBMITTED` và chỉ được phép nếu còn chỗ.
 - Luồng ngoại lệ cho phép ưu tiên hoặc xử lý ngoài thứ tự gửi hiện chưa được triển khai. Nếu nhà trường cần ngoại lệ, cần có quy định riêng cùng thao tác ghi nhận người thực hiện, lý do và thời điểm; không được bỏ qua thứ tự một cách âm thầm.
 

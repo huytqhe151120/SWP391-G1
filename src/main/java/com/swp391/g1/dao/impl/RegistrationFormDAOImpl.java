@@ -9,11 +9,16 @@ import com.swp391.g1.util.DateTimeUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
+    // Activity start times are stored in UTC; form deadlines use Vietnam local time (UTC+7).
+    private static final String ACTIVITY_CLOSE_CUTOFF =
+            "DATEADD(HOUR,-24,DATEADD(HOUR,7,a.start_time))";
     private static final String SELECT = "SELECT f.*, a.name AS activity_name, a.max_participants, "
             + "(SELECT COUNT(*) FROM dbo.activity_registration r WHERE r.form_id=f.id AND r.status<>'WITHDRAWN') AS registration_count, "
             + "(SELECT COUNT(*) FROM dbo.activity_registration r WHERE r.form_id=f.id "
@@ -63,7 +68,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
                 + "WHERE f.status='OPENING' OR (f.status='DRAFT' AND ("
                 + "(f.close_at IS NOT NULL AND f.close_at<=SYSDATETIME()) "
-                + "OR (f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME()))) "
+                + "OR f.open_at IS NULL OR f.open_at<=SYSDATETIME())) "
                 + "ORDER BY a.id";
         try (PreparedStatement p = c.prepareStatement(sql); ResultSet r = p.executeQuery()) {
             while (r.next()) {
@@ -124,10 +129,12 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     @Override
     public RegistrationForm findOpenFormById(int id, int studentId) {
         String sql = SELECT + " WHERE f.id=? AND f.status='OPENING' "
-                + "AND (f.open_at IS NULL OR f.open_at<=SYSDATETIME()) "
-                + "AND (f.close_at IS NULL OR f.close_at>SYSDATETIME()) AND a.approval_status='APPROVED' "
+                + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
+                + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
+                + "AND a.start_time IS NOT NULL AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF + " "
+                + "AND a.approval_status='APPROVED' "
                 + "AND a.activity_status='UPCOMING' AND a.is_public=1 AND a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=1 "
-                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
+                + "AND a.start_time>SYSUTCDATETIME() "
                 + "AND (a.max_participants IS NULL OR (SELECT COUNT(*) FROM dbo.activity_registration occupied "
                 + "WHERE occupied.form_id=f.id AND occupied.status IN ('SUBMITTED','APPROVED')) < a.max_participants) "
                 + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=f.id AND r.student_id=? AND r.status<>'WITHDRAWN')";
@@ -222,10 +229,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         String sql = "SELECT 1 FROM dbo.activity_registration_form f "
                 + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
                 + "WHERE f.id=? AND f.status='OPENING' "
-                + "AND (f.open_at IS NULL OR f.open_at<=SYSDATETIME()) "
-                + "AND (f.close_at IS NULL OR f.close_at>SYSDATETIME()) "
+                + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
+                + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
+                + "AND a.start_time IS NOT NULL AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF + " "
                 + "AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
-                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
+                + "AND a.start_time>SYSUTCDATETIME() "
                 + "AND a.max_participants IS NOT NULL "
                 + "AND (SELECT COUNT(*) FROM dbo.activity_registration r WHERE r.form_id=f.id "
                 + "AND r.status IN ('SUBMITTED','APPROVED')) >= a.max_participants";
@@ -276,15 +284,19 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "OR NOT EXISTS(SELECT 1 FROM dbo.extracurricular_activity a "
                 + "WHERE a.id=activity_registration_form.activity_id AND a.approval_status='APPROVED' "
                 + "AND a.activity_status='UPCOMING' "
-                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME())))) "
+                + "AND a.start_time IS NOT NULL AND a.start_time>SYSUTCDATETIME() "
+                + "AND activity_registration_form.open_at IS NOT NULL "
+                + "AND activity_registration_form.close_at IS NOT NULL "
+                + "AND activity_registration_form.close_at<=" + ACTIVITY_CLOSE_CUTOFF + "))) "
                 + "OR (status='DRAFT' AND close_at IS NOT NULL AND close_at<=SYSDATETIME())";
         String openScheduledSql = "UPDATE f SET status='OPENING',updated_at=SYSDATETIME() "
                 + "FROM dbo.activity_registration_form f "
                 + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
                 + "WHERE f.status='DRAFT' AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
-                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
+                + "AND a.start_time IS NOT NULL AND a.start_time>SYSUTCDATETIME() "
                 + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
-                + "AND (f.close_at IS NULL OR f.close_at>SYSDATETIME())";
+                + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
+                + "AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF;
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
@@ -310,7 +322,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
                 + "COALESCE(submitted.email,s.email) AS email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at "
-                + ",r.pending_since "
+                + ",r.pending_since,r.rejection_reason "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
                 + "LEFT JOIN (SELECT registration_id,"
@@ -341,7 +353,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
                 + "COALESCE(submitted.email,s.email) AS email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at "
-                + ",r.pending_since "
+                + ",r.pending_since,r.rejection_reason "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
                 + "LEFT JOIN (SELECT registration_id,"
@@ -377,6 +389,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         application.setPhoneNumber(r.getString("phone_number"));
         application.setNote(r.getString("note"));
         application.setStatus(r.getString("status"));
+        application.setRejectionReason(r.getString("rejection_reason"));
         Timestamp submittedAt = r.getTimestamp("submitted_at");
         if (submittedAt != null) application.setSubmittedAt(submittedAt.toLocalDateTime());
         Timestamp pendingSince = r.getTimestamp("pending_since");
@@ -521,6 +534,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
+                if (!lockActivityForForm(c, f.getId())) {
+                    c.rollback();
+                    return false;
+                }
                 int changed;
                 try (PreparedStatement p = c.prepareStatement(sql)) {
                     bindForm(p, f);
@@ -634,6 +651,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     p.setInt(1, id);
                     p.executeUpdate();
                 }
+                try (PreparedStatement p = c.prepareStatement(
+                        "DELETE FROM dbo.activity_registration_form_field WHERE form_id=?")) {
+                    p.setInt(1, id);
+                    p.executeUpdate();
+                }
                 boolean deleted;
                 try (PreparedStatement p = c.prepareStatement(
                         "DELETE FROM dbo.activity_registration_form WHERE id=?")) {
@@ -667,9 +689,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     @Override
-    public boolean reviewApplication(int registrationId, String expectedStatus, String newStatus) {
-        String sql = "UPDATE r SET status=?, pending_since=CASE "
-                + "WHEN ?='SUBMITTED' AND ?<>'SUBMITTED' THEN SYSDATETIME() "
+    public boolean reviewApplication(int registrationId, String expectedStatus, String newStatus,
+                                     String rejectionReason) {
+        String sql = "UPDATE r SET status=?, rejection_reason=CASE WHEN ?='REJECTED' THEN ? ELSE NULL END, "
+                + "pending_since=CASE WHEN ?='SUBMITTED' AND ?<>'SUBMITTED' THEN SYSDATETIME() "
                 + "ELSE r.pending_since END FROM dbo.activity_registration r "
                 + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
                 + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
@@ -705,9 +728,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 try (PreparedStatement p = c.prepareStatement(sql)) {
                     p.setString(1, newStatus);
                     p.setString(2, newStatus);
-                    p.setString(3, expectedStatus);
-                    p.setInt(4, registrationId);
+                    p.setString(3, rejectionReason);
+                    p.setString(4, newStatus);
                     p.setString(5, expectedStatus);
+                    p.setInt(6, registrationId);
+                    p.setString(7, expectedStatus);
                     boolean changed = p.executeUpdate() > 0;
                     if (changed) c.commit();
                     else c.rollback();
@@ -723,12 +748,97 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     @Override
+    public boolean rejectApplications(int formId, List<Integer> registrationIds, String reason) {
+        String sql = "UPDATE r SET status='REJECTED',rejection_reason=? "
+                + "FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
+                + "WHERE r.id=? AND r.form_id=? AND r.status='SUBMITTED' "
+                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration earlier_app WITH (UPDLOCK,HOLDLOCK) "
+                + "WHERE earlier_app.form_id=r.form_id AND earlier_app.status='SUBMITTED' "
+                + "AND (earlier_app.pending_since<r.pending_since "
+                + "OR (earlier_app.pending_since=r.pending_since AND earlier_app.id<r.id)))";
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                if (registrationIds.isEmpty() || !lockActivityForApplication(c, registrationIds.get(0))) {
+                    c.rollback();
+                    return false;
+                }
+                try (PreparedStatement p = c.prepareStatement(sql)) {
+                    for (int registrationId : registrationIds) {
+                        p.setString(1, reason);
+                        p.setInt(2, registrationId);
+                        p.setInt(3, formId);
+                        if (p.executeUpdate() != 1) {
+                            c.rollback();
+                            return false;
+                        }
+                    }
+                }
+                c.commit();
+                return true;
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể từ chối các đơn đăng ký đã chọn.", e);
+        }
+    }
+
+    @Override
+    public boolean approveApplications(int formId, List<Integer> registrationIds) {
+        String sql = "UPDATE r SET status='APPROVED',rejection_reason=NULL "
+                + "FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
+                + "WHERE r.id=? AND r.form_id=? AND r.status='SUBMITTED' "
+                + "AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
+                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
+                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration earlier_app WITH (UPDLOCK,HOLDLOCK) "
+                + "WHERE earlier_app.form_id=r.form_id AND earlier_app.status='SUBMITTED' "
+                + "AND (earlier_app.pending_since<r.pending_since "
+                + "OR (earlier_app.pending_since=r.pending_since AND earlier_app.id<r.id)))";
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                if (registrationIds.isEmpty() || !lockActivityForApplication(c, registrationIds.get(0))) {
+                    c.rollback();
+                    return false;
+                }
+                try (PreparedStatement p = c.prepareStatement(sql)) {
+                    for (int registrationId : registrationIds) {
+                        p.setInt(1, registrationId);
+                        p.setInt(2, formId);
+                        if (p.executeUpdate() != 1) {
+                            c.rollback();
+                            return false;
+                        }
+                    }
+                }
+                c.commit();
+                return true;
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể duyệt các đơn đăng ký đã chọn.", e);
+        }
+    }
+
+    @Override
     public boolean registerStudentWithAnswers(int formId, int studentId, String note,
                                               List<RegistrationFormField> answers) {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
                 if (!lockActivityForForm(c, formId)) {
+                    c.rollback();
+                    return false;
+                }
+                if (!answersMatchCurrentFormFields(c, formId, answers)) {
                     c.rollback();
                     return false;
                 }
@@ -766,9 +876,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                         + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
                         + "WHERE f.id=? AND f.status='OPENING' AND a.approval_status='APPROVED' "
                         + "AND a.activity_status='UPCOMING' AND a.is_public=1 AND a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=1 "
-                        + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
-                        + "AND (f.open_at IS NULL OR f.open_at<=SYSDATETIME()) "
-                        + "AND (f.close_at IS NULL OR f.close_at>SYSDATETIME()) "
+                        + "AND a.start_time IS NOT NULL AND a.start_time>SYSUTCDATETIME() "
+                        + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
+                        + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
+                        + "AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF + " "
                         + "AND (a.max_participants IS NULL OR (SELECT COUNT(*) FROM dbo.activity_registration occupied WITH (UPDLOCK,HOLDLOCK) "
                         + "WHERE occupied.form_id=f.id AND occupied.status IN ('SUBMITTED','APPROVED')) < a.max_participants) "
                         + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration x WITH (UPDLOCK,HOLDLOCK) "
@@ -812,6 +923,33 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    private boolean answersMatchCurrentFormFields(Connection c, int formId,
+                                                  List<RegistrationFormField> answers) throws SQLException {
+        Map<Integer, String> submittedFields = new HashMap<>();
+        if (answers != null) {
+            for (RegistrationFormField answer : answers) {
+                if (answer != null && answer.getId() > 0) {
+                    submittedFields.put(answer.getId(), answer.getFieldKey());
+                }
+            }
+        }
+
+        int currentFieldCount = 0;
+        try (PreparedStatement p = c.prepareStatement(
+                "SELECT id,field_key FROM dbo.activity_registration_form_field WHERE form_id=?")) {
+            p.setInt(1, formId);
+            try (ResultSet r = p.executeQuery()) {
+                while (r.next()) {
+                    currentFieldCount++;
+                    if (!Objects.equals(submittedFields.get(r.getInt("id")), r.getString("field_key"))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return currentFieldCount == submittedFields.size();
+    }
+
     @Override
     public Map<String, String> findSavedProfile(int studentId) {
         Map<String, String> profile = new LinkedHashMap<>();
@@ -850,7 +988,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
     @Override
     public List<RegistrationApplication> findApplicationsForStudent(int studentId) {
-        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
+        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since,r.rejection_reason, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
                 + "CASE WHEN a.activity_status='UPCOMING' AND (a.start_time IS NULL OR a.start_time>DATEADD(HOUR,24,SYSUTCDATETIME())) THEN 1 ELSE 0 END AS can_cancel, "
                 + "CASE WHEN a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=0 THEN 1 ELSE 0 END AS quick_registration "
                 + "FROM dbo.activity_registration r LEFT JOIN dbo.activity_registration_form f ON f.id=r.form_id "
@@ -894,7 +1032,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 if (!r.next()) return -1;
                 name = r.getString(1);
                 Timestamp start = r.getTimestamp(2);
-                if (start != null) closeAt = DateTimeUtil.fromUtc(start.toLocalDateTime()).minusHours(1);
+                if (start == null) return -1;
+                closeAt = DateTimeUtil.fromUtc(start.toLocalDateTime()).minusHours(24);
             }
         }
         java.time.LocalDateTime now = DateTimeUtil.now();
@@ -924,10 +1063,13 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 int formId = findOrCreateQuickForm(c, activityId);
                 if (formId > 0) {
                     // Duyệt lại sau khi bị thu hồi: mở lại form nếu thời gian còn hợp lệ
-                    String reopenSql = "UPDATE dbo.activity_registration_form SET status='OPENING',updated_at=SYSDATETIME() "
-                            + "WHERE id=? AND status='CLOSED' "
-                            + "AND (open_at IS NULL OR open_at<=SYSDATETIME()) "
-                            + "AND (close_at IS NULL OR close_at>SYSDATETIME())";
+                    String reopenSql = "UPDATE f SET status='OPENING',updated_at=SYSDATETIME() "
+                            + "FROM dbo.activity_registration_form f "
+                            + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
+                            + "WHERE f.id=? AND f.status='CLOSED' "
+                            + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
+                            + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
+                            + "AND a.start_time IS NOT NULL AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF;
                     try (PreparedStatement p = c.prepareStatement(reopenSql)) {
                         p.setInt(1, formId);
                         p.executeUpdate();
@@ -1003,9 +1145,12 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     return "UNAVAILABLE";
                 }
                 // Kiểm tra thời gian mở/đóng của form
-                String windowSql = "SELECT 1 FROM dbo.activity_registration_form f WHERE f.id=? AND f.status='OPENING' "
-                        + "AND (f.open_at IS NULL OR f.open_at<=SYSDATETIME()) "
-                        + "AND (f.close_at IS NULL OR f.close_at>SYSDATETIME())";
+                String windowSql = "SELECT 1 FROM dbo.activity_registration_form f "
+                        + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
+                        + "WHERE f.id=? AND f.status='OPENING' "
+                        + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
+                        + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
+                        + "AND a.start_time IS NOT NULL AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF;
                 try (PreparedStatement p = c.prepareStatement(windowSql)) {
                     p.setInt(1, formId);
                     try (ResultSet r = p.executeQuery()) {

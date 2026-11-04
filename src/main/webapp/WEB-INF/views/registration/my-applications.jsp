@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <c:set var="activeNav" value="registration-forms" scope="request"/>
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đơn đăng ký</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261026-1"><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261026-1"></head><body><div class="activity-app-shell">
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Đơn đăng ký</title><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-2"><link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261104-4"></head><body><div class="activity-app-shell">
 <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
 <div class="activity-app-layout">
     <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
@@ -48,9 +48,9 @@
                                 <td><c:choose><c:when test="${app.status eq 'SUBMITTED'}"><span
                                         class="badge status-pill status-yellow">Chờ duyệt</span></c:when><c:when
                                         test="${app.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when><c:when
-                                        test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span></c:when><c:when
+                                        test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span><c:if test="${not empty app.rejectionReason}"><small class="registration-list-rejection-reason"><c:out value="${app.rejectionReason}"/></small></c:if></c:when><c:when
                                         test="${app.status eq 'CANCELLED'}"><span class="badge status-pill status-red">Đã hủy</span></c:when><c:when
-                                        test="${app.status eq 'WITHDRAWN'}"><span class="badge status-pill status-muted">Đã rút đơn</span></c:when><c:otherwise><span
+                                        test="${app.status eq 'WITHDRAWN'}"><span class="badge status-pill status-blue">Đã rút đơn</span></c:when><c:otherwise><span
                                         class="badge status-pill status-muted"><c:out value="${app.status}"/></span></c:otherwise></c:choose>
                                 </td>
                                 <td>

@@ -15,6 +15,7 @@ public class RegistrationApplication {
     private String phoneNumber;
     private String note;
     private String status;
+    private String rejectionReason;
     private LocalDateTime submittedAt;
     private LocalDateTime pendingSince;
     private List<RegistrationFormField> answers = new ArrayList<>();
@@ -55,6 +56,9 @@ public class RegistrationApplication {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }

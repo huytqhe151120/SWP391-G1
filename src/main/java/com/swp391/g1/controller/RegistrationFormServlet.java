@@ -128,6 +128,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 RegistrationForm form = service.getById(application.getFormId());
                 req.setAttribute("application", application);
                 req.setAttribute("form", form);
+                req.setAttribute("applicationDob", applicationDateOfBirth(application));
                 setApplicationQuestionFields(req, form, application);
                 req.setAttribute("isStudent", true);
                 req.setAttribute("returnTo", safeReturnTo(req,
@@ -209,8 +210,11 @@ public class RegistrationFormServlet extends HttpServlet {
                         f.setActivityId(activityId);
                         // Auto-set openAt and closeAt based on activity time
                         if (activity.getStartTime() != null) {
-                            f.setOpenAt(activity.getStartTime().minusDays(7)); // Open 7 days before activity
-                            f.setCloseAt(activity.getStartTime().minusHours(1)); // Close 1 hour before activity
+                            LocalDateTime defaultOpenAt = activity.getStartTime().minusDays(7);
+                            LocalDateTime earliestOpenAt = DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES)
+                                    .plusMinutes(1);
+                            f.setOpenAt(defaultOpenAt.isBefore(earliestOpenAt) ? earliestOpenAt : defaultOpenAt);
+                            f.setCloseAt(activity.getStartTime().minusHours(24));
                         }
                     }
                 }
@@ -229,6 +233,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 req.setAttribute("application", application);
                 RegistrationForm form = service.getById(application.getFormId());
                 req.setAttribute("form", form);
+                req.setAttribute("applicationDob", applicationDateOfBirth(application));
                 setApplicationQuestionFields(req, form, application);
                 req.getRequestDispatcher("/WEB-INF/views/registration/application-detail.jsp").forward(req, resp);
                 return;
@@ -371,12 +376,33 @@ public class RegistrationFormServlet extends HttpServlet {
                 resp.sendError(403);
                 return;
             }
+            if ("bulkRejectApplications".equals(action) || "bulkApproveApplications".equals(action)) {
+                int formId = parseInt(req.getParameter("formId"));
+                String[] rawIds = req.getParameterValues("registrationIds");
+                List<Integer> registrationIds = rawIds == null ? List.of()
+                        : Arrays.stream(rawIds).map(RegistrationFormServlet::parseInt).toList();
+                boolean rejecting = "bulkRejectApplications".equals(action);
+                error = rejecting
+                        ? service.rejectApplications(formId, registrationIds, req.getParameter("rejectionReason"))
+                        : service.approveApplications(formId, registrationIds);
+                if (error == null) {
+                    req.getSession().setAttribute("successMessage",
+                            "Đã " + (rejecting ? "từ chối " : "duyệt ") + registrationIds.size()
+                                    + " đơn" + (rejecting ? " với cùng một lý do." : "."));
+                } else {
+                    req.getSession().setAttribute("errorMessage", error);
+                }
+                resp.sendRedirect(req.getContextPath() + "/registration-forms?action=view&id="
+                        + formId + "&tab=applications");
+                return;
+            }
             if ("approveApplication".equals(action) || "rejectApplication".equals(action)
                     || "undoApplicationApproval".equals(action) || "undoApplicationRejection".equals(action)) {
                 int registrationId = parseInt(req.getParameter("registrationId"));
                 error = switch (action) {
                     case "approveApplication" -> service.reviewApplication(registrationId);
-                    case "rejectApplication" -> service.rejectApplication(registrationId);
+                    case "rejectApplication" -> service.rejectApplication(
+                            registrationId, req.getParameter("rejectionReason"));
                     case "undoApplicationApproval" -> service.undoApplicationApproval(registrationId);
                     default -> service.undoApplicationRejection(registrationId);
                 };
@@ -392,6 +418,7 @@ public class RegistrationFormServlet extends HttpServlet {
                     case "undoApplicationRejection" -> "rejectionUndone";
                     default -> "approvalUndone";
                 }
+                        : "rejectApplication".equals(action) && error.contains("lý do") ? "reasonError"
                         : error.contains("đã đủ số lượng tối đa") ? "capacityError"
                         : error.contains("được gửi trước") ? "fifoError" : "reviewError";
                 resp.sendRedirect(req.getContextPath() + "/registration-forms?action=application&id="
@@ -620,16 +647,27 @@ public class RegistrationFormServlet extends HttpServlet {
 
     private static void setApplicationQuestionFields(HttpServletRequest request, RegistrationForm form,
                                                      RegistrationApplication application) {
-        List<RegistrationFormField> questions = form == null ? List.of() : form.getFields().stream()
-                .filter(field -> field.getFieldKey() != null && field.getFieldKey().startsWith("question_"))
+        List<RegistrationFormField> questions = application.getAnswers().stream()
+                .filter(answer -> answer.getFieldKey() != null
+                        && answer.getFieldKey().startsWith("question_"))
                 .toList();
-        if (questions.isEmpty()) {
-            questions = application.getAnswers().stream()
-                    .filter(answer -> answer.getFieldKey() != null
-                            && answer.getFieldKey().startsWith("question_"))
+        if (questions.isEmpty() && form != null) {
+            questions = form.getFields().stream()
+                    .filter(field -> field.getFieldKey() != null
+                            && field.getFieldKey().startsWith("question_"))
                     .toList();
         }
         request.setAttribute("questionFields", questions);
+    }
+
+    private static String applicationDateOfBirth(RegistrationApplication application) {
+        return application.getAnswers().stream()
+                .filter(answer -> "application_dob".equals(answer.getFieldKey()))
+                .map(RegistrationFormField::getValue)
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst()
+                .map(RegistrationFormServlet::formatDateOfBirth)
+                .orElse(null);
     }
 
     private static Map<String, String> personalInfo(Student student) {

@@ -34,7 +34,11 @@ public interface IRegistrationFormService {
 
     String reviewApplication(int registrationId);
 
-    String rejectApplication(int registrationId);
+    String rejectApplication(int registrationId, String reason);
+
+    String rejectApplications(int formId, List<Integer> registrationIds, String reason);
+
+    String approveApplications(int formId, List<Integer> registrationIds);
 
     String undoApplicationRejection(int registrationId);
 

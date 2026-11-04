@@ -8,8 +8,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết đơn đăng ký | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261021-14">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261104-5">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -28,6 +28,7 @@
 
                 <c:if test="${param.msg eq 'approved'}"><div class="alert alert-success activity-alert">Đã duyệt đơn đăng ký.</div></c:if>
                 <c:if test="${param.msg eq 'rejected'}"><div class="alert alert-error activity-alert">Đã từ chối đơn đăng ký.</div></c:if>
+                <c:if test="${param.msg eq 'reasonError'}"><div class="alert alert-error activity-alert">Vui lòng nhập lý do từ chối (tối đa 1000 ký tự).</div></c:if>
                 <c:if test="${param.msg eq 'rejectionUndone'}"><div class="alert alert-success activity-alert">Đã hủy từ chối; đơn trở về trạng thái chờ duyệt.</div></c:if>
                 <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt đơn; đơn đang chờ xử lý.</div></c:if>
                 <c:if test="${param.msg eq 'reviewError'}"><div class="alert alert-error activity-alert">Trạng thái đơn đã thay đổi hoặc không thể cập nhật.</div></c:if>
@@ -45,7 +46,7 @@
                             <c:when test="${application.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
                             <c:when test="${application.status eq 'CANCELLED'}"><span
                                     class="badge status-pill status-gray">Sinh viên đã hủy</span></c:when>
-                            <c:when test="${application.status eq 'WITHDRAWN'}"><span class="badge status-pill status-gray">Sinh viên đã rút đơn</span></c:when>
+                            <c:when test="${application.status eq 'WITHDRAWN'}"><span class="badge status-pill status-blue">Sinh viên đã rút đơn</span></c:when>
                             <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
                         </c:choose>
                     </div>
@@ -59,6 +60,7 @@
                                 <div class="detail-item"><dt>Lớp</dt><dd><c:out value="${application.classCode}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Email</dt><dd><c:out value="${application.email}" default="—"/></dd></div>
                                 <div class="detail-item"><dt>Số điện thoại</dt><dd><c:out value="${application.phoneNumber}" default="—"/></dd></div>
+                                <div class="detail-item"><dt>Ngày sinh</dt><dd><c:out value="${applicationDob}" default="—"/></dd></div>
                             </dl>
                         </section>
 
@@ -70,18 +72,7 @@
                                     <c:set var="hasSupplementaryAnswers" value="true"/>
                                     <div class="detail-item field-wide">
                                         <dt>Câu <c:out value="${question.count}"/>: <c:out value="${field.label}"/></dt>
-                                        <dd class="activity-detail-description">
-                                            <c:set var="questionAnswer" value="${field.value}"/>
-                                            <c:forEach items="${application.answers}" var="answer">
-                                                <c:if test="${answer.fieldKey eq field.fieldKey}">
-                                                    <c:set var="questionAnswer" value="${answer.value}"/>
-                                                </c:if>
-                                            </c:forEach>
-                                            <c:choose>
-                                                <c:when test="${not empty questionAnswer}"><c:out value="${questionAnswer}"/></c:when>
-                                                <c:otherwise>—</c:otherwise>
-                                            </c:choose>
-                                        </dd>
+                                        <dd class="activity-detail-description"><c:out value="${not empty field.value ? field.value : '—'}"/></dd>
                                     </div>
                                 </c:forEach>
                                 <c:if test="${not hasSupplementaryAnswers}">
@@ -95,6 +86,12 @@
                                 </c:if>
                             </dl>
                         </section>
+                        <c:if test="${application.status eq 'REJECTED'}">
+                            <section class="activity-detail-section">
+                                <h3>Lý do từ chối</h3>
+                                <p class="registration-rejection-reason"><c:out value="${application.rejectionReason}" default="Không có lý do được ghi nhận."/></p>
+                            </section>
+                        </c:if>
                     </div>
 
                     <div class="form-actions activity-form-actions">
@@ -104,16 +101,31 @@
                         <c:if test="${not isStudent}"><c:choose>
                             <c:when test="${application.status eq 'SUBMITTED'}">
                                 <div class="registration-review-actions">
+                                    <form class="registration-individual-rejection" method="post"
+                                          action="${pageContext.request.contextPath}/registration-forms"
+                                          data-individual-rejection-form>
+                                        <input type="hidden" name="action" value="rejectApplication">
+                                        <input type="hidden" name="registrationId" value="${application.id}">
+                                        <button class="button registration-review-button registration-review-button--reject-outline"
+                                                type="button" data-show-rejection-reason>Từ chối đơn</button>
+                                        <div class="registration-individual-rejection-panel"
+                                             data-individual-rejection-panel hidden>
+                                            <label for="rejectionReason">Lý do từ chối <span class="required-mark">*</span></label>
+                                            <textarea id="rejectionReason" name="rejectionReason" rows="3"
+                                                      maxlength="1000" placeholder="Nhập lý do từ chối"></textarea>
+                                            <div class="registration-rejection-actions">
+                                                <button class="button registration-review-button registration-review-button--reject"
+                                                        type="submit" data-confirm-rejection disabled>Xác nhận từ chối</button>
+                                                <button class="button button-secondary" type="button"
+                                                        data-cancel-rejection>Hủy</button>
+                                            </div>
+                                        </div>
+                                    </form>
                                     <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                                         <input type="hidden" name="action" value="approveApplication">
                                         <input type="hidden" name="registrationId" value="${application.id}">
-                                        <button class="button registration-review-button registration-review-button--approve" type="submit">Duyệt đơn</button>
-                                    </form>
-                                    <form method="post" action="${pageContext.request.contextPath}/registration-forms"
-                                          onsubmit="return confirm('Từ chối đơn đăng ký này?')">
-                                        <input type="hidden" name="action" value="rejectApplication">
-                                        <input type="hidden" name="registrationId" value="${application.id}">
-                                        <button class="button registration-review-button registration-review-button--reject" type="submit">Từ chối đơn</button>
+                                        <button class="button registration-review-button registration-review-button--approve"
+                                                type="submit">Duyệt đơn</button>
                                     </form>
                                 </div>
                             </c:when>
@@ -140,5 +152,37 @@
         </div>
     </div>
 </div>
+<script>
+    (function() {
+        const rejectionForm = document.querySelector('[data-individual-rejection-form]');
+        if (!rejectionForm) return;
+        const showReason = rejectionForm.querySelector('[data-show-rejection-reason]');
+        const reasonPanel = rejectionForm.querySelector('[data-individual-rejection-panel]');
+        const reasonInput = rejectionForm.querySelector('[name="rejectionReason"]');
+        const cancelButton = rejectionForm.querySelector('[data-cancel-rejection]');
+        const confirmButton = rejectionForm.querySelector('[data-confirm-rejection]');
+        showReason.addEventListener('click', function() {
+            reasonPanel.hidden = false;
+            reasonInput.required = true;
+            showReason.hidden = true;
+            reasonInput.focus();
+        });
+        cancelButton.addEventListener('click', function() {
+            reasonPanel.hidden = true;
+            reasonInput.required = false;
+            reasonInput.value = '';
+            showReason.hidden = false;
+            confirmButton.disabled = true;
+        });
+        reasonInput.addEventListener('input', function() {
+            confirmButton.disabled = !reasonInput.value.trim();
+        });
+        rejectionForm.addEventListener('submit', function(event) {
+            if (!reasonInput.value.trim() || !window.confirm('Từ chối đơn với lý do đã nhập?')) {
+                event.preventDefault();
+            }
+        });
+    })();
+</script>
 </body>
 </html>

@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Hoạt động ngoại khóa</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=5">
 </head>
 <body>
