@@ -15,6 +15,9 @@ public interface IActivityParticipantDAO {
 
     int countByActivityId(int activityId);
 
+    /** Distinct students in the attendance roster or holding an active registration seat. */
+    int countOccupiedByActivityId(int activityId);
+
     /**
      * Adds active students that are not yet in the activity, in one transaction. Returns the number of
      * inserted rows, or -1 (nothing inserted) when the result would exceed maxParticipants (null = no limit).

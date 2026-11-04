@@ -240,6 +240,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     dto.setEndTime(endTime == null
                             ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
                     dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+                    dto.setPublic(rs.getBoolean("is_public"));
 
                     // Thông tin chi tiết JOIN từ các bảng liên quan
                     dto.setSemesterCode(rs.getString("semester_code"));
@@ -532,6 +533,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
         // Remove the partner-company link before its invitation because it references that invitation.
         String[] dependentDeletes = {
+                "DELETE h FROM activity_attendance_history h "
+                        + "JOIN activity_participant ap ON ap.id = h.activity_participant_id "
+                        + "WHERE ap.activity_id = ?",
+                "DELETE FROM activity_participant WHERE activity_id = ?",
                 "DELETE FROM activity_staff WHERE activity_id = ?",
                 "DELETE FROM activity_department WHERE activity_id = ?",
                 "DELETE FROM activity_partner_staff WHERE activity_id = ?",
@@ -789,6 +794,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
 
         String[] dependentDeletes = {
+                "DELETE h FROM activity_attendance_history h "
+                        + "JOIN activity_participant ap ON ap.id = h.activity_participant_id "
+                        + "WHERE ap.activity_id = ?",
+                "DELETE FROM activity_participant WHERE activity_id = ?",
                 "DELETE FROM activity_staff WHERE activity_id = ?",
                 "DELETE FROM activity_department WHERE activity_id = ?",
                 "DELETE FROM activity_partner_staff WHERE activity_id = ?",
