@@ -4,6 +4,12 @@ Tài liệu này mô tả quy tắc tạo và quản lý form đăng ký hoạt 
 
 ## Cài đặt cơ sở dữ liệu
 
+Trước khi sử dụng chức năng điểm danh và quản lý danh sách sinh viên hoạt động, áp dụng script
+`src/main/resources/db/activity-attendance.sql` vào SQL Server.
+
+Khi thêm sinh viên vào danh sách điểm danh, sức chứa được tính trên các sinh viên phân biệt đã có trong danh sách
+và các đơn đăng ký `SUBMITTED`/`APPROVED` đang giữ chỗ; một sinh viên thuộc cả hai nhóm chỉ chiếm một chỗ.
+
 Trước khi sử dụng form đăng ký, custom form fields, thông tin hồ sơ được lưu và trạng thái đơn bị từ chối, áp dụng các script sau vào SQL Server:
 
 - `src/main/resources/db/registration-form-fields.sql`

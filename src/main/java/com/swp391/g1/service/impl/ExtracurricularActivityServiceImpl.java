@@ -417,7 +417,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         ExtracurricularActivity submitted = changeApprovalStatus(id, ApprovalStatus.PENDING,
                 "Only draft or rejected activities can be submitted for approval.",
                 ApprovalStatus.DRAFT, ApprovalStatus.REJECTED);
-        if (submitted != null && submitted.getApprovalStatus() == ApprovalStatus.DRAFT) {
+        if (submitted != null) {
             notificationService.notifyApprovalRequest(id, submitted.getName());
         }
         return submitted != null;
@@ -541,7 +541,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             new com.swp391.g1.dao.impl.RegistrationFormDAOImpl().ensureQuickForm(id);
         }
 
-        return true;
+        return activity;
     }
 
     /**

@@ -71,7 +71,7 @@ DBContext
 
 `DBContext` loads the connection settings from `src/main/resources/ConnectDB.properties` and opens connections with `java.sql.DriverManager`. Database credentials are developer-local and must never be committed to the repository or documented in the README.
 
-Before using registration forms, custom form fields, saved profile answers, and rejected applications, apply the SQL scripts listed in [REGISTRATION-BUSINESS-RULES.md](REGISTRATION-BUSINESS-RULES.md) to the configured SQL Server database.
+Before using attendance or registration features, apply the SQL scripts listed in [REGISTRATION-BUSINESS-RULES.md](REGISTRATION-BUSINESS-RULES.md) to the configured SQL Server database.
 
 See [REGISTRATION-BUSINESS-RULES.md](REGISTRATION-BUSINESS-RULES.md) for the detailed rules for creating and managing activity registration forms, accepting applications, capacity limits, and application review.
 

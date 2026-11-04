@@ -61,6 +61,7 @@ public class HomeServlet extends HttpServlet {
             List<ExtracurricularActivityResponseDTO> approvedActivities =
                     activityService.getAllActivities().stream()
                             .filter(activity -> activity.getApprovalStatus() == ApprovalStatus.APPROVED)
+                            .filter(ExtracurricularActivityResponseDTO::isPublic)
                             .collect(Collectors.toList());
 
             Comparator<ExtracurricularActivityResponseDTO> byStartTime =
