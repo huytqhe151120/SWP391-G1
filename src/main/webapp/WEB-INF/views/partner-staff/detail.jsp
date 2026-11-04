@@ -8,12 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết nhân viên đối tác | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 <main class="page activity-list-page activity-form-page">
     <header class="activity-hero">
@@ -76,5 +77,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

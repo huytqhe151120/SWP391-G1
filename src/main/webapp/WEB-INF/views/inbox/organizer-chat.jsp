@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat với ${student.name} - SWP391 G1</title>
@@ -109,9 +109,9 @@
 </head>
 <body class="support-page organizer-chat-page">
 <div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 
 <header class="header">

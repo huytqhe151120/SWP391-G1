@@ -56,8 +56,8 @@ public class ActivityPartnerStaffDAOImpl implements IActivityPartnerStaffDAO {
     public boolean insert(int activityId, int partnerStaffId) {
         String sql = """
                 INSERT INTO activity_partner_staff
-                    (activity_id, partner_staff_id, assigned_on, collaboration_status)
-                SELECT ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2), 'ACTIVE'
+                    (activity_id, partner_staff_id, assigned_on)
+                SELECT ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
                 WHERE EXISTS (
                     SELECT 1
                     FROM extracurricular_activity

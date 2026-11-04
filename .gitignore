@@ -56,3 +56,9 @@ src/main/resources/ConnectDB.properties
 /nbbuild/
 /nbdist/
 /.nb-gradle/
+
+# ------------------------------------------------------------------
+# AI Prompts & Local Instructions
+# ------------------------------------------------------------------
+.prompts/
+*.md.local

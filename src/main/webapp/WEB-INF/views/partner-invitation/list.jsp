@@ -1,7 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.swp391.g1.dto.CurrentUser" %>
+<%@ page import="com.swp391.g1.util.AuthContext" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<%
+    CurrentUser invNavUser = AuthContext.getCurrentUser(request);
+    String invNavType = invNavUser == null ? "" : invNavUser.getType();
+    boolean showCompanyColumn = "ADMIN".equals(invNavType) || "STAFF".equals(invNavType);
+    pageContext.setAttribute("showCompanyColumn", showCompanyColumn);
+%>
 <c:set var="activeNav" value="partner-invitations" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -9,14 +17,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lời mời hợp tác | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=13">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=25">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 <main class="page activity-list-page">
     <header class="activity-hero">
@@ -56,7 +65,7 @@
             <div class="activity-filter-field activity-filter-search">
                 <label for="filter-keyword">Tìm kiếm</label>
                 <input id="filter-keyword" type="search" name="keyword" value="<c:out value='${keyword}'/>"
-                       placeholder="Mã hoặc tên hoạt động">
+                       placeholder="${showCompanyColumn ? 'Tên công ty, mã hoặc tên hoạt động' : 'Mã hoặc tên hoạt động'}">
             </div>
             <div class="activity-filter-field">
                 <label for="filter-type">Loại hoạt động</label>
@@ -106,6 +115,9 @@
             <table class="partner-invitation-table">
                 <thead>
                 <tr>
+                    <c:if test="${showCompanyColumn}">
+                        <th scope="col">Tên công ty</th>
+                    </c:if>
                     <th scope="col">Mã hoạt động</th>
                     <th scope="col">Tên hoạt động</th>
                     <th scope="col">Loại hoạt động</th>
@@ -121,7 +133,7 @@
                 <c:choose>
                     <c:when test="${empty invitations}">
                         <tr>
-                            <td class="empty-state activity-empty-state" colspan="9">
+                            <td class="empty-state activity-empty-state" colspan="${showCompanyColumn ? 10 : 9}">
                                 <c:choose>
                                     <c:when test="${filtered}"><strong>Không tìm thấy lời mời phù hợp</strong></c:when>
                                     <c:otherwise><strong>Chưa có lời mời hợp tác nào</strong></c:otherwise>
@@ -132,6 +144,9 @@
                     <c:otherwise>
                         <c:forEach var="inv" items="${invitations}">
                             <tr>
+                                <c:if test="${showCompanyColumn}">
+                                    <td><strong class="activity-name"><c:out value="${inv.partnerCompanyName}" default="—"/></strong></td>
+                                </c:if>
                                 <td><span class="activity-code"><c:out value="${inv.activityCode}"/></span></td>
                                 <td><strong class="activity-name"><c:out value="${inv.activityName}"/></strong></td>
                                 <td><c:out value="${inv.activityTypeName}" default="—"/></td>
@@ -149,11 +164,13 @@
                                 <td class="freeze freeze-message">
                                     <c:choose>
                                         <c:when test="${empty inv.message}">—</c:when>
-                                        <c:otherwise>
-                                            <button type="button" class="button button-sm invitation-message-view"
-                                                    data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
-                                                    data-message="<c:out value='${inv.message}'/>">Xem</button>
-                                        </c:otherwise>
+                                            <c:when test="${empty inv.message}">—</c:when>
+                                            <c:otherwise>
+                                                <button type="button" class="button button-sm action-btn action-btn--view invitation-message-view"
+                                                        data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
+                                                        data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
+                                                </button>
+                                            </c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td class="freeze freeze-status invitation-status-column">
@@ -167,7 +184,8 @@
                                 </td>
                                 <td class="freeze freeze-actions">
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}#tab-partner">
+                                        <a class="activity-action-link action-btn action-btn--view" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}">
+                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                             Chi tiết
                                         </a>
                                         <c:if test="${inv.canRespond || inv.canRevoke}">
@@ -264,6 +282,7 @@
     <div style="text-align: right;"><button type="button" class="button" id="invitation-message-modal-close">Đóng</button></div>
 </dialog>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
-<script src="${pageContext.request.contextPath}/assets/js/partner-invitation.js?v=3"></script>
+<script src="${pageContext.request.contextPath}/assets/js/partner-invitation.js?v=8"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

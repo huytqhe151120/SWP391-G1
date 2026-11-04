@@ -9,15 +9,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261021-12">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
 </head>
 <body>
-<div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
-        <main class="page activity-list-page activity-form-page activity-detail-page">
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+        <main class="activity-app-main page activity-list-page activity-form-page activity-detail-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG</span>
@@ -41,6 +43,19 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
+            <c:if test="${canManageActivities}">
+                <div class="activity-heading-actions">
+                    <a class="button button-outline action-btn"
+                       href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
+                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                        Điểm danh
+                    </a>
+                    <c:if test="${activity.activityStatus == 'UPCOMING'}">
+                        <a class="button button-primary"
+                           href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+                    </c:if>
+                </div>
+            </c:if>
             <div class="activity-detail-header-actions">
                 <c:if test="${canManageActivities}">
                     <c:choose>
@@ -70,13 +85,13 @@
 
         <div class="activity-tabs-nav" role="tablist">
             <button type="button" class="activity-tab-btn active" id="btn-tab-info" data-tab="tab-info" role="tab" aria-selected="true" aria-controls="tab-info">
-                Thông tin chi tiết hoạt động
+                Thông tin chi tiết
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-staff" data-tab="tab-staff" role="tab" aria-selected="false" aria-controls="tab-staff">
-                Đơn vị đồng phụ trách
+                Phụ trách
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-partner" data-tab="tab-partner" role="tab" aria-selected="false" aria-controls="tab-partner">
-                Đối tác hỗ trợ hoạt động
+                Đối tác
             </button>
         </div>
 
@@ -148,13 +163,13 @@
                         <table>
                             <thead>
                             <tr>
-                                <th scope="col" style="width: 60px;">STT</th>
+                                <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Mã đơn vị</th>
                                 <th scope="col">Tên đơn vị</th>
-                                <th scope="col">Trạng thái</th>
+                                <th scope="col">Trạng thái đơn vị</th>
                                 <th scope="col">Thời gian thêm</th>
                                 <c:if test="${canRemoveStaff}">
-                                    <th scope="col" style="text-align: right; width: 120px;">Thao tác</th>
+                                    <th scope="col" class="activity-action-column">Thao tác</th>
                                 </c:if>
                             </tr>
                             </thead>
@@ -162,8 +177,8 @@
                             <c:choose>
                                 <c:when test="${empty coDepartments}">
                                     <tr>
-                                        <td colspan="${canRemoveStaff ? 6 : 5}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
-                                            Chưa có đơn vị đồng phụ trách nào.
+                                        <td class="empty-state activity-empty-state" colspan="${canRemoveStaff ? 6 : 5}">
+                                            <strong>Chưa có đơn vị đồng phụ trách nào.</strong>
                                         </td>
                                     </tr>
                                 </c:when>
@@ -176,16 +191,17 @@
                                             <td><span class="badge status-pill ${st:css(cd.departmentStatus)}">${st:label(cd.departmentStatus)}</span></td>
                                             <td><c:out value="${cd.formattedCreatedAt}"/></td>
                                             <c:if test="${canRemoveStaff}">
-                                                <td style="text-align: right;">
-                                                    <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
+                                                <td class="activity-action-column">
+                                                    <div class="actions activity-actions"><form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                           data-confirm="Gỡ đơn vị này sẽ đồng thời gỡ các nhân sự chỉ thuộc đơn vị này khỏi hoạt động. Bạn có chắc chắn?">
                                                         <input type="hidden" name="action" value="removeDepartment">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="departmentId" value="${cd.departmentId}">
-                                                        <button type="submit" class="button" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: #dc2626; border-color: #fca5a5;">
+                                                        <button type="submit" class="button button-sm action-btn action-btn--bulk-reject">
+                                                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg></span>
                                                             Gỡ bỏ
                                                         </button>
-                                                    </form>
+                                                    </form></div>
                                                 </td>
                                             </c:if>
                                         </tr>
@@ -226,9 +242,7 @@
                                             </div>
                                             <span class="multi-select-count" aria-live="polite">Chưa chọn đơn vị</span>
                                         </div>
-                                        <button type="submit" class="button button-primary">
-                                            + Thêm đơn vị đồng phụ trách
-                                        </button>
+                                        <button type="submit" class="button button-primary button-sm action-btn"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Thêm đơn vị đồng phụ trách</button>
                                     </form>
                                 </c:when>
                                 <c:otherwise>
@@ -248,10 +262,6 @@
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
                                 Các nhân sự thuộc đơn vị đồng phụ trách tham gia điều phối hoạt động.
                             </p>
-                            <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Nhân sự phụ trách chính: <strong><c:out value="${activity.responsibleStaffName}" default="Chưa có"/></strong>
-                                - Đơn vị: <c:out value="${activity.responsibleDepartmentName}" default="Không có"/>
-                            </p>
                         </div>
                         <span class="activity-count">
                             <c:choose>
@@ -265,14 +275,14 @@
                         <table>
                             <thead>
                             <tr>
-                                <th scope="col" style="width: 60px;">STT</th>
+                                <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Mã nhân sự</th>
                                 <th scope="col">Họ và tên</th>
                                 <th scope="col">Trạng thái nhân sự</th>
                                 <th scope="col">Chức vụ</th>
                                 <th scope="col">Thời gian phân công</th>
                                 <c:if test="${canRemoveStaff && activity.activityStatus == 'UPCOMING'}">
-                                    <th scope="col" style="text-align: right; width: 120px;">Thao tác</th>
+                                    <th scope="col" class="activity-action-column">Thao tác</th>
                                 </c:if>
                             </tr>
                             </thead>
@@ -280,8 +290,8 @@
                             <c:choose>
                                 <c:when test="${empty assignedStaffs}">
                                     <tr>
-                                        <td colspan="${canRemoveStaff && activity.activityStatus == 'UPCOMING' ? 7 : 6}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
-                                            Chưa có nhân sự nào được phân công phụ trách hoạt động này.
+                                        <td class="empty-state activity-empty-state" colspan="${canRemoveStaff && activity.activityStatus == 'UPCOMING' ? 7 : 6}">
+                                            <strong>Chưa có nhân sự nào được phân công phụ trách hoạt động này.</strong>
                                         </td>
                                     </tr>
                                 </c:when>
@@ -295,16 +305,17 @@
                                             <td><c:out value="${ast.position}" default="Nhân viên"/></td>
                                             <td><c:out value="${ast.formattedAssignedOn}"/></td>
                                             <c:if test="${canRemoveStaff && activity.activityStatus == 'UPCOMING'}">
-                                                <td style="text-align: right;">
-                                                    <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
+                                                <td class="activity-action-column">
+                                                    <div class="actions activity-actions"><form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                       data-confirm="Bạn có chắc chắn muốn hủy phân công nhân sự này?">
                                                     <input type="hidden" name="action" value="unassignStaff">
                                                     <input type="hidden" name="activityId" value="${activity.id}">
                                                     <input type="hidden" name="staffId" value="${ast.staffId}">
-                                                    <button type="submit" class="button" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: #dc2626; border-color: #fca5a5;">
+                                                    <button type="submit" class="button button-sm action-btn action-btn--bulk-reject">
+                                                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg></span>
                                                         Gỡ bỏ
                                                     </button>
-                                                    </form>
+                                                    </form></div>
                                                 </td>
                                             </c:if>
                                         </tr>
@@ -348,9 +359,7 @@
                                             </div>
                                             <span class="multi-select-count" aria-live="polite">Chưa chọn nhân sự</span>
                                         </div>
-                                        <button type="submit" class="button button-primary">
-                                            + Phân công vào hoạt động
-                                        </button>
+                                        <button type="submit" class="button button-primary button-sm action-btn"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Phân công vào hoạt động</button>
                                     </form>
                                 </c:when>
                                 <c:otherwise>
@@ -380,23 +389,23 @@
                         <table>
                             <thead>
                             <tr>
-                                <th scope="col" style="width: 60px;">STT</th>
+                                <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Công ty đối tác</th>
-                                <th scope="col">Nhân sự phụ trách chính</th>
+                                <th scope="col">Phụ trách chính</th>
                                 <th scope="col">Loại lời mời</th>
                                 <th scope="col">Lời nhắn</th>
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col">Người mời</th>
                                 <th scope="col">Thời gian mời</th>
-                                <th scope="col" style="text-align: left;">Thao tác</th>
+                                <th scope="col" class="activity-action-column">Thao tác</th>
                             </tr>
                             </thead>
                             <tbody>
                             <c:choose>
                                 <c:when test="${empty invitations}">
                                     <tr>
-                                        <td colspan="9" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
-                                            Chưa có lời mời nào được gửi cho hoạt động này.
+                                        <td class="empty-state activity-empty-state" colspan="9">
+                                            <strong>Chưa có lời mời nào được gửi cho hoạt động này.</strong>
                                         </td>
                                     </tr>
                                 </c:when>
@@ -411,9 +420,10 @@
                                                 <c:choose>
                                                     <c:when test="${empty inv.message}">—</c:when>
                                                     <c:otherwise>
-                                                        <button type="button" class="button activity-message-view"
+                                                        <button type="button" class="button button-sm action-btn action-btn--view activity-message-view"
                                                                 data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
-                                                                data-message="<c:out value='${inv.message}'/>">Xem</button>
+                                                                data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
+                                                        </button>
                                                     </c:otherwise>
                                                 </c:choose>
                                             </td>
@@ -428,14 +438,15 @@
                                             </td>
                                             <td><c:out value="${empty inv.createdByName ? inv.createdBy : inv.createdByName}"/></td>
                                             <td><c:out value="${inv.formattedCreatedAt}"/></td>
-                                            <td style="text-align: right; white-space: nowrap;">
+                                            <td class="activity-action-column">
+                                                <div class="actions activity-actions">
                                                 <c:if test="${inv.canRespond && activity.activityStatus == 'UPCOMING'}">
                                                     <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline">
                                                         <input type="hidden" name="action" value="respondInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
-                                                        <button type="submit" name="decision" value="accept" class="button button-approve">Chấp nhận</button>
-                                                        <button type="submit" name="decision" value="reject" class="button button-reject">Từ chối</button>
+                                                        <button type="submit" name="decision" value="accept" class="button button-sm action-btn action-btn--bulk-approve"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span> Chấp nhận</button>
+                                                        <button type="submit" name="decision" value="reject" class="button button-sm action-btn action-btn--bulk-reject"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Từ chối</button>
                                                     </form>
                                                 </c:if>
                                                 <c:if test="${inv.canRevoke}">
@@ -444,7 +455,8 @@
                                                         <input type="hidden" name="action" value="revokeInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
-                                                        <button type="submit" class="button button-revoke">
+                                                        <button type="submit" class="button button-sm action-btn button-revoke">
+                                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M5.5 13a8 8 0 1 0 2-7L3 11"/></svg></span>
                                                             ${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}
                                                         </button>
                                                     </form>
@@ -455,9 +467,10 @@
                                                         <input type="hidden" name="action" value="cancelInvitation">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="invitationId" value="${inv.id}">
-                                                        <button type="submit" class="button button-revoke">Hủy lời mời</button>
+                                                        <button type="submit" class="button button-sm action-btn button-revoke"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span> Hủy lời mời</button>
                                                     </form>
                                                 </c:if>
+                                            </div>
                                             </td>
                                         </tr>
                                     </c:forEach>
@@ -563,7 +576,7 @@
                                     <span id="partnerStaffMessage" class="field-hint" aria-live="polite"></span>
                                 </div>
                             </div>
-<div class="field">
+                            <div class="field">
                                 <label for="inviteMessage">Lời nhắn gửi đối tác</label>
                                 <textarea id="inviteMessage" name="message" rows="2" maxlength="500" required
                                           placeholder="Nội dung lời mời / lý do ngừng hợp tác"></textarea>
@@ -590,20 +603,20 @@
                         <table>
                             <thead>
                             <tr>
-                                <th scope="col" style="width: 60px;">STT</th>
+                                <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Công ty đối tác</th>
-                                <th scope="col">Nhân sự phụ trách chính</th>
+                                <th scope="col">Phụ trách chính</th>
                                 <th scope="col">Chức vụ</th>
                                 <th scope="col">Trạng thái</th>
-                                <th scope="col">Ngày tham gia</th>
-                            </tr>
+                                <th scope="col">Bắt đầu hợp tác</th>
+`                            </tr>
                             </thead>
                             <tbody>
                             <c:choose>
                                 <c:when test="${empty approvedPartners}">
                                     <tr>
-                                        <td colspan="6" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
-                                            Chưa có đối tác nào được mời tham gia hoạt động này.
+                                        <td class="empty-state activity-empty-state" colspan="6">
+                                            <strong>Chưa có đối tác nào được mời tham gia hoạt động này.</strong>
                                         </td>
                                     </tr>
                                 </c:when>
@@ -620,7 +633,7 @@
                                                 </span>
                                             </td>
                                             <td><c:out value="${partner.formattedCreatedAt}"/></td>
-                                                                                    </tr>
+                                        </tr>
                                     </c:forEach>
                                 </c:otherwise>
                             </c:choose>
@@ -644,7 +657,7 @@
                         <table>
                             <thead>
                             <tr>
-                                <th scope="col" style="width: 60px;">STT</th>
+                                <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Mã nhân sự</th>
                                 <th scope="col">Họ và tên</th>
                                 <th scope="col">Công ty</th>
@@ -652,7 +665,7 @@
                                 <th scope="col">Trạng thái</th>
                                 <th scope="col">Thời gian phân công</th>
                                 <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
-                                    <th scope="col" style="text-align: right; width: 120px;">Thao tác</th>
+                                    <th scope="col" class="activity-action-column">Thao tác</th>
                                 </c:if>
                             </tr>
                             </thead>
@@ -660,8 +673,8 @@
                             <c:choose>
                                 <c:when test="${empty assignedPartnerStaffs}">
                                     <tr>
-                                        <td colspan="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING' ? 8 : 7}" style="text-align: center; padding: 1.5rem; color: var(--text-muted, #888);">
-                                            Chưa có nhân sự đối tác nào được phân công phụ trách hoạt động này.
+                                        <td class="empty-state activity-empty-state" colspan="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING' ? 8 : 7}">
+                                            <strong>Chưa có nhân sự đối tác nào được phân công phụ trách hoạt động này.</strong>
                                         </td>
                                     </tr>
                                 </c:when>
@@ -676,16 +689,17 @@
                                             <td><span class="badge status-pill ${st:css(aps.status)}">${st:label(aps.status)}</span></td>
                                             <td><c:out value="${aps.formattedAssignedOn}"/></td>
                                             <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
-                                                <td style="text-align: right;">
-                                                    <form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
+                                                <td class="activity-action-column">
+                                                    <div class="actions activity-actions"><form action="${pageContext.request.contextPath}/activities" method="post" style="display:inline"
                                                           data-confirm="Bạn có chắc chắn muốn gỡ nhân sự đối tác này?">
                                                         <input type="hidden" name="action" value="unassignPartnerStaff">
                                                         <input type="hidden" name="activityId" value="${activity.id}">
                                                         <input type="hidden" name="partnerStaffId" value="${aps.partnerStaffId}">
-                                                        <button type="submit" class="button" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: #dc2626; border-color: #fca5a5;">
+                                                        <button type="submit" class="button button-sm action-btn action-btn--bulk-reject">
+                                                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg></span>
                                                             Gỡ bỏ
                                                         </button>
-                                                    </form>
+                                                    </form></div>
                                                 </td>
                                             </c:if>
                                         </tr>
@@ -729,7 +743,7 @@
                                             </div>
                                             <span class="multi-select-count" aria-live="polite">Chưa chọn nhân sự đối tác</span>
                                         </div>
-                                        <button type="submit" class="button button-primary">+ Phân công vào hoạt động</button>
+                                        <button type="submit" class="button button-primary button-sm action-btn"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span> Phân công vào hoạt động</button>
                                     </form>
                                 </c:when>
                                 <c:otherwise>
@@ -791,5 +805,6 @@
     <div style="text-align: right;"><button type="button" class="button" id="activity-message-modal-close">Đóng</button></div>
 </dialog>
 <script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

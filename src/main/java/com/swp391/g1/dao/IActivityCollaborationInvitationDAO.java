@@ -36,8 +36,8 @@ public interface IActivityCollaborationInvitationDAO {
      * Creates a PENDING invitation. A COLLABORATION invitation also creates the INACTIVE partner row
      * (or reuses the existing row of the company); a TERMINATION invitation leaves the partner row untouched.
      */
-    boolean insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
-                   String invitationType, String message);
+    int insert(int activityId, int partnerCompanyId, int partnerStaffId, String createdBy,
+               String invitationType, String message);
 
     /**
      * PENDING -> APPROVED. COLLABORATION: collaboration ACTIVE.

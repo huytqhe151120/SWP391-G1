@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hộp thư của tôi | SWP391-G1</title>
@@ -13,9 +13,9 @@
 </head>
 <body class="support-page student-inbox-page">
 <div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 <a class="skip-link" href="#inbox-content">Đi đến nội dung chính</a>
 <main class="inbox-page" id="inbox-content">

@@ -1,6 +1,15 @@
 /* Partner Invitation CSS - SWP391-G1 */
 @import "base.css";
-@import "activity.css?v=20261020-11";
+@import "activity.css?v=20261022-4";
+
+/* Hiệu ứng cuộn hero dùng chung ở hero-scroll.css (class .hero-scroll trên shell) */
+
+/* Khoảng cách giữa hero và bảng giống trang danh sách hoạt động (16px giữa các khối) */
+.activity-list-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
 
 /* Partner invitation list: frozen right-hand columns */
 .partner-invitation-table {

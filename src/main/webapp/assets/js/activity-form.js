@@ -90,6 +90,10 @@
     });
     pickers[0].config.onChange.push(function (d) {
         pickers[1].set("minDate", d[0] || null);
+        validate(byId("endTime"));
+    });
+    pickers[1].config.onChange.push(function () {
+        validate(byId("endTime"));
     });
     if (pickers[0].selectedDates[0]) {
         pickers[1].set("minDate", pickers[0].selectedDates[0]);
@@ -111,7 +115,13 @@
         var empty = !String(el.value || "").trim();
         var msg = fieldOf(el).querySelector(".error-msg");
         var text = empty ? "Vui lòng nhập thông tin này." : "";
-        if (!empty && el.id === "endTime" && byId("startTime").value && el.value < byId("startTime").value) {
+        if (!empty && el.id === "startTime") {
+            var startTime = new Date(el.value);
+            if (!Number.isNaN(startTime.getTime()) && startTime.getTime() <= Date.now()) {
+                text = "Thời gian bắt đầu hoạt động phải ở tương lai.";
+            }
+        }
+        if (!empty && el.id === "endTime" && byId("startTime").value && el.value <= byId("startTime").value) {
             text = "Thời gian kết thúc phải sau thời gian bắt đầu.";
         }
         msg.textContent = text;
@@ -120,8 +130,18 @@
     }
     var required = Array.prototype.slice.call(form.querySelectorAll("input[data-required], select[data-required]"));
     required.forEach(function (el) {
-        el.addEventListener("change", function () { validate(el); });
-        el.addEventListener("blur", function () { validate(el); });
+        el.addEventListener("change", function () {
+            validate(el);
+            if (el.id === "startTime") {
+                validate(byId("endTime"));
+            }
+        });
+        el.addEventListener("blur", function () {
+            validate(el);
+            if (el.id === "startTime") {
+                validate(byId("endTime"));
+            }
+        });
     });
 
     function validateCombobox(box) {

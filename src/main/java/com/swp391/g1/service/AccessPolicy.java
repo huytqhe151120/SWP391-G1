@@ -78,6 +78,11 @@ public final class AccessPolicy {
         return hasType(user, "STUDENT");
     }
 
+    /** Any authenticated account can open notifications; the DAO only returns rows addressed to that account. */
+    public static boolean canViewNotifications(CurrentUser user) {
+        return user != null;
+    }
+
     /** ADMIN organizers and STAFF can access their resolved 1-to-1 inbox. */
     public static boolean canUseSupportInbox(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
