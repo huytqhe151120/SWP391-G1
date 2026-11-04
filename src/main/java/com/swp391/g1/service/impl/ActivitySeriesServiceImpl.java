@@ -1,18 +1,25 @@
 package com.swp391.g1.service.impl;
 
+import java.sql.Connection;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Objects;
+
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.IActivitySeriesDAO;
 import com.swp391.g1.dao.ISemesterDAO;
-import com.swp391.g1.service.impl.ActivityTypeServiceImpl;
-import com.swp391.g1.service.impl.DepartmentServiceImpl;
 import com.swp391.g1.dao.impl.ActivitySeriesDAOImpl;
 import com.swp391.g1.dao.impl.SemesterDAOImpl;
-import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.ActivitySeries;
-import com.swp391.g1.model.ExtracurricularActivity;
+import com.swp391.g1.model.ActivityType;
+import com.swp391.g1.model.Department;
 import com.swp391.g1.model.Enum;
+import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.model.Semester;
+import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivitySeriesService;
 import com.swp391.g1.service.IActivityTypeService;
@@ -20,13 +27,6 @@ import com.swp391.g1.service.IDepartmentService;
 import com.swp391.g1.service.IStaffService;
 import com.swp391.g1.util.DateTimeUtil;
 import com.swp391.g1.util.RecurrenceGenerator;
-
-import java.sql.Connection;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Objects;
 
 public class ActivitySeriesServiceImpl implements IActivitySeriesService {
 
@@ -417,7 +417,11 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         if (seriesId <= 0) {
             return List.of();
         }
+        try {
         return seriesDAO.findOccurrencesBySeriesId(seriesId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return List.of();
+        }
     }
-
 }

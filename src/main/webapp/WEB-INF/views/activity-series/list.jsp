@@ -13,10 +13,10 @@
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
     <div class="activity-app-main-wrapper">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <main class="activity-app-main page activity-list-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
@@ -105,19 +105,19 @@
                     <tr class="series-child-row" data-series-id="${s.id}" style="display:none;">
                         <td colspan="9">
                             <div class="series-child-container" id="series-child-${s.id}">
-                                <div class="series-loading" id="series-loading-${s.id}" style="display:none;"><span class="loading-spinner"></span><span>�ang t?i...</span></div>
-                                <div class="series-error" id="series-error-${s.id}" style="display:none;"><span class="error-text"></span><button type="button" class="button button-outline series-retry-btn" data-series-id="${s.id}">Th? l?i</button></div>
-                                <div class="series-empty" id="series-empty-${s.id}" style="display:none;"><p>Chua c� s? ki?n l?p l?i n�o du?c t?o.</p></div>
+                                <div class="series-loading" id="series-loading-${s.id}" style="display:none;"><span class="loading-spinner"></span><span>Đang tải...</span></div>
+                                <div class="series-error" id="series-error-${s.id}" style="display:none;"><span class="error-text"></span><button type="button" class="button button-outline series-retry-btn" data-series-id="${s.id}">Thử lại</button></div>
+                                <div class="series-empty" id="series-empty-${s.id}" style="display:none;"><p>Chưa có sự kiện lặp lại nào được tạo.</p></div>
                                 <table class="activity-table occurrence-table" id="occurrence-table-${s.id}">
                                     <thead>
                                         <tr>
-                                            <th>M�</th>
-                                            <th>T�n</th>
-                                            <th>Th?i gian b?t d?u</th>
-                                            <th>Th?i gian k?t th�c</th>
-                                            <th>Tr?ng th�i ho?t d?ng</th>
-                                            <th>Tr?ng th�i duy?t</th>
-                                            <th class="activity-table-actions">H�nh d?ng</th>
+                                            <th>Mã</th>
+                                            <th>Tên</th>
+                                            <th>Thời gian bắt đầu</th>
+                                            <th>Thời gian kết thúc</th>
+                                            <th>Trạng thái hoạt động</th>
+                                            <th>Trạng thái duyệt</th>
+                                            <th class="activity-table-actions">Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody id="occurrence-body-${s.id}">

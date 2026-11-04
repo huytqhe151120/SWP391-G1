@@ -12,10 +12,10 @@
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
 
     <div class="activity-app-main-wrapper">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <main class="activity-app-main page activity-list-page activity-form-page activity-detail-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
