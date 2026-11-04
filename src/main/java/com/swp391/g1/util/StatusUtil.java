@@ -15,7 +15,12 @@ public final class StatusUtil {
             Map.entry("DRAFT", "Bản nháp"),
             Map.entry("PENDING", "Chờ duyệt"),
             Map.entry("APPROVED", "Đã duyệt"),
-            Map.entry("REJECTED", "Đã từ chối"));
+            Map.entry("REJECTED", "Đã từ chối"),
+            Map.entry("NOT_YET", "Chưa điểm danh"),
+            Map.entry("ATTENDED", "Có mặt"),
+            Map.entry("ABSENT", "Vắng mặt"),
+            Map.entry("IN_LATE", "Đi muộn"),
+            Map.entry("OUT_EARLY", "Về sớm"));
 
     private StatusUtil() {
     }
@@ -33,9 +38,9 @@ public final class StatusUtil {
             return "status-gray";
         }
         return switch (status.toString()) {
-            case "ACTIVE", "COMPLETED", "APPROVED" -> "status-green";
-            case "ONGOING", "PENDING" -> "status-yellow";
-            case "CANCELLED", "REJECTED" -> "status-red";
+            case "ACTIVE", "COMPLETED", "APPROVED", "ATTENDED" -> "status-green";
+            case "ONGOING", "PENDING", "IN_LATE", "OUT_EARLY" -> "status-yellow";
+            case "CANCELLED", "REJECTED", "ABSENT" -> "status-red";
             default -> "status-gray";
         };
     }

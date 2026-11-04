@@ -29,4 +29,13 @@ public class Enum {
         VOLUNTARY,
         MANDATORY
     }
+
+    // Attendance status of a student in an activity (activity_participant.attendance_status)
+    public enum ParticipantStatus {
+        NOT_YET, // Chưa điểm danh
+        ATTENDED, // Có mặt
+        ABSENT, // Vắng mặt
+        IN_LATE, // Đi muộn
+        OUT_EARLY // Về sớm
+    }
 }
