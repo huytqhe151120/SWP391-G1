@@ -306,8 +306,14 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     function syncStickyColumnWidths() {
         var actionsCells = table.querySelectorAll("tr td.activity-action-column, tr th.activity-action-column");
         var approvalCells = table.querySelectorAll("tr td.activity-status-column, tr th.activity-status-column");
+        var orderStatusCells = table.querySelectorAll("tr td.activity-order-status-column, tr th.activity-order-status-column");
+        var registrationStatusCells = table.querySelectorAll("tr td.activity-registration-status-column, tr th.activity-registration-status-column");
+        var deadlineCells = table.querySelectorAll("tr td.activity-registration-deadline, tr th.activity-registration-deadline");
         var actionsWidth = 0;
         var approvalWidth = 0;
+        var orderStatusWidth = 0;
+        var registrationStatusWidth = 0;
+        var deadlineWidth = 0;
 
         actionsCells.forEach(function (cell) {
             actionsWidth = Math.max(actionsWidth, cell.getBoundingClientRect().width);
@@ -315,9 +321,29 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         approvalCells.forEach(function (cell) {
             approvalWidth = Math.max(approvalWidth, cell.getBoundingClientRect().width);
         });
-        if (actionsWidth > 0 && approvalWidth > 0) {
+        orderStatusCells.forEach(function (cell) {
+            orderStatusWidth = Math.max(orderStatusWidth, cell.getBoundingClientRect().width);
+        });
+        registrationStatusCells.forEach(function (cell) {
+            registrationStatusWidth = Math.max(registrationStatusWidth, cell.getBoundingClientRect().width);
+        });
+        deadlineCells.forEach(function (cell) {
+            deadlineWidth = Math.max(deadlineWidth, cell.getBoundingClientRect().width);
+        });
+        if (actionsWidth > 0) {
             table.style.setProperty("--activity-actions-col-width", actionsWidth + "px");
+        }
+        if (approvalWidth > 0) {
             table.style.setProperty("--activity-approval-col-width", approvalWidth + "px");
+        }
+        if (deadlineWidth > 0) {
+            table.style.setProperty("--activity-deadline-col-width", deadlineWidth + "px");
+        }
+        if (orderStatusWidth > 0) {
+            table.style.setProperty("--activity-order-status-col-width", orderStatusWidth + "px");
+        }
+        if (registrationStatusWidth > 0) {
+            table.style.setProperty("--activity-registration-status-col-width", registrationStatusWidth + "px");
         }
     }
 

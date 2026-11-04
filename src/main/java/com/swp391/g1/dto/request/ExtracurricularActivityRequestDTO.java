@@ -18,6 +18,10 @@ public class ExtracurricularActivityRequestDTO {
     private String partnerCompanyId;         // Received as String from form, then convert to int in the controller
     private String partnerStaffId;           // Received as String from form, then convert to int in the controller
     private String registrationFormRequired; // "true" when the toggle is on
+    private String isPublic;
+
+    public String getIsPublic() { return isPublic; }
+    public void setIsPublic(String isPublic) { this.isPublic = isPublic; }
 
     public String getRegistrationFormRequired() {
         return registrationFormRequired;
