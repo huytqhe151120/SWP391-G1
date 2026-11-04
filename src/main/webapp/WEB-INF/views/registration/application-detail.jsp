@@ -27,10 +27,10 @@
                 </header>
 
                 <c:if test="${param.msg eq 'approved'}"><div class="alert alert-success activity-alert">Đã duyệt đơn đăng ký.</div></c:if>
-                <c:if test="${param.msg eq 'rejected'}"><div class="alert alert-error activity-alert">Đã từ chối đơn đăng ký.</div></c:if>
+                <c:if test="${param.msg eq 'rejected'}"><div class="alert alert-success activity-alert">Đã từ chối đơn đăng ký.</div></c:if>
                 <c:if test="${param.msg eq 'reasonError'}"><div class="alert alert-error activity-alert">Vui lòng nhập lý do từ chối (tối đa 1000 ký tự).</div></c:if>
-                <c:if test="${param.msg eq 'rejectionUndone'}"><div class="alert alert-success activity-alert">Đã hủy từ chối; đơn trở về trạng thái chờ duyệt.</div></c:if>
-                <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt đơn; đơn đang chờ xử lý.</div></c:if>
+                <c:if test="${param.msg eq 'rejectionUndone'}"><div class="alert alert-success activity-alert">Đã hủy từ chối; đơn trở về trạng thái chờ duyệt và được xếp ở cuối hàng.</div></c:if>
+                <c:if test="${param.msg eq 'approvalUndone'}"><div class="alert alert-success activity-alert">Đã hủy duyệt đơn; đơn trở về trạng thái chờ duyệt và được xếp ở cuối hàng.</div></c:if>
                 <c:if test="${param.msg eq 'reviewError'}"><div class="alert alert-error activity-alert">Trạng thái đơn đã thay đổi hoặc không thể cập nhật.</div></c:if>
                 <c:if test="${param.msg eq 'fifoError'}"><div class="alert alert-error activity-alert">Không thể xử lý đơn này vì còn đơn chờ xử lý được gửi trước. Hãy xử lý các đơn theo thứ tự gửi.</div></c:if>
                 <c:if test="${param.msg eq 'capacityError'}"><div class="alert alert-error activity-alert">Không thể khôi phục đơn: hoạt động đã đủ số lượng tối đa. Đơn bị từ chối vẫn được giữ nguyên.</div></c:if>

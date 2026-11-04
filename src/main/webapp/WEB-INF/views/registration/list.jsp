@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý đợt đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261020-11">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261103-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261105-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
 </head>
 <body>
@@ -29,14 +29,8 @@
                     </div>
                 </header>
 
-                <c:if test="${param.msg eq 'saved'}">
-                    <div class="alert alert-success activity-alert">Đã lưu đợt đăng ký.</div>
-                </c:if>
                 <c:if test="${param.msg eq 'deleted'}">
                     <div class="alert alert-success activity-alert">Đã xóa form.</div>
-                </c:if>
-                <c:if test="${param.msg eq 'editError'}">
-                    <div class="alert alert-error activity-alert">Form đã có sinh viên đăng ký nên không thể chỉnh sửa.</div>
                 </c:if>
                 <c:if test="${not empty sessionScope.errorMessage}">
                     <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
@@ -69,7 +63,7 @@
                                 <th scope="col">Hoạt động</th>
                                 <th scope="col">Thời gian đăng ký</th>
                                 <th scope="col" class="registration-sticky-status">Trạng thái</th>
-                                <th scope="col" class="registration-sticky-count">Số đăng ký</th>
+                                <th scope="col" class="registration-sticky-count">Đơn hiệu lực</th>
                                 <th scope="col" class="registration-sticky-actions">Thao tác</th>
                             </tr>
                             </thead>
@@ -111,27 +105,44 @@
                                                 Chi tiết
                                             </a>
 
-                                            <details class="action-menu">
-                                                <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
-                                                <div class="action-menu__items">
-                                                    <a class="action-menu-item action-menu-item--edit"
-                                                       href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${f.id}">
-                                                        <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></span>
-                                                        Chỉnh sửa
-                                                    </a>
-                                                    <c:if test="${not f.quick and f.registrationCount == 0}">
-                                                    <form method="post" action="${pageContext.request.contextPath}/registration-forms"
-                                                          onsubmit="return confirm('Bạn chắc chắn muốn xóa form này?')">
-                                                        <input type="hidden" name="action" value="delete">
-                                                        <input type="hidden" name="id" value="${f.id}">
-                                                        <button class="action-menu-item action-menu-item--delete" type="submit">
-                                                            <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg></span>
-                                                            Xóa
-                                                        </button>
-                                                    </form>
-                                                    </c:if>
-                                                </div>
-                                            </details>
+                                            <c:if test="${f.quick or f.registrationCount == 0 or extendableFormIds.contains(f.id)}">
+                                                <details class="action-menu">
+                                                    <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
+                                                    <div class="action-menu__items">
+                                                        <c:if test="${f.quick or f.registrationCount == 0}">
+                                                            <a class="action-menu-item action-menu-item--edit"
+                                                               href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${f.id}">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></span>
+                                                                Chỉnh sửa
+                                                            </a>
+                                                        </c:if>
+                                                        <c:if test="${extendableFormIds.contains(f.id)}">
+                                                            <form class="registration-extend-form" method="post"
+                                                                  action="${pageContext.request.contextPath}/registration-forms">
+                                                                <input type="hidden" name="action" value="extendFormClose">
+                                                                <input type="hidden" name="formId" value="${f.id}">
+                                                                <label for="extend-close-${f.id}">Thời gian đóng mới</label>
+                                                                <input id="extend-close-${f.id}" type="datetime-local"
+                                                                       name="closeAt" min="${minimumExtensionTime}" required>
+                                                                <button class="action-menu-item action-menu-item--extend" type="submit">
+                                                                    Gia hạn đăng ký
+                                                                </button>
+                                                            </form>
+                                                        </c:if>
+                                                        <c:if test="${not f.quick and f.registrationCount == 0}">
+                                                            <form method="post" action="${pageContext.request.contextPath}/registration-forms"
+                                                                  onsubmit="return confirm('Bạn chắc chắn muốn xóa form này?')">
+                                                                <input type="hidden" name="action" value="delete">
+                                                                <input type="hidden" name="id" value="${f.id}">
+                                                                <button class="action-menu-item action-menu-item--delete" type="submit">
+                                                                    <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg></span>
+                                                                    Xóa
+                                                                </button>
+                                                            </form>
+                                                        </c:if>
+                                                    </div>
+                                                </details>
+                                            </c:if>
 
                                         </div>
                                     </td>

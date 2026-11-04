@@ -46,10 +46,10 @@
                                 <td><c:choose><c:when test="${not empty app.submittedAt}"><c:out
                                         value="${dt:format(app.submittedAt)}"/></c:when><c:otherwise>—</c:otherwise></c:choose></td>
                                 <td><c:choose><c:when test="${app.status eq 'SUBMITTED'}"><span
-                                        class="badge status-pill status-yellow">Chờ duyệt</span></c:when><c:when
+                                        class="badge status-pill status-yellow">Chờ xử lý</span></c:when><c:when
                                         test="${app.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when><c:when
-                                        test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-red">Bị từ chối</span><c:if test="${not empty app.rejectionReason}"><small class="registration-list-rejection-reason"><c:out value="${app.rejectionReason}"/></small></c:if></c:when><c:when
-                                        test="${app.status eq 'CANCELLED'}"><span class="badge status-pill status-red">Đã hủy</span></c:when><c:when
+                                        test="${app.status eq 'REJECTED'}"><span class="badge status-pill status-red">Từ chối</span><c:if test="${not empty app.rejectionReason}"><small class="registration-list-rejection-reason"><c:out value="${app.rejectionReason}"/></small></c:if></c:when><c:when
+                                        test="${app.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy đăng ký</span></c:when><c:when
                                         test="${app.status eq 'WITHDRAWN'}"><span class="badge status-pill status-blue">Đã rút đơn</span></c:when><c:otherwise><span
                                         class="badge status-pill status-muted"><c:out value="${app.status}"/></span></c:otherwise></c:choose>
                                 </td>

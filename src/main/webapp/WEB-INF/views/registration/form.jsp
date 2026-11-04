@@ -170,12 +170,12 @@
                                     <label for="openAt">Thời gian mở đăng ký <span class="required-mark">*</span></label>
                                     <input id="openAt" name="openAt" type="datetime-local" required
                                            <c:if test="${not form.quick and form.id == 0}">min="${minimumRegistrationTime}"</c:if>
-                                           value="${form.openAt}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
+                                           value="${openAtInput}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
                                 </div>
                                 <div class="field">
                                     <label for="closeAt">Thời gian đóng đăng ký <span class="required-mark">*</span></label>
                                     <input id="closeAt" name="closeAt" type="datetime-local" required
-                                           value="${form.closeAt}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
+                                           value="${closeAtInput}" <c:if test="${form.registrationCount > 0 and not form.quick}">disabled</c:if>>
                                 </div>
                             </div>
                         </div>

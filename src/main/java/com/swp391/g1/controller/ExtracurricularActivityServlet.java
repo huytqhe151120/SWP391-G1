@@ -551,7 +551,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         }
         if (form == null) {
             return !activity.isRegistrationFormRequired()
-                    && (activity.getStartTime() == null || now.isBefore(activity.getStartTime().minusHours(1)));
+                    && (activity.getStartTime() == null || now.isBefore(activity.getStartTime().minusHours(24)));
         }
         return "OPENING".equals(form.getStatus())
                 && (form.getOpenAt() == null || !now.isBefore(form.getOpenAt()))

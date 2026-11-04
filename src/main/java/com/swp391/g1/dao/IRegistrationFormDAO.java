@@ -70,10 +70,10 @@ public interface IRegistrationFormDAO {
 
     Map<String, String> findSavedProfile(int studentId);
 
-    /** Tạo đợt đăng ký nhanh mặc định cho hoạt động (nếu chưa có); mở lại nếu thời gian còn hợp lệ. */
     void ensureQuickForm(int activityId);
 
-    /** Staff chỉnh mô tả và thời gian của form đăng ký nhanh. */
     boolean updateQuickForm(int formId, String description, java.time.LocalDateTime openAt,
                             java.time.LocalDateTime closeAt, String status);
+
+    boolean extendCloseTime(int formId, java.time.LocalDateTime closeAt);
 }

@@ -8,12 +8,7 @@ import com.swp391.g1.model.RegistrationFormField;
 import com.swp391.g1.util.DateTimeUtil;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     // Activity start times are stored in UTC; form deadlines use Vietnam local time (UTC+7).
@@ -321,7 +316,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_code,s.code) AS student_code,"
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
-                + "COALESCE(submitted.email,s.email) AS email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at "
+                + "COALESCE(submitted.email,s.email) AS email,"
+                + "COALESCE(submitted.phone_number,s.phone_number) AS phone_number,r.note,r.status,r.submitted_at "
                 + ",r.pending_since,r.rejection_reason "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
@@ -329,7 +325,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "MAX(CASE WHEN field_key='application_student_code' THEN answer_value END) AS student_code,"
                 + "MAX(CASE WHEN field_key='application_student_name' THEN answer_value END) AS student_name,"
                 + "MAX(CASE WHEN field_key='application_class_code' THEN answer_value END) AS class_code,"
-                + "MAX(CASE WHEN field_key='application_email' THEN answer_value END) AS email "
+                + "MAX(CASE WHEN field_key='application_email' THEN answer_value END) AS email,"
+                + "MAX(CASE WHEN field_key='application_phone_number' THEN answer_value END) AS phone_number "
                 + "FROM dbo.activity_registration_answer GROUP BY registration_id) submitted "
                 + "ON submitted.registration_id=r.id WHERE r.form_id=? "
                 + "ORDER BY CASE WHEN r.status='SUBMITTED' THEN 0 ELSE 1 END, "
@@ -352,7 +349,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_code,s.code) AS student_code,"
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
-                + "COALESCE(submitted.email,s.email) AS email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at "
+                + "COALESCE(submitted.email,s.email) AS email,"
+                + "COALESCE(submitted.phone_number,s.phone_number) AS phone_number,r.note,r.status,r.submitted_at "
                 + ",r.pending_since,r.rejection_reason "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
@@ -360,7 +358,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "MAX(CASE WHEN field_key='application_student_code' THEN answer_value END) AS student_code,"
                 + "MAX(CASE WHEN field_key='application_student_name' THEN answer_value END) AS student_name,"
                 + "MAX(CASE WHEN field_key='application_class_code' THEN answer_value END) AS class_code,"
-                + "MAX(CASE WHEN field_key='application_email' THEN answer_value END) AS email "
+                + "MAX(CASE WHEN field_key='application_email' THEN answer_value END) AS email,"
+                + "MAX(CASE WHEN field_key='application_phone_number' THEN answer_value END) AS phone_number "
                 + "FROM dbo.activity_registration_answer GROUP BY registration_id) submitted "
                 + "ON submitted.registration_id=r.id WHERE r.id=?";
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
@@ -464,6 +463,23 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 return r.next();
             }
         }
+    }
+
+    /**
+     * Trả về các đơn theo đúng thứ tự hàng đợi nếu danh sách chọn là các đơn đầu hàng đợi; ngược lại trả null.
+     */
+    private List<Integer> takeQueuePrefix(Connection c, int formId, List<Integer> selected) throws SQLException {
+        String sql = "SELECT TOP (?) r.id FROM dbo.activity_registration r "
+                + "WHERE r.form_id=? AND r.status='SUBMITTED' ORDER BY r.pending_since, r.id";
+        List<Integer> queue = new ArrayList<>();
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, selected.size());
+            p.setInt(2, formId);
+            try (ResultSet r = p.executeQuery()) {
+                while (r.next()) queue.add(r.getInt(1));
+            }
+        }
+        return new HashSet<>(queue).equals(new HashSet<>(selected)) ? queue : null;
     }
 
     @Override
@@ -761,12 +777,17 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
-                if (registrationIds.isEmpty() || !lockActivityForApplication(c, registrationIds.get(0))) {
+                if (registrationIds.isEmpty() || !lockActivityForForm(c, formId)) {
+                    c.rollback();
+                    return false;
+                }
+                List<Integer> ordered = takeQueuePrefix(c, formId, registrationIds);
+                if (ordered == null) {
                     c.rollback();
                     return false;
                 }
                 try (PreparedStatement p = c.prepareStatement(sql)) {
-                    for (int registrationId : registrationIds) {
+                    for (int registrationId : ordered) {
                         p.setString(1, reason);
                         p.setInt(2, registrationId);
                         p.setInt(3, formId);
@@ -803,12 +824,17 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
-                if (registrationIds.isEmpty() || !lockActivityForApplication(c, registrationIds.get(0))) {
+                if (registrationIds.isEmpty() || !lockActivityForForm(c, formId)) {
+                    c.rollback();
+                    return false;
+                }
+                List<Integer> ordered = takeQueuePrefix(c, formId, registrationIds);
+                if (ordered == null) {
                     c.rollback();
                     return false;
                 }
                 try (PreparedStatement p = c.prepareStatement(sql)) {
-                    for (int registrationId : registrationIds) {
+                    for (int registrationId : ordered) {
                         p.setInt(1, registrationId);
                         p.setInt(2, formId);
                         if (p.executeUpdate() != 1) {
@@ -1036,7 +1062,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 closeAt = DateTimeUtil.fromUtc(start.toLocalDateTime()).minusHours(24);
             }
         }
-        java.time.LocalDateTime now = DateTimeUtil.now();
+        java.time.LocalDateTime now = DateTimeUtil.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
         String status = (closeAt != null && !closeAt.isAfter(now)) ? "CLOSED" : "OPENING";
         String title = "Đăng ký nhanh - " + name;
         if (title.length() > 200) title = title.substring(0, 200);
@@ -1101,6 +1127,31 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
             return p.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể lưu form đăng ký nhanh.", e);
+        }
+    }
+
+    @Override
+    public boolean extendCloseTime(int formId, java.time.LocalDateTime closeAt) {
+        String sql = "UPDATE f SET f.close_at=?, "
+                + "f.status=CASE WHEN f.open_at<=SYSDATETIME() THEN 'OPENING' ELSE f.status END, "
+                + "f.updated_at=SYSDATETIME() "
+                + "FROM dbo.activity_registration_form f "
+                + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
+                + "WHERE f.id=? AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
+                + "AND a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=1 "
+                + "AND a.start_time>SYSUTCDATETIME() AND f.close_at<=SYSDATETIME() "
+                + "AND EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=f.id) "
+                + "AND ?>SYSDATETIME() AND ?>f.open_at AND ?<=" + ACTIVITY_CLOSE_CUTOFF;
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            Timestamp t = Timestamp.valueOf(closeAt);
+            p.setTimestamp(1, t);
+            p.setInt(2, formId);
+            p.setTimestamp(3, t);
+            p.setTimestamp(4, t);
+            p.setTimestamp(5, t);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể gia hạn đợt đăng ký.", e);
         }
     }
 
@@ -1207,10 +1258,16 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                         if (r.next()) {
                             // Reactivate WITHDRAWN registration
                             int regId = r.getInt(1);
-                            String reactivateSql = "UPDATE dbo.activity_registration SET status='APPROVED',submitted_at=SYSDATETIME() WHERE id=?";
+                            String reactivateSql = "UPDATE dbo.activity_registration "
+                                    + "SET status='APPROVED',note=?,submitted_at=SYSDATETIME(),rejection_reason=NULL "
+                                    + "WHERE id=? AND status='WITHDRAWN'";
                             try (PreparedStatement p2 = c.prepareStatement(reactivateSql)) {
-                                p2.setInt(1, regId);
-                                p2.executeUpdate();
+                                p2.setString(1, note);
+                                p2.setInt(2, regId);
+                                if (p2.executeUpdate() != 1) {
+                                    c.rollback();
+                                    return "UNAVAILABLE";
+                                }
                             }
                             c.commit();
                             return "OK";

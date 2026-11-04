@@ -60,4 +60,6 @@ public interface IRegistrationFormService {
     Map<String, String> getSavedProfile(int studentId);
 
     String saveQuickForm(RegistrationForm f);
+
+    String extendCloseTime(int formId, java.time.LocalDateTime closeAt);
 }

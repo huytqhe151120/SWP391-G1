@@ -162,8 +162,8 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         }
 
         // Prevent changing nature or registrationFormRequired when there are registrations
-        int reservedCount = activityDAO.countReservedApplications(entity.getId());
-        if (reservedCount > 0) {
+        int activeApplicationCount = activityDAO.countActiveApplications(entity.getId());
+        if (activeApplicationCount > 0) {
             if (!Objects.equals(existing.getNature(), entity.getNature())) {
                 throw new IllegalArgumentException(
                         "Không thể thay đổi tính chất hoạt động khi đã có sinh viên đăng ký.");

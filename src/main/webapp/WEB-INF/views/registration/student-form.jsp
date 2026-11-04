@@ -210,7 +210,7 @@
                                 <div class="field field-wide">
                                     <label for="note">Ghi chú thêm <span class="registration-optional">(không bắt buộc)</span></label>
                                     <textarea id="note" name="note" rows="5" maxlength="2000"
-                                              placeholder="Thông tin bạn muốn ban tổ chức biết..."></textarea>
+                                              placeholder="Thông tin bạn muốn ban tổ chức biết..."><c:out value="${note}"/></textarea>
                                     <small class="field-hint registration-note-hint">Chỉ ban tổ chức xem được nội dung này.</small>
                                 </div>
                                 <div class="field field-wide student-registration-commitment-field">

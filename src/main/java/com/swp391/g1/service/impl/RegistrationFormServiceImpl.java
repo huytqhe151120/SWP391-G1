@@ -299,6 +299,27 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         return null;
     }
 
+    @Override
+    public String extendCloseTime(int formId, LocalDateTime closeAt) {
+        RegistrationForm form = getById(formId);
+        if (form == null) return "Không tìm thấy form đăng ký.";
+        if (form.isQuick()) return "Không thể gia hạn form đăng ký nhanh.";
+        if (form.getRegistrationCount() == 0) return "Chỉ có thể gia hạn form đã có sinh viên đăng ký.";
+        if (form.getCloseAt() == null || form.getCloseAt().isAfter(DateTimeUtil.now())) {
+            return "Chỉ có thể gia hạn sau khi form đã đóng.";
+        }
+        if (closeAt == null) return "Vui lòng chọn thời gian đóng đăng ký.";
+        if (!closeAt.isAfter(DateTimeUtil.now())) return "Thời gian đóng đăng ký phải ở tương lai.";
+        if (form.getOpenAt() != null && !closeAt.isAfter(form.getOpenAt())) {
+            return "Thời gian đóng mới phải sau thời gian mở đăng ký.";
+        }
+        LocalDateTime start = dao.findActivityStartTime(form.getActivityId());
+        if (start == null || closeAt.isAfter(start.minusHours(24)))
+            return "Thời gian đóng đăng ký phải trước thời gian bắt đầu hoạt động ít nhất 24 giờ.";
+        return dao.extendCloseTime(formId, closeAt) ? null
+                : "Không thể gia hạn: kiểm tra hoạt động còn ở trạng thái Chưa diễn ra.";
+    }
+
     public String delete(int id) {
         RegistrationForm form = dao.findById(id);
         if (form == null) return "Không tìm thấy form đăng ký.";

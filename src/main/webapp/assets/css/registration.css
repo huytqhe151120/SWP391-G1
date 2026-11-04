@@ -279,6 +279,14 @@
     min-width: 945px;
 }
 
+.registration-form-applications-table {
+    min-width: 995px;
+}
+
+.registration-form-applications-table--review {
+    min-width: 1043px;
+}
+
 .activity-list-page .activity-table-wrap table.registration-applications-table {
     width: 100%;
     min-width: 945px;
@@ -297,13 +305,20 @@
     max-width: 48px;
 }
 
-.registration-form-applications-table.registration-form-applications-table--review th:nth-child(2) { width: 280px; }
-.registration-form-applications-table.registration-form-applications-table--review th:nth-child(3) { width: 140px; }
-.registration-form-applications-table.registration-form-applications-table--review th:nth-child(4) { width: 250px; }
+.registration-form-applications-table.registration-form-applications-table--review th:nth-child(2) { width: 230px; }
+.registration-form-applications-table.registration-form-applications-table--review th:nth-child(3) { width: 110px; }
+.registration-form-applications-table.registration-form-applications-table--review th:nth-child(4) { width: 220px; }
+.registration-form-applications-table.registration-form-applications-table--review th:nth-child(5) { width: 160px; }
 
-.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(1) { width: 280px; }
-.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(2) { width: 140px; }
-.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(3) { width: 250px; }
+.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(1) { width: 230px; }
+.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(2) { width: 110px; }
+.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(3) { width: 220px; }
+.registration-form-applications-table.registration-form-applications-table--quick th:nth-child(4) { width: 160px; }
+
+.registration-form-applications-table th.registration-submitted-time,
+.registration-form-applications-table td.registration-submitted-time {
+    white-space: nowrap;
+}
 
 .registration-form-applications-table td.registration-sticky-status {
     white-space: normal;
@@ -877,6 +892,41 @@
     background: #eff6ff;
     color: #1d4ed8;
     text-decoration: none;
+}
+
+.registration-extend-form {
+    gap: 7px;
+    padding: 8px;
+}
+
+.registration-extend-form label {
+    color: #405777;
+    font-size: .78rem;
+    font-weight: 650;
+}
+
+.registration-extend-form input[type="datetime-local"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 7px;
+    border: 1px solid #d5deea;
+    border-radius: 6px;
+    color: #344963;
+    font: inherit;
+    font-size: .78rem;
+}
+
+.registration-extend-form .action-menu-item--extend {
+    justify-content: center;
+    background: #2457c5;
+    color: #fff;
+    font-weight: 650;
+}
+
+.registration-extend-form .action-menu-item--extend:hover {
+    background: #1d4ed8;
+    color: #fff;
 }
 
 .registration-empty-state {

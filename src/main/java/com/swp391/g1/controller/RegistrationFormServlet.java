@@ -29,11 +29,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @WebServlet("/registration-forms")
 public class RegistrationFormServlet extends HttpServlet {
@@ -238,7 +234,19 @@ public class RegistrationFormServlet extends HttpServlet {
                 req.getRequestDispatcher("/WEB-INF/views/registration/application-detail.jsp").forward(req, resp);
                 return;
             }
-            req.setAttribute("forms", service.getAll());
+            List<RegistrationForm> forms = service.getAll();
+            req.setAttribute("forms", forms);
+            LocalDateTime now = DateTimeUtil.now();
+            Set<Integer> extendableFormIds = new HashSet<>();
+            for (RegistrationForm form : forms) {
+                if (!form.isQuick() && form.getRegistrationCount() > 0
+                        && form.getCloseAt() != null && !form.getCloseAt().isAfter(now)) {
+                    extendableFormIds.add(form.getId());
+                }
+            }
+            req.setAttribute("extendableFormIds", extendableFormIds);
+            req.setAttribute("minimumExtensionTime",
+                    DateTimeUtil.formatInput(now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)));
             req.getRequestDispatcher("/WEB-INF/views/registration/list.jsp").forward(req, resp);
         } catch (RuntimeException e) {
             throw new ServletException(e);
@@ -291,6 +299,7 @@ public class RegistrationFormServlet extends HttpServlet {
                     return;
                 }
                 req.setAttribute("error", error);
+                req.setAttribute("note", req.getParameter("note"));
                 RegistrationForm f = service.getById(id(req));
                 if (f != null) {
                     for (RegistrationFormField field : f.getFields()) {
@@ -418,11 +427,19 @@ public class RegistrationFormServlet extends HttpServlet {
                     case "undoApplicationRejection" -> "rejectionUndone";
                     default -> "approvalUndone";
                 }
-                        : "rejectApplication".equals(action) && error.contains("lý do") ? "reasonError"
+                        : "rejectApplication".equals(action) && error.toLowerCase().contains("lý do") ? "reasonError"
                         : error.contains("đã đủ số lượng tối đa") ? "capacityError"
                         : error.contains("được gửi trước") ? "fifoError" : "reviewError";
                 resp.sendRedirect(req.getContextPath() + "/registration-forms?action=application&id="
                         + application.getId() + "&msg=" + message);
+                return;
+            }
+            if ("extendFormClose".equals(action)) {
+                int formId = parseInt(req.getParameter("formId"));
+                error = service.extendCloseTime(formId, parseDate(req.getParameter("closeAt")));
+                req.getSession().setAttribute(error == null ? "successMessage" : "errorMessage",
+                        error == null ? "Đã gia hạn đợt đăng ký." : error);
+                resp.sendRedirect(req.getContextPath() + "/registration-forms");
                 return;
             }
             if ("delete".equals(action)) {
@@ -643,6 +660,8 @@ public class RegistrationFormServlet extends HttpServlet {
                 .toList());
         request.setAttribute("minimumRegistrationTime",
                 DateTimeUtil.formatInput(DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)));
+        request.setAttribute("openAtInput", DateTimeUtil.formatInput(form.getOpenAt()));
+        request.setAttribute("closeAtInput", DateTimeUtil.formatInput(form.getCloseAt()));
     }
 
     private static void setApplicationQuestionFields(HttpServletRequest request, RegistrationForm form,

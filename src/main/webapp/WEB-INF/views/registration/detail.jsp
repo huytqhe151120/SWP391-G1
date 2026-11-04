@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết đợt đăng ký | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261104-9">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261105-1">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -49,9 +49,9 @@
                         <div class="registration-detail-actions">
                             <a class="button button-back" href="<c:out value='${returnTo}'/>">Quay lại</a>
                             <a class="button button-secondary" href="${pageContext.request.contextPath}/registration-forms?action=list">Danh sách form</a>
-
+                            <c:if test="${form.quick or form.registrationCount == 0}">
                                 <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=edit&amp;id=${form.id}&amp;from=detail">Chỉnh sửa</a>
-
+                            </c:if>
                         </div>
                     </div>
 
@@ -62,7 +62,7 @@
                         </button>
                         <button type="button" class="activity-tab-btn" id="btn-tab-form-applications"
                                 data-tab="tab-form-applications" role="tab" aria-selected="false" aria-controls="tab-form-applications">
-                            Đơn đã gửi <span class="activity-tab-badge"><c:out value="${form.registrationCount}"/></span>
+                            Đơn đã gửi <span class="activity-tab-badge"><c:out value="${fn:length(applications)}"/></span>
                         </button>
                     </div>
 
@@ -178,13 +178,13 @@
                                     <input type="hidden" name="formId" value="${form.id}">
                                     <div class="registration-bulk-reject-controls">
                                         <span class="registration-selected-count" data-selected-count>Chưa chọn đơn nào</span>
-                                        <span class="registration-bulk-hint">Tối đa 100 đơn chờ, theo thứ tự gửi</span>
+                                        <span class="registration-bulk-hint">Chọn các đơn đầu hàng đợi, tối đa 100 đơn</span>
                                         <button class="registration-bulk-select-all" type="button"
                                                 data-select-all-applications>Chọn tất cả đơn chờ</button>
                                         <button class="button registration-bulk-reject" type="button"
                                                 data-show-bulk-reason disabled>Từ chối đơn đã chọn</button>
                                         <button class="button registration-bulk-approve" type="submit"
-                                                data-bulk-approve disabled>Duyệt đơn đã chọn</button>
+                                                formnovalidate data-bulk-approve disabled>Duyệt đơn đã chọn</button>
                                     </div>
                                     <div class="registration-reject-reason-panel" data-bulk-reason-panel hidden>
                                         <label for="bulkRejectionReason">Lý do từ chối <span class="required-mark">*</span></label>
@@ -208,6 +208,7 @@
                                             <th>Sinh viên (Mã sinh viên)</th>
                                             <th>Lớp</th>
                                             <th>Email</th>
+                                            <th class="registration-submitted-time">Thời gian gửi</th>
                                             <th class="registration-sticky-status">Trạng thái</th>
                                             <th class="registration-sticky-actions">Chi tiết</th>
                                         </tr>
@@ -231,6 +232,12 @@
                                                 </td>
                                                 <td><c:out value="${application.classCode}" default="—"/></td>
                                                 <td><c:out value="${application.email}" default="—"/></td>
+                                                <td class="registration-submitted-time">
+                                                    <c:choose>
+                                                        <c:when test="${not empty application.submittedAt}"><c:out value="${dt:format(application.submittedAt)}"/></c:when>
+                                                        <c:otherwise>—</c:otherwise>
+                                                    </c:choose>
+                                                </td>
                                                 <td class="registration-sticky-status">
                                                     <c:choose>
                                                         <c:when test="${application.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
@@ -246,7 +253,7 @@
                                         <c:if test="${empty applications}">
                                             <tr>
                                                 <td class="empty-state registration-empty-state"
-                                                    colspan="${form.quick ? 5 : 6}">
+                                                    colspan="${form.quick ? 6 : 7}">
                                                     <strong>Chưa có sinh viên gửi đơn</strong>
                                                     <span>Đơn đăng ký sẽ xuất hiện tại đây sau khi sinh viên gửi form.</span>
                                                 </td>
@@ -292,8 +299,18 @@
                     ? 'Bỏ chọn tất cả'
                     : 'Chọn tất cả đơn chờ';
             };
-            selections.forEach(function(item) {
-                item.addEventListener('change', updateSelection);
+            selections.forEach(function(item, index) {
+                item.addEventListener('change', function() {
+                    if (item.checked && index >= 100) {
+                        item.checked = false;
+                        return;
+                    }
+                    selections.forEach(function(other, i) {
+                        if (item.checked && i < index) other.checked = true;   // tick đơn k thì tick các đơn trước
+                        if (!item.checked && i > index) other.checked = false; // bỏ đơn k thì bỏ các đơn sau
+                    });
+                    updateSelection();
+                });
             });
             selectAllButton.addEventListener('click', function() {
                 const select = selections.some(function(item) { return !item.checked; });
@@ -314,6 +331,8 @@
             reasonInput.addEventListener('input', updateSelection);
             approveButton.addEventListener('click', function() {
                 actionInput.value = 'bulkApproveApplications';
+                reasonPanel.hidden = true;
+                reasonInput.required = false;
             });
             confirmReject.addEventListener('click', function() {
                 actionInput.value = 'bulkRejectApplications';
@@ -332,36 +351,6 @@
                 }
             });
             updateSelection();
-        }
-
-        const rejectionForm = document.querySelector('[data-individual-rejection-form]');
-        if (rejectionForm) {
-            const showReason = document.querySelector('[data-show-rejection-reason]');
-            const reasonPanel = rejectionForm.querySelector('[data-individual-rejection-panel]');
-            const reasonInput = rejectionForm.querySelector('[name="rejectionReason"]');
-            const cancelButton = rejectionForm.querySelector('[data-cancel-rejection]');
-            const confirmButton = rejectionForm.querySelector('[data-confirm-rejection]');
-            showReason.addEventListener('click', function() {
-                reasonPanel.hidden = false;
-                reasonInput.required = true;
-                reasonInput.focus();
-                showReason.hidden = true;
-            });
-            cancelButton.addEventListener('click', function() {
-                reasonPanel.hidden = true;
-                reasonInput.required = false;
-                reasonInput.value = '';
-                showReason.hidden = false;
-            });
-            reasonInput.addEventListener('input', function() {
-                confirmButton.disabled = !reasonInput.value.trim();
-            });
-            rejectionForm.addEventListener('submit', function(event) {
-                if (!reasonInput.value.trim()
-                        || !window.confirm('Từ chối đơn với lý do đã nhập?')) {
-                    event.preventDefault();
-                }
-            });
         }
 
         const urlParams = new URLSearchParams(window.location.search);

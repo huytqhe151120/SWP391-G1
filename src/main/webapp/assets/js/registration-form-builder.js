@@ -126,7 +126,14 @@
     });
 
     builder.addEventListener("change", event => {
-        if (event.target.matches("[data-question-type]")) update();
+        if (event.target.matches("[data-question-type]")) {
+            const card = event.target.closest("[data-question-card]");
+            if (event.target.value !== "TEXTAREA" && card.querySelectorAll(".registration-choice-row").length === 0) {
+                addChoice(card);
+                addChoice(card);
+            }
+            update();
+        }
     });
 
     update();

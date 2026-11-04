@@ -293,6 +293,21 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     }
 
     @Override
+    public int countActiveApplications(int activityId) {
+        String sql = "SELECT COUNT(*) FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=? AND r.status<>'WITHDRAWN'";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to count reserved activity registrations.", e);
+        }
+    }
+
+    @Override
     public Integer insert(ExtracurricularActivity activity) {
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
