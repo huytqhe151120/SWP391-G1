@@ -1,7 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.swp391.g1.dto.CurrentUser" %>
+<%@ page import="com.swp391.g1.util.AuthContext" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<%
+    CurrentUser invNavUser = AuthContext.getCurrentUser(request);
+    String invNavType = invNavUser == null ? "" : invNavUser.getType();
+    boolean showCompanyColumn = "ADMIN".equals(invNavType) || "STAFF".equals(invNavType);
+    pageContext.setAttribute("showCompanyColumn", showCompanyColumn);
+%>
 <c:set var="activeNav" value="partner-invitations" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -57,7 +65,7 @@
             <div class="activity-filter-field activity-filter-search">
                 <label for="filter-keyword">Tìm kiếm</label>
                 <input id="filter-keyword" type="search" name="keyword" value="<c:out value='${keyword}'/>"
-                       placeholder="Mã hoặc tên hoạt động">
+                       placeholder="${showCompanyColumn ? 'Tên công ty, mã hoặc tên hoạt động' : 'Mã hoặc tên hoạt động'}">
             </div>
             <div class="activity-filter-field">
                 <label for="filter-type">Loại hoạt động</label>
@@ -107,6 +115,9 @@
             <table class="partner-invitation-table">
                 <thead>
                 <tr>
+                    <c:if test="${showCompanyColumn}">
+                        <th scope="col">Tên công ty</th>
+                    </c:if>
                     <th scope="col">Mã hoạt động</th>
                     <th scope="col">Tên hoạt động</th>
                     <th scope="col">Loại hoạt động</th>
@@ -122,7 +133,7 @@
                 <c:choose>
                     <c:when test="${empty invitations}">
                         <tr>
-                            <td class="empty-state activity-empty-state" colspan="9">
+                            <td class="empty-state activity-empty-state" colspan="${showCompanyColumn ? 10 : 9}">
                                 <c:choose>
                                     <c:when test="${filtered}"><strong>Không tìm thấy lời mời phù hợp</strong></c:when>
                                     <c:otherwise><strong>Chưa có lời mời hợp tác nào</strong></c:otherwise>
@@ -133,6 +144,9 @@
                     <c:otherwise>
                         <c:forEach var="inv" items="${invitations}">
                             <tr>
+                                <c:if test="${showCompanyColumn}">
+                                    <td><strong class="activity-name"><c:out value="${inv.partnerCompanyName}" default="—"/></strong></td>
+                                </c:if>
                                 <td><span class="activity-code"><c:out value="${inv.activityCode}"/></span></td>
                                 <td><strong class="activity-name"><c:out value="${inv.activityName}"/></strong></td>
                                 <td><c:out value="${inv.activityTypeName}" default="—"/></td>

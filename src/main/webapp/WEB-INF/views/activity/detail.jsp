@@ -43,21 +43,55 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
-                <a class="button button-primary"
-                   href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+            <c:if test="${canManageActivities}">
+                <div class="activity-heading-actions">
+                    <a class="button button-outline action-btn"
+                       href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
+                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                        Điểm danh
+                    </a>
+                    <c:if test="${activity.activityStatus == 'UPCOMING'}">
+                        <a class="button button-primary"
+                           href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+                    </c:if>
+                </div>
             </c:if>
+            <div class="activity-detail-header-actions">
+                <c:if test="${canManageActivities}">
+                    <c:choose>
+                        <c:when test="${not empty registrationForm}">
+                            <a class="button button-primary-outline"
+                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}&amp;from=activity">
+                                Xem đợt đăng ký
+                            </a>
+                        </c:when>
+                        <c:when test="${activity.approvalStatus == 'APPROVED' and activity.registrationFormRequired}">
+                            <a class="button button-primary-outline"
+                               href="${pageContext.request.contextPath}/registration-forms?action=create&amp;activityId=${activity.id}">
+                                Tạo đợt đăng ký
+                            </a>
+                        </c:when>
+                        <c:when test="${activity.approvalStatus != 'APPROVED'}">
+                            <span class="field-hint">Chỉ có thể tạo đợt đăng ký sau khi hoạt động được duyệt.</span>
+                        </c:when>
+                    </c:choose>
+                </c:if>
+                <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
+                    <a class="button button-primary"
+                       href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+                </c:if>
+            </div>
         </div>
 
         <div class="activity-tabs-nav" role="tablist">
             <button type="button" class="activity-tab-btn active" id="btn-tab-info" data-tab="tab-info" role="tab" aria-selected="true" aria-controls="tab-info">
-                Thông tin chi tiết hoạt động
+                Thông tin chi tiết
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-staff" data-tab="tab-staff" role="tab" aria-selected="false" aria-controls="tab-staff">
-                Đơn vị đồng phụ trách
+                Phụ trách
             </button>
             <button type="button" class="activity-tab-btn" id="btn-tab-partner" data-tab="tab-partner" role="tab" aria-selected="false" aria-controls="tab-partner">
-                Đối tác hỗ trợ hoạt động
+                Đối tác
             </button>
         </div>
 
@@ -227,10 +261,6 @@
                             <h3 style="margin: 0;">Danh sách nhân sự đồng phụ trách</h3>
                             <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
                                 Các nhân sự thuộc đơn vị đồng phụ trách tham gia điều phối hoạt động.
-                            </p>
-                            <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-muted, #666);">
-                                Nhân sự phụ trách chính: <strong><c:out value="${activity.responsibleStaffName}" default="Chưa có"/></strong>
-                                - Đơn vị: <c:out value="${activity.responsibleDepartmentName}" default="Không có"/>
                             </p>
                         </div>
                         <span class="activity-count">

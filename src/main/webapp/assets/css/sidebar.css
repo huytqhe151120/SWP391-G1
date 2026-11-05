@@ -1,0 +1,532 @@
+/* ==========================================================================
+   Sidebar UI Optimization - EAMS System (SWP391-G1)
+   ========================================================================== */
+
+:root {
+    --sb-primary: #1890FF;
+    --sb-primary-bg: #E6F4FF;
+    --sb-bg: #FFFFFF;
+    --sb-text-primary: #1F2937;
+    --sb-text-normal: #4B5563;
+    --sb-text-muted: #8C98A4;
+    --sb-icon-normal: #6B7280;
+    --sb-icon-hover: #374151;
+    --sb-hover-bg: #F3F4F6;
+    --sb-border: #E5E7EB;
+    --sb-width: 248px;
+    --sb-collapsed-width: 72px;
+    --sb-font: "Inter", "Roboto", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+.activity-app-shell {
+    --activity-sidebar-width: var(--sb-width);
+}
+
+/* 3.5. Bố cục & Scroll Behavior */
+.activity-side-nav {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    width: var(--sb-width);
+    min-width: var(--sb-width);
+    max-width: var(--sb-width);
+    height: 100%;
+    max-height: 100vh;
+    flex-shrink: 0;
+    padding: 10px 12px 0;
+    background-color: var(--sb-bg);
+    border: 1px solid var(--sb-border);
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+    font-family: var(--sb-font);
+    color: var(--sb-text-primary);
+    overflow: hidden;
+    transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+                min-width 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.24s ease;
+}
+
+.activity-side-nav::-webkit-scrollbar,
+.activity-nav-menu::-webkit-scrollbar {
+    width: 5px;
+}
+
+.activity-side-nav::-webkit-scrollbar-thumb,
+.activity-nav-menu::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 999px;
+}
+
+/* Header: Brand Logo (logo-positive.svg + EAMS) & Collapse Sidebar Button */
+.activity-sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 4px 8px 6px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid var(--sb-border);
+    flex-shrink: 0;
+}
+
+.activity-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: var(--sb-text-primary);
+    text-decoration: none;
+}
+
+.activity-sidebar-brand:hover {
+    color: var(--sb-text-primary);
+    text-decoration: none;
+}
+
+.activity-sidebar-brand-logo {
+    display: block;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    object-fit: contain;
+}
+
+.activity-sidebar-brand-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.activity-sidebar-brand-eams {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.15;
+    color: #0F172A;
+}
+
+.activity-sidebar-brand-sub {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    color: var(--sb-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    padding: 0;
+    border: 1px solid var(--sb-border);
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: var(--sb-icon-normal);
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.activity-sidebar-toggle:hover {
+    background-color: var(--sb-hover-bg);
+    color: var(--sb-text-primary);
+    border-color: #D1D5DB;
+}
+
+.activity-sidebar-toggle:focus-visible {
+    outline: 2px solid var(--sb-primary);
+    outline-offset: 2px;
+}
+
+.activity-sidebar-toggle-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.activity-sidebar-toggle-chevron {
+    transform-origin: 14px 12px;
+    transition: transform 0.22s ease;
+}
+
+.activity-side-nav.is-collapsed .activity-sidebar-toggle-chevron {
+    transform: scaleX(-1);
+}
+
+/* Navigation Menu Container */
+.activity-nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #CBD5E1 transparent;
+    padding-bottom: 8px;
+}
+
+/* 3.1. Group Title (QUẢN LÝ, HỖ TRỢ) */
+.activity-nav-group {
+    display: block;
+    margin: 10px 10px 4px;
+    padding: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--sb-text-muted);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-nav-group:first-child {
+    margin-top: 2px;
+}
+
+/* 3.2. Chuẩn hóa Icon & Trạng thái Hover / Active */
+.activity-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    background: transparent;
+    border-radius: 0;
+    color: var(--sb-icon-normal);
+    transition: color 0.16s ease;
+}
+
+.activity-nav-icon svg,
+.sidebar-svg-icon {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    display: block;
+}
+
+.activity-nav-label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Link Item & Accordion Trigger Base */
+.activity-nav-menu a.activity-nav-item,
+.activity-nav-menu > a,
+.activity-nav-accordion-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 0;
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+    background-color: transparent;
+    color: var(--sb-text-normal);
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+/* Normal -> Hover */
+.activity-nav-menu a.activity-nav-item:hover,
+.activity-nav-menu > a:hover,
+.activity-nav-accordion-trigger:hover {
+    background-color: var(--sb-hover-bg);
+    color: var(--sb-text-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.activity-nav-menu a.activity-nav-item:hover .activity-nav-icon,
+.activity-nav-menu > a:hover .activity-nav-icon,
+.activity-nav-accordion-trigger:hover .activity-nav-icon {
+    background: transparent;
+    color: var(--sb-icon-hover);
+}
+
+/* Active State (VD: Điểm danh sinh viên) */
+.activity-nav-menu a.activity-nav-item.active,
+.activity-nav-menu > a.active {
+    background-color: var(--sb-primary-bg);
+    color: var(--sb-primary);
+    border-left: 3px solid var(--sb-primary);
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.activity-nav-menu a.activity-nav-item.active .activity-nav-icon,
+.activity-nav-menu > a.active .activity-nav-icon {
+    background: transparent;
+    color: var(--sb-primary);
+}
+
+/* 3.3. Collapsible / Accordion Sub-menu */
+.activity-nav-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.activity-nav-accordion.has-active > .activity-nav-accordion-trigger {
+    color: var(--sb-text-primary);
+    font-weight: 600;
+}
+
+.activity-nav-accordion.has-active > .activity-nav-accordion-trigger .activity-nav-icon {
+    color: var(--sb-primary);
+}
+
+.activity-nav-chevron {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    color: var(--sb-text-muted);
+    transition: transform 0.2s ease, color 0.16s ease;
+}
+
+.activity-nav-accordion.is-open > .activity-nav-accordion-trigger .activity-nav-chevron {
+    transform: rotate(180deg);
+}
+
+.activity-nav-submenu {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: 14px;
+    padding-left: 8px;
+    border-left: 1px solid #E5E7EB;
+}
+
+.activity-nav-accordion.is-open > .activity-nav-submenu {
+    display: flex;
+}
+
+.activity-nav-submenu a.activity-nav-item {
+    min-height: 33px;
+    padding: 5px 10px;
+    font-size: 0.84rem;
+}
+
+/* 3.4. Tối ưu khối Thông tin người dùng (User Profile Box) */
+.activity-sidebar-account {
+    position: sticky;
+    bottom: 0;
+    margin-top: auto;
+    padding: 10px 4px 12px;
+    background-color: var(--sb-bg);
+    border-top: 1px solid var(--sb-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+    z-index: 2;
+}
+
+.activity-sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 2px 6px;
+    min-width: 0;
+}
+
+.activity-sidebar-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+    background-color: var(--sb-primary-bg);
+    color: var(--sb-primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.activity-sidebar-user {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0;
+    min-width: 0;
+    flex: 1;
+}
+
+.activity-sidebar-user strong {
+    color: var(--sb-text-primary);
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-sidebar-user span {
+    color: var(--sb-text-muted);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-sidebar-account form {
+    margin: 0;
+}
+
+.activity-sidebar-logout {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 36px;
+    padding: 7px 12px;
+    border: 1px solid var(--sb-border);
+    border-radius: 8px;
+    background-color: #F9FAFB;
+    color: var(--sb-text-normal);
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.activity-sidebar-logout:hover {
+    background-color: #FEF2F2;
+    border-color: #FCA5A5;
+    color: #DC2626;
+}
+
+.activity-sidebar-logout-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Chế độ thu gọn Sidebar (Icon-only) trên Desktop */
+@media (min-width: 1025px) {
+    .activity-side-nav.is-collapsed {
+        width: var(--sb-collapsed-width);
+        min-width: var(--sb-collapsed-width);
+        max-width: var(--sb-collapsed-width);
+        padding: 14px 8px 0;
+    }
+
+    .activity-side-nav.is-collapsed .activity-sidebar-head {
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .activity-side-nav.is-collapsed .activity-sidebar-brand,
+    .activity-side-nav.is-collapsed .activity-nav-label,
+    .activity-side-nav.is-collapsed .activity-nav-chevron,
+    .activity-side-nav.is-collapsed .activity-sidebar-user,
+    .activity-side-nav.is-collapsed .activity-nav-accordion-trigger {
+        display: none;
+    }
+
+    .activity-side-nav.is-collapsed .activity-nav-group {
+        height: 1px;
+        margin: 10px 6px;
+        background-color: var(--sb-border);
+        font-size: 0;
+        color: transparent;
+    }
+
+    .activity-side-nav.is-collapsed .activity-nav-submenu {
+        display: flex;
+        margin-left: 0;
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .activity-side-nav.is-collapsed .activity-nav-menu a.activity-nav-item,
+    .activity-side-nav.is-collapsed .activity-nav-menu > a {
+        justify-content: center;
+        padding: 9px 0;
+    }
+
+    .activity-side-nav.is-collapsed .activity-sidebar-profile {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .activity-side-nav.is-collapsed .activity-sidebar-logout {
+        width: 38px;
+        height: 38px;
+        min-height: 38px;
+        margin: 0 auto;
+        padding: 0;
+        border-radius: 8px;
+    }
+
+    .activity-side-nav.is-collapsed .activity-sidebar-account form {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* Responsive trên màn hình Tablet / Mobile */
+@media (max-width: 1024px) {
+    .activity-side-nav {
+        position: static;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        height: auto;
+        max-height: none;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+    }
+
+    .activity-side-nav .activity-nav-menu {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-side-nav.is-collapsed {
+        padding-bottom: 14px;
+    }
+
+    .activity-side-nav.is-collapsed .activity-sidebar-head {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .activity-side-nav.is-collapsed .activity-nav-menu,
+    .activity-side-nav.is-collapsed .activity-sidebar-account {
+        display: none;
+    }
+}

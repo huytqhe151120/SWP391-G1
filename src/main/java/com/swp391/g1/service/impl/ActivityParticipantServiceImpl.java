@@ -1,0 +1,170 @@
+package com.swp391.g1.service.impl;
+
+import com.swp391.g1.dao.IActivityParticipantDAO;
+import com.swp391.g1.dao.impl.ActivityParticipantDAOImpl;
+import com.swp391.g1.dto.CurrentUser;
+import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
+import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
+import com.swp391.g1.dto.response.ParticipantCandidateDTO;
+import com.swp391.g1.model.Enum.ActivityStatus;
+import com.swp391.g1.model.Enum.ParticipantStatus;
+import com.swp391.g1.service.IActivityParticipantService;
+import com.swp391.g1.service.IExtracurricularActivityService;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class ActivityParticipantServiceImpl implements IActivityParticipantService {
+
+    private final IActivityParticipantDAO participantDAO;
+    private final IExtracurricularActivityService activityService;
+
+    public ActivityParticipantServiceImpl() {
+        this.participantDAO = new ActivityParticipantDAOImpl();
+        this.activityService = new ExtracurricularActivityServiceImpl();
+    }
+
+    @Override
+    public List<ActivityParticipantResponseDTO> getParticipants(int activityId) {
+        if (activityId <= 0) {
+            return List.of();
+        }
+        return participantDAO.findByActivityId(activityId);
+    }
+
+    @Override
+    public boolean canTakeAttendance(ExtracurricularActivityResponseDTO activity) {
+        return activity != null
+                && (activity.getActivityStatus() == ActivityStatus.ONGOING
+                        || activity.getActivityStatus() == ActivityStatus.COMPLETED);
+    }
+
+    @Override
+    public int saveAttendance(int activityId, Map<Integer, String> statusByParticipantId, CurrentUser user) {
+        if (activityId <= 0 || user == null) {
+            throw new IllegalArgumentException("Thông tin điểm danh không hợp lệ.");
+        }
+        ExtracurricularActivityResponseDTO activity = activityService.getActivityById(activityId);
+        if (activity == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+        if (!canTakeAttendance(activity)) {
+            throw new IllegalArgumentException(
+                    "Chỉ được điểm danh khi hoạt động đang diễn ra hoặc đã hoàn thành.");
+        }
+        Map<Integer, ParticipantStatus> statuses = new LinkedHashMap<>();
+        for (Map.Entry<Integer, String> entry : statusByParticipantId.entrySet()) {
+            ParticipantStatus status = parseStatus(entry.getValue());
+            if (entry.getKey() != null && entry.getKey() > 0 && status != null) {
+                statuses.put(entry.getKey(), status);
+            }
+        }
+        if (statuses.isEmpty()) {
+            return 0;
+        }
+        return participantDAO.updateStatuses(activityId, statuses, user.getUsername());
+    }
+
+    @Override
+    public boolean canManageParticipants(ExtracurricularActivityResponseDTO activity) {
+        return activity != null && activity.getActivityStatus() != ActivityStatus.CANCELLED;
+    }
+
+    @Override
+    public List<ParticipantCandidateDTO> getCandidates(int activityId) {
+        if (activityId <= 0) {
+            return List.of();
+        }
+        return participantDAO.findCandidates(activityId);
+    }
+
+    @Override
+    public int addStudents(int activityId, List<Integer> studentIds) {
+        ExtracurricularActivityResponseDTO activity = requireManageableActivity(activityId);
+        List<Integer> ids = distinctPositive(studentIds);
+        if (ids.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên.");
+        }
+        Integer max = activity.getMaxParticipants();
+        int added = participantDAO.insertParticipants(activityId, ids, max);
+        if (added < 0) {
+            int remaining = Math.max(0, max - participantDAO.countOccupiedByActivityId(activityId));
+            throw new IllegalArgumentException("Hoạt động chỉ còn " + remaining
+                    + " chỗ trống, không thể thêm " + ids.size() + " sinh viên.");
+        }
+        return added;
+    }
+
+    @Override
+    public int addStudentsByGroup(int activityId, int departmentId, int majorId, int programId, int classId) {
+        if (departmentId <= 0 && majorId <= 0 && programId <= 0 && classId <= 0) {
+            throw new IllegalArgumentException(
+                    "Vui lòng chọn ít nhất một tiêu chí: khoa, ngành, chương trình đào tạo hoặc lớp.");
+        }
+        requireManageableActivity(activityId);
+        List<Integer> studentIds = new ArrayList<>();
+        for (ParticipantCandidateDTO candidate : participantDAO.findCandidates(activityId)) {
+            if ((departmentId <= 0 || candidate.getDepartmentId() == departmentId)
+                    && (majorId <= 0 || candidate.getMajorId() == majorId)
+                    && (programId <= 0 || candidate.getAcademicProgramId() == programId)
+                    && (classId <= 0 || candidate.getMainClassId() == classId)) {
+                studentIds.add(candidate.getStudentId());
+            }
+        }
+        if (studentIds.isEmpty()) {
+            return 0;
+        }
+        return addStudents(activityId, studentIds);
+    }
+
+    @Override
+    public int removeParticipants(int activityId, List<Integer> participantIds) {
+        requireManageableActivity(activityId);
+        List<Integer> ids = distinctPositive(participantIds);
+        if (ids.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên.");
+        }
+        return participantDAO.deleteRemovable(activityId, ids);
+    }
+
+    private ExtracurricularActivityResponseDTO requireManageableActivity(int activityId) {
+        if (activityId <= 0) {
+            throw new IllegalArgumentException("Thông tin hoạt động không hợp lệ.");
+        }
+        ExtracurricularActivityResponseDTO activity = activityService.getActivityById(activityId);
+        if (activity == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+        if (!canManageParticipants(activity)) {
+            throw new IllegalArgumentException("Không thể thay đổi danh sách sinh viên của hoạt động đã hủy.");
+        }
+        return activity;
+    }
+
+    private List<Integer> distinctPositive(List<Integer> ids) {
+        Set<Integer> result = new LinkedHashSet<>();
+        if (ids != null) {
+            for (Integer id : ids) {
+                if (id != null && id > 0) {
+                    result.add(id);
+                }
+            }
+        }
+        return new ArrayList<>(result);
+    }
+
+    private ParticipantStatus parseStatus(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return ParticipantStatus.valueOf(value.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+}
