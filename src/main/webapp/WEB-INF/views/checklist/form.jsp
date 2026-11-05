@@ -1,6 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <% request.setAttribute("activeNav", "checklist"); %>
+<c:url var="checklistUrl" value="/checklist">
+    <c:if test="${formActivityId > 0}">
+        <c:param name="activityId" value="${formActivityId}"/>
+    </c:if>
+</c:url>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:out value="${isEdit ? 'Chỉnh sửa' : 'Tạo'}"/> công việc checklist | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261029-10">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261105-4">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -24,7 +29,7 @@
                             <c:otherwise>Tạo công việc checklist</c:otherwise></c:choose></h1>
                         <p class="subtitle">Nhập thông tin và chọn nhân sự được phân công.</p>
                     </div>
-                    <a class="checklist-back-link" href="${pageContext.request.contextPath}/checklist">Quay lại checklist</a>
+                    <a class="checklist-back-link" href="${checklistUrl}">Quay lại checklist</a>
                 </header>
 
                 <c:if test="${not empty errorMessage}">
@@ -40,6 +45,41 @@
                         <h2>Thông tin công việc</h2>
                         <div class="checklist-form-grid">
                             <div class="checklist-field">
+                                <label for="activityId">Hoạt động <span>*</span></label>
+                                <select id="activityId" name="activityId" required>
+                                    <option value="">-- Chọn hoạt động --</option>
+                                    <c:forEach var="activity" items="${activityOptions}">
+                                        <option value="${activity.id}"
+                                            ${formActivityId == activity.id ? 'selected' : ''}>
+                                            <c:out value="${activity.code}"/> - <c:out value="${activity.name}"/>
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                            <div class="checklist-field">
+                                <label for="phase">Giai đoạn <span>*</span></label>
+                                <select id="phase" name="phase" required>
+                                    <option value="">-- Chọn giai đoạn --</option>
+                                    <option value="BEFORE_EVENT" ${formPhase == 'BEFORE_EVENT' ? 'selected' : ''}>
+                                        Trước hoạt động
+                                    </option>
+                                    <option value="DURING_EVENT" ${formPhase == 'DURING_EVENT' ? 'selected' : ''}>
+                                        Trong hoạt động
+                                    </option>
+                                    <option value="AFTER_EVENT" ${formPhase == 'AFTER_EVENT' ? 'selected' : ''}>
+                                        Sau hoạt động
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="checklist-field">
+                                <label for="priority">Mức độ ưu tiên <span>*</span></label>
+                                <select id="priority" name="priority" required>
+                                    <option value="LOW" ${formPriority == 'LOW' ? 'selected' : ''}>Thấp</option>
+                                    <option value="MEDIUM" ${formPriority == 'MEDIUM' ? 'selected' : ''}>Trung bình</option>
+                                    <option value="HIGH" ${formPriority == 'HIGH' ? 'selected' : ''}>Cao</option>
+                                </select>
+                            </div>
+                            <div class="checklist-field">
                                 <label for="code">Mã công việc <span>*</span></label>
                                 <input id="code" name="code" type="text" maxlength="50" required
                                        value="<c:out value='${formCode}'/>" placeholder="Ví dụ: TASK-001">
@@ -49,15 +89,29 @@
                                 <input id="name" name="name" type="text" maxlength="255" required
                                        value="<c:out value='${formName}'/>" placeholder="Nhập tên công việc">
                             </div>
-                            <div class="checklist-field checklist-field-wide">
-                                <label for="description">Công việc chuẩn bị</label>
-                                <textarea id="description" name="description" rows="4"
-                                          placeholder="Nhập công việc cần chuẩn bị"><c:out value="${formDescription}"/></textarea>
-                            </div>
                             <div class="checklist-field">
-                                <label for="deadline">Hạn hoàn thành <span>*</span></label>
+                                <label for="deadline">Deadline <span>*</span></label>
                                 <input id="deadline" name="deadline" type="datetime-local" required
                                        value="<c:out value='${formDeadline}'/>">
+                            </div>
+                            <div class="checklist-field checklist-field-wide">
+                                <label for="prerequisiteTaskIds">Công việc tiên quyết</label>
+                                <select id="prerequisiteTaskIds" name="prerequisiteTaskIds" multiple size="5">
+                                    <c:forEach var="candidateTask" items="${taskOptions}">
+                                        <option value="${candidateTask.id}"
+                                                data-task-activity="${candidateTask.activityId}"
+                                                data-task-id="${candidateTask.id}"
+                                            ${selectedPrerequisiteTaskIds.contains(candidateTask.id) ? 'selected' : ''}>
+                                            <c:out value="${candidateTask.code}"/> - <c:out value="${candidateTask.name}"/>
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                                <small data-no-prerequisite-options hidden>
+                                    Hoạt động này chưa có công việc nào khác để chọn làm tiên quyết.
+                                </small>
+                                <small data-prerequisite-help>
+                                    Giữ Ctrl (Windows) hoặc Command (Mac) để chọn nhiều việc thuộc cùng hoạt động.
+                                </small>
                             </div>
                             <div class="checklist-field">
                                 <label for="status">Trạng thái <span>*</span></label>
@@ -88,15 +142,29 @@
                                         <label class="checklist-assignee-search-label" for="staffSearch">Tìm nhân viên</label>
                                         <input class="checklist-assignee-search" id="staffSearch" type="search"
                                                data-assignee-search="staff" placeholder="Nhập tên hoặc mã nhân viên">
-                                        <div class="checklist-assignee-list" data-assignee-list="staff">
-                                            <c:forEach var="staff" items="${staffOptions}">
-                                                <label class="checklist-assignee-option" data-assignee-option>
-                                                    <input type="checkbox" name="staffIds" value="${staff.id}"
-                                                           <c:if test="${selectedStaffIds.contains(staff.id)}">checked</c:if>>
-                                                    <span><strong><c:out value="${staff.name}"/></strong>
-                                                        <small><c:out value="${staff.code}"/></small></span>
-                                                </label>
-                                            </c:forEach>
+                                        <div class="checklist-table-wrap checklist-assignee-table-wrap"
+                                             data-assignee-list="staff">
+                                            <table class="checklist-table checklist-assignee-table">
+                                                <thead><tr>
+                                                    <th>Chọn</th><th>STT</th><th>Mã nhân sự</th><th>Họ và tên</th>
+                                                    <th>Trạng thái nhân sự</th><th>Chức vụ</th><th>Thời gian phân công</th>
+                                                </tr></thead>
+                                                <tbody>
+                                                <c:forEach var="staff" items="${staffOptions}" varStatus="row">
+                                                    <tr data-assignee-option>
+                                                        <td><input aria-label="Chọn nhân sự"
+                                                                   type="checkbox" name="staffIds" value="${staff.id}"
+                                                            <c:if test="${selectedStaffIds.contains(staff.id)}">checked</c:if>></td>
+                                                        <td><c:out value="${row.index + 1}"/></td>
+                                                        <td><c:out value="${staff.code}"/></td>
+                                                        <td><c:out value="${staff.name}"/></td>
+                                                        <td><c:out value="${staff.statusDisplay}"/></td>
+                                                        <td><c:out value="${empty staff.position ? 'Chưa cập nhật' : staff.position}"/></td>
+                                                        <td><c:out value="${staff.assignedAtDisplay}"/></td>
+                                                    </tr>
+                                                </c:forEach>
+                                                </tbody>
+                                            </table>
                                         </div>
                                         <p class="checklist-no-search-results" data-no-assignee-results="staff" hidden>
                                             Không tìm thấy nhân viên phù hợp.
@@ -115,19 +183,31 @@
                                         <label class="checklist-assignee-search-label" for="partnerStaffSearch">Tìm nhân viên đối tác</label>
                                         <input class="checklist-assignee-search" id="partnerStaffSearch" type="search"
                                                data-assignee-search="partner" placeholder="Nhập tên, mã hoặc công ty">
-                                        <div class="checklist-assignee-list" data-assignee-list="partner">
-                                            <c:forEach var="partnerStaff" items="${partnerStaffOptions}">
-                                                <label class="checklist-assignee-option" data-assignee-option>
-                                                    <input type="checkbox" name="partnerStaffIds" value="${partnerStaff.id}"
-                                                           <c:if test="${selectedPartnerStaffIds.contains(partnerStaff.id)}">checked</c:if>>
-                                                    <span><strong><c:out value="${partnerStaff.name}"/></strong>
-                                                        <small><c:out value="${partnerStaff.code}"/>
-                                                            <c:if test="${not empty partnerStaff.companyName}">
-                                                                · <c:out value="${partnerStaff.companyName}"/>
-                                                            </c:if>
-                                                        </small></span>
-                                                </label>
-                                            </c:forEach>
+                                        <div class="checklist-table-wrap checklist-assignee-table-wrap"
+                                             data-assignee-list="partner">
+                                            <table class="checklist-table checklist-assignee-table">
+                                                <thead><tr>
+                                                    <th>Chọn</th><th>STT</th><th>Mã đối tác</th><th>Họ và tên</th>
+                                                    <th>Công ty</th><th>Trạng thái nhân sự</th><th>Chức vụ</th>
+                                                    <th>Thời gian phân công</th>
+                                                </tr></thead>
+                                                <tbody>
+                                                <c:forEach var="partnerStaff" items="${partnerStaffOptions}" varStatus="row">
+                                                    <tr data-assignee-option>
+                                                        <td><input aria-label="Chọn nhân sự đối tác"
+                                                                   type="checkbox" name="partnerStaffIds" value="${partnerStaff.id}"
+                                                            <c:if test="${selectedPartnerStaffIds.contains(partnerStaff.id)}">checked</c:if>></td>
+                                                        <td><c:out value="${row.index + 1}"/></td>
+                                                        <td><c:out value="${partnerStaff.code}"/></td>
+                                                        <td><c:out value="${partnerStaff.name}"/></td>
+                                                        <td><c:out value="${empty partnerStaff.companyName ? 'Chưa cập nhật' : partnerStaff.companyName}"/></td>
+                                                        <td><c:out value="${partnerStaff.statusDisplay}"/></td>
+                                                        <td><c:out value="${empty partnerStaff.position ? 'Chưa cập nhật' : partnerStaff.position}"/></td>
+                                                        <td><c:out value="${partnerStaff.assignedAtDisplay}"/></td>
+                                                    </tr>
+                                                </c:forEach>
+                                                </tbody>
+                                            </table>
                                         </div>
                                         <p class="checklist-no-search-results" data-no-assignee-results="partner" hidden>
                                             Không tìm thấy nhân viên đối tác phù hợp.
@@ -139,7 +219,7 @@
                     </section>
 
                     <div class="checklist-form-actions">
-                        <a class="checklist-cancel-button" href="${pageContext.request.contextPath}/checklist">Hủy</a>
+                        <a class="checklist-cancel-button" href="${checklistUrl}">Hủy</a>
                         <button class="checklist-create-button" type="submit">
                             <c:choose><c:when test="${isEdit}">Lưu thay đổi</c:when>
                                 <c:otherwise>Tạo công việc</c:otherwise></c:choose>
@@ -150,6 +230,6 @@
         </div>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/checklist-form.js" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/checklist-form.js?v=20261105-5" defer></script>
 </body>
 </html>

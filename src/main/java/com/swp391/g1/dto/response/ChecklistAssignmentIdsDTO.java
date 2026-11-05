@@ -6,10 +6,13 @@ public class ChecklistAssignmentIdsDTO {
 
     private final List<Integer> staffIds;
     private final List<Integer> partnerStaffIds;
+    private final List<Integer> prerequisiteTaskIds;
 
-    public ChecklistAssignmentIdsDTO(List<Integer> staffIds, List<Integer> partnerStaffIds) {
+    public ChecklistAssignmentIdsDTO(List<Integer> staffIds, List<Integer> partnerStaffIds,
+                                     List<Integer> prerequisiteTaskIds) {
         this.staffIds = List.copyOf(staffIds);
         this.partnerStaffIds = List.copyOf(partnerStaffIds);
+        this.prerequisiteTaskIds = List.copyOf(prerequisiteTaskIds);
     }
 
     public List<Integer> getStaffIds() {
@@ -18,5 +21,9 @@ public class ChecklistAssignmentIdsDTO {
 
     public List<Integer> getPartnerStaffIds() {
         return partnerStaffIds;
+    }
+
+    public List<Integer> getPrerequisiteTaskIds() {
+        return prerequisiteTaskIds;
     }
 }

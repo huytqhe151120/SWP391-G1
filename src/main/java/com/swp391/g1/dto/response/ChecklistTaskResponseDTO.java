@@ -11,24 +11,46 @@ public class ChecklistTaskResponseDTO {
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final int id;
+    private final int activityId;
     private final String code;
     private final String name;
     private final String description;
     private final LocalDateTime deadline;
     private final String status;
+    private final String assignees;
+    private final String staffAssignees;
+    private final String partnerStaffAssignees;
+    private final String prerequisites;
+    private final String phase;
+    private final int progress;
+    private final String priority;
 
     public ChecklistTaskResponseDTO(
-            int id, String code, String name, String description, LocalDateTime deadline, String status) {
+            int id, int activityId, String code, String name, String description, LocalDateTime deadline,
+            String status, String assignees, String staffAssignees, String partnerStaffAssignees,
+            String prerequisites, String phase, int progress, String priority) {
         this.id = id;
+        this.activityId = activityId;
         this.code = code;
         this.name = name;
         this.description = description;
         this.deadline = deadline;
         this.status = status;
+        this.assignees = assignees;
+        this.staffAssignees = staffAssignees;
+        this.partnerStaffAssignees = partnerStaffAssignees;
+        this.prerequisites = prerequisites;
+        this.phase = phase;
+        this.progress = progress;
+        this.priority = priority;
     }
 
     public int getId() {
         return id;
+    }
+
+    public int getActivityId() {
+        return activityId;
     }
 
     public String getCode() {
@@ -62,5 +84,55 @@ public class ChecklistTaskResponseDTO {
 
     public String getStatusValue() {
         return ChecklistTaskStatus.normalize(status);
+    }
+
+    public String getAssignees() {
+        return assignees;
+    }
+
+    public String getStaffAssignees() {
+        return staffAssignees;
+    }
+
+    public String getPartnerStaffAssignees() {
+        return partnerStaffAssignees;
+    }
+
+    public String getDeadlineFilterValue() {
+        return deadline == null ? "" : deadline.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+    }
+
+    public String getPrerequisites() {
+        return prerequisites;
+    }
+
+    public String getPhase() {
+        return phase;
+    }
+
+    public String getPhaseDisplay() {
+        return switch (phase == null ? "" : phase) {
+            case "BEFORE_EVENT" -> "Trước hoạt động";
+            case "DURING_EVENT" -> "Trong hoạt động";
+            case "AFTER_EVENT" -> "Sau hoạt động";
+            default -> phase == null || phase.isBlank() ? "Chưa xác định" : phase;
+        };
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public String getPriorityDisplay() {
+        return switch (priority == null ? "" : priority) {
+            case "HIGH" -> "Cao";
+            case "LOW" -> "Thấp";
+            case "MEDIUM" -> "Trung bình";
+            default -> priority == null || priority.isBlank() ? "Trung bình" : priority;
+        };
     }
 }

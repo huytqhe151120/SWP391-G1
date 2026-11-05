@@ -10,19 +10,29 @@ import java.util.List;
 public interface IChecklistTaskDAO {
     List<ChecklistTaskResponseDTO> findAll();
 
+    List<ChecklistTaskResponseDTO> findForActivity(int activityId);
+
     List<ChecklistAssigneeResponseDTO> findActiveStaff();
+
+    List<ChecklistAssigneeResponseDTO> findActiveStaff(int taskId);
 
     List<ChecklistAssigneeResponseDTO> findActivePartnerStaff();
 
-    int create(String code, String name, String description, LocalDateTime deadline,
-               String status, List<Integer> staffIds, List<Integer> partnerStaffIds);
+    List<ChecklistAssigneeResponseDTO> findActivePartnerStaff(int taskId);
+
+    int create(int activityId, String phase, String priority, String code, String name, String description,
+               LocalDateTime deadline, String status, List<Integer> staffIds, List<Integer> partnerStaffIds,
+               List<Integer> prerequisiteTaskIds);
+
+    boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds);
 
     ChecklistTaskDetailResponseDTO findDetailById(int taskId);
 
     ChecklistAssignmentIdsDTO findAssigneeIds(int taskId);
 
-    int update(int taskId, String code, String name, String description, LocalDateTime deadline,
-               String status, List<Integer> staffIds, List<Integer> partnerStaffIds);
+    int update(int taskId, int activityId, String phase, String priority, String code, String name,
+               String description, LocalDateTime deadline, String status, List<Integer> staffIds,
+               List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
 
     boolean updateStatus(int taskId, String status);
 

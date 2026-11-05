@@ -27,4 +27,12 @@ public final class ChecklistTaskStatus {
         }
         return NOT_COMPLETED;
     }
+
+    public static String toDatabaseValue(String status) {
+        return switch (normalize(status)) {
+            case COMPLETED -> "COMPLETED";
+            case IN_PROGRESS -> "IN_PROGRESS";
+            default -> "TODO";
+        };
+    }
 }

@@ -10,19 +10,29 @@ import java.util.List;
 public interface IChecklistTaskService {
     List<ChecklistTaskResponseDTO> getAllTasks();
 
+    List<ChecklistTaskResponseDTO> getTasksForActivity(int activityId);
+
     List<ChecklistAssigneeResponseDTO> getActiveStaff();
+
+    List<ChecklistAssigneeResponseDTO> getActiveStaff(int taskId);
 
     List<ChecklistAssigneeResponseDTO> getActivePartnerStaff();
 
-    int createTask(String code, String name, String description, LocalDateTime deadline,
-                   String status, List<Integer> staffIds, List<Integer> partnerStaffIds);
+    List<ChecklistAssigneeResponseDTO> getActivePartnerStaff(int taskId);
+
+    int createTask(int activityId, String phase, String priority, String code, String name, String description,
+                   LocalDateTime deadline, String status, List<Integer> staffIds,
+                   List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
+
+    boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds);
 
     ChecklistTaskDetailResponseDTO getTaskDetail(int taskId);
 
     ChecklistAssignmentIdsDTO getAssigneeIds(int taskId);
 
-    int updateTask(int taskId, String code, String name, String description, LocalDateTime deadline,
-                   String status, List<Integer> staffIds, List<Integer> partnerStaffIds);
+    int updateTask(int taskId, int activityId, String phase, String priority, String code, String name,
+                   String description, LocalDateTime deadline, String status, List<Integer> staffIds,
+                   List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
 
     boolean updateTaskStatus(int taskId, String status);
 

@@ -29,8 +29,18 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     }
 
     @Override
+    public List<ChecklistTaskResponseDTO> getTasksForActivity(int activityId) {
+        return checklistTaskDAO.findForActivity(activityId);
+    }
+
+    @Override
     public List<ChecklistAssigneeResponseDTO> getActiveStaff() {
         return checklistTaskDAO.findActiveStaff();
+    }
+
+    @Override
+    public List<ChecklistAssigneeResponseDTO> getActiveStaff(int taskId) {
+        return checklistTaskDAO.findActiveStaff(taskId);
     }
 
     @Override
@@ -39,9 +49,22 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     }
 
     @Override
-    public int createTask(String code, String name, String description, LocalDateTime deadline,
-                          String status, List<Integer> staffIds, List<Integer> partnerStaffIds) {
-        return checklistTaskDAO.create(code, name, description, deadline, status, staffIds, partnerStaffIds);
+    public List<ChecklistAssigneeResponseDTO> getActivePartnerStaff(int taskId) {
+        return checklistTaskDAO.findActivePartnerStaff(taskId);
+    }
+
+    @Override
+    public int createTask(int activityId, String phase, String priority, String code, String name,
+                          String description, LocalDateTime deadline, String status,
+                          List<Integer> staffIds, List<Integer> partnerStaffIds,
+                          List<Integer> prerequisiteTaskIds) {
+        return checklistTaskDAO.create(activityId, phase, priority, code, name, description, deadline,
+                status, staffIds, partnerStaffIds, prerequisiteTaskIds);
+    }
+
+    @Override
+    public boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds) {
+        return checklistTaskDAO.addAssignees(taskId, staffIds, partnerStaffIds);
     }
 
     @Override
@@ -55,10 +78,12 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     }
 
     @Override
-    public int updateTask(int taskId, String code, String name, String description, LocalDateTime deadline,
-                          String status, List<Integer> staffIds, List<Integer> partnerStaffIds) {
-        return checklistTaskDAO.update(taskId, code, name, description, deadline,
-                status, staffIds, partnerStaffIds);
+    public int updateTask(int taskId, int activityId, String phase, String priority, String code,
+                          String name, String description, LocalDateTime deadline, String status,
+                          List<Integer> staffIds, List<Integer> partnerStaffIds,
+                          List<Integer> prerequisiteTaskIds) {
+        return checklistTaskDAO.update(taskId, activityId, phase, priority, code, name, description, deadline,
+                status, staffIds, partnerStaffIds, prerequisiteTaskIds);
     }
 
     @Override
