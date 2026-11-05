@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.swp391.g1.dto.CurrentUser" %>
+<%@ page import="com.swp391.g1.service.AccessPolicy" %>
 <%@ page import="com.swp391.g1.util.AuthContext" %>
 <%
     CurrentUser navUser = AuthContext.getCurrentUser(request);
@@ -7,6 +8,7 @@
     boolean navAdmin = "ADMIN".equals(navType);
     boolean navStaff = "STAFF".equals(navType);
     boolean navStudent = "STUDENT".equals(navType);
+    boolean navCanTakeAttendance = AccessPolicy.canTakeAttendance(navUser);
     Object navActiveAttr = request.getAttribute("activeNav");
     String navActive = navActiveAttr == null ? "" : navActiveAttr.toString();
     String reqUri = request.getRequestURI() == null ? "" : request.getRequestURI();
@@ -90,7 +92,7 @@
                     </span>
                     <span class="activity-nav-label">Hoạt động ngoại khóa</span>
                 </a>
-                <% if (navAdmin || navStaff) { %>
+                <% if (navCanTakeAttendance) { %>
                 <a class="activity-nav-item <%= "attendance".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/attendance"
                    title="Điểm danh sinh viên"
                    <%= "attendance".equals(navActive) ? "aria-current=\"page\"" : "" %>>

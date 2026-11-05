@@ -8,6 +8,7 @@ import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.ParticipantCandidateDTO;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ParticipantStatus;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityParticipantService;
 import com.swp391.g1.service.IExtracurricularActivityService;
 
@@ -45,7 +46,7 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     @Override
     public int saveAttendance(int activityId, Map<Integer, String> statusByParticipantId, CurrentUser user) {
-        if (activityId <= 0 || user == null) {
+        if (activityId <= 0 || user == null || !AccessPolicy.canTakeAttendance(user)) {
             throw new IllegalArgumentException("Thông tin điểm danh không hợp lệ.");
         }
         ExtracurricularActivityResponseDTO activity = activityService.getActivityById(activityId);

@@ -450,7 +450,7 @@
                                                data-participant-id="${p.participantId}"
                                                data-removable="${p.removable ? 'true' : 'false'}"
                                                aria-label="Chọn <c:out value='${p.studentName}'/>"
-                                               title="${p.removable ? 'Chọn sinh viên' : 'Sinh viên đã được điểm danh (chỉ có thể thao tác điểm danh, không thể xóa khỏi danh sách)'}">
+                                               title="${canManageParticipants and not p.removable ? 'Sinh viên đã được điểm danh (chỉ có thể thao tác điểm danh, không thể xóa khỏi danh sách)' : 'Chọn sinh viên'}">
                                     </td>
                                 </c:if>
                                 <td><span class="activity-code"><c:out value="${p.studentCode}" default="—"/></span></td>

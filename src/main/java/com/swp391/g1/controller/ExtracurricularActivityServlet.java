@@ -492,6 +492,11 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 request.setAttribute("activityBeforeStart",
                         isUpcomingBeforeStart(activity, DateTimeUtil.now()));
                 setActivityManagementPermission(request);
+                Set<Integer> attendanceActivityIds =
+                        invitationService.getAttendanceActivityIds(currentUser);
+                boolean canAccessAttendance = AccessPolicy.canTakeAttendance(currentUser)
+                        && (attendanceActivityIds == null || attendanceActivityIds.contains(id));
+                request.setAttribute("canAccessAttendance", canAccessAttendance);
                 if (AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
                     request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
                 }

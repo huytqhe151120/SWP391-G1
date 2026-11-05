@@ -43,14 +43,16 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <c:if test="${canManageActivities}">
+            <c:if test="${canAccessAttendance or canManageActivities}">
                 <div class="activity-heading-actions">
-                    <a class="button button-outline action-btn"
-                       href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
-                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
-                        Điểm danh
-                    </a>
-                    <c:if test="${activity.activityStatus == 'UPCOMING'}">
+                    <c:if test="${canAccessAttendance}">
+                        <a class="button button-outline action-btn"
+                           href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
+                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                            Điểm danh
+                        </a>
+                    </c:if>
+                    <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                         <a class="button button-primary"
                            href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
                     </c:if>

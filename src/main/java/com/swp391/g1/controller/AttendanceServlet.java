@@ -59,9 +59,9 @@ public class AttendanceServlet extends HttpServlet {
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        if (!AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
+        if (!AccessPolicy.canTakeAttendance(AuthContext.getCurrentUser(request))) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
-                    "Chỉ tài khoản STAFF hoặc ADMIN mới được điểm danh sinh viên.");
+                    "Chỉ tài khoản ADMIN, STAFF hoặc PARTNER_STAFF mới được điểm danh sinh viên.");
             return;
         }
         super.service(request, response);
@@ -139,12 +139,18 @@ public class AttendanceServlet extends HttpServlet {
                 request.setAttribute("majors", majors);
                 request.setAttribute("mainClasses", classes);
                 setFilterAttributes(request, filter);
-                boolean canManageParticipants = participantService.canManageParticipants(selectedActivity);
+                boolean canManageParticipants = AccessPolicy.canManageParticipants(currentUser)
+                        && participantService.canManageParticipants(selectedActivity);
                 request.setAttribute("canManageParticipants", canManageParticipants);
                 if (canManageParticipants) {
                     setCandidateAttributes(request, participantService.getCandidates(activityId));
                     request.setAttribute("openAddPanel", openAddPanel);
                 } else if (openAddPanel) {
+                    if (!AccessPolicy.canManageParticipants(currentUser)) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                                "Bạn không có quyền thêm hoặc xóa sinh viên trong danh sách tham gia.");
+                        return;
+                    }
                     request.getSession().setAttribute("errorMessage",
                             "Không thể thay đổi danh sách sinh viên của hoạt động đã hủy.");
                     response.sendRedirect(request.getContextPath() + "/attendance?activityId=" + activityId
@@ -180,6 +186,12 @@ public class AttendanceServlet extends HttpServlet {
         }
 
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if ((ADD_ACTIONS.contains(action) || "remove".equals(action))
+                && !AccessPolicy.canManageParticipants(currentUser)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền thêm hoặc xóa sinh viên trong danh sách tham gia.");
+            return;
+        }
         if (findById(getVisibleActivities(currentUser), activityId) == null) {
             if (isAjax) {
                 json(response, HttpServletResponse.SC_FORBIDDEN,
@@ -368,7 +380,7 @@ public class AttendanceServlet extends HttpServlet {
     }
 
     private List<ExtracurricularActivityResponseDTO> getVisibleActivities(CurrentUser user) {
-        Set<Integer> visibleActivityIds = invitationService.getVisibleActivityIds(user);
+        Set<Integer> visibleActivityIds = invitationService.getAttendanceActivityIds(user);
         List<ExtracurricularActivityResponseDTO> activities = new ArrayList<>();
         for (ExtracurricularActivityResponseDTO activity : activityService.getActivitiesVisibleTo(user)) {
             if (visibleActivityIds == null || visibleActivityIds.contains(activity.getId())) {
