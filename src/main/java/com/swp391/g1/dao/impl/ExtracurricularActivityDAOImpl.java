@@ -50,6 +50,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setEndTime(endTime == null
                 ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
         activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+        activity.setPublic(rs.getBoolean("is_public"));
         return activity;
     }
 
@@ -239,6 +240,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     dto.setEndTime(endTime == null
                             ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
                     dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+                    dto.setPublic(rs.getBoolean("is_public"));
 
                     // Thông tin chi tiết JOIN từ các bảng liên quan
                     dto.setSemesterCode(rs.getString("semester_code"));
@@ -280,12 +282,42 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     }
 
     @Override
+    public int countReservedApplications(int activityId) {
+        String sql = "SELECT COUNT(*) FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=? AND r.status IN ('SUBMITTED','APPROVED')";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to count reserved activity registrations.", e);
+        }
+    }
+
+    @Override
+    public int countActiveApplications(int activityId) {
+        String sql = "SELECT COUNT(*) FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=? AND r.status<>'WITHDRAWN'";
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to count reserved activity registrations.", e);
+        }
+    }
+
+    @Override
     public Integer insert(ExtracurricularActivity activity) {
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
                 + "partner_company_id, partner_staff_id, nature, is_summary_required, address, description, "
-                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required, max_participants) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required, max_participants, is_public) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -319,7 +351,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
                 + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
-                + "registration_form_required = ?, max_participants = ?"
+                + "registration_form_required = ?, max_participants = ?, is_public = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?") + " WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection();
@@ -350,7 +382,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
             ps.setBoolean(15, activity.isRegistrationFormRequired());
             setMaxParticipants(ps, 16, activity);
-            int next = 17;
+            ps.setBoolean(17, activity.isPublic());
+            int next = 18;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
@@ -375,15 +408,21 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return false;
         }
 
-        String sql = "UPDATE extracurricular_activity SET "
+        String sql = "UPDATE a WITH (UPDLOCK,HOLDLOCK) SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
                 + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
-                + "registration_form_required = ?, max_participants = ?"
+                + "registration_form_required = ?, max_participants = ?, is_public = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?")
-                + " WHERE id = ? AND activity_status = 'UPCOMING' "
-                + "AND start_time IS NOT NULL AND start_time > ? "
-                + "AND approval_status = ?";
+                + " FROM dbo.extracurricular_activity a "
+                + " WHERE a.id = ? AND a.activity_status = 'UPCOMING' "
+                + "AND a.start_time IS NOT NULL AND a.start_time > ? "
+                + "AND a.approval_status = ? "
+                + "AND (? IS NULL OR ? >= (SELECT COUNT(*) FROM dbo.activity_registration r WITH (UPDLOCK,HOLDLOCK) "
+                + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
+                + "WHERE f.activity_id=a.id "
+                + "AND r.status IN ('SUBMITTED','APPROVED')) "
+                + "OR (? IS NOT NULL AND a.max_participants = ?))";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -413,14 +452,19 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
             ps.setBoolean(15, activity.isRegistrationFormRequired());
             setMaxParticipants(ps, 16, activity);
+            ps.setBoolean(17, activity.isPublic());
 
-            int next = 17;
+            int next = 18;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
             ps.setInt(next++, activity.getId());
             ps.setTimestamp(next++, Timestamp.valueOf(now));
-            ps.setString(next, expectedApprovalStatus.name());
+            ps.setString(next++, expectedApprovalStatus.name());
+            setMaxParticipants(ps, next++, activity);
+            setMaxParticipants(ps, next++, activity);
+            setMaxParticipants(ps, next++, activity);
+            setMaxParticipants(ps, next, activity);
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -477,6 +521,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
         ps.setBoolean(17, activity.isRegistrationFormRequired());
         setMaxParticipants(ps, 18, activity);
+        ps.setBoolean(19, activity.isPublic());
     }
 
     @Override
@@ -488,6 +533,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
         // Remove the partner-company link before its invitation because it references that invitation.
         String[] dependentDeletes = {
+                "DELETE h FROM activity_attendance_history h "
+                        + "JOIN activity_participant ap ON ap.id = h.activity_participant_id "
+                        + "WHERE ap.activity_id = ?",
+                "DELETE FROM activity_participant WHERE activity_id = ?",
                 "DELETE FROM activity_staff WHERE activity_id = ?",
                 "DELETE FROM activity_department WHERE activity_id = ?",
                 "DELETE FROM activity_partner_staff WHERE activity_id = ?",
@@ -745,6 +794,10 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
 
         String[] dependentDeletes = {
+                "DELETE h FROM activity_attendance_history h "
+                        + "JOIN activity_participant ap ON ap.id = h.activity_participant_id "
+                        + "WHERE ap.activity_id = ?",
+                "DELETE FROM activity_participant WHERE activity_id = ?",
                 "DELETE FROM activity_staff WHERE activity_id = ?",
                 "DELETE FROM activity_department WHERE activity_id = ?",
                 "DELETE FROM activity_partner_staff WHERE activity_id = ?",
@@ -791,6 +844,31 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         } catch (SQLException e) {
             throw new IllegalStateException(
                     "Failed to delete activity that has not started or was cancelled.", e);
+        }
+    }
+
+    @Override
+    public boolean refreshPublic(int activityId) {
+        String sql = """
+                UPDATE dbo.extracurricular_activity
+                SET is_public = CASE
+                    WHEN nature <> 'REQUIRE_REGISTRATION' THEN 1
+                    WHEN registration_form_required = 0 THEN 1
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM dbo.activity_registration_form
+                        WHERE activity_id = ?
+                    ) THEN 1
+                    ELSE 0
+                END
+                WHERE id = ?
+                """;
+        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            p.setInt(2, activityId);
+            return p.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Không thể cập nhật trạng thái công khai của hoạt động.", e);
         }
     }
 

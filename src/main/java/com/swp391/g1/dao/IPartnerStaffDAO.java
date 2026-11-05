@@ -1,6 +1,5 @@
 package com.swp391.g1.dao;
 import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
-import com.swp391.g1.model.PartnerCompany;
 import com.swp391.g1.model.PartnerStaff;
 import com.swp391.g1.model.Enum;
 import java.util.List;

@@ -20,6 +20,7 @@
         else if (reqUri.contains("/attendance")) navActive = "attendance";
     }
     boolean isActivityGroupActive = "activities".equals(navActive)
+            || "registration-forms".equals(navActive)
             || "attendance".equals(navActive)
             || "partner-invitations".equals(navActive);
     boolean isHrGroupActive = "students".equals(navActive)
@@ -92,6 +93,39 @@
                     </span>
                     <span class="activity-nav-label">Hoạt động ngoại khóa</span>
                 </a>
+                <% if (navAdmin || navStaff) { %>
+                <a class="activity-nav-item <%= "registration-forms".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/registration-forms"
+                   title="Đăng ký tham gia"
+                   <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <rect width="18" height="18" x="3" y="4" rx="2"/>
+                            <line x1="16" x2="16" y1="2" y2="6"/>
+                            <line x1="8" x2="8" y1="2" y2="6"/>
+                            <line x1="3" x2="21" y1="10" y2="10"/>
+                            <path d="M8 14h8"/>
+                            <path d="M8 18h5"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Đăng ký tham gia</span>
+                </a>
+                <% } else if (navStudent) { %>
+                <a class="activity-nav-item <%= "registration-forms".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/registration-forms?action=myApplications"
+                   title="Đơn đăng ký"
+                   <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <path d="M14 2v6h6"/>
+                            <path d="M8 13h8"/>
+                            <path d="M8 17h8"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Đơn đăng ký</span>
+                </a>
+                <% } %>
                 <% if (navCanTakeAttendance) { %>
                 <a class="activity-nav-item <%= "attendance".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/attendance"
                    title="Điểm danh sinh viên"

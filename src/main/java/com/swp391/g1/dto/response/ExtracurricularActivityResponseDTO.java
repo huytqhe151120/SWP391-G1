@@ -39,6 +39,13 @@ public class ExtracurricularActivityResponseDTO {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
+    private boolean isPublic = true;
+
+    public boolean isPublic() { return isPublic; }
+
+    public boolean getPublic() { return isPublic; }
+
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
 
     public boolean isRegistrationFormRequired() {
         return registrationFormRequired;

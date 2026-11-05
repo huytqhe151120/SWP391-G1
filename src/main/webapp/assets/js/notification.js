@@ -1,5 +1,6 @@
 (function () {
     var API = (window.APP_CTX || '') + '/api/notifications';
+    var csrfToken = '';
 
     function esc(s) {
         var d = document.createElement('div');
@@ -12,14 +13,23 @@
     }
     function get(params) {
         return fetch(API + '?' + new URLSearchParams(params), {credentials: 'same-origin'})
-            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+            .then(function (r) {
+                if (!r.ok) throw new Error(r.status);
+                csrfToken = r.headers.get('X-CSRF-Token') || csrfToken;
+                return r.json();
+            });
     }
-    function post(params) {
+    function sendPost(params) {
         return fetch(API, {
             method: 'POST', credentials: 'same-origin',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': csrfToken},
             body: new URLSearchParams(params)
         }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+    }
+    function post(params) {
+        return (csrfToken ? Promise.resolve() : get({action: 'count'})).then(function () {
+            return sendPost(params);
+        });
     }
     function safeHref(link) {
         return link && link.charAt(0) === '/' && link.charAt(1) !== '/' ? (window.APP_CTX || '') + link : null;

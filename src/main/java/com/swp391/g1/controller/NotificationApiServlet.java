@@ -11,7 +11,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JSON API: GET ?action=list|count, POST action=read(id)|readAll.
@@ -20,6 +23,7 @@ import java.util.List;
 @WebServlet("/api/notifications")
 public class NotificationApiServlet extends HttpServlet {
 
+    private static final String CSRF_SESSION_KEY = NotificationApiServlet.class.getName() + ".csrfToken";
     private final INotificationService service;
 
     public NotificationApiServlet() {
@@ -30,6 +34,7 @@ public class NotificationApiServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         CurrentUser user = authorize(req, resp);
         if (user == null) return;
+        resp.setHeader("X-CSRF-Token", csrfToken(req));
         try {
             if ("count".equals(req.getParameter("action"))) {
                 json(resp, 200, "{\"unread\":" + service.countUnread(user.getId()) + "}");
@@ -65,6 +70,10 @@ public class NotificationApiServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         CurrentUser user = authorize(req, resp);
         if (user == null) return;
+        if (!isValidCsrfToken(req)) {
+            json(resp, 403, "{\"error\":\"Yêu cầu không hợp lệ.\"}");
+            return;
+        }
         try {
             String action = req.getParameter("action");
             if ("readAll".equals(action)) {
@@ -89,6 +98,30 @@ public class NotificationApiServlet extends HttpServlet {
             return null;
         }
         return user;
+    }
+
+    private static String csrfToken(HttpServletRequest req) {
+        var session = req.getSession();
+        synchronized (session) {
+            String token = (String) session.getAttribute(CSRF_SESSION_KEY);
+            if (token == null) {
+                token = UUID.randomUUID().toString();
+                session.setAttribute(CSRF_SESSION_KEY, token);
+            }
+            return token;
+        }
+    }
+
+    private static boolean isValidCsrfToken(HttpServletRequest req) {
+        var session = req.getSession(false);
+        if (session == null) {
+            return false;
+        }
+        Object expected = session.getAttribute(CSRF_SESSION_KEY);
+        String supplied = req.getHeader("X-CSRF-Token");
+        return expected instanceof String token && supplied != null
+                && MessageDigest.isEqual(token.getBytes(StandardCharsets.UTF_8),
+                        supplied.getBytes(StandardCharsets.UTF_8));
     }
 
     private static String normalizeFilter(String f) {

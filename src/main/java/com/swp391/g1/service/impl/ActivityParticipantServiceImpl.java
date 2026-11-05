@@ -93,7 +93,7 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
         Integer max = activity.getMaxParticipants();
         int added = participantDAO.insertParticipants(activityId, ids, max);
         if (added < 0) {
-            int remaining = Math.max(0, max - participantDAO.countByActivityId(activityId));
+            int remaining = Math.max(0, max - participantDAO.countOccupiedByActivityId(activityId));
             throw new IllegalArgumentException("Hoạt động chỉ còn " + remaining
                     + " chỗ trống, không thể thêm " + ids.size() + " sinh viên.");
         }

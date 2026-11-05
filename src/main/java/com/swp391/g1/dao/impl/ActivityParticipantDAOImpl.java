@@ -120,6 +120,34 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
     }
 
     @Override
+    public int countOccupiedByActivityId(int activityId) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT ap.student_id
+                    FROM dbo.activity_participant ap
+                    WHERE ap.activity_id = ?
+                    UNION
+                    SELECT r.student_id
+                    FROM dbo.activity_registration_form f
+                    JOIN dbo.activity_registration r ON r.form_id = f.id
+                    WHERE f.activity_id = ? AND r.status IN ('SUBMITTED', 'APPROVED')
+                ) occupied
+                """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to count occupied seats for activity " + activityId, e);
+        }
+    }
+
+    @Override
     public int insertParticipants(int activityId, List<Integer> studentIds, Integer maxParticipants) {
         // Locks the activity row so concurrent additions to the same activity cannot both pass the limit.
         String lockSql = "SELECT id FROM extracurricular_activity WITH (UPDLOCK, ROWLOCK) WHERE id = ?";
@@ -146,7 +174,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                 }
                 insert.executeBatch();
                 int after = count(conn, activityId);
-                if (maxParticipants != null && after > maxParticipants) {
+                if (maxParticipants != null && countOccupied(conn, activityId) > maxParticipants) {
                     conn.rollback();
                     return -1;
                 }
@@ -205,6 +233,30 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COUNT(*) FROM activity_participant WHERE activity_id = ?")) {
             ps.setInt(1, activityId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
+
+    private int countOccupied(Connection conn, int activityId) throws SQLException {
+        String sql = """
+                SELECT COUNT(*)
+                FROM (
+                    SELECT ap.student_id
+                    FROM dbo.activity_participant ap
+                    WHERE ap.activity_id = ?
+                    UNION
+                    SELECT r.student_id
+                    FROM dbo.activity_registration_form f
+                    JOIN dbo.activity_registration r ON r.form_id = f.id
+                    WHERE f.activity_id = ? AND r.status IN ('SUBMITTED', 'APPROVED')
+                ) occupied
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, activityId);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);

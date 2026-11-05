@@ -105,6 +105,15 @@
     color: #2563eb;
 }
 
+.action-menu-item--view {
+    color: #2563eb;
+}
+
+.action-menu-item--view:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
 .action-menu-item--edit:hover {
     background: #eff6ff;
     color: #1d4ed8;

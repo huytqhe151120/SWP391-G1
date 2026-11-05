@@ -58,6 +58,31 @@
                     </c:if>
                 </div>
             </c:if>
+            <div class="activity-detail-header-actions">
+                <c:if test="${canManageActivities}">
+                    <c:choose>
+                        <c:when test="${not empty registrationForm}">
+                            <a class="button button-primary-outline"
+                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}&amp;from=activity">
+                                Xem đợt đăng ký
+                            </a>
+                        </c:when>
+                        <c:when test="${activity.approvalStatus == 'APPROVED' and activity.registrationFormRequired}">
+                            <a class="button button-primary-outline"
+                               href="${pageContext.request.contextPath}/registration-forms?action=create&amp;activityId=${activity.id}">
+                                Tạo đợt đăng ký
+                            </a>
+                        </c:when>
+                        <c:when test="${activity.approvalStatus != 'APPROVED'}">
+                            <span class="field-hint">Chỉ có thể tạo đợt đăng ký sau khi hoạt động được duyệt.</span>
+                        </c:when>
+                    </c:choose>
+                </c:if>
+                <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
+                    <a class="button button-primary"
+                       href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+                </c:if>
+            </div>
         </div>
 
         <div class="activity-tabs-nav" role="tablist">
