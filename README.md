@@ -150,3 +150,29 @@ Default WAR context path: /swp391-g1
 The application URL is typically:
 
 http://localhost:8080/swp391-g1/home
+
+
+
+
+
+## Checklist Priority Alerts
+
+Checklist assignments send alerts according to priority:
+
+* `LOW`: no alert.
+* `MEDIUM`: in-app notification to assigned staff and partner staff.
+* `HIGH`: in-app notification and email to assigned recipients with available email addresses.
+
+Configure email delivery through environment variables; never commit SMTP credentials:
+
+| Variable | Required | Default / purpose |
+| --- | --- | --- |
+| `MAIL_HOST` | Yes for email | SMTP server hostname |
+| `MAIL_FROM` | Yes for email | Sender email address |
+| `MAIL_PORT` | No | `587` |
+| `MAIL_USERNAME` | No | SMTP login; configure together with `MAIL_PASSWORD` |
+| `MAIL_PASSWORD` | No | SMTP password |
+| `MAIL_STARTTLS` | No | `true` |
+| `APP_BASE_URL` | No | Application base URL for the task link in the email |
+
+Email recipients are taken from an assigned account's `username` when it is an email address; partner-company email is also used for assigned partner staff. Configure account usernames as email addresses where staff email is not stored separately.

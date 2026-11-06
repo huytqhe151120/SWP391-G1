@@ -6,11 +6,13 @@ import com.swp391.g1.dto.response.ChecklistAssignmentIdsDTO;
 import com.swp391.g1.dto.response.ChecklistTaskDetailResponseDTO;
 import com.swp391.g1.dto.response.ChecklistTaskResponseDTO;
 import com.swp391.g1.service.IExtracurricularActivityService;
+import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.model.ChecklistTaskStatus;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IChecklistTaskService;
 import com.swp391.g1.service.impl.ChecklistTaskServiceImpl;
 import com.swp391.g1.service.impl.ExtracurricularActivityServiceImpl;
+import com.swp391.g1.service.impl.NotificationServiceImpl;
 import com.swp391.g1.util.AuthContext;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
@@ -35,15 +37,24 @@ public class ChecklistServlet extends HttpServlet {
 
     private final IChecklistTaskService checklistTaskService;
     private final IExtracurricularActivityService activityService;
+    private final INotificationService notificationService;
 
     public ChecklistServlet() {
-        this(new ChecklistTaskServiceImpl(), new ExtracurricularActivityServiceImpl());
+        this(new ChecklistTaskServiceImpl(), new ExtracurricularActivityServiceImpl(),
+                new NotificationServiceImpl());
     }
 
     ChecklistServlet(IChecklistTaskService checklistTaskService,
                      IExtracurricularActivityService activityService) {
+        this(checklistTaskService, activityService, new NotificationServiceImpl());
+    }
+
+    ChecklistServlet(IChecklistTaskService checklistTaskService,
+                     IExtracurricularActivityService activityService,
+                     INotificationService notificationService) {
         this.checklistTaskService = checklistTaskService;
         this.activityService = activityService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -227,22 +238,27 @@ public class ChecklistServlet extends HttpServlet {
 
         try {
             if ("create".equals(action)) {
-                checklistTaskService.createTask(activityId, phase, priority, code, name, description,
+                int createdTaskId = checklistTaskService.createTask(activityId, phase, priority, code, name, description,
                         deadline, status, new ArrayList<>(staffIds), new ArrayList<>(partnerStaffIds),
                         new ArrayList<>(prerequisiteTaskIds));
+                notificationService.notifyChecklistTaskAssignment(createdTaskId);
                 response.sendRedirect(request.getContextPath()
                         + "/checklist?created=1&activityId=" + activityId);
             } else {
                 int updated = checklistTaskService.updateTask(taskId, activityId, phase, priority,
                         code, name, description, deadline, status, new ArrayList<>(staffIds),
                         new ArrayList<>(partnerStaffIds), new ArrayList<>(prerequisiteTaskIds));
+                if (updated > 0) {
+                    notificationService.notifyChecklistTaskAssignment(taskId);
+                }
                 response.sendRedirect(request.getContextPath()
                         + (updated == 0 ? "/checklist?notFound=1" : "/checklist?updated=1")
                         + "&activityId=" + activityId);
             }
         } catch (IllegalArgumentException e) {
-            request.setAttribute("errorMessage",
-                    "Nhân sự hoặc công việc tiên quyết không hợp lệ. Hãy chọn lại các mục cùng hoạt động.");
+            request.setAttribute("errorMessage", "PREREQUISITES_INCOMPLETE".equals(e.getMessage())
+                    ? "Chỉ có thể bắt đầu công việc sau khi tất cả công việc tiên quyết hoàn thành."
+                    : "Nhân sự hoặc công việc tiên quyết không hợp lệ. Hãy chọn lại các mục cùng hoạt động.");
             preserveForm(request, activityId, phase, priority, code, name, description, deadlineValue,
                     status, staffIds, partnerStaffIds, prerequisiteTaskIds);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -345,6 +361,10 @@ public class ChecklistServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath()
                     + (updated ? "/checklist?statusUpdated=1" : "/checklist?notFound=1")
                     + activityQuery(request.getParameter("activityId")));
+        } catch (IllegalStateException e) {
+            response.sendRedirect(request.getContextPath()
+                    + "/checklist?statusBlocked=1"
+                    + activityQuery(request.getParameter("activityId")));
         } catch (DataAccessException e) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Không thể cập nhật trạng thái công việc.");
@@ -384,6 +404,9 @@ public class ChecklistServlet extends HttpServlet {
             }
             boolean assigned = checklistTaskService.addAssignees(taskId,
                     new ArrayList<>(staffIds), new ArrayList<>(partnerStaffIds));
+            if (assigned) {
+                notificationService.notifyChecklistTaskAssignment(taskId);
+            }
             response.sendRedirect(request.getContextPath()
                     + (assigned ? "/checklist?assigned=1" : "/checklist?quickAssignError=1")
                     + activityQuery(Integer.toString(activityId)));

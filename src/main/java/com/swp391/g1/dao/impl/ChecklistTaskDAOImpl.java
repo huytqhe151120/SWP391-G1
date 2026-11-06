@@ -59,7 +59,15 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                        FROM checklist_task_dependency dependency
                        JOIN checklist_task prerequisite ON prerequisite.id = dependency.depends_on_task_id
                        WHERE dependency.task_id = t.id
-                   ), N'') AS prerequisites
+                   ), N'') AS prerequisites,
+                   CASE WHEN EXISTS (
+                       SELECT 1
+                       FROM checklist_task_dependency dependency
+                       JOIN checklist_task prerequisite ON prerequisite.id = dependency.depends_on_task_id
+                       WHERE dependency.task_id = t.id
+                         AND UPPER(LTRIM(RTRIM(prerequisite.status)))
+                             NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                   ) THEN 0 ELSE 1 END AS prerequisites_completed
             """;
 
     @Override
@@ -185,6 +193,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                 validateAssignees(conn, "staff", uniqueStaffIds);
                 validateAssignees(conn, "partner_staff", uniquePartnerStaffIds);
                 validatePrerequisites(conn, activityId, null, uniquePrerequisiteTaskIds);
+                validatePrerequisiteCompletion(conn, uniquePrerequisiteTaskIds, status);
 
                 int taskId;
                 try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -394,6 +403,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                 validateAssigneesForTask(conn, "partner_staff", "checklist_task_partner_staff",
                         "partner_staff_id", taskId, uniquePartnerStaffIds);
                 validatePrerequisites(conn, activityId, taskId, uniquePrerequisiteTaskIds);
+                validatePrerequisiteCompletion(conn, uniquePrerequisiteTaskIds, status);
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, activityId);
                     ps.setString(2, phase);
@@ -432,12 +442,36 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
 
     @Override
     public boolean updateStatus(int taskId, String status) {
-        String sql = "UPDATE checklist_task SET status = ? WHERE id = ?";
+        String databaseStatus = ChecklistTaskStatus.toDatabaseValue(status);
+        String sql = """
+                UPDATE checklist_task
+                SET status = ?
+                WHERE id = ?
+                  AND (status = ? OR ? = 'TODO' OR NOT EXISTS (
+                      SELECT 1
+                      FROM checklist_task_dependency dependency
+                      JOIN checklist_task prerequisite ON prerequisite.id = dependency.depends_on_task_id
+                      WHERE dependency.task_id = checklist_task.id
+                        AND UPPER(LTRIM(RTRIM(prerequisite.status)))
+                            NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                  ))
+                """;
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, ChecklistTaskStatus.toDatabaseValue(status));
+            ps.setString(1, databaseStatus);
             ps.setInt(2, taskId);
-            return ps.executeUpdate() > 0;
+            ps.setString(3, databaseStatus);
+            ps.setString(4, databaseStatus);
+            int updated = ps.executeUpdate();
+            if (updated > 0) {
+                return true;
+            }
+            if (taskExists(conn, taskId)) {
+                throw new IllegalStateException("PREREQUISITES_INCOMPLETE");
+            }
+            return false;
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (SQLException e) {
             throw new DataAccessException("Could not update checklist task status.", e);
         }
@@ -704,6 +738,33 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
         }
     }
 
+    private void validatePrerequisiteCompletion(Connection conn, Set<Integer> prerequisiteTaskIds,
+                                                String status) throws SQLException {
+        String databaseStatus = ChecklistTaskStatus.toDatabaseValue(status);
+        if ("TODO".equals(databaseStatus) || prerequisiteTaskIds.isEmpty()) {
+            return;
+        }
+        String placeholders = String.join(",", java.util.Collections.nCopies(prerequisiteTaskIds.size(), "?"));
+        String sql = """
+                SELECT COUNT(*)
+                FROM checklist_task
+                WHERE id IN (__IDS__)
+                  AND UPPER(LTRIM(RTRIM(status))) IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                """.replace("__IDS__", placeholders);
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            int parameterIndex = 1;
+            for (int prerequisiteId : prerequisiteTaskIds) {
+                ps.setInt(parameterIndex++, prerequisiteId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                if (rs.getInt(1) != prerequisiteTaskIds.size()) {
+                    throw new IllegalArgumentException("PREREQUISITES_INCOMPLETE");
+                }
+            }
+        }
+    }
+
     private void insertPrerequisites(Connection conn, int taskId, Set<Integer> prerequisiteTaskIds)
             throws SQLException {
         String sql = """
@@ -796,6 +857,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                 rs.getString("staff_assignees"),
                 rs.getString("partner_staff_assignees"),
                 rs.getString("prerequisites"),
+                rs.getBoolean("prerequisites_completed"),
                 rs.getString("phase"),
                 rs.getInt("progress"),
                 rs.getString("priority"));

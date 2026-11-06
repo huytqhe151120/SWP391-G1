@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết công việc | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261105-5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261106-2">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -40,7 +40,11 @@
                         <div><dt>Mã công việc</dt><dd><c:out value="${taskDetail.task.code}"/></dd></div>
                         <div><dt>Tên công việc</dt><dd><c:out value="${taskDetail.task.name}"/></dd></div>
                         <div><dt>Deadline</dt><dd><c:out value="${taskDetail.task.deadlineDisplay}"/></dd></div>
-                        <div><dt>Mức độ ưu tiên</dt><dd><c:out value="${taskDetail.task.priorityDisplay}"/></dd></div>
+                        <div><dt>Mức độ ưu tiên</dt><dd>
+                            <span class="checklist-priority-badge ${taskDetail.task.priority == 'HIGH' ? 'checklist-priority-high' : taskDetail.task.priority == 'LOW' ? 'checklist-priority-low' : 'checklist-priority-medium'}">
+                                <c:out value="${taskDetail.task.priorityDisplay}"/>
+                            </span>
+                        </dd></div>
                         <div><dt>Trạng thái</dt><dd><span class="checklist-status"><c:out value="${taskDetail.task.statusDisplay}"/></span></dd></div>
                         <div class="checklist-detail-wide">
                             <dt>Công việc chuẩn bị</dt>
@@ -72,7 +76,14 @@
                                             <td><c:out value="${row.index + 1}"/></td>
                                             <td><a href="${pageContext.request.contextPath}/checklist?action=detail&amp;id=${relatedTask.id}&amp;activityId=${taskDetail.task.activityId}"><c:out value="${relatedTask.code}"/></a></td>
                                             <td><c:out value="${relatedTask.name}"/></td>
-                                            <td><c:out value="${relatedTask.statusDisplay}"/></td>
+                                            <td>
+                                                <c:out value="${relatedTask.statusDisplay}"/>
+                                                <c:if test="${not relatedTask.prerequisitesCompleted}">
+                                                    <small class="checklist-prerequisite-locked">
+                                                        Đang chờ công việc tiên quyết
+                                                    </small>
+                                                </c:if>
+                                            </td>
                                         </tr>
                                     </c:forEach>
                                     </tbody>
@@ -98,7 +109,14 @@
                                             <td><c:out value="${row.index + 1}"/></td>
                                             <td><a href="${pageContext.request.contextPath}/checklist?action=detail&amp;id=${relatedTask.id}&amp;activityId=${taskDetail.task.activityId}"><c:out value="${relatedTask.code}"/></a></td>
                                             <td><c:out value="${relatedTask.name}"/></td>
-                                            <td><c:out value="${relatedTask.statusDisplay}"/></td>
+                                            <td>
+                                                <c:out value="${relatedTask.statusDisplay}"/>
+                                                <c:if test="${not relatedTask.prerequisitesCompleted}">
+                                                    <small class="checklist-prerequisite-locked">
+                                                        Đang chờ công việc tiên quyết
+                                                    </small>
+                                                </c:if>
+                                            </td>
                                         </tr>
                                     </c:forEach>
                                     </tbody>

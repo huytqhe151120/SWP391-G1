@@ -13,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:out value="${isEdit ? 'Chỉnh sửa' : 'Tạo'}"/> công việc checklist | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261105-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261106-3">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -95,31 +95,70 @@
                                        value="<c:out value='${formDeadline}'/>">
                             </div>
                             <div class="checklist-field checklist-field-wide">
-                                <label for="prerequisiteTaskIds">Công việc tiên quyết</label>
-                                <select id="prerequisiteTaskIds" name="prerequisiteTaskIds" multiple size="5">
-                                    <c:forEach var="candidateTask" items="${taskOptions}">
-                                        <option value="${candidateTask.id}"
-                                                data-task-activity="${candidateTask.activityId}"
-                                                data-task-id="${candidateTask.id}"
-                                            ${selectedPrerequisiteTaskIds.contains(candidateTask.id) ? 'selected' : ''}>
-                                            <c:out value="${candidateTask.code}"/> - <c:out value="${candidateTask.name}"/>
-                                        </option>
-                                    </c:forEach>
-                                </select>
+                                <span class="checklist-prerequisite-label">Công việc tiên quyết</span>
+                                <button class="checklist-prerequisite-button" type="button"
+                                        data-open-prerequisites>Chọn công việc tiên quyết</button>
+                                <p class="checklist-prerequisite-selection" data-prerequisite-selection>
+                                    Chưa chọn công việc tiên quyết.
+                                </p>
                                 <small data-no-prerequisite-options hidden>
                                     Hoạt động này chưa có công việc nào khác để chọn làm tiên quyết.
                                 </small>
-                                <small data-prerequisite-help>
-                                    Giữ Ctrl (Windows) hoặc Command (Mac) để chọn nhiều việc thuộc cùng hoạt động.
-                                </small>
+                                <dialog class="checklist-prerequisite-dialog" data-prerequisite-dialog>
+                                    <div class="checklist-prerequisite-dialog-content">
+                                        <div class="checklist-prerequisite-dialog-header">
+                                            <div>
+                                                <h2>Chọn công việc tiên quyết</h2>
+                                                <p>Chỉ có thể chọn công việc thuộc cùng hoạt động.</p>
+                                            </div>
+                                            <button type="button" class="checklist-quick-assign-close"
+                                                    aria-label="Đóng" data-close-prerequisites>&times;</button>
+                                        </div>
+                                        <label class="checklist-prerequisite-search-label" for="prerequisiteSearch">
+                                            Tìm công việc
+                                        </label>
+                                        <input id="prerequisiteSearch" class="checklist-assignee-search"
+                                               type="search" data-prerequisite-search
+                                               placeholder="Nhập mã hoặc tên công việc">
+                                        <div class="checklist-prerequisite-options" data-prerequisite-options>
+                                            <c:forEach var="candidateTask" items="${taskOptions}">
+                                                <label class="checklist-prerequisite-option"
+                                                       data-prerequisite-option>
+                                                    <input type="checkbox" name="prerequisiteTaskIds"
+                                                           value="${candidateTask.id}"
+                                                           data-task-activity="${candidateTask.activityId}"
+                                                           data-task-id="${candidateTask.id}"
+                                                           data-task-status="${candidateTask.statusValue}"
+                                                        ${selectedPrerequisiteTaskIds.contains(candidateTask.id)
+                                                            ? 'checked' : ''}>
+                                                    <span>
+                                                        <strong><c:out value="${candidateTask.code}"/></strong>
+                                                        <small><c:out value="${candidateTask.name}"/></small>
+                                                    </span>
+                                                </label>
+                                            </c:forEach>
+                                        </div>
+                                        <p class="checklist-no-search-results"
+                                           data-no-prerequisite-results hidden>
+                                            Không tìm thấy công việc phù hợp.
+                                        </p>
+                                        <div class="checklist-prerequisite-dialog-actions">
+                                            <button type="button" class="checklist-create-button"
+                                                    data-close-prerequisites>Hoàn tất chọn</button>
+                                        </div>
+                                    </div>
+                                </dialog>
                             </div>
                             <div class="checklist-field">
                                 <label for="status">Trạng thái <span>*</span></label>
                                 <select id="status" name="status" required>
                                     <option value="Chưa hoàn thành" ${formStatus == 'Chưa hoàn thành' ? 'selected' : ''}>Chưa hoàn thành</option>
-                                    <option value="Đang hoàn thành" ${formStatus == 'Đang hoàn thành' ? 'selected' : ''}>Đang hoàn thành</option>
-                                    <option value="Đã hoàn thành" ${formStatus == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
+                                    <option value="Đang hoàn thành" data-advanced-status ${formStatus == 'Đang hoàn thành' ? 'selected' : ''}>Đang hoàn thành</option>
+                                    <option value="Đã hoàn thành" data-advanced-status ${formStatus == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
                                 </select>
+                                <small data-prerequisite-status-help hidden>
+                                    Chỉ có thể bắt đầu công việc sau khi tất cả công việc tiên quyết hoàn thành.
+                                </small>
                             </div>
                         </div>
                     </section>
@@ -230,6 +269,6 @@
         </div>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/checklist-form.js?v=20261105-5" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/checklist-form.js?v=20261106-1" defer></script>
 </body>
 </html>

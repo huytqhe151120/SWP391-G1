@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Checklist công việc | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261105-3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261106-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css">
 </head>
 <body>
@@ -53,6 +53,11 @@
                 </c:if>
                 <c:if test="${param.statusUpdated == '1'}">
                     <div class="checklist-success" role="status">Đã cập nhật trạng thái công việc.</div>
+                </c:if>
+                <c:if test="${param.statusBlocked == '1'}">
+                    <div class="checklist-error" role="alert">
+                        Chỉ có thể bắt đầu công việc sau khi tất cả công việc tiên quyết hoàn thành.
+                    </div>
                 </c:if>
                 <c:if test="${param.assigned == '1'}">
                     <div class="checklist-success" role="status">Đã phân công nhanh nhân sự cho công việc.</div>
@@ -288,7 +293,11 @@
                                             </c:choose>
                                         </td>
                                         <td><c:out value="${task.phaseDisplay}"/></td>
-                                        <td><c:out value="${task.priorityDisplay}"/></td>
+                                        <td>
+                                            <span class="checklist-priority-badge ${task.priority == 'HIGH' ? 'checklist-priority-high' : task.priority == 'LOW' ? 'checklist-priority-low' : 'checklist-priority-medium'}">
+                                                <c:out value="${task.priorityDisplay}"/>
+                                            </span>
+                                        </td>
                                         <td><c:out value="${task.deadlineDisplay}"/></td>
                                         <td>
                                             <form class="checklist-inline-status" method="post"
@@ -299,10 +308,19 @@
                                                 <select name="status" aria-label="Trạng thái công việc"
                                                         onchange="this.form.requestSubmit()">
                                                     <option value="Chưa hoàn thành" ${task.statusValue == 'Chưa hoàn thành' ? 'selected' : ''}>Chưa hoàn thành</option>
-                                                    <option value="Đang hoàn thành" ${task.statusValue == 'Đang hoàn thành' ? 'selected' : ''}>Đang hoàn thành</option>
-                                                    <option value="Đã hoàn thành" ${task.statusValue == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
+                                                    <option value="Đang hoàn thành"
+                                                        <c:if test="${not task.prerequisitesCompleted and task.statusValue == 'Chưa hoàn thành'}">disabled</c:if>
+                                                        ${task.statusValue == 'Đang hoàn thành' ? 'selected' : ''}>Đang hoàn thành</option>
+                                                    <option value="Đã hoàn thành"
+                                                        <c:if test="${not task.prerequisitesCompleted and task.statusValue == 'Chưa hoàn thành'}">disabled</c:if>
+                                                        ${task.statusValue == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
                                                 </select>
                                             </form>
+                                            <c:if test="${not task.prerequisitesCompleted}">
+                                                <small class="checklist-prerequisite-locked">
+                                                    Đang chờ công việc tiên quyết hoàn thành
+                                                </small>
+                                            </c:if>
                                         </td>
                                         <td class="checklist-actions-cell">
                                             <div class="checklist-actions">

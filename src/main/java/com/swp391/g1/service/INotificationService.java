@@ -29,6 +29,9 @@ public interface INotificationService {
     /** Gửi thông báo phản hồi lời mời của đối tác tới nhân sự phụ trách chính. */
     void notifyPartnerInvitationOwner(int invitationId, String eventType, String title, String content);
 
+    /** Cảnh báo checklist: MEDIUM qua chuông, HIGH qua chuông và email. */
+    void notifyChecklistTaskAssignment(int taskId);
+
     List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size);
 
     int countNotifications(int accountId, String filter);

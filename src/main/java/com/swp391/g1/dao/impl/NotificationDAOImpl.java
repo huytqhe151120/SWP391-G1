@@ -2,12 +2,162 @@ package com.swp391.g1.dao.impl;
 
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.INotificationDAO;
+import com.swp391.g1.dto.response.ChecklistTaskAlertDTO;
 import com.swp391.g1.dto.response.NotificationDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NotificationDAOImpl implements INotificationDAO {
+
+    @Override
+    public ChecklistTaskAlertDTO createChecklistTaskNotification(int taskId) {
+        String taskSql = """
+                SELECT id, activity_id, code, name, priority, deadline
+                FROM checklist_task
+                WHERE id = ?
+                """;
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                ChecklistTaskAlertDTO task;
+                String priority;
+                try (PreparedStatement ps = c.prepareStatement(taskSql)) {
+                    ps.setInt(1, taskId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            c.rollback();
+                            return null;
+                        }
+                        priority = rs.getString("priority");
+                        if (!"MEDIUM".equalsIgnoreCase(priority) && !"HIGH".equalsIgnoreCase(priority)) {
+                            c.rollback();
+                            return null;
+                        }
+                        String code = rs.getString("code");
+                        String name = rs.getString("name");
+                        Timestamp deadline = rs.getTimestamp("deadline");
+                        int activityId = rs.getInt("activity_id");
+                        String deadlineDisplay = deadline == null ? "Chưa có hạn"
+                                : deadline.toLocalDateTime().format(
+                                        java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                        task = new ChecklistTaskAlertDTO(code, name, priority, deadlineDisplay,
+                                "/checklist?action=detail&id=" + taskId + "&activityId=" + activityId,
+                                "HIGH".equalsIgnoreCase(priority)
+                                        ? findChecklistTaskRecipientEmails(c, taskId) : List.of());
+                    }
+                }
+
+                List<Integer> recipientIds = findChecklistTaskRecipientIds(c, taskId);
+                if (!recipientIds.isEmpty()) {
+                    String title = "HIGH".equalsIgnoreCase(priority)
+                            ? "Công việc ưu tiên cao được phân công"
+                            : "Có công việc mới được phân công";
+                    String content = "Công việc " + task.code() + " - " + task.name()
+                            + " có mức ưu tiên " + ("HIGH".equalsIgnoreCase(priority) ? "cao" : "trung bình")
+                            + ". Deadline: " + task.deadlineDisplay() + ".";
+                    int notificationId;
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "INSERT INTO notifications (title, content, type, event_type, target_url) "
+                                    + "VALUES (?, ?, 'IN_APP', 'CHECKLIST_TASK_ASSIGNED', ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setString(1, title);
+                        ps.setString(2, content);
+                        ps.setString(3, task.targetUrl());
+                        ps.executeUpdate();
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (!rs.next()) {
+                                throw new SQLException("Checklist notification ID was not generated.");
+                            }
+                            notificationId = rs.getInt(1);
+                        }
+                    }
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "INSERT INTO user_notifications (notification_id, user_id) VALUES (?, ?)")) {
+                        for (int recipientId : recipientIds) {
+                            ps.setInt(1, notificationId);
+                            ps.setInt(2, recipientId);
+                            ps.addBatch();
+                        }
+                        ps.executeBatch();
+                    }
+                }
+                c.commit();
+                return task;
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create checklist task notification.", e);
+        }
+    }
+
+    private List<Integer> findChecklistTaskRecipientIds(Connection c, int taskId) throws SQLException {
+        String sql = """
+                SELECT DISTINCT recipient.account_id
+                FROM (
+                    SELECT s.account_id
+                    FROM checklist_task_staff assignment
+                    JOIN staff s ON s.id = assignment.staff_id
+                    WHERE assignment.task_id = ? AND s.account_id IS NOT NULL
+                    UNION
+                    SELECT ps.account_id
+                    FROM checklist_task_partner_staff assignment
+                    JOIN partner_staff ps ON ps.id = assignment.partner_staff_id
+                    WHERE assignment.task_id = ? AND ps.account_id IS NOT NULL
+                ) recipient
+                """;
+        List<Integer> ids = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            ps.setInt(2, taskId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt(1));
+                }
+            }
+        }
+        return ids;
+    }
+
+    private List<String> findChecklistTaskRecipientEmails(Connection c, int taskId) throws SQLException {
+        String sql = """
+                SELECT recipient.email
+                FROM (
+                    SELECT a.username AS email
+                    FROM checklist_task_staff assignment
+                    JOIN staff s ON s.id = assignment.staff_id
+                    JOIN account a ON a.id = s.account_id
+                    WHERE assignment.task_id = ? AND a.username LIKE '%_@_%._%'
+                    UNION
+                    SELECT a.username AS email
+                    FROM checklist_task_partner_staff assignment
+                    JOIN partner_staff ps ON ps.id = assignment.partner_staff_id
+                    JOIN account a ON a.id = ps.account_id
+                    WHERE assignment.task_id = ? AND a.username LIKE '%_@_%._%'
+                    UNION
+                    SELECT company.email
+                    FROM checklist_task_partner_staff assignment
+                    JOIN partner_staff ps ON ps.id = assignment.partner_staff_id
+                    JOIN partner_company company ON company.id = ps.company_id
+                    WHERE assignment.task_id = ? AND company.email LIKE '%_@_%._%'
+                ) recipient
+                WHERE recipient.email IS NOT NULL AND LTRIM(RTRIM(recipient.email)) <> ''
+                """;
+        List<String> emails = new ArrayList<>();
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            ps.setInt(2, taskId);
+            ps.setInt(3, taskId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    emails.add(rs.getString(1));
+                }
+            }
+        }
+        return emails;
+    }
 
     private static String filterClause(String filter) {
         if ("unread".equals(filter)) return " AND un.is_read = 0";

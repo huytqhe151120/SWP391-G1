@@ -1,6 +1,7 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.dto.response.NotificationDTO;
+import com.swp391.g1.dto.response.ChecklistTaskAlertDTO;
 import java.util.List;
 
 public interface INotificationDAO {
@@ -19,6 +20,8 @@ public interface INotificationDAO {
     /** Notifies the activity's primary responsible staff about a partner invitation update. */
     int createPartnerInvitationOwnerNotification(
             int invitationId, String eventType, String title, String content, String targetUrl);
+
+    ChecklistTaskAlertDTO createChecklistTaskNotification(int taskId);
 
     /** filter: "all" | "unread" | "read". */
     List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);

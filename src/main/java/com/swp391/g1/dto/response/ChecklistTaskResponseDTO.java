@@ -21,6 +21,7 @@ public class ChecklistTaskResponseDTO {
     private final String staffAssignees;
     private final String partnerStaffAssignees;
     private final String prerequisites;
+    private final boolean prerequisitesCompleted;
     private final String phase;
     private final int progress;
     private final String priority;
@@ -28,7 +29,7 @@ public class ChecklistTaskResponseDTO {
     public ChecklistTaskResponseDTO(
             int id, int activityId, String code, String name, String description, LocalDateTime deadline,
             String status, String assignees, String staffAssignees, String partnerStaffAssignees,
-            String prerequisites, String phase, int progress, String priority) {
+            String prerequisites, boolean prerequisitesCompleted, String phase, int progress, String priority) {
         this.id = id;
         this.activityId = activityId;
         this.code = code;
@@ -40,6 +41,7 @@ public class ChecklistTaskResponseDTO {
         this.staffAssignees = staffAssignees;
         this.partnerStaffAssignees = partnerStaffAssignees;
         this.prerequisites = prerequisites;
+        this.prerequisitesCompleted = prerequisitesCompleted;
         this.phase = phase;
         this.progress = progress;
         this.priority = priority;
@@ -104,6 +106,10 @@ public class ChecklistTaskResponseDTO {
 
     public String getPrerequisites() {
         return prerequisites;
+    }
+
+    public boolean isPrerequisitesCompleted() {
+        return prerequisitesCompleted;
     }
 
     public String getPhase() {

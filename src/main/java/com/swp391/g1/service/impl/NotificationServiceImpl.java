@@ -2,6 +2,7 @@ package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.INotificationDAO;
 import com.swp391.g1.dao.impl.NotificationDAOImpl;
+import com.swp391.g1.dto.response.ChecklistTaskAlertDTO;
 import com.swp391.g1.dto.response.NotificationDTO;
 import com.swp391.g1.service.INotificationService;
 import java.util.List;
@@ -13,6 +14,7 @@ public class NotificationServiceImpl implements INotificationService {
     private static final Logger LOGGER = Logger.getLogger(NotificationServiceImpl.class.getName());
 
     private final INotificationDAO notificationDAO = new NotificationDAOImpl();
+    private final ChecklistTaskEmailSender checklistTaskEmailSender = new ChecklistTaskEmailSender();
 
     @Override
     public void notifyApprovalRequest(int activityId, String activityName) {
@@ -73,6 +75,21 @@ public class NotificationServiceImpl implements INotificationService {
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, "Could not send partner invitation update notification.", e);
         }
+    }
+
+    @Override
+    public void notifyChecklistTaskAssignment(int taskId) {
+        ChecklistTaskAlertDTO task;
+        try {
+            task = notificationDAO.createChecklistTaskNotification(taskId);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not create checklist task notification.", e);
+            return;
+        }
+        if (task == null || !"HIGH".equalsIgnoreCase(task.priority())) {
+            return;
+        }
+        checklistTaskEmailSender.send(task);
     }
 
     private void notifyPartnerInvitation(int invitationId, String eventType, String title, String content) {
