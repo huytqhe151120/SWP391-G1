@@ -75,6 +75,36 @@ public class RecurrenceTest {
         check("yearly with endDate returns 2 dates", y4.size() == 2);
         check("yearly with endDate date[1] = 2027-03-10", y4.get(1).equals(LocalDate.of(2027, 3, 10)));
 
+        // --- first_occurrence_date as recurrence anchor ---
+        System.out.println("\\n-- first_occurrence_date as recurrence anchor (series_start_date=2027-01-01, first_occurrence_date=2027-01-15) --");
+        List<LocalDate> f1 = RecurrenceGenerator.generateMonthly(LocalDate.of(2027, 1, 15), 1, null, 3);
+        check("first_occurrence_date monthly date[0] = 2027-01-15", f1.get(0).equals(LocalDate.of(2027, 1, 15)));
+        check("first_occurrence_date monthly date[1] = 2027-02-15", f1.get(1).equals(LocalDate.of(2027, 2, 15)));
+        check("first_occurrence_date monthly date[2] = 2027-03-15", f1.get(2).equals(LocalDate.of(2027, 3, 15)));
+
+        List<LocalDate> f2 = RecurrenceGenerator.generateYearly(LocalDate.of(2027, 1, 15), 1, null, 3);
+        check("first_occurrence_date yearly date[0] = 2027-01-15", f2.get(0).equals(LocalDate.of(2027, 1, 15)));
+        check("first_occurrence_date yearly date[1] = 2028-01-15", f2.get(1).equals(LocalDate.of(2028, 1, 15)));
+        check("first_occurrence_date yearly date[2] = 2029-01-15", f2.get(2).equals(LocalDate.of(2029, 1, 15)));
+
+        // --- first_occurrence_date month-end clamping (Jan 31) ---
+        System.out.println("\\n-- first_occurrence_date month-end clamping (Jan 31 -> Feb 28) --");
+        List<LocalDate> f3 = RecurrenceGenerator.generateMonthly(LocalDate.of(2026, 1, 31), 1, null, 3);
+        check("first_occurrence_date monthly Jan 31 -> Feb 28 (clamp)", f3.get(1).equals(LocalDate.of(2026, 2, 28)));
+        check("first_occurrence_date monthly Jan 31 -> Mar 31", f3.get(2).equals(LocalDate.of(2026, 3, 31)));
+
+        // --- first_occurrence_date leap-year handling (Feb 29) ---
+        System.out.println("\\n-- first_occurrence_date leap-year handling (Feb 29) --");
+        List<LocalDate> f4 = RecurrenceGenerator.generateYearly(LocalDate.of(2024, 2, 29), 1, null, 3);
+        check("first_occurrence_date yearly Feb 29 -> 2025-02-28 (clamp)", f4.get(1).equals(LocalDate.of(2025, 2, 28)));
+        check("first_occurrence_date yearly Feb 29 -> 2026-02-28 (clamp)", f4.get(2).equals(LocalDate.of(2026, 2, 28)));
+
+        // --- series_start_date vs first_occurrence_date are different anchors ---
+        System.out.println("\\n-- series_start_date vs first_occurrence_date are different --");
+        List<LocalDate> s1 = RecurrenceGenerator.generateMonthly(LocalDate.of(2027, 1, 01), 1, null, 1);
+        List<LocalDate> f5 = RecurrenceGenerator.generateMonthly(LocalDate.of(2027, 1, 15), 1, null, 1);
+        check("series_start_date=2027-01-01 != first_occurrence_date=2027-01-15",
+                !s1.get(0).equals(f5.get(0)));
         // --- buildStartTime / buildEndTime ---
         System.out.println("\n-- buildStartTime / buildEndTime --");
         LocalDateTime start = RecurrenceGenerator.buildStartTime(LocalDate.of(2026, 1, 15), LocalTime.of(8, 30));

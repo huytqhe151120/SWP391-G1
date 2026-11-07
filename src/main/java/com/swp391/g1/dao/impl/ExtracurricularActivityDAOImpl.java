@@ -50,6 +50,15 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setEndTime(endTime == null
                 ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
         activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+
+        // Activity Series linking fields (nullable for standalone activities)
+        activity.setSeriesId((Integer) rs.getObject("series_id"));
+        activity.setOccurrenceNo((Integer) rs.getObject("occurrence_no"));
+        Timestamp occurrenceStartDate = rs.getTimestamp("occurrence_start_date");
+        activity.setOccurrenceStartDate(occurrenceStartDate == null
+                ? null : occurrenceStartDate.toLocalDateTime().toLocalDate());
+        activity.setApprovedViaSeries(rs.getBoolean("approved_via_series"));
+
         return activity;
     }
 

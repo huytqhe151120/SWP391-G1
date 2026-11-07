@@ -73,26 +73,59 @@
                         <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
-                        <label for="responsibleDepartmentId">Mã phòng ban phụ trách <span class="required-mark">*</span></label>
-                        <select id="responsibleDepartmentId" name="responsibleDepartmentId" data-required>
-                            <option value="">-- Chọn phòng ban --</option>
-                            <c:forEach var="dept" items="${departments}">
-                                <option value="${dept.id}" ${param.responsibleDepartmentId == dept.id ? 'selected' : ''}>
-                                    <c:out value="${dept.code}"/> - <c:out value="${dept.name}"/></option>
-                            </c:forEach>
-                        </select>
+                        <label id="responsibleDepartmentLabel">Mã phòng ban phụ trách <span class="required-mark">*</span></label>
+                        <div class="multi-select-combobox" id="departmentCombobox" data-multi-select data-single data-required
+                             data-item-label="đơn vị" data-input-name="responsibleDepartmentId"
+                             data-staff-endpoint="${pageContext.request.contextPath}/activities/staffs-by-department">
+                            <button type="button" class="multi-select-trigger" aria-expanded="false"
+                                    aria-controls="department-options" aria-labelledby="responsibleDepartmentLabel">
+                                <span data-selection-label>Chọn đơn vị</span>
+                                <span aria-hidden="true">▾</span>
+                            </button>
+                            <div class="multi-select-dropdown" id="department-options" hidden>
+                                <input class="multi-select-search" type="search" placeholder="Tìm đơn vị..." aria-label="Tìm đơn vị">
+                                <fieldset class="multi-select-options">
+                                    <legend class="visually-hidden">Chọn đơn vị</legend>
+                                    <c:forEach var="dept" items="${departments}">
+                                        <label class="multi-select-option">
+                                            <input type="radio" name="responsibleDepartmentId" value="${dept.id}" <c:if test="${param.responsibleDepartmentId == dept.id}">checked</c:if>>
+                                            <span><c:out value="${dept.code}"/> - <c:out value="${dept.name}"/></span>
+                                        </label>
+                                    </c:forEach>
+                                </fieldset>
+                                <div class="multi-select-empty" hidden>Không tìm thấy đơn vị phù hợp.</div>
+                            </div>
+                            <span class="multi-select-count" aria-live="polite">Chưa chọn đơn vị</span>
+                        </div>
                         <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
-                        <label for="responsibleStaffId">Mã nhân viên phụ trách <span class="required-mark">*</span></label>
-                        <select id="responsibleStaffId" name="responsibleStaffId" data-required>
-                            <option value="">-- Chọn nhân viên --</option>
-                            <c:forEach var="staff" items="${staffs}">
-                                <option value="${staff.id}" ${param.responsibleStaffId == staff.id ? 'selected' : ''}>
-                                    <c:out value="${staff.code}"/> - <c:out value="${staff.name}"/></option>
-                            </c:forEach>
-                        </select>
-                        <small class="error-msg"></small>
+                        <label id="responsibleStaffLabel">Mã nhân viên phụ trách <span class="required-mark">*</span></label>
+                        <div class="multi-select-combobox" id="staffCombobox" data-multi-select data-single data-required
+                             data-item-label="nhân viên" data-input-name="responsibleStaffId"
+                             <c:if test="${empty param.responsibleDepartmentId}">data-disabled</c:if>>
+                            <button type="button" class="multi-select-trigger" aria-expanded="false"
+                                    aria-controls="staff-options" aria-labelledby="responsibleStaffLabel"
+                                    <c:if test="${empty param.responsibleDepartmentId}">disabled</c:if>>
+                                <span data-selection-label><c:choose><c:when test="${empty param.responsibleDepartmentId}">Chọn đơn vị phụ trách trước</c:when><c:otherwise>Chọn nhân viên</c:otherwise></c:choose></span>
+                                <span aria-hidden="true">▾</span>
+                            </button>
+                            <div class="multi-select-dropdown" id="staff-options" hidden>
+                                <input class="multi-select-search" type="search" placeholder="Tìm nhân viên..." aria-label="Tìm nhân viên">
+                                <fieldset class="multi-select-options">
+                                    <legend class="visually-hidden">Chọn nhân viên</legend>
+                                    <c:forEach var="staff" items="${staffs}">
+                                        <label class="multi-select-option">
+                                            <input type="radio" name="responsibleStaffId" value="${staff.id}" <c:if test="${param.responsibleStaffId == staff.id}">checked</c:if> <c:if test="${empty param.responsibleDepartmentId}">disabled</c:if>>
+                                            <span><c:out value="${staff.code}"/> - <c:out value="${staff.name}"/></span>
+                                        </label>
+                                    </c:forEach>
+                                </fieldset>
+                                <div class="multi-select-empty" hidden>Không tìm thấy nhân viên phù hợp.</div>
+                            </div>
+                            <span class="multi-select-count" aria-live="polite">Chưa chọn nhân viên</span>
+                        </div>
+                        <span id="responsibleStaffMessage" class="field-hint helper-text" aria-live="polite"></span>
                     </div>
                     <div class="field field-wide">
                         <label for="description">Mô tả</label>
@@ -102,6 +135,27 @@
                     <div class="checkbox-inline">
                         <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true" <c:if test="${param.registrationFormRequired == 'true'}">checked</c:if>/>
                         <label for="registrationFormRequired">Bắt buộc điền form đăng ký</label>
+                    </div>
+                    <div class="field form-group-custom">
+                        <label for="nature">Tính chất hoạt động <span class="required-mark">*</span></label>
+                        <select id="nature" name="nature" data-required>
+                            <option value="">-- Chọn tính chất --</option>
+                            <option value="REQUIRE_REGISTRATION" <c:if test="${param.nature == 'REQUIRE_REGISTRATION'}">selected</c:if>>Cần đăng ký</option>
+                            <option value="VOLUNTARY" <c:if test="${param.nature == 'VOLUNTARY'}">selected</c:if>>Tự nguyện</option>
+                            <option value="MANDATORY" <c:if test="${param.nature == 'MANDATORY'}">selected</c:if>>Bắt buộc</option>
+                        </select>
+                        <small class="error-msg"></small>
+                    </div>
+                    <div class="field form-group-custom">
+                        <label for="maxParticipants">Số lượng tối đa</label>
+                        <input id="maxParticipants" name="maxParticipants" type="number" min="1"
+                               placeholder="Không giới hạn"
+                               value="${param.maxParticipants}"/>
+                        <small class="error-msg"></small>
+                    </div>
+                    <div class="checkbox-inline">
+                        <input id="summaryRequired" name="summaryRequired" type="checkbox" value="true" <c:if test="${param.summaryRequired == 'true'}">checked</c:if>/>
+                        <label for="summaryRequired">Yêu cầu bài tổng kết</label>
                     </div>
                 </div>
             </div>
@@ -134,6 +188,12 @@
                         <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
+                        <label for="firstOccurrenceDate">Ngày diễn ra sự kiện đầu tiên</label>
+                        <input id="firstOccurrenceDate" name="firstOccurrenceDate" type="date"
+                               value="${param.firstOccurrenceDate}"/>
+                        <small class="error-msg">Ngày occurrence đầu tiên, dùng làm mốc tính lặp lại.</small>
+                    </div>
+                    <div class="field form-group-custom">
                         <label for="seriesEndDate">Ngày kết thúc chuỗi</label>
                         <input id="seriesEndDate" name="seriesEndDate" type="date"
                                value="${param.seriesEndDate}"/>
@@ -160,7 +220,7 @@
                         <small class="error-msg"></small>
                     </div>
                     <div class="field form-group-custom">
-                        <label for="semesterId">Mã học kỳ</label>
+                        <label for="semesterId">Học kỳ</label>
                         <select id="semesterId" name="semesterId">
                             <option value="">-- Chọn học kỳ (tùy chọn) --</option>
                             <c:forEach var="sem" items="${semesters}">
@@ -185,5 +245,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261016-1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity-series-form.js?v=1"></script>
 </body>
 </html>

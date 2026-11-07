@@ -131,6 +131,9 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
             if (!Objects.equals(series.getSeriesStartDate(), existing.getSeriesStartDate())) {
                 throw new IllegalStateException("Không thể thay đổi series_start_date trên chuỗi hoạt động đã duyệt.");
             }
+            if (!Objects.equals(series.getFirstOccurrenceDate(), existing.getFirstOccurrenceDate())) {
+                throw new IllegalStateException("Không thể thay đổi first_occurrence_date trên chuỗi hoạt động đã duyệt.");
+            }
             if (!Objects.equals(series.getSeriesEndDate(), existing.getSeriesEndDate())) {
                 throw new IllegalStateException("Không thể thay đổi series_end_date trên chuỗi hoạt động đã duyệt.");
             }
@@ -153,6 +156,17 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
                 throw new IllegalStateException("Không thể thay đổi responsible_staff_id trên chuỗi hoạt động đã duyệt.");
             }
 
+            // Default activity fields (Task 6) — also locked for APPROVED series
+            if (!Objects.equals(series.getNature(), existing.getNature())) {
+                throw new IllegalStateException("Không thể thay đổi nature trên chuỗi hoạt động đã duyệt.");
+            }
+            if (!Objects.equals(series.getMaxParticipants(), existing.getMaxParticipants())) {
+                throw new IllegalStateException("Không thể thay đổi max_participants trên chuỗi hoạt động đã duyệt.");
+            }
+            if (series.isSummaryRequired() != existing.isSummaryRequired()) {
+                throw new IllegalStateException("Không thể thay đổi summary_required trên chuỗi hoạt động đã duyệt.");
+            }
+
             // Override all non-description fields with existing values to be safe
             series.setSeriesCode(existing.getSeriesCode());
             series.setName(existing.getName());
@@ -162,14 +176,22 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
             series.setRecurrenceMode(existing.getRecurrenceMode());
             series.setRecurrenceInterval(existing.getRecurrenceInterval());
             series.setSeriesStartDate(existing.getSeriesStartDate());
+            series.setFirstOccurrenceDate(existing.getFirstOccurrenceDate());
             series.setSeriesEndDate(existing.getSeriesEndDate());
             series.setMaxOccurrences(existing.getMaxOccurrences());
             series.setOccurrenceDurationMinutes(existing.getOccurrenceDurationMinutes());
             series.setTimeOfDay(existing.getTimeOfDay());
             series.setRegistrationFormRequired(existing.isRegistrationFormRequired());
+            series.setNature(existing.getNature());
+            series.setMaxParticipants(existing.getMaxParticipants());
+            series.setSummaryRequired(existing.isSummaryRequired());
             series.setSemesterId(existing.getSemesterId());
             series.setApprovalStatus(existing.getApprovalStatus());
         } else {
+            // Preserve existing first_occurrence_date if not explicitly submitted
+            if (series.getFirstOccurrenceDate() == null && existing.getFirstOccurrenceDate() != null) {
+                series.setFirstOccurrenceDate(existing.getFirstOccurrenceDate());
+            }
             validateSeries(series, true);
         }
 
@@ -244,17 +266,23 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
                             + " đã có " + existingOccurrences + " occurrence đã được tạo.");
         }
 
+        // Recurrence anchor must be first_occurrence_date; do not fall back to series_start_date.
+        if (series.getFirstOccurrenceDate() == null) {
+            throw new IllegalArgumentException(
+                    "Không thể tạo sự kiện lặp lại: ngày diễn ra sự kiện đầu tiên (first occurrence date) chưa được chỉ định. "
+                            + "Vui lòng sửa chuỗi hoạt động để thiết lập ngày này trước.");
+        }
         List<LocalDate> occurrenceDates;
         if (series.getRecurrenceMode() == Enum.RecurrenceMode.MONTHLY) {
             occurrenceDates = RecurrenceGenerator.generateMonthly(
-                    series.getSeriesStartDate(),
+                    series.getFirstOccurrenceDate(),
                     series.getRecurrenceInterval() != null ? series.getRecurrenceInterval() : 1,
                     series.getSeriesEndDate(),
                     series.getMaxOccurrences()
             );
         } else if (series.getRecurrenceMode() == Enum.RecurrenceMode.YEARLY) {
             occurrenceDates = RecurrenceGenerator.generateYearly(
-                    series.getSeriesStartDate(),
+                    series.getFirstOccurrenceDate(),
                     series.getRecurrenceInterval() != null ? series.getRecurrenceInterval() : 1,
                     series.getSeriesEndDate(),
                     series.getMaxOccurrences()
@@ -301,6 +329,9 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
                         series.getResponsibleStaffId(),
                         series.getDescription(),
                         series.isRegistrationFormRequired(),
+                        series.getNature(),
+                        series.getMaxParticipants(),
+                        series.isSummaryRequired(),
                         series.getSemesterId(),
                         startTimeUtc,
                         endTimeUtc,
@@ -409,6 +440,16 @@ public class ActivitySeriesServiceImpl implements IActivitySeriesService {
         }
         if (series.getTimeOfDay() == null) {
             throw new IllegalArgumentException("Thời gian trong ngày không được để trống.");
+        }
+        if (series.getNature() != null) {
+            try {
+                Enum.ActivityNature.valueOf(series.getNature().name());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Tính chất hoạt động không hợp lệ.");
+            }
+        }
+        if (series.getMaxParticipants() != null && series.getMaxParticipants() < 1) {
+            throw new IllegalArgumentException("Số lượng tối đa phải lớn hơn hoặc bằng 1.");
         }
     }
 

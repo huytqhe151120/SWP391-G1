@@ -160,15 +160,17 @@ public class ActivitySeriesServlet extends HttpServlet {
             throws ServletException, IOException {
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID chuá»—i hoáº¡t Ä‘á»™ng khÃ´ng há»£p lá»‡.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID chuỗi hoạt động không hợp lệ.");
             return;
         }
         ActivitySeries series = seriesService.getSeriesById(id);
         if (series == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y chuá»—i hoáº¡t Ä‘á»™ng.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy chuỗi hoạt động.");
             return;
         }
         request.setAttribute("series", series);
+        List<ExtracurricularActivity> occurrences = seriesService.getOccurrencesBySeriesId(id);
+        request.setAttribute("occurrences", occurrences);
         request.getRequestDispatcher("/WEB-INF/views/activity-series/detail.jsp")
                 .forward(request, response);
     }
@@ -184,12 +186,12 @@ public class ActivitySeriesServlet extends HttpServlet {
             throws ServletException, IOException {
         int id = parseId(request.getParameter("id"));
         if (id <= 0) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID chuá»—i hoáº¡t Ä‘á»™ng khÃ´ng há»£p lá»‡.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID chuỗi hoạt động không hợp lệ.");
             return;
         }
         ActivitySeries series = seriesService.getSeriesById(id);
         if (series == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "KhÃ´ng tÃ¬m tháº¥y chuá»—i hoáº¡t Ä‘á»™ng.");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy chuỗi hoạt động.");
             return;
         }
         request.setAttribute("series", series);
@@ -343,7 +345,7 @@ public class ActivitySeriesServlet extends HttpServlet {
         HttpSession session = request.getSession();
         int seriesId = parseId(request.getParameter("seriesId"));
         if (seriesId <= 0) {
-            session.setAttribute("errorMessage", "ID chuá»—i hoáº¡t Ä‘á»™ng khÃ´ng há»£p lá»‡.");
+            session.setAttribute("errorMessage", "ID chuỗi hoạt động không hợp lệ.");
             response.sendRedirect(request.getContextPath() + "/activity-series");
             return;
         }
@@ -387,6 +389,16 @@ public class ActivitySeriesServlet extends HttpServlet {
         series.setDescription(request.getParameter("description"));
         series.setRegistrationFormRequired(
                 "true".equalsIgnoreCase(request.getParameter("registrationFormRequired")));
+        String nature = request.getParameter("nature");
+        if (nature != null && !nature.trim().isEmpty()) {
+            series.setNature(Enum.ActivityNature.valueOf(nature.trim()));
+        }
+        String maxParticipants = request.getParameter("maxParticipants");
+        if (maxParticipants != null && !maxParticipants.trim().isEmpty()) {
+            series.setMaxParticipants(Integer.parseInt(maxParticipants.trim()));
+        }
+        series.setSummaryRequired(
+                "true".equalsIgnoreCase(request.getParameter("summaryRequired")));
         String mode = request.getParameter("recurrenceMode");
         if (mode != null && !mode.trim().isEmpty()) {
             series.setRecurrenceMode(Enum.RecurrenceMode.valueOf(mode.trim()));
@@ -402,6 +414,10 @@ public class ActivitySeriesServlet extends HttpServlet {
         String endDate = request.getParameter("seriesEndDate");
         if (endDate != null && !endDate.trim().isEmpty()) {
             series.setSeriesEndDate(LocalDate.parse(endDate.trim()));
+        }
+        String firstOccDate = request.getParameter("firstOccurrenceDate");
+        if (firstOccDate != null && !firstOccDate.trim().isEmpty()) {
+            series.setFirstOccurrenceDate(LocalDate.parse(firstOccDate.trim()));
         }
         String maxOcc = request.getParameter("maxOccurrences");
         if (maxOcc != null && !maxOcc.trim().isEmpty()) {

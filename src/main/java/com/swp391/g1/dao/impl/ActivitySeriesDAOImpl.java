@@ -27,11 +27,17 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
         series.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
         series.setDescription(rs.getString("description"));
         series.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+        String nature = rs.getString("nature");
+        series.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
+        series.setMaxParticipants((Integer) rs.getObject("max_participants"));
+        series.setSummaryRequired(rs.getBoolean("summary_required"));
         String mode = rs.getString("recurrence_mode");
         series.setRecurrenceMode(mode == null ? null : Enum.RecurrenceMode.valueOf(mode));
         series.setRecurrenceInterval((Integer) rs.getObject("recurrence_interval"));
         Timestamp startDate = rs.getTimestamp("series_start_date");
         series.setSeriesStartDate(startDate == null ? null : startDate.toLocalDateTime().toLocalDate());
+        Timestamp firstOccDate = rs.getTimestamp("first_occurrence_date");
+        series.setFirstOccurrenceDate(firstOccDate == null ? null : firstOccDate.toLocalDateTime().toLocalDate());
         Timestamp endDate = rs.getTimestamp("series_end_date");
         series.setSeriesEndDate(endDate == null ? null : endDate.toLocalDateTime().toLocalDate());
         series.setMaxOccurrences((Integer) rs.getObject("max_occurrences"));
@@ -86,11 +92,12 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
         String sql = """
             INSERT INTO activity_series
                 (series_code, name, activity_type_id, responsible_department_id, responsible_staff_id,
-                 description, registration_form_required, recurrence_mode, recurrence_interval,
-                 series_start_date, series_end_date, max_occurrences, occurrence_duration_minutes,
+                 description, registration_form_required, nature, max_participants, summary_required,
+                 recurrence_mode, recurrence_interval,
+                 series_start_date, first_occurrence_date, series_end_date, max_occurrences, occurrence_duration_minutes,
                  time_of_day, semester_id, approval_status, created_at, updated_at)
             OUTPUT INSERTED.id
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME(), SYSDATETIME())
             """;
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -101,35 +108,47 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
             ps.setInt(5, entity.getResponsibleStaffId());
             ps.setString(6, entity.getDescription());
             ps.setBoolean(7, entity.isRegistrationFormRequired());
-            ps.setString(8, entity.getRecurrenceMode() == null ? null : entity.getRecurrenceMode().name());
-            if (entity.getRecurrenceInterval() == null) {
+            ps.setString(8, entity.getNature() == null ? null : entity.getNature().name());
+            if (entity.getMaxParticipants() == null) {
                 ps.setNull(9, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(9, entity.getRecurrenceInterval());
+                ps.setInt(9, entity.getMaxParticipants());
             }
-            ps.setTimestamp(10, Timestamp.valueOf(entity.getSeriesStartDate().atStartOfDay()));
-            if (entity.getSeriesEndDate() == null) {
-                ps.setNull(11, java.sql.Types.DATE);
-            } else {
-                ps.setTimestamp(11, Timestamp.valueOf(entity.getSeriesEndDate().atStartOfDay()));
-            }
-            if (entity.getMaxOccurrences() == null) {
+            ps.setBoolean(10, entity.isSummaryRequired());
+            ps.setString(11, entity.getRecurrenceMode() == null ? null : entity.getRecurrenceMode().name());
+            if (entity.getRecurrenceInterval() == null) {
                 ps.setNull(12, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(12, entity.getMaxOccurrences());
+                ps.setInt(12, entity.getRecurrenceInterval());
+            }
+            ps.setTimestamp(13, Timestamp.valueOf(entity.getSeriesStartDate().atStartOfDay()));
+            if (entity.getFirstOccurrenceDate() == null) {
+                ps.setNull(14, java.sql.Types.DATE);
+            } else {
+                ps.setTimestamp(14, Timestamp.valueOf(entity.getFirstOccurrenceDate().atStartOfDay()));
+            }
+            if (entity.getSeriesEndDate() == null) {
+                ps.setNull(15, java.sql.Types.DATE);
+            } else {
+                ps.setTimestamp(15, Timestamp.valueOf(entity.getSeriesEndDate().atStartOfDay()));
+            }
+            if (entity.getMaxOccurrences() == null) {
+                ps.setNull(16, java.sql.Types.INTEGER);
+            } else {
+                ps.setInt(16, entity.getMaxOccurrences());
             }
             if (entity.getOccurrenceDurationMinutes() == null) {
-                ps.setNull(13, java.sql.Types.INTEGER);
+                ps.setNull(17, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(13, entity.getOccurrenceDurationMinutes());
+                ps.setInt(17, entity.getOccurrenceDurationMinutes());
             }
-            ps.setTimestamp(14, Timestamp.valueOf(entity.getTimeOfDay().atDate(java.time.LocalDate.of(1900, 1, 1))));
+            ps.setTimestamp(18, Timestamp.valueOf(entity.getTimeOfDay().atDate(java.time.LocalDate.of(1900, 1, 1))));
             if (entity.getSemesterId() == null) {
-                ps.setNull(15, java.sql.Types.INTEGER);
+                ps.setNull(19, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(15, entity.getSemesterId());
+                ps.setInt(19, entity.getSemesterId());
             }
-            ps.setString(16, entity.getApprovalStatus() == null ? null : entity.getApprovalStatus().name());
+            ps.setString(20, entity.getApprovalStatus() == null ? null : entity.getApprovalStatus().name());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -148,7 +167,9 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
             UPDATE activity_series
             SET series_code = ?, name = ?, activity_type_id = ?, responsible_department_id = ?,
                 responsible_staff_id = ?, description = ?, registration_form_required = ?,
+                nature = ?, max_participants = ?, summary_required = ?,
                 recurrence_mode = ?, recurrence_interval = ?, series_start_date = ?,
+                first_occurrence_date = ?,
                 series_end_date = ?, max_occurrences = ?, occurrence_duration_minutes = ?,
                 time_of_day = ?, semester_id = ?, approval_status = ?, updated_at = SYSDATETIME()
             WHERE id = ?
@@ -162,36 +183,48 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
             ps.setInt(5, entity.getResponsibleStaffId());
             ps.setString(6, entity.getDescription());
             ps.setBoolean(7, entity.isRegistrationFormRequired());
-            ps.setString(8, entity.getRecurrenceMode() == null ? null : entity.getRecurrenceMode().name());
-            if (entity.getRecurrenceInterval() == null) {
+            ps.setString(8, entity.getNature() == null ? null : entity.getNature().name());
+            if (entity.getMaxParticipants() == null) {
                 ps.setNull(9, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(9, entity.getRecurrenceInterval());
+                ps.setInt(9, entity.getMaxParticipants());
             }
-            ps.setTimestamp(10, Timestamp.valueOf(entity.getSeriesStartDate().atStartOfDay()));
-            if (entity.getSeriesEndDate() == null) {
-                ps.setNull(11, java.sql.Types.DATE);
-            } else {
-                ps.setTimestamp(11, Timestamp.valueOf(entity.getSeriesEndDate().atStartOfDay()));
-            }
-            if (entity.getMaxOccurrences() == null) {
+            ps.setBoolean(10, entity.isSummaryRequired());
+            ps.setString(11, entity.getRecurrenceMode() == null ? null : entity.getRecurrenceMode().name());
+            if (entity.getRecurrenceInterval() == null) {
                 ps.setNull(12, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(12, entity.getMaxOccurrences());
+                ps.setInt(12, entity.getRecurrenceInterval());
+            }
+            ps.setTimestamp(13, Timestamp.valueOf(entity.getSeriesStartDate().atStartOfDay()));
+            if (entity.getFirstOccurrenceDate() == null) {
+                ps.setNull(14, java.sql.Types.DATE);
+            } else {
+                ps.setTimestamp(14, Timestamp.valueOf(entity.getFirstOccurrenceDate().atStartOfDay()));
+            }
+            if (entity.getSeriesEndDate() == null) {
+                ps.setNull(15, java.sql.Types.DATE);
+            } else {
+                ps.setTimestamp(15, Timestamp.valueOf(entity.getSeriesEndDate().atStartOfDay()));
+            }
+            if (entity.getMaxOccurrences() == null) {
+                ps.setNull(16, java.sql.Types.INTEGER);
+            } else {
+                ps.setInt(16, entity.getMaxOccurrences());
             }
             if (entity.getOccurrenceDurationMinutes() == null) {
-                ps.setNull(13, java.sql.Types.INTEGER);
+                ps.setNull(17, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(13, entity.getOccurrenceDurationMinutes());
+                ps.setInt(17, entity.getOccurrenceDurationMinutes());
             }
-            ps.setTimestamp(14, Timestamp.valueOf(entity.getTimeOfDay().atDate(java.time.LocalDate.of(1900, 1, 1))));
+            ps.setTimestamp(18, Timestamp.valueOf(entity.getTimeOfDay().atDate(java.time.LocalDate.of(1900, 1, 1))));
             if (entity.getSemesterId() == null) {
-                ps.setNull(15, java.sql.Types.INTEGER);
+                ps.setNull(19, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(15, entity.getSemesterId());
+                ps.setInt(19, entity.getSemesterId());
             }
-            ps.setString(16, entity.getApprovalStatus() == null ? null : entity.getApprovalStatus().name());
-            ps.setInt(17, entity.getId());
+            ps.setString(20, entity.getApprovalStatus() == null ? null : entity.getApprovalStatus().name());
+            ps.setInt(21, entity.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to update activity series.", e);
@@ -391,6 +424,15 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
                     Timestamp endTime = rs.getTimestamp("end_time");
                     activity.setEndTime(endTime == null ? null : endTime.toLocalDateTime());
                     activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
+
+                    // Activity Series linking fields (nullable for standalone activities)
+                    activity.setSeriesId((Integer) rs.getObject("series_id"));
+                    activity.setOccurrenceNo((Integer) rs.getObject("occurrence_no"));
+                    Timestamp occurrenceStartDate = rs.getTimestamp("occurrence_start_date");
+                    activity.setOccurrenceStartDate(occurrenceStartDate == null
+                            ? null : occurrenceStartDate.toLocalDateTime().toLocalDate());
+                    activity.setApprovedViaSeries(rs.getBoolean("approved_via_series"));
+
                     list.add(activity);
                 }
             }
@@ -408,6 +450,9 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
                                     int responsibleStaffId,
                                     String description,
                                     boolean registrationFormRequired,
+                                    Enum.ActivityNature nature,
+                                    Integer maxParticipants,
+                                    boolean summaryRequired,
                                     Integer semesterId,
                                     java.time.LocalDateTime startTimeUtc,
                                     java.time.LocalDateTime endTimeUtc,
@@ -417,11 +462,11 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
         String sql = """
             INSERT INTO extracurricular_activity
                 (code, name, activity_type_id, responsible_department_id, responsible_staff_id,
-                 description, registration_form_required, is_summary_required, activity_status, approval_status,
+                 description, registration_form_required, nature, max_participants, is_summary_required, activity_status, approval_status,
                  start_time, end_time, series_id, occurrence_no,
                  occurrence_start_date, semester_id, approved_via_series, created_at)
             OUTPUT INSERTED.id
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UPCOMING', 'DRAFT', ?, ?, ?, ?, ?, ?, ?, 0, SYSDATETIME())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'UPCOMING', 'DRAFT', ?, ?, ?, ?, ?, ?, ?, 0, SYSDATETIME())
             """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, code);
@@ -431,16 +476,22 @@ public class ActivitySeriesDAOImpl implements IActivitySeriesDAO {
             ps.setInt(5, responsibleStaffId);
             ps.setString(6, description);
             ps.setBoolean(7, registrationFormRequired);
-            ps.setBoolean(8, false);
-            ps.setTimestamp(9, Timestamp.valueOf(startTimeUtc));
-            ps.setTimestamp(10, Timestamp.valueOf(endTimeUtc));
-            ps.setInt(11, seriesId);
-            ps.setInt(12, occurrenceNo);
-            ps.setTimestamp(13, Timestamp.valueOf(occurrenceStartDate.atStartOfDay()));
-            if (semesterId == null) {
-                ps.setNull(14, java.sql.Types.INTEGER);
+            ps.setString(8, nature == null ? null : nature.name());
+            if (maxParticipants == null) {
+                ps.setNull(9, java.sql.Types.INTEGER);
             } else {
-                ps.setInt(14, semesterId);
+                ps.setInt(9, maxParticipants);
+            }
+            ps.setBoolean(10, summaryRequired);
+            ps.setTimestamp(11, Timestamp.valueOf(startTimeUtc));
+            ps.setTimestamp(12, Timestamp.valueOf(endTimeUtc));
+            ps.setInt(13, seriesId);
+            ps.setInt(14, occurrenceNo);
+            ps.setTimestamp(15, Timestamp.valueOf(occurrenceStartDate.atStartOfDay()));
+            if (semesterId == null) {
+                ps.setNull(16, java.sql.Types.INTEGER);
+            } else {
+                ps.setInt(16, semesterId);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {

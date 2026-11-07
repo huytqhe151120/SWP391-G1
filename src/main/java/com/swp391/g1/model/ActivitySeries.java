@@ -13,9 +13,13 @@ public class ActivitySeries {
     private int responsibleStaffId;
     private String description;
     private boolean registrationFormRequired;
+    private Enum.ActivityNature nature;
+    private Integer maxParticipants;
+    private boolean summaryRequired;
     private Enum.RecurrenceMode recurrenceMode;
     private Integer recurrenceInterval;
     private LocalDate seriesStartDate;
+    private LocalDate firstOccurrenceDate;
     private LocalDate seriesEndDate;
     private Integer maxOccurrences;
     private Integer occurrenceDurationMinutes;
@@ -92,6 +96,30 @@ public class ActivitySeries {
         this.registrationFormRequired = registrationFormRequired;
     }
 
+    public Enum.ActivityNature getNature() {
+        return nature;
+    }
+
+    public void setNature(Enum.ActivityNature nature) {
+        this.nature = nature;
+    }
+
+    public Integer getMaxParticipants() {
+        return maxParticipants;
+    }
+
+    public void setMaxParticipants(Integer maxParticipants) {
+        this.maxParticipants = maxParticipants;
+    }
+
+    public boolean isSummaryRequired() {
+        return summaryRequired;
+    }
+
+    public void setSummaryRequired(boolean summaryRequired) {
+        this.summaryRequired = summaryRequired;
+    }
+
     public Enum.RecurrenceMode getRecurrenceMode() {
         return recurrenceMode;
     }
@@ -114,6 +142,14 @@ public class ActivitySeries {
 
     public void setSeriesStartDate(LocalDate seriesStartDate) {
         this.seriesStartDate = seriesStartDate;
+    }
+
+    public LocalDate getFirstOccurrenceDate() {
+        return firstOccurrenceDate;
+    }
+
+    public void setFirstOccurrenceDate(LocalDate firstOccurrenceDate) {
+        this.firstOccurrenceDate = firstOccurrenceDate;
     }
 
     public LocalDate getSeriesEndDate() {

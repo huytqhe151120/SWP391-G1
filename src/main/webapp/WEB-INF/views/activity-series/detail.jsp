@@ -56,12 +56,49 @@
             <div class="detail-item"><dt>Số sự kiện tối đa</dt><dd><c:out value="${series.maxOccurrences}"/></dd></div>
             <div class="detail-item"><dt>Thời lượng sự kiện (phút)</dt><dd><c:out value="${series.occurrenceDurationMinutes}"/></dd></div>
             <div class="detail-item"><dt>Giờ trong ngày</dt><dd><c:out value="${series.timeOfDay}"/></dd></div>
-            <div class="detail-item"><dt>Mã học kỳ</dt><dd><c:out value="${series.semesterId}"/></dd></div>
+            <div class="detail-item"><dt>Học kỳ</dt><dd><c:out value="${series.semesterId}"/></dd></div>
             <div class="detail-item"><dt>Mô tả</dt><dd><c:out value="${series.description}"/></dd></div>
             <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><span class="badge ${series.approvalStatus == 'APPROVED' ? 'status-green' : series.approvalStatus == 'REJECTED' ? 'status-red' : series.approvalStatus == 'PENDING' ? 'status-yellow' : 'status-gray'}"><c:out value="${series.approvalStatus}"/></span></dd></div>
             <div class="detail-item"><dt>Tạo lúc</dt><dd><c:out value="${series.createdAt}"/></dd></div>
             <div class="detail-item"><dt>Cập nhật lúc</dt><dd><c:out value="${series.updatedAt}"/></dd></div>
         </dl>
+
+        <section class="activity-detail-section">
+            <h3>Danh sách sự kiện lặp lại</h3>
+            <c:if test="${not empty occurrences}">
+                <div class="table-wrap">
+                    <table class="activity-table occurrence-table">
+                        <thead>
+                            <tr>
+                                <th>Mã hoạt động</th>
+                                <th>Tên hoạt động</th>
+                                <th>Thời gian bắt đầu</th>
+                                <th>Thời gian kết thúc</th>
+                                <th>Trạng thái hoạt động</th>
+                                <th>Trạng thái duyệt</th>
+                                <th class="activity-table-actions">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach var="occ" items="${occurrences}">
+                                <tr>
+                                    <td><c:out value="${occ.code}"/></td>
+                                    <td><a href="${pageContext.request.contextPath}/activities?action=detail&id=${occ.id}"><c:out value="${occ.name}"/></a></td>
+                                    <td><c:out value="${occ.startTime}"/></td>
+                                    <td><c:out value="${occ.endTime}"/></td>
+                                    <td><span class="badge status-${occ.activityStatus == null ? 'gray' : occ.activityStatus.toLowerCase()}"><c:out value="${occ.activityStatus}"/></span></td>
+                                    <td><span class="badge ${occ.approvalStatus == 'APPROVED' ? 'status-green' : occ.approvalStatus == 'REJECTED' ? 'status-red' : occ.approvalStatus == 'PENDING' ? 'status-yellow' : 'status-gray'}"><c:out value="${occ.approvalStatus}"/></span></td>
+                                    <td class="activity-table-actions"><a class="button button-outline" href="${pageContext.request.contextPath}/activities?action=detail&id=${occ.id}">Chi tiết</a></td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </c:if>
+            <c:if test="${empty occurrences}">
+                <div class="empty-state"><p>Chưa có sự kiện lặp lại nào được tạo cho chuỗi này.</p></div>
+            </c:if>
+        </section>
 
         <div class="activity-form-actions">
             <c:if test="${canManageActivities}">

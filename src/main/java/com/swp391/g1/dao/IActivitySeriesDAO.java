@@ -1,6 +1,7 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.model.ActivitySeries;
+import com.swp391.g1.model.Enum;
 import com.swp391.g1.model.ExtracurricularActivity;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -19,6 +20,9 @@ public interface IActivitySeriesDAO extends IGenericDAO<ActivitySeries, Integer>
                              int responsibleStaffId,
                              String description,
                              boolean registrationFormRequired,
+                             Enum.ActivityNature nature,
+                             Integer maxParticipants,
+                             boolean summaryRequired,
                              Integer semesterId,
                              java.time.LocalDateTime startTimeUtc,
                              java.time.LocalDateTime endTimeUtc,

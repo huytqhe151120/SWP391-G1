@@ -1,4 +1,5 @@
 package com.swp391.g1.model;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ExtracurricularActivity {
@@ -22,6 +23,11 @@ public class ExtracurricularActivity {
     private LocalDateTime startTime; //[cite: 1]
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
+    // Activity Series linking fields (nullable for standalone activities)
+    private Integer seriesId; // FK → activity_series(id), NULL for standalone activity
+    private Integer occurrenceNo; // 1-based occurrence number within series, NULL for standalone
+    private LocalDate occurrenceStartDate; // occurrence date mốc, NULL for standalone
+    private boolean approvedViaSeries; // true if approved via series inherit, false otherwise
 
     public boolean isRegistrationFormRequired() {
         return registrationFormRequired;
@@ -186,5 +192,37 @@ public class ExtracurricularActivity {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
+    }
+
+    public Integer getSeriesId() {
+        return seriesId;
+    }
+
+    public void setSeriesId(Integer seriesId) {
+        this.seriesId = seriesId;
+    }
+
+    public Integer getOccurrenceNo() {
+        return occurrenceNo;
+    }
+
+    public void setOccurrenceNo(Integer occurrenceNo) {
+        this.occurrenceNo = occurrenceNo;
+    }
+
+    public LocalDate getOccurrenceStartDate() {
+        return occurrenceStartDate;
+    }
+
+    public void setOccurrenceStartDate(LocalDate occurrenceStartDate) {
+        this.occurrenceStartDate = occurrenceStartDate;
+    }
+
+    public boolean isApprovedViaSeries() {
+        return approvedViaSeries;
+    }
+
+    public void setApprovedViaSeries(boolean approvedViaSeries) {
+        this.approvedViaSeries = approvedViaSeries;
     }
 }
