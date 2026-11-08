@@ -287,7 +287,11 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         var attempt = assessmentService.startAttempt(assessmentId, student.getId());
-        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentById(assessmentId, user);
+        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentForStudentAttempt(assessmentId, student.getId());
+        if (assessment == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Khong tim thay danh gia hoac bai lam khong thuoc ban.");
+            return;
+        }
         request.setAttribute("activityId", assessment.getActivityId());
         var questions = new com.swp391.g1.dao.impl.AssessmentQuestionDAOImpl()
                 .findByAssessmentId(assessmentId);
@@ -468,13 +472,16 @@ public class AssessmentServlet extends HttpServlet {
             CurrentUser user) throws IOException {
         int id = parseId(request.getParameter("id"));
         com.swp391.g1.model.Assessment a = assessmentService.getAssessmentById(id, user);
-        int activityId = a != null ? a.getActivityId() : 0;
+        if (a == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Khong tim thay danh gia.");
+            return;
+        }
+        int activityId = a.getActivityId();
         assessmentService.deleteAssessment(id, user);
         HttpSession session = request.getSession();
         session.setAttribute("successMessage", "Da xoa danh gia thanh cong.");
-    }
-
         response.sendRedirect(request.getContextPath() + "/assessment?action=manage&activityId=" + activityId);
+    }
     private void handleStartAttempt(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int assessmentId = parseId(request.getParameter("assessmentId"));
@@ -569,7 +576,11 @@ public class AssessmentServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Chua co bai lam.");
             return;
         }
-        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentById(assessmentId, user);
+        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentForStudentAttempt(assessmentId, student.getId());
+        if (assessment == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Khong tim thay danh gia hoac bai lam khong thuoc ban.");
+            return;
+        }
         request.setAttribute("activityId", assessment.getActivityId());
         var answers = assessmentService.getAttemptAnswers(attempt.getId(), student.getId());
         request.setAttribute("attempt", attempt);

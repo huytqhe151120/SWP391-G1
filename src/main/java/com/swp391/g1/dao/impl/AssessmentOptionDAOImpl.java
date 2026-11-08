@@ -55,6 +55,25 @@ public class AssessmentOptionDAOImpl implements IAssessmentOptionDAO {
     }
 
     @Override
+    public AssessmentOption findById(Connection conn, int id) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (id <= 0) {
+            return null;
+        }
+        String sql = "SELECT * FROM assessment_option WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to find assessment option by ID.", e);
+        }
+    }
+
+    @Override
     public List<AssessmentOption> findByQuestionId(int questionId) {
         if (questionId <= 0) {
             return List.of();

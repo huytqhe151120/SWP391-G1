@@ -181,4 +181,36 @@ public class AssessmentAttemptDAOImpl implements IAssessmentAttemptDAO {
             throw new IllegalStateException("Failed to update attempt status and score.", e);
         }
     }
+
+    @Override
+    public boolean updateStatusAndScore(Connection conn, int id, AssessmentAttempt.Status expectedStatus, AssessmentAttempt.Status newStatus, BigDecimal finalScore, LocalDateTime submittedAt) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (id <= 0) {
+            return false;
+        }
+        if (expectedStatus == null || newStatus == null) {
+            throw new IllegalArgumentException("Expected status and new status must not be null.");
+        }
+        String sql = "UPDATE assessment_attempt SET status = ?, final_score = ?, submitted_at = ?, updated_at = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2) WHERE id = ? AND status = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newStatus == null ? "IN_PROGRESS" : newStatus.name());
+            if (finalScore != null) {
+                ps.setBigDecimal(2, finalScore);
+            } else {
+                ps.setNull(2, java.sql.Types.DECIMAL);
+            }
+            if (submittedAt != null) {
+                ps.setTimestamp(3, Timestamp.valueOf(submittedAt));
+            } else {
+                ps.setNull(3, java.sql.Types.TIMESTAMP);
+            }
+            ps.setInt(4, id);
+            ps.setString(5, expectedStatus.name());
+            return ps.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to update attempt status and score.", e);
+        }
+    }
 }

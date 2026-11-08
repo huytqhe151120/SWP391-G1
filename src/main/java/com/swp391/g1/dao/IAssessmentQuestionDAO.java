@@ -8,4 +8,7 @@ public interface IAssessmentQuestionDAO extends IGenericDAO<AssessmentQuestion, 
     List<AssessmentQuestion> findByAssessmentId(int assessmentId);
     AssessmentQuestion findById(Integer id);
     boolean deleteByAssessmentId(int assessmentId);
+
+    /** Find questions by assessment using caller-provided Connection. */
+    List<AssessmentQuestion> findByAssessmentId(Connection conn, int assessmentId);
 }

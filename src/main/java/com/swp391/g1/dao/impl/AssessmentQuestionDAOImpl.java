@@ -80,6 +80,27 @@ public class AssessmentQuestionDAOImpl implements IAssessmentQuestionDAO {
     }
 
     @Override
+    public List<AssessmentQuestion> findByAssessmentId(Connection conn, int assessmentId) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (assessmentId <= 0) {
+            return List.of();
+        }
+        String sql = "SELECT * FROM assessment_question WHERE assessment_id = ? ORDER BY display_order, id";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, assessmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<AssessmentQuestion> list = new ArrayList<>();
+                while (rs.next()) list.add(mapRow(rs));
+                return list;
+            }
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to find questions by assessment ID.", e);
+        }
+    }
+
+    @Override
     public Integer insert(AssessmentQuestion question) {
         String sql = "INSERT INTO assessment_question (assessment_id, question_type, content, max_score, display_order) "
                 + "VALUES (?, ?, ?, ?, ?)";

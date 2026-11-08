@@ -26,6 +26,9 @@ public interface IAssessmentService {
 
     Assessment getAssessmentById(int id, CurrentUser user);
 
+    /** Load assessment only after verifying the attempt belongs to the student. Returns null if attempt not found or not owned by student. */
+    Assessment getAssessmentForStudentAttempt(int assessmentId, int studentId);
+
     Assessment getAssessmentByActivityId(int activityId, CurrentUser user);
 
     /* ---------- Question (staff/manager) ---------- */

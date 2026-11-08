@@ -176,7 +176,7 @@ public class AssessmentAnswerDAOImpl implements IAssessmentAnswerDAO {
 
     @Override
     public boolean updateGrade(int id, BigDecimal awardedScore, String feedback, AssessmentAnswer.GradingStatus gradingStatus) {
-        String sql = "UPDATE assessment_answer SET awarded_score = ?, feedback = ?, grading_status = ?, updated_at = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2) WHERE id = ?";
+        String sql = "UPDATE assessment_answer SET awarded_score = ?, feedback = ?, grading_status = ?, updated_at = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2) WHERE id = ? AND grading_status = 'PENDING_GRADING'";
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             if (awardedScore != null) {
@@ -209,6 +209,112 @@ public class AssessmentAnswerDAOImpl implements IAssessmentAnswerDAO {
             return ps.executeUpdate() > 0;
         } catch (java.sql.SQLException e) {
             throw new IllegalStateException("Failed to delete answers by attempt ID.", e);
+        }
+    }
+
+    @Override
+    public boolean deleteByAttemptId(Connection conn, int attemptId) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (attemptId <= 0) {
+            return false;
+        }
+        String sql = "DELETE FROM assessment_answer WHERE attempt_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, attemptId);
+            return ps.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to delete answers by attempt ID.", e);
+        }
+    }
+
+    @Override
+    public boolean insert(Connection conn, AssessmentAnswer answer) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (answer == null) {
+            return false;
+        }
+        String sql = "INSERT INTO assessment_answer (attempt_id, question_id, selected_option_id, answer_text, awarded_score, feedback, grading_status, created_at, updated_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2), CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2))";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, answer.getAttemptId());
+            ps.setInt(2, answer.getQuestionId());
+            if (answer.getSelectedOptionId() != null) {
+                ps.setInt(3, answer.getSelectedOptionId());
+            } else {
+                ps.setNull(3, java.sql.Types.INTEGER);
+            }
+            if (answer.getAnswerText() != null) {
+                ps.setString(4, answer.getAnswerText());
+            } else {
+                ps.setNull(4, java.sql.Types.NVARCHAR);
+            }
+            if (answer.getAwardedScore() != null) {
+                ps.setBigDecimal(5, BigDecimal.valueOf(answer.getAwardedScore()));
+            } else {
+                ps.setNull(5, java.sql.Types.DECIMAL);
+            }
+            if (answer.getFeedback() != null) {
+                ps.setString(6, answer.getFeedback());
+            } else {
+                ps.setNull(6, java.sql.Types.NVARCHAR);
+            }
+            ps.setString(7, answer.getGradingStatus() == null ? "PENDING_GRADING" : answer.getGradingStatus().name());
+            return ps.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to insert assessment answer.", e);
+        }
+    }
+
+    @Override
+    public boolean updateGrade(Connection conn, int id, BigDecimal awardedScore, String feedback, AssessmentAnswer.GradingStatus gradingStatus) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (id <= 0) {
+            return false;
+        }
+        String sql = "UPDATE assessment_answer SET awarded_score = ?, feedback = ?, grading_status = ?, updated_at = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2) WHERE id = ? AND grading_status = 'PENDING_GRADING'";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (awardedScore != null) {
+                ps.setBigDecimal(1, awardedScore);
+            } else {
+                ps.setNull(1, java.sql.Types.DECIMAL);
+            }
+            if (feedback != null) {
+                ps.setString(2, feedback);
+            } else {
+                ps.setNull(2, java.sql.Types.NVARCHAR);
+            }
+            ps.setString(3, gradingStatus == null ? "PENDING_GRADING" : gradingStatus.name());
+            ps.setInt(4, id);
+            return ps.executeUpdate() > 0;
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to update answer grade.", e);
+        }
+    }
+
+    @Override
+    public List<AssessmentAnswer> findByAttemptId(Connection conn, int attemptId) {
+        if (conn == null) {
+            throw new IllegalArgumentException("Connection must not be null.");
+        }
+        if (attemptId <= 0) {
+            return List.of();
+        }
+        String sql = "SELECT * FROM assessment_answer WHERE attempt_id = ? ORDER BY question_id";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, attemptId);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<AssessmentAnswer> list = new ArrayList<>();
+                while (rs.next()) list.add(mapRow(rs));
+                return list;
+            }
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to find answers by attempt ID.", e);
         }
     }
 }

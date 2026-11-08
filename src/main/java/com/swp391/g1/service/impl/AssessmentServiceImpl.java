@@ -31,6 +31,7 @@ import com.swp391.g1.service.IAssessmentService;
 import com.swp391.g1.util.DateTimeUtil;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -189,6 +190,15 @@ public class AssessmentServiceImpl implements IAssessmentService {
             return assessment;
         }
         return null;
+    }
+
+    @Override
+    public Assessment getAssessmentForStudentAttempt(int assessmentId, int studentId) {
+        AssessmentAttempt attempt = attemptDAO.findByAssessmentAndStudent(assessmentId, studentId);
+        if (attempt == null) {
+            return null;
+        }
+        return assessmentDAO.findById(assessmentId);
     }
 
     @Override
@@ -503,47 +513,112 @@ public class AssessmentServiceImpl implements IAssessmentService {
             questionMap.put(q.getId(), q);
         }
 
-        answerDAO.deleteByAttemptId(attemptId);
+        Connection conn = null;
+        try {
+            conn = com.swp391.g1.common.DBContext.getConnection();
+            conn.setAutoCommit(false);
 
-        for (Map.Entry<Integer, java.lang.Object> entry : answers.entrySet()) {
-            int questionId = entry.getKey();
-            AssessmentQuestion question = questionMap.get(questionId);
-            if (question == null) {
-                throw new AssessmentServiceException("Cau hoi khong thuoc danh gia nay.");
-            }
-            AssessmentAnswer answer = new AssessmentAnswer();
-            answer.setAttemptId(attemptId);
-            answer.setQuestionId(questionId);
-            if (question.getQuestionType() == AssessmentQuestion.QuestionType.MCQ) {
-                Integer optionId = null;
-                if (entry.getValue() instanceof Number) {
-                    optionId = ((Number) entry.getValue()).intValue();
-                } else if (entry.getValue() != null) {
-                    try {
-                        optionId = Integer.parseInt(entry.getValue().toString());
-                    } catch (NumberFormatException ignored) {
-                        optionId = null;
+            // Lock attempt row to prevent concurrent submitAttempt
+            try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id, status FROM assessment_attempt WITH (UPDLOCK, HOLDLOCK) WHERE id = ?")) {
+                ps.setInt(1, attemptId);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        throw new AssessmentServiceException("Khong tim thay bai lam.");
+                    }
+                    String status = rs.getString("status");
+                    if (!AssessmentAttempt.Status.IN_PROGRESS.name().equals(status)) {
+                        conn.rollback();
+                        throw new AssessmentServiceException("Khong the luu cau tra loi sau khi da nop.");
                     }
                 }
-                if (optionId != null) {
-                    AssessmentOption option = optionDAO.findById(optionId);
-                    if (option == null || option.getQuestionId() != questionId) {
-                        throw new AssessmentServiceException("Phuong an khong thuoc cau hoi nay.");
-                    }
-                    answer.setSelectedOptionId(optionId);
-                }
-            } else {
-                String text = entry.getValue() == null ? null : entry.getValue().toString();
-                if (text != null && text.length() > 10000) {
-                    throw new AssessmentServiceException("Cau tra loi Essay qua dai.");
-                }
-                answer.setAnswerText(text);
             }
-            answer.setGradingStatus(
-                    question.getQuestionType() == AssessmentQuestion.QuestionType.MCQ
-                            ? AssessmentAnswer.GradingStatus.GRADED
-                            : AssessmentAnswer.GradingStatus.PENDING_GRADING);
-            answerDAO.insert(answer);
+
+            answerDAO.deleteByAttemptId(conn, attemptId);
+
+            for (Map.Entry<Integer, java.lang.Object> entry : answers.entrySet()) {
+                int questionId = entry.getKey();
+                AssessmentQuestion question = questionMap.get(questionId);
+                if (question == null) {
+                    throw new AssessmentServiceException("Cau hoi khong thuoc danh gia nay.");
+                }
+                AssessmentAnswer answer = new AssessmentAnswer();
+                answer.setAttemptId(attemptId);
+                answer.setQuestionId(questionId);
+                if (question.getQuestionType() == AssessmentQuestion.QuestionType.MCQ) {
+                    Integer optionId = null;
+                    if (entry.getValue() instanceof Number) {
+                        optionId = ((Number) entry.getValue()).intValue();
+                    } else if (entry.getValue() != null) {
+                        try {
+                            optionId = Integer.parseInt(entry.getValue().toString());
+                        } catch (NumberFormatException ignored) {
+                            optionId = null;
+                        }
+                    }
+                    if (optionId != null) {
+                        AssessmentOption option = optionDAO.findById(optionId);
+                        if (option == null || option.getQuestionId() != questionId) {
+                            throw new AssessmentServiceException("Phuong an khong thuoc cau hoi nay.");
+                        }
+                        answer.setSelectedOptionId(optionId);
+                    }
+                } else {
+                    String text = entry.getValue() == null ? null : entry.getValue().toString();
+                    if (text != null && text.length() > 10000) {
+                        throw new AssessmentServiceException("Cau tra loi Essay qua dai.");
+                    }
+                    answer.setAnswerText(text);
+                }
+                answer.setGradingStatus(
+                        question.getQuestionType() == AssessmentQuestion.QuestionType.MCQ
+                                ? AssessmentAnswer.GradingStatus.GRADED
+                                : AssessmentAnswer.GradingStatus.PENDING_GRADING);
+
+                // Insert using the shared Connection (within transaction)
+                answerDAO.insert(conn, answer);
+            }
+
+            conn.commit();
+        } catch (AssessmentServiceException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (java.sql.SQLException rollbackEx) {
+                    throw new AssessmentServiceException("Transaction rollback failed: " + e.getMessage()
+                            + ". Rollback also failed: " + rollbackEx.getMessage(), e);
+                }
+            }
+            throw e;
+        } catch (java.sql.SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (java.sql.SQLException rollbackEx) {
+                    throw new IllegalStateException("Database operation failed and rollback also failed: "
+                            + rollbackEx.getMessage(), e);
+                }
+            }
+            throw new IllegalStateException("Failed to save answers.", e);
+        } catch (RuntimeException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (java.sql.SQLException rollbackEx) {
+                    e.addSuppressed(rollbackEx);
+                }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (java.sql.SQLException e) {
+                    java.util.logging.Logger.getLogger(AssessmentServiceImpl.class.getName())
+                            .log(java.util.logging.Level.WARNING, "Failed to close database connection.", e);
+                }
+            }
         }
     }
 
@@ -592,10 +667,34 @@ public class AssessmentServiceImpl implements IAssessmentService {
             finalScore = mcqTotal;
         }
 
-        boolean updated = attemptDAO.updateStatusAndScore(attemptId, newStatus,
-                finalScore == null ? null : BigDecimal.valueOf(finalScore), now);
-        if (!updated) {
-            throw new AssessmentServiceException("Khong the nop bai. Vui long thu lai.");
+        Connection conn = null;
+        try {
+            conn = com.swp391.g1.common.DBContext.getConnection();
+            conn.setAutoCommit(false);
+
+            boolean updated = attemptDAO.updateStatusAndScore(conn, attemptId,
+                    AssessmentAttempt.Status.IN_PROGRESS, newStatus,
+                    finalScore == null ? null : BigDecimal.valueOf(finalScore), now);
+            if (!updated) {
+                conn.rollback();
+                throw new AssessmentServiceException("Bai lam da duoc nop truoc do.");
+            }
+
+            conn.commit();
+        } catch (java.sql.SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException re) {
+                    throw new IllegalStateException("Database operation failed and rollback also failed: " + re.getMessage(), e);
+                }
+            }
+            throw new IllegalStateException("Failed to submit attempt.", e);
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (SQLException e) {
+                    java.util.logging.Logger.getLogger(AssessmentServiceImpl.class.getName())
+                            .log(java.util.logging.Level.WARNING, "Failed to close database connection.", e);
+                }
+            }
         }
 
         attempt.setStatus(newStatus);
@@ -658,40 +757,85 @@ public class AssessmentServiceImpl implements IAssessmentService {
             throw new AssessmentServiceException("Khong tim thay bai lam.");
         }
 
-        boolean graded = answerDAO.updateGrade(answerId, score, feedback,
-                AssessmentAnswer.GradingStatus.GRADED);
-        if (!graded) {
-            throw new AssessmentServiceException("Khong the luu diem cham bai.");
-        }
+        Connection conn = null;
+        try {
+            conn = com.swp391.g1.common.DBContext.getConnection();
+            conn.setAutoCommit(false);
 
-        List<AssessmentQuestion> allQuestions = questionDAO.findByAssessmentId(assessment.getId());
-        List<AssessmentAnswer> allAnswers = answerDAO.findByAttemptId(attempt.getId());
-        boolean allEssayGraded = true;
-        double totalScore = 0;
-
-        for (AssessmentQuestion q : allQuestions) {
-            AssessmentAnswer ans = findAnswer(allAnswers, q.getId());
-            if (q.getQuestionType() == AssessmentQuestion.QuestionType.MCQ) {
-                if (ans != null && ans.getSelectedOptionId() != null) {
-                    AssessmentOption option = optionDAO.findById(ans.getSelectedOptionId());
-                    if (option != null && option.isCorrect()) {
-                        totalScore += q.getMaxScore();
+            // Lock attempt row to prevent concurrent grading of same attempt
+            try (java.sql.PreparedStatement ps = conn.prepareStatement(
+                    "SELECT id, status FROM assessment_attempt WITH (UPDLOCK, HOLDLOCK) WHERE id = ?")) {
+                ps.setInt(1, attempt.getId());
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        conn.rollback();
+                        throw new AssessmentServiceException("Khong tim thay bai lam.");
+                    }
+                    String status = rs.getString("status");
+                    if (!AssessmentAttempt.Status.SUBMITTED.name().equals(status)) {
+                        conn.rollback();
+                        throw new AssessmentServiceException("Bai lam da duoc nop truoc do.");
                     }
                 }
-            } else {
-                if (ans == null || ans.getGradingStatus() == AssessmentAnswer.GradingStatus.PENDING_GRADING) {
-                    allEssayGraded = false;
-                } else if (ans.getAwardedScore() != null) {
-                    totalScore += ans.getAwardedScore();
+            }
+
+            boolean graded = answerDAO.updateGrade(conn, answerId, score, feedback,
+                    AssessmentAnswer.GradingStatus.GRADED);
+            if (!graded) {
+                conn.rollback();
+                throw new AssessmentServiceException("Khong the luu diem cham bai.");
+            }
+
+            List<AssessmentQuestion> allQuestions = questionDAO.findByAssessmentId(conn, assessment.getId());
+            List<AssessmentAnswer> allAnswers = answerDAO.findByAttemptId(conn, attempt.getId());
+            boolean allEssayGraded = true;
+            double totalScore = 0;
+
+            for (AssessmentQuestion q : allQuestions) {
+                AssessmentAnswer ans = findAnswer(allAnswers, q.getId());
+                if (q.getQuestionType() == AssessmentQuestion.QuestionType.MCQ) {
+                    if (ans != null && ans.getSelectedOptionId() != null) {
+                        AssessmentOption option = optionDAO.findById(conn, ans.getSelectedOptionId());
+                        if (option != null && option.isCorrect()) {
+                            totalScore += q.getMaxScore();
+                        }
+                    }
+                } else {
+                    if (ans == null || ans.getGradingStatus() == AssessmentAnswer.GradingStatus.PENDING_GRADING) {
+                        allEssayGraded = false;
+                    } else if (ans.getAwardedScore() != null) {
+                        totalScore += ans.getAwardedScore();
+                    }
                 }
             }
-        }
 
-        if (allEssayGraded) {
-            attemptDAO.updateStatusAndScore(attempt.getId(),
-                    AssessmentAttempt.Status.COMPLETED, BigDecimal.valueOf(totalScore), null);
-            attempt.setStatus(AssessmentAttempt.Status.COMPLETED);
-            attempt.setFinalScore(totalScore);
+            if (allEssayGraded) {
+                boolean updated = attemptDAO.updateStatusAndScore(conn, attempt.getId(),
+                        AssessmentAttempt.Status.SUBMITTED, AssessmentAttempt.Status.COMPLETED,
+                        BigDecimal.valueOf(totalScore), null);
+                if (!updated) {
+                    conn.rollback();
+                    throw new AssessmentServiceException("Bai lam da duoc cap nhat boi nguoi khac.");
+                }
+                attempt.setStatus(AssessmentAttempt.Status.COMPLETED);
+                attempt.setFinalScore(totalScore);
+            }
+
+            conn.commit();
+        } catch (Exception e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException re) {
+                    throw new IllegalStateException("Database operation failed and rollback also failed: " + re.getMessage(), e);
+                }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (SQLException e) {
+                    java.util.logging.Logger.getLogger(AssessmentServiceImpl.class.getName())
+                            .log(java.util.logging.Level.WARNING, "Failed to close database connection.", e);
+                }
+            }
         }
 
         return true;
