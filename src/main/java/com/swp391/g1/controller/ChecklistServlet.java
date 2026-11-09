@@ -61,12 +61,14 @@ public class ChecklistServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         CurrentUser user = AuthContext.getCurrentUser(request);
-        if (!authorize(user, response)) {
+        String action = request.getParameter("action");
+        boolean checklistManager = AccessPolicy.canViewChecklist(user);
+        if (!checklistManager && !"detail".equals(action)) {
+            authorize(user, response);
             return;
         }
 
         try {
-            String action = request.getParameter("action");
             if ("create".equals(action)) {
                 try {
                     request.setAttribute("formActivityId",
@@ -81,6 +83,12 @@ public class ChecklistServlet extends HttpServlet {
                 ChecklistTaskDetailResponseDTO detail = checklistTaskService.getTaskDetail(taskId);
                 if (detail == null) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy công việc checklist.");
+                    return;
+                }
+                if (!checklistManager
+                        && (user == null || !checklistTaskService.isTaskAssignedToAccount(taskId, user.getId()))) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Bạn không được phân công công việc checklist này.");
                     return;
                 }
                 if ("edit".equals(action)) {
@@ -104,6 +112,7 @@ public class ChecklistServlet extends HttpServlet {
                 } else {
                     request.setAttribute("taskDetail", detail);
                     request.setAttribute("activeNav", "checklist");
+                    request.setAttribute("canManageChecklist", checklistManager);
                     request.getRequestDispatcher("/WEB-INF/views/checklist/detail.jsp").forward(request, response);
                 }
             } else {
@@ -160,6 +169,10 @@ public class ChecklistServlet extends HttpServlet {
         }
         if ("updateStatus".equals(action)) {
             updateTaskStatus(request, response);
+            return;
+        }
+        if ("updateStatuses".equals(action)) {
+            updateTaskStatuses(request, response);
             return;
         }
         if (!"create".equals(action) && !"update".equals(action)) {
@@ -368,6 +381,40 @@ public class ChecklistServlet extends HttpServlet {
         } catch (DataAccessException e) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Không thể cập nhật trạng thái công việc.");
+        }
+    }
+
+    private void updateTaskStatuses(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        int activityId;
+        Set<Integer> taskIds;
+        String status = trim(request.getParameter("status"));
+        try {
+            activityId = parseActivityId(request.getParameter("activityId"));
+            taskIds = parseIds(request.getParameterValues("taskIds"));
+            if (taskIds.isEmpty() || !ChecklistTaskStatus.isValid(status)) {
+                throw new IllegalArgumentException("Invalid bulk checklist status request.");
+            }
+        } catch (IllegalArgumentException e) {
+            response.sendRedirect(request.getContextPath()
+                    + "/checklist?bulkStatusError=1" + activityQuery(request.getParameter("activityId")));
+            return;
+        }
+
+        try {
+            int updated = checklistTaskService.updateTaskStatuses(
+                    activityId, new ArrayList<>(taskIds), status);
+            response.sendRedirect(request.getContextPath()
+                    + "/checklist?bulkStatusUpdated=" + updated
+                    + activityQuery(Integer.toString(activityId)));
+        } catch (IllegalArgumentException e) {
+            String result = "PREREQUISITES_INCOMPLETE".equals(e.getMessage())
+                    ? "?bulkStatusBlocked=1" : "?bulkStatusError=1";
+            response.sendRedirect(request.getContextPath()
+                    + "/checklist" + result + activityQuery(Integer.toString(activityId)));
+        } catch (DataAccessException | IllegalStateException e) {
+            response.sendRedirect(request.getContextPath()
+                    + "/checklist?bulkStatusError=1" + activityQuery(Integer.toString(activityId)));
         }
     }
 

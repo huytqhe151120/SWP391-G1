@@ -595,6 +595,48 @@
     box-shadow: 0 8px 24px rgb(28 45 80 / 4%);
 }
 
+.checklist-bulk-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f2;
+    background: #fff;
+}
+
+.checklist-bulk-status label {
+    color: #34425b;
+    font-size: .86rem;
+    font-weight: 650;
+}
+
+.checklist-bulk-status select {
+    min-height: 38px;
+    padding: 7px 30px 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #34425b;
+    font: inherit;
+    font-size: .84rem;
+}
+
+.checklist-bulk-status [data-bulk-selected-count] {
+    color: #64718a;
+    font-size: .83rem;
+}
+
+.checklist-bulk-status button:disabled {
+    border-color: #cbd5e1;
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.checklist-bulk-status [data-bulk-status-submit] {
+    margin-left: auto;
+}
+
 .checklist-table {
     width: 100%;
     min-width: 1160px;
@@ -696,7 +738,7 @@
     font-style: normal;
 }
 
-.checklist-table td:nth-child(6) {
+.checklist-table td:nth-child(7) {
     min-width: 155px;
     white-space: nowrap !important;
 }

@@ -59,6 +59,21 @@
                         Chỉ có thể bắt đầu công việc sau khi tất cả công việc tiên quyết hoàn thành.
                     </div>
                 </c:if>
+                <c:if test="${not empty param.bulkStatusUpdated}">
+                    <div class="checklist-success" role="status">
+                        Đã cập nhật trạng thái cho <c:out value="${param.bulkStatusUpdated}"/> công việc.
+                    </div>
+                </c:if>
+                <c:if test="${param.bulkStatusBlocked == '1'}">
+                    <div class="checklist-error" role="alert">
+                        Chưa cập nhật công việc nào. Hãy hoàn thành tất cả công việc tiên quyết trước.
+                    </div>
+                </c:if>
+                <c:if test="${param.bulkStatusError == '1'}">
+                    <div class="checklist-error" role="alert">
+                        Không thể cập nhật trạng thái. Hãy chọn công việc hợp lệ và thử lại.
+                    </div>
+                </c:if>
                 <c:if test="${param.assigned == '1'}">
                     <div class="checklist-success" role="status">Đã phân công nhanh nhân sự cho công việc.</div>
                 </c:if>
@@ -248,18 +263,28 @@
                             </div>
                         </section>
                         <section class="checklist-table-wrap" aria-label="Danh sách công việc">
+                            <form id="bulkStatusForm" class="checklist-bulk-status"
+                                  method="post" action="${pageContext.request.contextPath}/checklist">
+                                <input type="hidden" name="action" value="updateStatuses">
+                                <input type="hidden" name="activityId" value="${selectedActivityId}">
+                                <label for="bulkStatus">Trạng thái cho công việc đã chọn</label>
+                                <select id="bulkStatus" name="status" required>
+                                    <option value="">-- Chọn trạng thái --</option>
+                                    <option value="Chưa hoàn thành">Chưa hoàn thành</option>
+                                    <option value="Đang hoàn thành">Đang hoàn thành</option>
+                                    <option value="Đã hoàn thành">Đã hoàn thành</option>
+                                </select>
+                                <span data-bulk-selected-count>Chưa chọn công việc</span>
+                                <button type="submit" class="checklist-create-button"
+                                        data-bulk-status-submit disabled>Cập nhật nhanh</button>
+                            </form>
                             <table class="checklist-table">
                                 <thead>
-                                <tr data-checklist-row
-                                    data-code="<c:out value='${task.code}'/>"
-                                    data-name="<c:out value='${task.name}'/>"
-                                    data-description="<c:out value='${task.description}'/>"
-                                    data-assignees="<c:out value='${task.assignees}'/>"
-                                    data-staff="<c:out value='${task.staffAssignees}'/>"
-                                    data-partner="<c:out value='${task.partnerStaffAssignees}'/>"
-                                    data-phase="<c:out value='${task.phase}'/>"
-                                    data-status="<c:out value='${task.statusValue}'/>"
-                                    data-deadline="<c:out value='${task.deadlineFilterValue}'/>">
+                                <tr>
+                                    <th scope="col">
+                                        <input type="checkbox" aria-label="Chọn tất cả công việc đang hiển thị"
+                                               data-select-visible-tasks>
+                                    </th>
                                     <th scope="col">Mã công việc</th>
                                     <th scope="col">Tên công việc</th>
                                     <th scope="col">Người phụ trách</th>
@@ -273,7 +298,19 @@
                                 </thead>
                                 <tbody>
                                 <c:forEach var="task" items="${checklistTasks}">
-                                    <tr>
+                                    <tr data-checklist-row
+                                        data-code="<c:out value='${task.code}'/>"
+                                        data-name="<c:out value='${task.name}'/>"
+                                        data-description="<c:out value='${task.description}'/>"
+                                        data-assignees="<c:out value='${task.assignees}'/>"
+                                        data-staff="<c:out value='${task.staffAssignees}'/>"
+                                        data-partner="<c:out value='${task.partnerStaffAssignees}'/>"
+                                        data-phase="<c:out value='${task.phase}'/>"
+                                        data-status="<c:out value='${task.statusValue}'/>"
+                                        data-deadline="<c:out value='${task.deadlineFilterValue}'/>">
+                                        <td><input type="checkbox" name="taskIds" value="${task.id}"
+                                                   form="bulkStatusForm" data-bulk-task-checkbox
+                                                   aria-label="Chọn công việc"></td>
                                         <td class="checklist-table-code"><c:out value="${task.code}"/></td>
                                         <td class="checklist-table-name"><c:out value="${task.name}"/></td>
                                         <td class="checklist-table-description">
@@ -347,7 +384,7 @@
                                     </tr>
                                 </c:forEach>
                                 <tr data-filter-empty hidden>
-                                    <td colspan="9" class="checklist-filter-empty">
+                                    <td colspan="10" class="checklist-filter-empty">
                                         Không tìm thấy công việc phù hợp với điều kiện lọc.
                                     </td>
                                 </tr>
@@ -361,7 +398,7 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js" defer></script>
-<script src="${pageContext.request.contextPath}/assets/js/checklist-list.js?v=20261105-1" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/checklist-list.js?v=20261106-1" defer></script>
 <script src="${pageContext.request.contextPath}/assets/js/checklist-quick-assign.js?v=20261105-1" defer></script>
 </body>
 </html>

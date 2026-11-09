@@ -73,6 +73,11 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     }
 
     @Override
+    public boolean isTaskAssignedToAccount(int taskId, int accountId) {
+        return checklistTaskDAO.isAssignedToAccount(taskId, accountId);
+    }
+
+    @Override
     public ChecklistAssignmentIdsDTO getAssigneeIds(int taskId) {
         return checklistTaskDAO.findAssigneeIds(taskId);
     }
@@ -89,6 +94,11 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     @Override
     public boolean updateTaskStatus(int taskId, String status) {
         return checklistTaskDAO.updateStatus(taskId, status);
+    }
+
+    @Override
+    public int updateTaskStatuses(int activityId, List<Integer> taskIds, String status) {
+        return checklistTaskDAO.updateStatuses(activityId, taskIds, status);
     }
 
     @Override

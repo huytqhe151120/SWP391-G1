@@ -5,6 +5,7 @@ import com.swp391.g1.dao.INotificationDAO;
 import com.swp391.g1.dto.response.ChecklistTaskAlertDTO;
 import com.swp391.g1.dto.response.NotificationDTO;
 import java.sql.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,6 +92,114 @@ public class NotificationDAOImpl implements INotificationDAO {
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to create checklist task notification.", e);
         }
+    }
+
+    @Override
+    public int createOverdueChecklistTaskNotifications() {
+        String overdueTasksSql = """
+                SELECT id, activity_id, code, name, deadline
+                FROM checklist_task WITH (UPDLOCK, HOLDLOCK)
+                WHERE deadline < CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
+                  AND UPPER(LTRIM(RTRIM(status))) NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                ORDER BY deadline, id
+                """;
+        String alreadyAlertedSql = """
+                SELECT 1
+                FROM checklist_task_overdue_alert WITH (UPDLOCK, HOLDLOCK)
+                WHERE task_id = ?
+                  AND alert_date = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATE)
+                """;
+        String insertAlertSql = """
+                INSERT INTO checklist_task_overdue_alert (task_id, alert_date)
+                VALUES (?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATE))
+                """;
+        DateTimeFormatter deadlineFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                List<OverdueChecklistTask> overdueTasks = new ArrayList<>();
+                try (PreparedStatement ps = c.prepareStatement(overdueTasksSql)) {
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            Timestamp deadline = rs.getTimestamp("deadline");
+                            overdueTasks.add(new OverdueChecklistTask(
+                                    rs.getInt("id"),
+                                    rs.getInt("activity_id"),
+                                    rs.getString("code"),
+                                    rs.getString("name"),
+                                    deadline == null ? "" : deadline.toLocalDateTime().format(deadlineFormat)));
+                        }
+                    }
+                }
+
+                int notificationCount = 0;
+                for (OverdueChecklistTask task : overdueTasks) {
+                    List<Integer> recipientIds = findChecklistTaskRecipientIds(c, task.id());
+                    if (recipientIds.isEmpty()) {
+                        continue;
+                    }
+
+                    boolean alreadyAlerted;
+                    try (PreparedStatement ps = c.prepareStatement(alreadyAlertedSql)) {
+                        ps.setInt(1, task.id());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            alreadyAlerted = rs.next();
+                        }
+                    }
+                    if (alreadyAlerted) {
+                        continue;
+                    }
+
+                    try (PreparedStatement ps = c.prepareStatement(insertAlertSql)) {
+                        ps.setInt(1, task.id());
+                        ps.executeUpdate();
+                    }
+
+                    String targetUrl = "/checklist?action=detail&id=" + task.id()
+                            + "&activityId=" + task.activityId();
+                    int notificationId;
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "INSERT INTO notifications (title, content, type, event_type, target_url) "
+                                    + "VALUES (?, ?, 'IN_APP', 'CHECKLIST_TASK_OVERDUE', ?)",
+                            Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setString(1, "Công việc checklist đã quá hạn");
+                        ps.setString(2, "Công việc " + task.code() + " - " + task.name()
+                                + " đã quá hạn từ " + task.deadlineDisplay() + ".");
+                        ps.setString(3, targetUrl);
+                        ps.executeUpdate();
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (!rs.next()) {
+                                throw new SQLException("Overdue checklist notification ID was not generated.");
+                            }
+                            notificationId = rs.getInt(1);
+                        }
+                    }
+                    try (PreparedStatement ps = c.prepareStatement(
+                            "INSERT INTO user_notifications (notification_id, user_id) VALUES (?, ?)")) {
+                        for (int recipientId : recipientIds) {
+                            ps.setInt(1, notificationId);
+                            ps.setInt(2, recipientId);
+                            ps.addBatch();
+                        }
+                        ps.executeBatch();
+                    }
+                    notificationCount++;
+                }
+
+                c.commit();
+                return notificationCount;
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create overdue checklist notifications.", e);
+        }
+    }
+
+    private record OverdueChecklistTask(
+            int id, int activityId, String code, String name, String deadlineDisplay) {
     }
 
     private List<Integer> findChecklistTaskRecipientIds(Connection c, int taskId) throws SQLException {

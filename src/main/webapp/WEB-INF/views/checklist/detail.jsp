@@ -27,9 +27,17 @@
                         <p class="subtitle">Mã công việc: <strong><c:out value="${taskDetail.task.code}"/></strong></p>
                     </div>
                     <div class="checklist-header-actions">
-                        <a class="checklist-back-link" href="${checklistUrl}">Quay lại</a>
-                        <a class="checklist-create-button"
-                           href="${pageContext.request.contextPath}/checklist?action=edit&amp;id=${taskDetail.task.id}&amp;activityId=${taskDetail.task.activityId}">Chỉnh sửa</a>
+                        <c:choose>
+                            <c:when test="${canManageChecklist}">
+                                <a class="checklist-back-link" href="${checklistUrl}">Quay lại</a>
+                                <a class="checklist-create-button"
+                                   href="${pageContext.request.contextPath}/checklist?action=edit&amp;id=${taskDetail.task.id}&amp;activityId=${taskDetail.task.activityId}">Chỉnh sửa</a>
+                            </c:when>
+                            <c:otherwise>
+                                <a class="checklist-back-link"
+                                   href="${pageContext.request.contextPath}/notifications">Quay lại thông báo</a>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </header>
 

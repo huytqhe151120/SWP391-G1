@@ -176,3 +176,9 @@ Configure email delivery through environment variables; never commit SMTP creden
 | `APP_BASE_URL` | No | Application base URL for the task link in the email |
 
 Email recipients are taken from an assigned account's `username` when it is an email address; partner-company email is also used for assigned partner staff. Configure account usernames as email addresses where staff email is not stored separately.
+
+## Checklist Overdue Alerts
+
+The application checks for overdue checklist tasks immediately after startup and then once per hour. A task is overdue when its deadline has passed and its status is not completed. Assigned staff and partner staff receive an in-app notification at most once per task per Vietnam calendar day; completed tasks are excluded. This reminder currently uses the notification bell only and does not send email.
+
+Before deploying, run `src/main/resources/db/migration/V2__add_checklist_overdue_alert_tracking.sql` once against the application database. The tracking table prevents duplicate daily alerts. Only administrators can manage checklists; an assigned staff or partner account can open the task detail from its notification.

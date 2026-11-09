@@ -319,6 +319,35 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
         }
     }
 
+    @Override
+    public boolean isAssignedToAccount(int taskId, int accountId) {
+        String sql = """
+                SELECT CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM checklist_task_staff assignment
+                    JOIN staff s ON s.id = assignment.staff_id
+                    WHERE assignment.task_id = ? AND s.account_id = ?
+                ) OR EXISTS (
+                    SELECT 1
+                    FROM checklist_task_partner_staff assignment
+                    JOIN partner_staff ps ON ps.id = assignment.partner_staff_id
+                    WHERE assignment.task_id = ? AND ps.account_id = ?
+                ) THEN 1 ELSE 0 END
+                """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            ps.setInt(2, accountId);
+            ps.setInt(3, taskId);
+            ps.setInt(4, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getBoolean(1);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Could not verify checklist task assignment.", e);
+        }
+    }
+
     private List<ChecklistTaskResponseDTO> findRelatedTasks(int taskId, boolean prerequisites) {
         try (Connection conn = DBContext.getConnection()) {
             return findRelatedTasks(conn, taskId, prerequisites);
@@ -474,6 +503,88 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
             throw e;
         } catch (SQLException e) {
             throw new DataAccessException("Could not update checklist task status.", e);
+        }
+    }
+
+    @Override
+    public int updateStatuses(int activityId, List<Integer> taskIds, String status) {
+        Set<Integer> uniqueTaskIds = new HashSet<>(taskIds);
+        if (uniqueTaskIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one checklist task must be selected.");
+        }
+
+        String placeholders = String.join(",", java.util.Collections.nCopies(uniqueTaskIds.size(), "?"));
+        String selectedTasksSql = "SELECT COUNT(*) FROM checklist_task WHERE activity_id = ? AND id IN ("
+                + placeholders + ")";
+        String incompletePrerequisitesSql = """
+                SELECT COUNT(DISTINCT dependency.task_id)
+                FROM checklist_task_dependency dependency
+                JOIN checklist_task prerequisite ON prerequisite.id = dependency.depends_on_task_id
+                JOIN checklist_task selected_task ON selected_task.id = dependency.task_id
+                WHERE dependency.task_id IN (__IDS__)
+                  AND UPPER(LTRIM(RTRIM(selected_task.status))) <> ?
+                  AND UPPER(LTRIM(RTRIM(prerequisite.status)))
+                      NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                """.replace("__IDS__", placeholders);
+        String updateSql = "UPDATE checklist_task SET status = ? WHERE activity_id = ? AND id IN ("
+                + placeholders + ")";
+        String databaseStatus = ChecklistTaskStatus.toDatabaseValue(status);
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(selectedTasksSql)) {
+                    ps.setInt(1, activityId);
+                    bindIds(ps, uniqueTaskIds, 2);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        rs.next();
+                        if (rs.getInt(1) != uniqueTaskIds.size()) {
+                            throw new IllegalArgumentException("Selected tasks must belong to the activity.");
+                        }
+                    }
+                }
+
+                if (!"TODO".equals(databaseStatus)) {
+                    try (PreparedStatement ps = conn.prepareStatement(incompletePrerequisitesSql)) {
+                        bindIds(ps, uniqueTaskIds, 1);
+                        ps.setString(uniqueTaskIds.size() + 1, databaseStatus);
+                        try (ResultSet rs = ps.executeQuery()) {
+                            rs.next();
+                            if (rs.getInt(1) > 0) {
+                                throw new IllegalArgumentException("PREREQUISITES_INCOMPLETE");
+                            }
+                        }
+                    }
+                }
+
+                int updated;
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setString(1, databaseStatus);
+                    ps.setInt(2, activityId);
+                    bindIds(ps, uniqueTaskIds, 3);
+                    updated = ps.executeUpdate();
+                }
+                if (updated != uniqueTaskIds.size()) {
+                    throw new IllegalStateException("Checklist task status update was incomplete.");
+                }
+                conn.commit();
+                return updated;
+            } catch (SQLException | IllegalArgumentException | IllegalStateException e) {
+                rollback(conn, e);
+                if (e instanceof SQLException sqlException) {
+                    throw translate("update checklist task statuses", sqlException);
+                }
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw translate("update checklist task statuses", e);
+        }
+    }
+
+    private void bindIds(PreparedStatement ps, Set<Integer> ids, int startIndex) throws SQLException {
+        int parameterIndex = startIndex;
+        for (int id : ids) {
+            ps.setInt(parameterIndex++, id);
         }
     }
 

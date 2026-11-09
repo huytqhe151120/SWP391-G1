@@ -23,6 +23,8 @@ public interface INotificationDAO {
 
     ChecklistTaskAlertDTO createChecklistTaskNotification(int taskId);
 
+    int createOverdueChecklistTaskNotifications();
+
     /** filter: "all" | "unread" | "read". */
     List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);
 

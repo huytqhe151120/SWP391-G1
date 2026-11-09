@@ -32,6 +32,9 @@ public interface INotificationService {
     /** Cảnh báo checklist: MEDIUM qua chuông, HIGH qua chuông và email. */
     void notifyChecklistTaskAssignment(int taskId);
 
+    /** Gửi cảnh báo trong ứng dụng cho các công việc checklist quá hạn, tối đa một lần mỗi ngày. */
+    int notifyOverdueChecklistTasks();
+
     List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size);
 
     int countNotifications(int accountId, String filter);

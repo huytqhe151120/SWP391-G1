@@ -5,6 +5,10 @@
     const rows = Array.from(document.querySelectorAll("[data-checklist-row]"));
     const emptyRow = document.querySelector("[data-filter-empty]");
     const countLabel = document.querySelector("[data-filter-count]");
+    const taskCheckboxes = Array.from(document.querySelectorAll("[data-bulk-task-checkbox]"));
+    const selectVisibleCheckbox = document.querySelector("[data-select-visible-tasks]");
+    const selectedCount = document.querySelector("[data-bulk-selected-count]");
+    const submitBulkStatus = document.querySelector("[data-bulk-status-submit]");
     const normalize = (value) => (value || "")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
@@ -16,6 +20,25 @@
         Array.from(filters.querySelectorAll("[data-filter]"))
             .map((input) => [input.dataset.filter, input.value])
     );
+
+    const updateBulkSelection = () => {
+        const visibleCheckboxes = taskCheckboxes.filter((checkbox) => !checkbox.closest("tr").hidden);
+        const selectedVisibleCount = visibleCheckboxes.filter((checkbox) => checkbox.checked).length;
+        const selectedTotal = taskCheckboxes.filter((checkbox) => checkbox.checked).length;
+
+        if (selectVisibleCheckbox) {
+            selectVisibleCheckbox.checked = visibleCheckboxes.length > 0
+                && selectedVisibleCount === visibleCheckboxes.length;
+            selectVisibleCheckbox.indeterminate = selectedVisibleCount > 0
+                && selectedVisibleCount < visibleCheckboxes.length;
+        }
+        if (selectedCount) {
+            selectedCount.textContent = selectedTotal
+                ? `Đã chọn ${selectedTotal} công việc`
+                : "Chưa chọn công việc";
+        }
+        if (submitBulkStatus) submitBulkStatus.disabled = selectedTotal === 0;
+    };
 
     const applyFilters = () => {
         const selected = values();
@@ -46,8 +69,16 @@
         if (countLabel) {
             countLabel.textContent = `${visibleCount} / ${rows.length} công việc`;
         }
+        updateBulkSelection();
     };
 
+    taskCheckboxes.forEach((checkbox) => checkbox.addEventListener("change", updateBulkSelection));
+    selectVisibleCheckbox?.addEventListener("change", () => {
+        taskCheckboxes.forEach((checkbox) => {
+            if (!checkbox.closest("tr").hidden) checkbox.checked = selectVisibleCheckbox.checked;
+        });
+        updateBulkSelection();
+    });
     filters.addEventListener("input", applyFilters);
     filters.addEventListener("change", applyFilters);
     filters.querySelector("[data-clear-filters]")?.addEventListener("click", () => {

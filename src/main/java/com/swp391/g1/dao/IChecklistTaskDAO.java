@@ -28,6 +28,8 @@ public interface IChecklistTaskDAO {
 
     ChecklistTaskDetailResponseDTO findDetailById(int taskId);
 
+    boolean isAssignedToAccount(int taskId, int accountId);
+
     ChecklistAssignmentIdsDTO findAssigneeIds(int taskId);
 
     int update(int taskId, int activityId, String phase, String priority, String code, String name,
@@ -35,6 +37,8 @@ public interface IChecklistTaskDAO {
                List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
 
     boolean updateStatus(int taskId, String status);
+
+    int updateStatuses(int activityId, List<Integer> taskIds, String status);
 
     boolean delete(int taskId);
 
