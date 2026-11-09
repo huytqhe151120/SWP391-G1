@@ -316,11 +316,15 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_code,s.code) AS student_code,"
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
+                + "p.name AS program_name,m.name AS major_name,d.name AS department_name,"
                 + "COALESCE(submitted.email,s.email) AS email,"
                 + "COALESCE(submitted.phone_number,s.phone_number) AS phone_number,r.note,r.status,r.submitted_at "
                 + ",r.pending_since,r.rejection_reason "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
+                + "LEFT JOIN dbo.academic_program p ON p.id=mc.responsible_academic_program_id "
+                + "LEFT JOIN dbo.major m ON m.id=p.responsible_major_id "
+                + "LEFT JOIN dbo.department d ON d.id=m.responsible_department_id "
                 + "LEFT JOIN (SELECT registration_id,"
                 + "MAX(CASE WHEN field_key='application_student_code' THEN answer_value END) AS student_code,"
                 + "MAX(CASE WHEN field_key='application_student_name' THEN answer_value END) AS student_name,"
@@ -349,11 +353,15 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "COALESCE(submitted.student_code,s.code) AS student_code,"
                 + "COALESCE(submitted.student_name,s.name) AS student_name,"
                 + "COALESCE(submitted.class_code,mc.code) AS class_code,"
+                + "p.name AS program_name,m.name AS major_name,d.name AS department_name,"
                 + "COALESCE(submitted.email,s.email) AS email,"
                 + "COALESCE(submitted.phone_number,s.phone_number) AS phone_number,r.note,r.status,r.submitted_at "
                 + ",r.pending_since,r.rejection_reason "
                 + "FROM dbo.activity_registration r JOIN dbo.student s ON s.id=r.student_id "
                 + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
+                + "LEFT JOIN dbo.academic_program p ON p.id=mc.responsible_academic_program_id "
+                + "LEFT JOIN dbo.major m ON m.id=p.responsible_major_id "
+                + "LEFT JOIN dbo.department d ON d.id=m.responsible_department_id "
                 + "LEFT JOIN (SELECT registration_id,"
                 + "MAX(CASE WHEN field_key='application_student_code' THEN answer_value END) AS student_code,"
                 + "MAX(CASE WHEN field_key='application_student_name' THEN answer_value END) AS student_name,"
@@ -384,6 +392,9 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         application.setStudentCode(r.getString("student_code"));
         application.setStudentName(r.getString("student_name"));
         application.setClassCode(r.getString("class_code"));
+        application.setAcademicProgramName(r.getString("program_name"));
+        application.setMajorName(r.getString("major_name"));
+        application.setDepartmentName(r.getString("department_name"));
         application.setEmail(r.getString("email"));
         application.setPhoneNumber(r.getString("phone_number"));
         application.setNote(r.getString("note"));
@@ -466,20 +477,26 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     }
 
     /**
-     * Trả về các đơn theo đúng thứ tự hàng đợi nếu danh sách chọn là các đơn đầu hàng đợi; ngược lại trả null.
+     * Trả về các đơn đang chờ xử lý nằm trong danh sách chọn theo đúng thứ tự hàng đợi;
+     * nếu có đơn không hợp lệ hoặc không ở trạng thái SUBMITTED thì trả null.
      */
     private List<Integer> takeQueuePrefix(Connection c, int formId, List<Integer> selected) throws SQLException {
-        String sql = "SELECT TOP (?) r.id FROM dbo.activity_registration r "
+        String sql = "SELECT r.id FROM dbo.activity_registration r "
                 + "WHERE r.form_id=? AND r.status='SUBMITTED' ORDER BY r.pending_since, r.id";
-        List<Integer> queue = new ArrayList<>();
+        Set<Integer> selectedSet = new HashSet<>(selected);
+        List<Integer> ordered = new ArrayList<>();
         try (PreparedStatement p = c.prepareStatement(sql)) {
-            p.setInt(1, selected.size());
-            p.setInt(2, formId);
+            p.setInt(1, formId);
             try (ResultSet r = p.executeQuery()) {
-                while (r.next()) queue.add(r.getInt(1));
+                while (r.next()) {
+                    int id = r.getInt(1);
+                    if (selectedSet.contains(id)) {
+                        ordered.add(id);
+                    }
+                }
             }
         }
-        return new HashSet<>(queue).equals(new HashSet<>(selected)) ? queue : null;
+        return ordered.size() == selectedSet.size() ? ordered : null;
     }
 
     @Override
@@ -725,15 +742,6 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
             sql += " AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
                     + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME())";
         }
-        boolean processingPendingApplication = "SUBMITTED".equals(expectedStatus)
-                && ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus));
-        if (processingPendingApplication) {
-            sql += " AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration earlier_app "
-                    + "WITH (UPDLOCK,HOLDLOCK) WHERE earlier_app.form_id=r.form_id "
-                    + "AND earlier_app.status='SUBMITTED' "
-                    + "AND (earlier_app.pending_since<r.pending_since "
-                    + "OR (earlier_app.pending_since=r.pending_since AND earlier_app.id<r.id)))";
-        }
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
@@ -750,8 +758,16 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     p.setInt(6, registrationId);
                     p.setString(7, expectedStatus);
                     boolean changed = p.executeUpdate() > 0;
-                    if (changed) c.commit();
-                    else c.rollback();
+                    if (changed) {
+                        if ("APPROVED".equals(newStatus)) {
+                            addParticipantForRegistration(c, registrationId);
+                        } else if ("APPROVED".equals(expectedStatus)) {
+                            removeParticipantForRegistrationIfUnattended(c, registrationId);
+                        }
+                        c.commit();
+                    } else {
+                        c.rollback();
+                    }
                     return changed;
                 }
             } catch (SQLException | RuntimeException e) {
@@ -769,11 +785,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "FROM dbo.activity_registration r "
                 + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
                 + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
-                + "WHERE r.id=? AND r.form_id=? AND r.status='SUBMITTED' "
-                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration earlier_app WITH (UPDLOCK,HOLDLOCK) "
-                + "WHERE earlier_app.form_id=r.form_id AND earlier_app.status='SUBMITTED' "
-                + "AND (earlier_app.pending_since<r.pending_since "
-                + "OR (earlier_app.pending_since=r.pending_since AND earlier_app.id<r.id)))";
+                + "WHERE r.id=? AND r.form_id=? AND r.status='SUBMITTED'";
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
@@ -816,11 +828,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
                 + "WHERE r.id=? AND r.form_id=? AND r.status='SUBMITTED' "
                 + "AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
-                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME()) "
-                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration earlier_app WITH (UPDLOCK,HOLDLOCK) "
-                + "WHERE earlier_app.form_id=r.form_id AND earlier_app.status='SUBMITTED' "
-                + "AND (earlier_app.pending_since<r.pending_since "
-                + "OR (earlier_app.pending_since=r.pending_since AND earlier_app.id<r.id)))";
+                + "AND (a.start_time IS NULL OR a.start_time>SYSUTCDATETIME())";
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
@@ -841,6 +849,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                             c.rollback();
                             return false;
                         }
+                        addParticipantForRegistration(c, registrationId);
                     }
                 }
                 c.commit();
@@ -865,6 +874,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     return false;
                 }
                 if (!answersMatchCurrentFormFields(c, formId, answers)) {
+                    c.rollback();
+                    return false;
+                }
+                if (!isStudentEligibleForForm(c, formId, studentId)) {
                     c.rollback();
                     return false;
                 }
@@ -1014,12 +1027,18 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
     @Override
     public List<RegistrationApplication> findApplicationsForStudent(int studentId) {
-        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since,r.rejection_reason, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
+        String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,"
+                + "p.name AS program_name,m.name AS major_name,d.name AS department_name,"
+                + "s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since,r.rejection_reason, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
                 + "CASE WHEN a.activity_status='UPCOMING' AND (a.start_time IS NULL OR a.start_time>DATEADD(HOUR,24,SYSUTCDATETIME())) THEN 1 ELSE 0 END AS can_cancel, "
                 + "CASE WHEN a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=0 THEN 1 ELSE 0 END AS quick_registration "
                 + "FROM dbo.activity_registration r LEFT JOIN dbo.activity_registration_form f ON f.id=r.form_id "
                 + "LEFT JOIN dbo.extracurricular_activity a ON a.id=f.activity_id JOIN dbo.student s ON s.id=r.student_id "
-                + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id WHERE r.student_id=? ORDER BY r.submitted_at DESC,r.id DESC";
+                + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
+                + "LEFT JOIN dbo.academic_program p ON p.id=mc.responsible_academic_program_id "
+                + "LEFT JOIN dbo.major m ON m.id=p.responsible_major_id "
+                + "LEFT JOIN dbo.department d ON d.id=m.responsible_department_id "
+                + "WHERE r.student_id=? ORDER BY r.submitted_at DESC,r.id DESC";
         List<RegistrationApplication> result = new ArrayList<>();
         try (Connection c=DBContext.getConnection(); PreparedStatement p=c.prepareStatement(sql)) {
             p.setInt(1,studentId); try(ResultSet r=p.executeQuery()) { while(r.next()) {
@@ -1189,6 +1208,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     }
                 }
 
+                if (!isStudentEligibleForActivity(c, activityId, studentId)) {
+                    c.rollback();
+                    return "UNAVAILABLE";
+                }
+
                 // Tìm form đăng ký nhanh của hoạt động (tạo mặc định nếu chưa có)
                 int formId = findOrCreateQuickForm(c, activityId);
                 if (formId <= 0) {
@@ -1269,6 +1293,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                                     return "UNAVAILABLE";
                                 }
                             }
+                            addParticipantForActivityAndStudent(c, activityId, studentId);
                             c.commit();
                             return "OK";
                         }
@@ -1283,6 +1308,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     p.setString(3, note);
                     p.executeUpdate();
                 }
+                addParticipantForActivityAndStudent(c, activityId, studentId);
                 c.commit();
                 return "OK";
             } catch (SQLException | RuntimeException e) {
@@ -1303,11 +1329,105 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "WHERE r.id=? AND r.status IN ('SUBMITTED','APPROVED') "
                 + "AND a.activity_status='UPCOMING' "
                 + "AND (a.start_time IS NULL OR a.start_time>DATEADD(HOUR,24,SYSUTCDATETIME()))";
-        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setInt(1, registrationId);
-            return p.executeUpdate() > 0;
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try (PreparedStatement p = c.prepareStatement(sql)) {
+                p.setInt(1, registrationId);
+                boolean changed = p.executeUpdate() > 0;
+                if (changed) {
+                    removeParticipantForRegistrationIfUnattended(c, registrationId);
+                    c.commit();
+                } else {
+                    c.rollback();
+                }
+                return changed;
+            } catch (SQLException | RuntimeException e) {
+                c.rollback();
+                throw e;
+            }
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể hủy đăng ký.", e);
+        }
+    }
+
+    private boolean isStudentEligibleForForm(Connection c, int formId, int studentId) throws SQLException {
+        String sql = "SELECT activity_id FROM dbo.activity_registration_form WHERE id = ?";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, formId);
+            try (ResultSet rs = p.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+                return isStudentEligibleForActivity(c, rs.getInt("activity_id"), studentId);
+            }
+        }
+    }
+
+    private boolean isStudentEligibleForActivity(Connection c, int activityId, int studentId) throws SQLException {
+        String sql = "SELECT CASE "
+                + "WHEN NOT EXISTS (SELECT 1 FROM dbo.activity_target_participant t0 WHERE t0.activity_id = ?) THEN 1 "
+                + "WHEN EXISTS ("
+                + "    SELECT 1 FROM dbo.activity_target_participant t "
+                + "    JOIN dbo.student s ON s.id = ? "
+                + "    LEFT JOIN dbo.main_class mc ON mc.id = s.main_class_id "
+                + "    LEFT JOIN dbo.academic_program p ON p.id = mc.responsible_academic_program_id "
+                + "    LEFT JOIN dbo.major m ON m.id = p.responsible_major_id "
+                + "    WHERE t.activity_id = ? "
+                + "      AND (t.department_id IS NULL OR t.department_id = m.responsible_department_id) "
+                + "      AND (t.cohort_id IS NULL OR t.cohort_id = mc.applicable_cohort_id) "
+                + "      AND (t.major_id IS NULL OR t.major_id = p.responsible_major_id) "
+                + "      AND (t.academic_program_id IS NULL OR t.academic_program_id = mc.responsible_academic_program_id) "
+                + "      AND (t.main_class_id IS NULL OR t.main_class_id = s.main_class_id)"
+                + ") THEN 1 ELSE 0 END";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            p.setInt(2, studentId);
+            p.setInt(3, activityId);
+            try (ResultSet rs = p.executeQuery()) {
+                return rs.next() && rs.getInt(1) == 1;
+            }
+        }
+    }
+
+    private void addParticipantForRegistration(Connection c, int registrationId) throws SQLException {
+        String sql = "INSERT INTO dbo.activity_participant (activity_id, student_id, registration_status, registration_by) "
+                + "SELECT f.activity_id, r.student_id, 'REGISTERED', r.student_id "
+                + "FROM dbo.activity_registration r "
+                + "JOIN dbo.activity_registration_form f ON f.id = r.form_id "
+                + "WHERE r.id = ? AND r.status = 'APPROVED' "
+                + "AND NOT EXISTS (SELECT 1 FROM dbo.activity_participant ap "
+                + "WHERE ap.activity_id = f.activity_id AND ap.student_id = r.student_id)";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, registrationId);
+            p.executeUpdate();
+        }
+    }
+
+    private void addParticipantForActivityAndStudent(Connection c, int activityId, int studentId) throws SQLException {
+        String sql = "INSERT INTO dbo.activity_participant (activity_id, student_id, registration_status, registration_by) "
+                + "SELECT ?, ?, 'REGISTERED', ? "
+                + "WHERE NOT EXISTS (SELECT 1 FROM dbo.activity_participant ap "
+                + "WHERE ap.activity_id = ? AND ap.student_id = ?)";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            p.setInt(2, studentId);
+            p.setInt(3, studentId);
+            p.setInt(4, activityId);
+            p.setInt(5, studentId);
+            p.executeUpdate();
+        }
+    }
+
+    private void removeParticipantForRegistrationIfUnattended(Connection c, int registrationId) throws SQLException {
+        String sql = "DELETE ap FROM dbo.activity_participant ap "
+                + "JOIN dbo.activity_registration_form f ON f.activity_id = ap.activity_id "
+                + "JOIN dbo.activity_registration r ON r.form_id = f.id AND r.student_id = ap.student_id "
+                + "WHERE r.id = ? AND ap.attendance_status = 'NOT_YET' "
+                + "AND NOT EXISTS (SELECT 1 FROM dbo.activity_attendance_history h "
+                + "WHERE h.activity_participant_id = ap.id)";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, registrationId);
+            p.executeUpdate();
         }
     }
 

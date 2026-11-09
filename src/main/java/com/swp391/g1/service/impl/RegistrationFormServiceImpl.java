@@ -89,9 +89,6 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             return "Không thể duyệt đơn đăng ký nhanh (không cần duyệt).";
         }
         if (dao.reviewApplication(registrationId, "SUBMITTED", "APPROVED", null)) return null;
-        if (dao.hasEarlierPendingApplication(registrationId)) {
-            return "Không thể duyệt đơn này vì còn đơn chờ xử lý được gửi trước.";
-        }
         if (application != null && "SUBMITTED".equals(application.getStatus())
                 && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
             return "Không thể duyệt đơn vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
@@ -110,9 +107,6 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             return "Không thể từ chối đơn đăng ký nhanh (không cần duyệt).";
         }
         if (dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED", normalizedReason)) return null;
-        if (dao.hasEarlierPendingApplication(registrationId)) {
-            return "Không thể từ chối đơn này vì còn đơn chờ xử lý được gửi trước.";
-        }
         return "Chỉ có thể từ chối đơn đang chờ xử lý.";
     }
 
@@ -134,7 +128,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         }
         return dao.rejectApplications(formId, registrationIds, normalizedReason)
                 ? null
-                : "Không thể từ chối các đơn đã chọn. Hãy chọn các đơn đang chờ theo thứ tự gửi và thử lại.";
+                : "Không thể từ chối các đơn đã chọn. Vui lòng kiểm tra trạng thái đơn và thử lại.";
     }
 
     @Override
@@ -146,7 +140,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         }
         return dao.approveApplications(formId, registrationIds)
                 ? null
-                : "Không thể duyệt các đơn đã chọn. Hãy chọn các đơn đang chờ theo thứ tự gửi và thử lại.";
+                : "Không thể duyệt các đơn đã chọn. Vui lòng kiểm tra trạng thái đơn và thử lại.";
     }
 
     private static String validateBulkApplicationSelection(int formId, List<Integer> registrationIds) {

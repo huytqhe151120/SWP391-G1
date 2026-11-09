@@ -19,6 +19,7 @@ public class ExtracurricularActivity {
     private Enum.ApprovalStatus approvalStatus; //[cite: 1]
     private LocalDateTime createdAt; //[cite: 1]
     private int activityTypeId; //[cite: 1]
+    private int organizationLevelId;
     private LocalDateTime startTime; //[cite: 1]
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
@@ -175,6 +176,14 @@ public class ExtracurricularActivity {
 
     public void setActivityTypeId(int activityTypeId) {
         this.activityTypeId = activityTypeId;
+    }
+
+    public int getOrganizationLevelId() {
+        return organizationLevelId;
+    }
+
+    public void setOrganizationLevelId(int organizationLevelId) {
+        this.organizationLevelId = organizationLevelId;
     }
 
     public LocalDateTime getStartTime() {

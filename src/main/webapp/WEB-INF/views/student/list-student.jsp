@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Student List</title>
@@ -14,8 +14,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
           rel="stylesheet">
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/student.css?v=3">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+          href="${pageContext.request.contextPath}/assets/css/student.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 
 <body>
@@ -105,7 +105,7 @@
                     <th>Giới tính</th>
                     <th>Email</th>
                     <th>Số điện thoại</th>
-                    <th>Trạng thái</th>
+                    <th class="col-status">Trạng thái</th>
                 </tr>
                 </thead>
 
@@ -171,7 +171,7 @@
                             <c:out value="${student.phoneNumber}"/>
                         </td>
 
-                        <td>
+                        <td class="col-status">
                             <c:choose>
                                 <c:when test="${student.status == 'ACTIVE'}">
                                     <span class="status-badge active">Đang hoạt động</span>

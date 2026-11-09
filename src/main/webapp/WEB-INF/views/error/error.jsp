@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lỗi hệ thống</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base.css?v=20261107-2">
 </head>
 <body>
 <main class="page">

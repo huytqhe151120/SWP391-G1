@@ -6,13 +6,13 @@
 <html lang="vi">
 
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <title>Staff List</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/staff.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+          href="${pageContext.request.contextPath}/assets/css/staff.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 
 <body>
@@ -120,7 +120,7 @@
                     <th>Ngày sinh</th>
                     <th>Giới tính</th>
                     <th>Account ID</th>
-                    <th>Trạng thái</th>
+                    <th class="col-status">Trạng thái</th>
                 </tr>
 
                 </thead>
@@ -236,7 +236,7 @@
 
 
                         <!-- Status -->
-                        <td>
+                        <td class="col-status">
 
                             <c:choose>
 

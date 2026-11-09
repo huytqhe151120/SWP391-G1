@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inbox Dashboard - SWP391 G1</title>
@@ -124,7 +124,7 @@
         }
         .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
     </style>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
 </head>
 <body class="support-page organizer-inbox-page">
 <div class="activity-app-shell">

@@ -2,6 +2,8 @@ package com.swp391.g1.dto.response;
 
 import com.swp391.g1.model.Enum.ParticipantStatus;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 public class ActivityParticipantResponseDTO {
@@ -15,8 +17,23 @@ public class ActivityParticipantResponseDTO {
     private String majorName;
     private String mainClassCode;
     private ParticipantStatus attendanceStatus;
+    private String registrationStatus;
+    private Long registrationBy;
     private LocalDateTime createdAt;
     private boolean removable;
+
+    // Grading & score fields
+    private BigDecimal attendanceScore;
+    private BigDecimal participationEvalScore;
+    private String participationFeedback;
+    private String participationGradedBy;
+    private LocalDateTime participationGradedAt;
+    private BigDecimal participationScore;
+    private BigDecimal summaryScore;
+    private BigDecimal averageScore;
+    private BigDecimal orgLevelCoefficient;
+    private BigDecimal earlyRegCoefficient;
+    private BigDecimal finalPoint;
 
     public ActivityParticipantResponseDTO() {
     }
@@ -108,5 +125,142 @@ public class ActivityParticipantResponseDTO {
 
     public void setRemovable(boolean removable) {
         this.removable = removable;
+    }
+
+    public String getRegistrationStatus() {
+        return registrationStatus;
+    }
+
+    public void setRegistrationStatus(String registrationStatus) {
+        this.registrationStatus = registrationStatus;
+    }
+
+    public Long getRegistrationBy() {
+        return registrationBy;
+    }
+
+    public void setRegistrationBy(Long registrationBy) {
+        this.registrationBy = registrationBy;
+    }
+
+    public BigDecimal getAttendanceScore() {
+        return attendanceScore;
+    }
+
+    public void setAttendanceScore(BigDecimal attendanceScore) {
+        this.attendanceScore = attendanceScore;
+    }
+
+    public BigDecimal getParticipationEvalScore() {
+        return participationEvalScore;
+    }
+
+    public void setParticipationEvalScore(BigDecimal participationEvalScore) {
+        this.participationEvalScore = participationEvalScore;
+    }
+
+    public String getParticipationFeedback() {
+        return participationFeedback;
+    }
+
+    public void setParticipationFeedback(String participationFeedback) {
+        this.participationFeedback = participationFeedback;
+    }
+
+    public String getParticipationGradedBy() {
+        return participationGradedBy;
+    }
+
+    public void setParticipationGradedBy(String participationGradedBy) {
+        this.participationGradedBy = participationGradedBy;
+    }
+
+    public LocalDateTime getParticipationGradedAt() {
+        return participationGradedAt;
+    }
+
+    public void setParticipationGradedAt(LocalDateTime participationGradedAt) {
+        this.participationGradedAt = participationGradedAt;
+    }
+
+    public BigDecimal getParticipationScore() {
+        return participationScore;
+    }
+
+    public void setParticipationScore(BigDecimal participationScore) {
+        this.participationScore = participationScore;
+    }
+
+    public BigDecimal getSummaryScore() {
+        return summaryScore;
+    }
+
+    public void setSummaryScore(BigDecimal summaryScore) {
+        this.summaryScore = summaryScore;
+    }
+
+    public BigDecimal getAverageScore() {
+        return averageScore;
+    }
+
+    public void setAverageScore(BigDecimal averageScore) {
+        this.averageScore = averageScore;
+    }
+
+    public BigDecimal getOrgLevelCoefficient() {
+        return orgLevelCoefficient;
+    }
+
+    public void setOrgLevelCoefficient(BigDecimal orgLevelCoefficient) {
+        this.orgLevelCoefficient = orgLevelCoefficient;
+    }
+
+    public BigDecimal getEarlyRegCoefficient() {
+        return earlyRegCoefficient;
+    }
+
+    public void setEarlyRegCoefficient(BigDecimal earlyRegCoefficient) {
+        this.earlyRegCoefficient = earlyRegCoefficient;
+    }
+
+    public BigDecimal getFinalPoint() {
+        return finalPoint;
+    }
+
+    public void setFinalPoint(BigDecimal finalPoint) {
+        this.finalPoint = finalPoint;
+    }
+
+    public boolean isPresentStatus() {
+        return attendanceStatus == ParticipantStatus.ATTENDED
+                || attendanceStatus == ParticipantStatus.IN_LATE
+                || attendanceStatus == ParticipantStatus.OUT_EARLY;
+    }
+
+    public String getFormattedAttendanceScore() {
+        return formatScore(attendanceScore);
+    }
+
+    public String getFormattedEvalScore() {
+        return participationEvalScore == null ? "" : formatScore(participationEvalScore);
+    }
+
+    public String getFormattedParticipationScore() {
+        return formatScore(participationScore);
+    }
+
+    public String getFormattedFinalPoint() {
+        return formatScore(finalPoint);
+    }
+
+    private static String formatScore(BigDecimal value) {
+        if (value == null) {
+            return "0";
+        }
+        BigDecimal stripped = value.setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+        if (stripped.scale() < 0) {
+            stripped = stripped.setScale(0);
+        }
+        return stripped.toPlainString();
     }
 }

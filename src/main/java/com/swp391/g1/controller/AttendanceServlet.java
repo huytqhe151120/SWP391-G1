@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -41,7 +42,10 @@ import java.util.TreeSet;
 public class AttendanceServlet extends HttpServlet {
 
     private static final String STATUS_PARAM_PREFIX = "status_";
-    private static final Set<String> POST_ACTIONS = Set.of("save", "saveAjax", "addStudents", "addGroup", "remove");
+    private static final Set<String> POST_ACTIONS = Set.of(
+            "save", "saveAjax", "batchGrade", "batchGradeAjax", "saveGradeAjax",
+            "addStudents", "addGroup", "remove");
+    private static final Set<String> AJAX_ACTIONS = Set.of("saveAjax", "batchGradeAjax", "saveGradeAjax");
     private static final Set<String> ADD_ACTIONS = Set.of("addStudents", "addGroup");
     private static final List<Integer> PAGE_SIZES = List.of(30, 40, 50);
     private static final int DEFAULT_PAGE_SIZE = 30;
@@ -173,7 +177,7 @@ public class AttendanceServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         int activityId = parseId(request.getParameter("activityId"));
         String action = request.getParameter("action");
-        boolean isAjax = "saveAjax".equals(action);
+        boolean isAjax = action != null && AJAX_ACTIONS.contains(action);
         // Set.of(...).contains(null) throws, so check null first.
         if (action == null || !POST_ACTIONS.contains(action) || activityId <= 0) {
             if (isAjax) {
@@ -203,8 +207,12 @@ public class AttendanceServlet extends HttpServlet {
             return;
         }
 
-        if (isAjax) {
+        if ("saveAjax".equals(action)) {
             saveAttendanceAjax(request, response, activityId, currentUser);
+            return;
+        }
+        if ("batchGradeAjax".equals(action) || "saveGradeAjax".equals(action)) {
+            saveGradesAjax(request, response, activityId, currentUser);
             return;
         }
 
@@ -218,13 +226,25 @@ public class AttendanceServlet extends HttpServlet {
                             ? "Không có thay đổi nào về trạng thái điểm danh."
                             : "Đã cập nhật điểm danh cho " + changed + " sinh viên.");
                 }
+                case "batchGrade" -> {
+                    List<Integer> participantIds = parseIds(request.getParameterValues("participantId"));
+                    BigDecimal evalScore = parseScore(request.getParameter("evalScore"));
+                    String feedback = request.getParameter("feedback");
+                    int graded = participantService.saveParticipationGrades(
+                            activityId, participantIds, evalScore, feedback, currentUser);
+                    session.setAttribute("successMessage", graded == 0
+                            ? "Không có sinh viên có mặt nào trong danh sách chọn để chấm điểm tham gia."
+                            : "Đã chấm điểm đánh giá tham gia cho " + graded + " sinh viên.");
+                }
                 case "addStudents" -> setAddedMessage(session, participantService.addStudents(activityId,
-                        parseIds(request.getParameterValues("studentId"))));
+                        parseIds(request.getParameterValues("studentId")),
+                        currentUser == null ? 1 : currentUser.getId()));
                 case "addGroup" -> setAddedMessage(session, participantService.addStudentsByGroup(activityId,
                         parseId(request.getParameter("groupDepartmentId")),
                         parseId(request.getParameter("groupMajorId")),
                         parseId(request.getParameter("groupProgramId")),
-                        parseId(request.getParameter("groupClassId"))));
+                        parseId(request.getParameter("groupClassId")),
+                        currentUser == null ? 1 : currentUser.getId()));
                 case "remove" -> {
                     List<Integer> participantIds = parseIds(request.getParameterValues("participantId"));
                     int removed = participantService.removeParticipants(activityId, participantIds);
@@ -256,8 +276,10 @@ public class AttendanceServlet extends HttpServlet {
     private void saveAttendanceAjax(HttpServletRequest request, HttpServletResponse response,
             int activityId, CurrentUser currentUser) throws IOException {
         try {
-            int changed = participantService.saveAttendance(activityId, readStatuses(request), currentUser);
-            Map<ParticipantStatus, Long> counts = countByStatus(participantService.getParticipants(activityId));
+            Map<Integer, String> statuses = readStatuses(request);
+            int changed = participantService.saveAttendance(activityId, statuses, currentUser);
+            List<ActivityParticipantResponseDTO> allParticipants = participantService.getParticipants(activityId);
+            Map<ParticipantStatus, Long> counts = countByStatus(allParticipants);
             StringBuilder body = new StringBuilder("{\"ok\":true,\"changed\":").append(changed).append(",\"counts\":{");
             boolean first = true;
             for (ParticipantStatus status : ParticipantStatus.values()) {
@@ -267,6 +289,8 @@ public class AttendanceServlet extends HttpServlet {
                 first = false;
                 body.append('"').append(status.name()).append("\":").append(counts.getOrDefault(status, 0L));
             }
+            body.append("},\"participants\":{");
+            appendParticipantScoresJson(body, allParticipants, statuses.keySet());
             body.append("}}");
             json(response, HttpServletResponse.SC_OK, body.toString());
         } catch (IllegalArgumentException e) {
@@ -275,6 +299,63 @@ public class AttendanceServlet extends HttpServlet {
         } catch (Exception e) {
             json(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "{\"ok\":false,\"error\":\"Đã xảy ra lỗi khi lưu điểm danh.\"}");
+        }
+    }
+
+    private void saveGradesAjax(HttpServletRequest request, HttpServletResponse response,
+            int activityId, CurrentUser currentUser) throws IOException {
+        try {
+            List<Integer> participantIds = parseIds(request.getParameterValues("participantId"));
+            BigDecimal evalScore = parseScore(request.getParameter("evalScore"));
+            String feedback = request.getParameter("feedback");
+            int updated = participantService.saveParticipationGrades(
+                    activityId, participantIds, evalScore, feedback, currentUser);
+            List<ActivityParticipantResponseDTO> allParticipants = participantService.getParticipants(activityId);
+            StringBuilder body = new StringBuilder("{\"ok\":true,\"updated\":").append(updated)
+                    .append(",\"participants\":{");
+            appendParticipantScoresJson(body, allParticipants, Set.copyOf(participantIds));
+            body.append("}}");
+            json(response, HttpServletResponse.SC_OK, body.toString());
+        } catch (IllegalArgumentException e) {
+            json(response, HttpServletResponse.SC_BAD_REQUEST,
+                    "{\"ok\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+        } catch (Exception e) {
+            json(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "{\"ok\":false,\"error\":\"Đã xảy ra lỗi khi lưu điểm tham gia.\"}");
+        }
+    }
+
+    private void appendParticipantScoresJson(StringBuilder body,
+            List<ActivityParticipantResponseDTO> allParticipants, Set<Integer> targetIds) {
+        boolean first = true;
+        for (ActivityParticipantResponseDTO p : allParticipants) {
+            if (targetIds != null && !targetIds.isEmpty() && !targetIds.contains(p.getParticipantId())) {
+                continue;
+            }
+            if (!first) {
+                body.append(',');
+            }
+            first = false;
+            body.append('"').append(p.getParticipantId()).append("\":{")
+                    .append("\"present\":").append(p.isPresentStatus())
+                    .append(",\"attendanceScore\":\"").append(escapeJson(p.getFormattedAttendanceScore())).append('"')
+                    .append(",\"evalScore\":\"").append(escapeJson(p.getFormattedEvalScore())).append('"')
+                    .append(",\"feedback\":\"").append(escapeJson(p.getParticipationFeedback())).append('"')
+                    .append(",\"gradedBy\":\"").append(escapeJson(p.getParticipationGradedBy())).append('"')
+                    .append(",\"participationScore\":\"").append(escapeJson(p.getFormattedParticipationScore())).append('"')
+                    .append(",\"finalPoint\":\"").append(escapeJson(p.getFormattedFinalPoint())).append('"')
+                    .append('}');
+        }
+    }
+
+    private BigDecimal parseScore(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng nhập điểm đánh giá tham gia (0 - 5).");
+        }
+        try {
+            return new BigDecimal(value.trim().replace(',', '.'));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Điểm đánh giá tham gia không hợp lệ.");
         }
     }
 

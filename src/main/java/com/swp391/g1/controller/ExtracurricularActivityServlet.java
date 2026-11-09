@@ -48,6 +48,8 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
     private final IExtracurricularActivityService activityService;
     private final IActivityTypeService activityTypeService;
+    private final IActivityOrganizationLevelService organizationLevelService;
+    private final IActivityTargetParticipantService targetParticipantService = new ActivityTargetParticipantServiceImpl();
     private final IPartnerCompanyService partnerCompanyService;
     private final IPartnerStaffService partnerStaffService;
     private final ISemesterService semesterService;
@@ -57,6 +59,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final IActivityPartnerStaffService activityPartnerStaffService;
     private final IActivityCollaborationInvitationService invitationService;
     private final IRegistrationFormService registrationFormService;
+    private final IActivityParticipantService participantService = new ActivityParticipantServiceImpl();
     private final IStudentService studentService = new StudentServiceImpl();
 
     public ExtracurricularActivityServlet() {
@@ -65,6 +68,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         this.registrationFormService = new RegistrationFormServiceImpl();
         this.activityService = new ExtracurricularActivityServiceImpl();
         this.activityTypeService = new ActivityTypeServiceImpl();
+        this.organizationLevelService = new ActivityOrganizationLevelServiceImpl();
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
         this.partnerStaffService = new PartnerStaffServiceImpl();
         this.semesterService = new SemesterServiceImpl();
@@ -527,17 +531,90 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xem hoạt động này.");
                 return;
             }
-            if (activity != null && AccessPolicy.hasType(currentUser, "STUDENT")
-                    && (!activity.isPublic()
-                    || activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED)) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
+            boolean studentView = AccessPolicy.hasType(currentUser, "STUDENT");
+            if (activity != null && studentView) {
+                com.swp391.g1.model.Student myStudent = studentService.getStudentByAccountId(currentUser.getId());
+                if (!activity.isPublic()
+                        || activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED
+                        || myStudent == null
+                        || !targetParticipantService.isStudentEligible(id, myStudent.getId())) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+                request.setAttribute("isStudent", true);
+                String detailReturnUrl = request.getRequestURI()
+                        + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
+                request.setAttribute("activityReturnUrl", detailReturnUrl);
+                request.setAttribute("activityReturnUrlParameter",
+                        URLEncoder.encode(detailReturnUrl, StandardCharsets.UTF_8));
+                com.swp391.g1.model.RegistrationForm studentRegForm = registrationFormService.getByActivityId(id);
+                request.setAttribute("registrationForm", studentRegForm);
+                request.setAttribute("canStudentRegister",
+                        isRegistrationAvailable(activity, studentRegForm, DateTimeUtil.now()));
+                for (com.swp391.g1.model.RegistrationApplication myApp
+                        : registrationFormService.getApplicationsForStudent(myStudent.getId())) {
+                    if (myApp.getActivityId() == id) {
+                        request.setAttribute("myRegistration", myApp);
+                        break;
+                    }
+                }
             }
             if (activity != null) {
                 request.setAttribute("activity", activity);
-                if (AccessPolicy.canManageActivities(currentUser)) {
-                    request.setAttribute("registrationForm", registrationFormService.getByActivityId(id));
+                com.swp391.g1.model.RegistrationForm regForm = registrationFormService.getByActivityId(id);
+                request.setAttribute("registrationForm", regForm);
+                int totalApplicationsCount = 0;
+                long regSubmittedCount = 0;
+                long regApprovedCount = 0;
+                long regRejectedCount = 0;
+                long regCancelledCount = 0;
+                List<com.swp391.g1.model.RegistrationApplication> recentApplications = List.of();
+                Integer registrationMaxQuota = regForm != null && regForm.getMaxParticipants() != null
+                        ? regForm.getMaxParticipants()
+                        : activity.getMaxParticipants();
+                if (regForm != null) {
+                    List<com.swp391.g1.model.RegistrationApplication> allApps =
+                            new ArrayList<>(registrationFormService.getApplications(regForm.getId()));
+                    totalApplicationsCount = allApps.size();
+                    for (com.swp391.g1.model.RegistrationApplication app : allApps) {
+                        String appStatus = app.getStatus();
+                        if ("SUBMITTED".equals(appStatus)) {
+                            regSubmittedCount++;
+                        } else if ("APPROVED".equals(appStatus)) {
+                            regApprovedCount++;
+                        } else if ("REJECTED".equals(appStatus)) {
+                            regRejectedCount++;
+                        } else if ("CANCELLED".equals(appStatus) || "WITHDRAWN".equals(appStatus)) {
+                            regCancelledCount++;
+                        }
+                    }
+                    allApps.sort((a, b) -> {
+                        if (a.getSubmittedAt() == null && b.getSubmittedAt() == null) {
+                            return Integer.compare(b.getId(), a.getId());
+                        }
+                        if (a.getSubmittedAt() == null) {
+                            return 1;
+                        }
+                        if (b.getSubmittedAt() == null) {
+                            return -1;
+                        }
+                        int cmp = b.getSubmittedAt().compareTo(a.getSubmittedAt());
+                        return cmp != 0 ? cmp : Integer.compare(b.getId(), a.getId());
+                    });
+                    recentApplications = allApps.subList(0, Math.min(5, allApps.size()));
                 }
+                int registrationProgressPct = (registrationMaxQuota != null && registrationMaxQuota > 0)
+                        ? Math.min(100, (int) Math.round((totalApplicationsCount * 100.0) / registrationMaxQuota))
+                        : 0;
+                request.setAttribute("totalApplicationsCount", totalApplicationsCount);
+                request.setAttribute("regSubmittedCount", regSubmittedCount);
+                request.setAttribute("regApprovedCount", regApprovedCount);
+                request.setAttribute("regRejectedCount", regRejectedCount);
+                request.setAttribute("regCancelledCount", regCancelledCount);
+                request.setAttribute("recentApplications", recentApplications);
+                request.setAttribute("registrationMaxQuota", registrationMaxQuota);
+                request.setAttribute("registrationProgressPct", registrationProgressPct);
+
                 request.setAttribute("activityBeforeStart",
                         isUpcomingBeforeStart(activity, DateTimeUtil.now()));
                 setActivityManagementPermission(request);
@@ -546,6 +623,71 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 boolean canAccessAttendance = AccessPolicy.canTakeAttendance(currentUser)
                         && (attendanceActivityIds == null || attendanceActivityIds.contains(id));
                 request.setAttribute("canAccessAttendance", canAccessAttendance);
+                boolean canOpenAttendancePage = canAccessAttendance
+                        && activity.getApprovalStatus() == com.swp391.g1.model.Enum.ApprovalStatus.APPROVED
+                        && activity.getActivityStatus() != com.swp391.g1.model.Enum.ActivityStatus.CANCELLED;
+                request.setAttribute("canOpenAttendancePage", canOpenAttendancePage);
+
+                List<com.swp391.g1.dto.response.ActivityParticipantResponseDTO> allParticipants =
+                        participantService.getParticipants(id);
+                long attendedCount = 0;
+                long absentCount = 0;
+                long lateOrEarlyCount = 0;
+                long notYetCount = 0;
+                java.util.Map<com.swp391.g1.model.Enum.ParticipantStatus, Long> statusCounts =
+                        new java.util.EnumMap<>(com.swp391.g1.model.Enum.ParticipantStatus.class);
+                for (com.swp391.g1.model.Enum.ParticipantStatus status : com.swp391.g1.model.Enum.ParticipantStatus.values()) {
+                    statusCounts.put(status, 0L);
+                }
+                List<com.swp391.g1.dto.response.ActivityParticipantResponseDTO> markedParticipants = new ArrayList<>();
+                for (com.swp391.g1.dto.response.ActivityParticipantResponseDTO p : allParticipants) {
+                    com.swp391.g1.model.Enum.ParticipantStatus st = p.getAttendanceStatus() != null
+                            ? p.getAttendanceStatus()
+                            : com.swp391.g1.model.Enum.ParticipantStatus.NOT_YET;
+                    statusCounts.put(st, statusCounts.getOrDefault(st, 0L) + 1L);
+                    if (st == com.swp391.g1.model.Enum.ParticipantStatus.ATTENDED) {
+                        attendedCount++;
+                        markedParticipants.add(p);
+                    } else if (st == com.swp391.g1.model.Enum.ParticipantStatus.ABSENT) {
+                        absentCount++;
+                        markedParticipants.add(p);
+                    } else if (st == com.swp391.g1.model.Enum.ParticipantStatus.IN_LATE
+                            || st == com.swp391.g1.model.Enum.ParticipantStatus.OUT_EARLY) {
+                        lateOrEarlyCount++;
+                        markedParticipants.add(p);
+                    } else {
+                        notYetCount++;
+                    }
+                }
+                int totalParticipantsCount = allParticipants.size();
+                long actualAttendedCount = attendedCount + lateOrEarlyCount;
+                int attendanceRatePct = totalParticipantsCount > 0
+                        ? Math.min(100, (int) Math.round((actualAttendedCount * 100.0) / totalParticipantsCount))
+                        : 0;
+                List<com.swp391.g1.dto.response.ActivityParticipantResponseDTO> sortedParticipants =
+                        new ArrayList<>(allParticipants);
+                sortedParticipants.sort((a, b) -> {
+                    boolean aMarked = a.getAttendanceStatus() != null
+                            && a.getAttendanceStatus() != com.swp391.g1.model.Enum.ParticipantStatus.NOT_YET;
+                    boolean bMarked = b.getAttendanceStatus() != null
+                            && b.getAttendanceStatus() != com.swp391.g1.model.Enum.ParticipantStatus.NOT_YET;
+                    if (aMarked != bMarked) {
+                        return aMarked ? -1 : 1;
+                    }
+                    return 0;
+                });
+                List<com.swp391.g1.dto.response.ActivityParticipantResponseDTO> recentParticipants =
+                        sortedParticipants.subList(0, Math.min(5, sortedParticipants.size()));
+                request.setAttribute("participantStatuses", com.swp391.g1.model.Enum.ParticipantStatus.values());
+                request.setAttribute("statusCounts", statusCounts);
+                request.setAttribute("totalParticipantsCount", totalParticipantsCount);
+                request.setAttribute("attendedCount", attendedCount);
+                request.setAttribute("absentCount", absentCount);
+                request.setAttribute("lateOrEarlyCount", lateOrEarlyCount);
+                request.setAttribute("notYetCount", notYetCount);
+                request.setAttribute("actualAttendedCount", actualAttendedCount);
+                request.setAttribute("attendanceRatePct", attendanceRatePct);
+                request.setAttribute("recentParticipants", recentParticipants);
                 if (AccessPolicy.canManageActivities(AuthContext.getCurrentUser(request))) {
                     request.setAttribute("partnerCompanies", partnerCompanyService.getActivePartnerCompanies());
                 }
@@ -1093,8 +1235,14 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private void loadDropdownData(HttpServletRequest request, int departmentId) {
         request.setAttribute("semesters", semesterService.getAllSemesters());
         request.setAttribute("activityTypes", activityTypeService.getActiveActivityTypes());
+        request.setAttribute("organizationLevels", organizationLevelService.getAllOrganizationLevels());
         request.setAttribute("departments", departmentService.getAllDepartments());
         request.setAttribute("staffs", staffService.getStaffsByDepartmentId(departmentId));
+        request.setAttribute("targetDepartments", targetParticipantService.getActiveAcademicDepartments());
+        request.setAttribute("targetCohorts", targetParticipantService.getActiveCohorts());
+        request.setAttribute("targetMajors", targetParticipantService.getActiveMajors());
+        request.setAttribute("targetPrograms", targetParticipantService.getActiveAcademicPrograms());
+        request.setAttribute("targetClasses", targetParticipantService.getActiveMainClasses());
     }
 
     private int parseId(String value) {
@@ -1122,6 +1270,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         dto.setName(request.getParameter("name"));
         dto.setSemesterId(request.getParameter("semesterId"));
         dto.setActivityTypeId(request.getParameter("activityTypeId"));
+        dto.setOrganizationLevelId(request.getParameter("organizationLevelId"));
         dto.setResponsibleDepartmentId(request.getParameter("responsibleDepartmentId"));
         dto.setResponsibleStaffId(request.getParameter("responsibleStaffId"));
         dto.setNature(request.getParameter("nature"));
@@ -1132,7 +1281,20 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         dto.setEndTime(request.getParameter("endTime"));             // Đổi endDateTime -> endTime
         dto.setDescription(request.getParameter("description"));
         dto.setRegistrationFormRequired(request.getParameter("registrationFormRequired") != null ? "true" : "false");
+        dto.setTargetScope(request.getParameter("targetScope"));
+        dto.setTargetDepartmentIds(toList(request.getParameterValues("targetDepartmentIds")));
+        dto.setTargetCohortIds(toList(request.getParameterValues("targetCohortIds")));
+        dto.setTargetMajorIds(toList(request.getParameterValues("targetMajorIds")));
+        dto.setTargetProgramIds(toList(request.getParameterValues("targetProgramIds")));
+        dto.setTargetClassIds(toList(request.getParameterValues("targetClassIds")));
         return dto;
+    }
+
+    private List<String> toList(String[] values) {
+        if (values == null || values.length == 0) {
+            return List.of();
+        }
+        return java.util.Arrays.asList(values);
     }
 
     private String escapeJson(String input) {

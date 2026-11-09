@@ -12,6 +12,7 @@ import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityParticipantService;
 import com.swp391.g1.service.IExtracurricularActivityService;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -20,6 +21,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class ActivityParticipantServiceImpl implements IActivityParticipantService {
+
+    private static final BigDecimal MIN_EVAL_SCORE = BigDecimal.ZERO;
+    private static final BigDecimal MAX_EVAL_SCORE = new BigDecimal("5.00");
 
     private final IActivityParticipantDAO participantDAO;
     private final IExtracurricularActivityService activityService;
@@ -67,7 +71,53 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
         if (statuses.isEmpty()) {
             return 0;
         }
-        return participantDAO.updateStatuses(activityId, statuses, user.getUsername());
+        String actorLabel = buildActorLabel(user);
+        return participantDAO.updateStatuses(activityId, statuses, actorLabel);
+    }
+
+    @Override
+    public int saveParticipationGrades(int activityId, List<Integer> participantIds, BigDecimal evalScore,
+            String feedback, CurrentUser user) {
+        if (activityId <= 0 || user == null || !AccessPolicy.canTakeAttendance(user)) {
+            throw new IllegalArgumentException("Thông tin chấm điểm tham gia không hợp lệ.");
+        }
+        ExtracurricularActivityResponseDTO activity = activityService.getActivityById(activityId);
+        if (activity == null) {
+            throw new IllegalArgumentException("Không tìm thấy hoạt động.");
+        }
+        if (!canTakeAttendance(activity)) {
+            throw new IllegalArgumentException(
+                    "Chỉ được chấm điểm tham gia khi hoạt động đang diễn ra hoặc đã hoàn thành.");
+        }
+        List<Integer> ids = distinctPositive(participantIds);
+        if (ids.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên để chấm điểm.");
+        }
+        if (evalScore == null
+                || evalScore.compareTo(MIN_EVAL_SCORE) < 0
+                || evalScore.compareTo(MAX_EVAL_SCORE) > 0) {
+            throw new IllegalArgumentException("Điểm đánh giá tham gia phải nằm trong khoảng từ 0 đến 5 điểm.");
+        }
+        if (feedback != null && feedback.trim().length() > 1000) {
+            throw new IllegalArgumentException("Nhận xét / Feedback không được vượt quá 1000 ký tự.");
+        }
+        String actorLabel = buildActorLabel(user);
+        return participantDAO.updateParticipationGrades(
+                activityId, ids, evalScore, feedback, actorLabel, user.getId());
+    }
+
+    private String buildActorLabel(CurrentUser user) {
+        if (user == null) {
+            return "Hệ thống";
+        }
+        String name = user.getDisplayName();
+        String role = user.getRoleLabel();
+        if (name != null && !name.isBlank()) {
+            return (role != null && !role.isBlank())
+                    ? name.trim() + " (" + role.trim() + ")"
+                    : name.trim();
+        }
+        return user.getUsername() == null ? "Hệ thống" : user.getUsername();
     }
 
     @Override
@@ -85,13 +135,18 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     @Override
     public int addStudents(int activityId, List<Integer> studentIds) {
+        return addStudents(activityId, studentIds, 1);
+    }
+
+    @Override
+    public int addStudents(int activityId, List<Integer> studentIds, Integer registrationBy) {
         ExtracurricularActivityResponseDTO activity = requireManageableActivity(activityId);
         List<Integer> ids = distinctPositive(studentIds);
         if (ids.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên.");
         }
         Integer max = activity.getMaxParticipants();
-        int added = participantDAO.insertParticipants(activityId, ids, max);
+        int added = participantDAO.insertParticipants(activityId, ids, max, registrationBy);
         if (added < 0) {
             int remaining = Math.max(0, max - participantDAO.countOccupiedByActivityId(activityId));
             throw new IllegalArgumentException("Hoạt động chỉ còn " + remaining
@@ -102,6 +157,11 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     @Override
     public int addStudentsByGroup(int activityId, int departmentId, int majorId, int programId, int classId) {
+        return addStudentsByGroup(activityId, departmentId, majorId, programId, classId, 1);
+    }
+
+    @Override
+    public int addStudentsByGroup(int activityId, int departmentId, int majorId, int programId, int classId, Integer registrationBy) {
         if (departmentId <= 0 && majorId <= 0 && programId <= 0 && classId <= 0) {
             throw new IllegalArgumentException(
                     "Vui lòng chọn ít nhất một tiêu chí: khoa, ngành, chương trình đào tạo hoặc lớp.");
@@ -119,7 +179,7 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
         if (studentIds.isEmpty()) {
             return 0;
         }
-        return addStudents(activityId, studentIds);
+        return addStudents(activityId, studentIds, registrationBy);
     }
 
     @Override

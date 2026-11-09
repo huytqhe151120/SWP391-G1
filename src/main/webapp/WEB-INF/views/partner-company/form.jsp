@@ -7,8 +7,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${isEdit}">Cập nhật công ty đối tác</c:when><c:otherwise>Thêm công ty đối tác</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-company.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-company.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -23,7 +23,7 @@
             <h1><c:choose><c:when test="${isEdit}">Cập nhật công ty</c:when><c:otherwise>Thêm công ty đối tác</c:otherwise></c:choose></h1>
             <p>Nhập thông tin liên hệ và thông tin quản lý của công ty.</p>
         </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-companies">
+        <a class="button button-back" href="${pageContext.request.contextPath}/partner-companies">
             <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách công ty
         </a>
@@ -54,12 +54,12 @@
                 <div class="form-grid activity-form-grid">
                     <div class="field">
                         <label for="code">Mã công ty <span class="required-mark">*</span></label>
-                        <input id="code" name="code" type="text" maxlength="50" required
+                        <input id="code" name="code" type="text" minlength="3" maxlength="15" required
                                value="<c:out value='${partnerCompany.code}'/>">
                     </div>
                     <div class="field">
                         <label for="name">Tên công ty <span class="required-mark">*</span></label>
-                        <input id="name" name="name" type="text" maxlength="255" required
+                        <input id="name" name="name" type="text" minlength="2" maxlength="50" required
                                value="<c:out value='${partnerCompany.name}'/>">
                     </div>
                     <div class="field">

@@ -39,6 +39,13 @@ public class Enum {
         IN_LATE, // Đi muộn
         OUT_EARLY // Về sớm
     }
+
+    // Registration source status in activity_participant.registration_status
+    public enum ParticipantRegistrationStatus {
+        REGISTERED, // Sinh viên tự đăng ký
+        AUTO_ENROLLED, // Hệ thống tự động ghi danh
+        STAFF_ENROLLED // Cán bộ/Admin thêm thủ công
+    }
     // Status for registration form
     public enum RegistrationFormStatus {
         DRAFT, // Chưa mở

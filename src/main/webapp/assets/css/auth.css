@@ -1,5 +1,5 @@
 /* Authentication CSS - SWP391-G1 */
-@import "base.css";
+@import "base.css?v=20261107-2";
 
 .login-page {
     display: flex;
