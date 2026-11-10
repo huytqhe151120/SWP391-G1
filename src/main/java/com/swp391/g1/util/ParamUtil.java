@@ -42,6 +42,19 @@ public class ParamUtil {
         return value.trim();
     }
 
+    // parse int with default value
+    public static int getInt(HttpServletRequest request, String paramName, int defaultValue) {
+        String value = request.getParameter(paramName);
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
     // format Date
     public static String getDate(LocalDateTime date) {
         if (date == null) {

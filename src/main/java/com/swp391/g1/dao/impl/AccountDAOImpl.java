@@ -37,9 +37,13 @@ public class AccountDAOImpl implements IAccountDAO {
 
     /** Search with optional filters; blank filters are ignored. */
     @Override
-    public List<Account> findByCriteria(String search, String type, String role, String status) {
+    public List<Account> findByCriteria(String id, String search, String type, String role, String status) {
         StringBuilder sql = new StringBuilder("SELECT " + ACCOUNT_COLUMNS + " FROM account WHERE 1 = 1");
         List<String> params = new ArrayList<>();
+        if (isNotBlank(id)) {
+            sql.append(" AND CAST(id AS VARCHAR(20)) LIKE ?");
+            params.add("%" + id.trim() + "%");
+        }
         if (isNotBlank(search)) {
             sql.append(" AND username LIKE ?");
             params.add("%" + search.trim() + "%");

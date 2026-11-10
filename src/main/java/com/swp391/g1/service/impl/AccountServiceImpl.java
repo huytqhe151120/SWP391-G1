@@ -32,8 +32,8 @@ public class AccountServiceImpl implements IAccountService {
     private final IAccountDAO accountDAO = new AccountDAOImpl();
 
     @Override
-    public List<Account> searchAccounts(String search, String type, String role, String status) {
-        return accountDAO.findByCriteria(search, type, role, status);
+    public List<Account> searchAccounts(String id, String search, String type, String role, String status) {
+        return accountDAO.findByCriteria(id, search, type, role, status);
     }
 
     /** Loads the account without its password; null when it does not exist. */

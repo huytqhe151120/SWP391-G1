@@ -11,7 +11,7 @@ public interface IAccountService {
     String STATUS_ACTIVE = "ACTIVE";
     List<String> ACCOUNT_STATUSES = List.of(STATUS_ACTIVE, "INACTIVE", "BLOCKED");
 
-    List<Account> searchAccounts(String search, String type, String role, String status);
+    List<Account> searchAccounts(String id, String search, String type, String role, String status);
 
     Account getAccountById(int id);
 
