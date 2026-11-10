@@ -137,6 +137,20 @@ public class AssessmentServlet extends HttpServlet {
                     break;
                 case "updateOption":
                     handleUpdateOption(request, response, user);
+                    break;
+            }
+        } catch (AssessmentServiceException e) {
+            HttpSession session = request.getSession();
+            session.setAttribute("errorMessage", e.getMessage());
+            String referer = request.getHeader("Referer");
+            if (referer != null) {
+                response.sendRedirect(referer);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/activities");
+            }
+        }
+    }
+
     private void showCreateForm(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws ServletException, IOException {
         int activityId = parseId(request.getParameter("activityId"));
@@ -219,11 +233,6 @@ public class AssessmentServlet extends HttpServlet {
                 .forward(request, response);
     }
 
-                    break;
-                case "deleteOption":
-                    handleDeleteOption(request, response, user);
-                    break;
-                case "startAttempt":
     private void showSubmissions(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws ServletException, IOException {
         int activityId = parseId(request.getParameter("activityId"));
@@ -257,34 +266,6 @@ public class AssessmentServlet extends HttpServlet {
                 .forward(request, response);
     }
 
-                    handleStartAttempt(request, response, user);
-                    break;
-                case "saveAnswers":
-                    handleSaveAnswers(request, response, user);
-                    break;
-                case "submitAttempt":
-                    handleSubmitAttempt(request, response, user);
-                    break;
-                case "gradeEssay":
-                    handleGradeEssay(request, response, user);
-                    break;
-                default:
-                    response.sendRedirect(request.getContextPath() + "/activities");
-                    break;
-            }
-        } catch (AssessmentServiceException e) {
-            HttpSession session = request.getSession();
-            session.setAttribute("errorMessage", e.getMessage());
-            String referer = request.getHeader("Referer");
-            if (referer != null) {
-                response.sendRedirect(referer);
-            } else {
-                response.sendRedirect(request.getContextPath() + "/activities");
-            }
-        }
-    }
-
-}
     private void showTakePage(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws ServletException, IOException {
         int assessmentId = parseId(request.getParameter("assessmentId"));
@@ -342,6 +323,11 @@ public class AssessmentServlet extends HttpServlet {
         }
         var answers = assessmentService.getAttemptAnswers(attempt.getId(), student.getId());
         request.setAttribute("attempt", attempt);
+        request.setAttribute("answers", answers);
+        request.getRequestDispatcher("/WEB-INF/views/assessment/student/result.jsp")
+                .forward(request, response);
+    }
+
     private void handleCreate(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int activityId = parseId(request.getParameter("activityId"));
@@ -407,6 +393,16 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         boolean publish = Boolean.parseBoolean(request.getParameter("publish"));
+        assessmentService.publishAssessment(id, publish, user);
+        HttpSession session = request.getSession();
+        session.setAttribute("successMessage",
+                publish ? "Da cong bo danh gia." : "Da huy cong bo danh gia.");
+
+        com.swp391.g1.model.Assessment a = assessmentService.getAssessmentById(id, user);
+        int activityId = a != null ? a.getActivityId() : 0;
+        response.sendRedirect(request.getContextPath() + "/assessment?action=manage&activityId=" + activityId);
+    }
+
     private void handleAddQuestion(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int assessmentId = parseId(request.getParameter("assessmentId"));
@@ -455,16 +451,6 @@ public class AssessmentServlet extends HttpServlet {
         HttpSession session = request.getSession();
         session.setAttribute("successMessage", "Da xoa cau hoi thanh cong.");
         response.sendRedirect(request.getContextPath() + "/assessment?action=questions&assessmentId=" + assessmentId);
-    }
-
-        assessmentService.publishAssessment(id, publish, user);
-        HttpSession session = request.getSession();
-        session.setAttribute("successMessage",
-                publish ? "Da cong bo danh gia." : "Da huy cong bo danh gia.");
-
-        com.swp391.g1.model.Assessment a = assessmentService.getAssessmentById(id, user);
-        int activityId = a != null ? a.getActivityId() : 0;
-        response.sendRedirect(request.getContextPath() + "/assessment?action=manage&activityId=" + activityId);
     }
 
     private void handleAddOption(HttpServletRequest request, HttpServletResponse response,
@@ -625,36 +611,6 @@ public class AssessmentServlet extends HttpServlet {
         com.swp391.g1.model.AssessmentAnswer ans = new com.swp391.g1.dao.impl.AssessmentAnswerDAOImpl().findById(answerId);
         int attemptId2 = ans != null ? ans.getAttemptId() : 0;
         response.sendRedirect(request.getContextPath() + "/assessment?action=grade&attemptId=" + attemptId2);
-    }
-
-    private void showResultPage(HttpServletRequest request, HttpServletResponse response,
-            CurrentUser user) throws ServletException, IOException {
-        int assessmentId = parseId(request.getParameter("assessmentId"));
-        if (assessmentId <= 0) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID danh gia khong hop le.");
-            return;
-        }
-        com.swp391.g1.model.Student student = getCurrentStudent(user);
-        if (student == null) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Khong tim thay thong tin sinh vien.");
-            return;
-        }
-        var attempt = assessmentService.getMyAttempt(assessmentId, student.getId());
-        if (attempt == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Chua co bai lam.");
-            return;
-        }
-        com.swp391.g1.model.Assessment assessment = assessmentService.getAssessmentForStudentAttempt(assessmentId, student.getId());
-        if (assessment == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Khong tim thay danh gia hoac bai lam khong thuoc ban.");
-            return;
-        }
-        request.setAttribute("activityId", assessment.getActivityId());
-        var answers = assessmentService.getAttemptAnswers(attempt.getId(), student.getId());
-        request.setAttribute("attempt", attempt);
-        request.setAttribute("answers", answers);
-        request.getRequestDispatcher("/WEB-INF/views/assessment/student/result.jsp")
-                .forward(request, response);
     }
 
     private com.swp391.g1.model.Student getCurrentStudent(CurrentUser user) {

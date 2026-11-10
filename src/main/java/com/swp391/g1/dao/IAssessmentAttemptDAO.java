@@ -2,6 +2,7 @@ package com.swp391.g1.dao;
 
 import com.swp391.g1.model.AssessmentAttempt;
 
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
 
