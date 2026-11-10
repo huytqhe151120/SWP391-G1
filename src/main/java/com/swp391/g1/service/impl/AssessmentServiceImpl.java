@@ -53,6 +53,9 @@ public class AssessmentServiceImpl implements IAssessmentService {
         if (user == null) {
             throw new AssessmentServiceException("Bạn chưa đăng nhập.");
         }
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return;
+        }
         if (!AccessPolicy.canManageActivities(user)) {
             throw new AssessmentServiceException("Chỉ STAFF hoặc ADMIN mới được quản lý đánh giá hoạt động.");
         }
@@ -214,7 +217,7 @@ public class AssessmentServiceImpl implements IAssessmentService {
                 && activityDAO.isInStaffActivityScope(activityId, user.getId(), user.getRole())) {
             return assessment;
         }
-        return assessment;
+        return null;
     }
 
     @Override
@@ -743,8 +746,9 @@ public class AssessmentServiceImpl implements IAssessmentService {
         if (assessment == null) {
             throw new AssessmentServiceException("Khong tim thay danh gia.");
         }
-        if (!AccessPolicy.canManageActivities(user)
-                || !activityDAO.isInStaffActivityScope(assessment.getActivityId(), user.getId(), user.getRole())) {
+        if (!AccessPolicy.hasType(user, "ADMIN")
+                && (!AccessPolicy.canManageActivities(user)
+                || !activityDAO.isInStaffActivityScope(assessment.getActivityId(), user.getId(), user.getRole()))) {
             throw new AssessmentServiceException("Ban khong co quyen cham bai danh gia nay.");
         }
         if (score == null || score.compareTo(BigDecimal.ZERO) < 0
@@ -846,7 +850,9 @@ public class AssessmentServiceImpl implements IAssessmentService {
         if (user == null) {
             throw new AssessmentServiceException("Ban chua dang nhap.");
         }
-        if (!AccessPolicy.canManageActivities(user)
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            // ADMIN bypasses activity scope
+        } else if (!AccessPolicy.canManageActivities(user)
                 || !activityDAO.isInStaffActivityScope(activityId, user.getId(), user.getRole())) {
             throw new AssessmentServiceException("Ban khong co quyen xem bai nop cua hoat dong nay.");
         }
@@ -870,8 +876,9 @@ public class AssessmentServiceImpl implements IAssessmentService {
         if (assessment == null) {
             throw new AssessmentServiceException("Khong tim thay danh gia.");
         }
-        if (!AccessPolicy.canManageActivities(user)
-                || !activityDAO.isInStaffActivityScope(assessment.getActivityId(), user.getId(), user.getRole())) {
+        if (!AccessPolicy.hasType(user, "ADMIN")
+                && (!AccessPolicy.canManageActivities(user)
+                || !activityDAO.isInStaffActivityScope(assessment.getActivityId(), user.getId(), user.getRole()))) {
             throw new AssessmentServiceException("Ban khong co quyen xem bai lam nay.");
         }
         return attempt;
