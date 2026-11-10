@@ -51,11 +51,11 @@
         </div>
         <div class="field">
             <label>Thoi gian mo bai</label>
-            <p><c:choose><c:when test="${not empty assessment.openTime}"><c:out value="${assessment.openTime}"/></c:when><c:otherwise>Chua cau hinh</c:otherwise></c:choose></p>
+            <p><c:choose><c:when test="${not empty openTimeDisplay}"><c:out value="${openTimeDisplay}"/></c:when><c:otherwise>Chua cau hinh</c:otherwise></c:choose></p>
         </div>
         <div class="field">
             <label>Thoi gian dong bai</label>
-            <p><c:choose><c:when test="${not empty assessment.closeTime}"><c:out value="${assessment.closeTime}"/></c:when><c:otherwise>Chua cau hinh</c:otherwise></c:choose></p>
+            <p><c:choose><c:when test="${not empty closeTimeDisplay}"><c:out value="${closeTimeDisplay}"/></c:when><c:otherwise>Chua cau hinh</c:otherwise></c:choose></p>
         </div>
         <div class="field">
             <label>Trang thai cong bo</label>

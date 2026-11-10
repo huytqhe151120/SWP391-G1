@@ -10,6 +10,7 @@ import com.swp391.g1.service.AssessmentServiceException;
 import com.swp391.g1.service.IAssessmentService;
 import com.swp391.g1.service.impl.AssessmentServiceImpl;
 import com.swp391.g1.util.AuthContext;
+import com.swp391.g1.util.DateTimeUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -201,6 +202,8 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         request.setAttribute("assessment", assessment);
+        request.setAttribute("openTimeDisplay", DateTimeUtil.format(assessment.getOpenTime()));
+        request.setAttribute("closeTimeDisplay", DateTimeUtil.format(assessment.getCloseTime()));
         request.getRequestDispatcher("/WEB-INF/views/assessment/staff/manage.jsp")
                 .forward(request, response);
     }
@@ -241,8 +244,13 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         var submissions = assessmentService.listSubmissionsForGrading(activityId, user);
+        java.util.Map<Integer, String> submittedAtDisplay = new java.util.HashMap<>();
+        for (var s : submissions) {
+            submittedAtDisplay.put(s.getId(), DateTimeUtil.format(s.getSubmittedAt()));
+        }
         request.setAttribute("activityId", activityId);
         request.setAttribute("submissions", submissions);
+        request.setAttribute("submittedAtDisplay", submittedAtDisplay);
         request.getRequestDispatcher("/WEB-INF/views/assessment/staff/submissions.jsp")
                 .forward(request, response);
     }

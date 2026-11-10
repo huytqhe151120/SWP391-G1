@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
@@ -66,7 +66,7 @@
                             <span class="status-badge ${s.status == 'COMPLETED' ? 'active' : (s.status == 'SUBMITTED' ? 'warning' : 'inactive')}">${s.status}</span>
                         </td>
                         <td><c:choose><c:when test="${not empty s.finalScore}"><c:out value="${s.finalScore}"/></c:when><c:otherwise>--</c:otherwise></c:choose></td>
-                        <td><c:choose><c:when test="${not empty s.submittedAt}"><c:out value="${s.submittedAt}"/></c:when><c:otherwise>--</c:otherwise></c:choose></td>
+                        <td><c:choose><c:when test="${not empty submittedAtDisplay[s.id]}"><c:out value="${submittedAtDisplay[s.id]}"/></c:when><c:otherwise>--</c:otherwise></c:choose></td>
                         <td>
                             <a class="button button-sm" href="${pageContext.request.contextPath}/assessment?action=grade&attemptId=${s.id}">Cham bai</a>
                         </td>

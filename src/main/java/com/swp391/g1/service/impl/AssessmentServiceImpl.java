@@ -827,10 +827,32 @@ public class AssessmentServiceImpl implements IAssessmentService {
             }
 
             conn.commit();
-        } catch (Exception e) {
+        } catch (AssessmentServiceException e) {
             if (conn != null) {
-                try { conn.rollback(); } catch (SQLException re) {
-                    throw new IllegalStateException("Database operation failed and rollback also failed: " + re.getMessage(), e);
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    throw new AssessmentServiceException("Transaction rollback failed: " + e.getMessage()
+                            + ". Rollback also failed: " + rollbackEx.getMessage(), e);
+                }
+            }
+            throw e;
+        } catch (java.sql.SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    throw new IllegalStateException("Database operation failed and rollback also failed: "
+                            + rollbackEx.getMessage(), e);
+                }
+            }
+            throw new IllegalStateException("Failed to grade essay.", e);
+        } catch (RuntimeException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    e.addSuppressed(rollbackEx);
                 }
             }
             throw e;
