@@ -4,6 +4,7 @@ import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
 import com.swp391.g1.dto.response.ParticipantCandidateDTO;
 import com.swp391.g1.model.Enum.ParticipantStatus;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -24,6 +25,10 @@ public interface IActivityParticipantDAO {
      */
     int insertParticipants(int activityId, List<Integer> studentIds, Integer maxParticipants);
 
+    default int insertParticipants(int activityId, List<Integer> studentIds, Integer maxParticipants, Integer registrationBy) {
+        return insertParticipants(activityId, studentIds, maxParticipants);
+    }
+
     /**
      * Deletes participants that are still NOT_YET and have no attendance history, so no attendance
      * data is lost. Other ids are skipped. Returns the number of deleted rows.
@@ -35,4 +40,11 @@ public interface IActivityParticipantDAO {
      * in activity_attendance_history, all in one transaction. Returns the number of changed rows.
      */
     int updateStatuses(int activityId, Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy);
+
+    /**
+     * Updates participation evaluation score (0-5) and feedback for one or many participants (batch grading),
+     * records audit trail in activity_grade_history, and recalculates student_activity_result.
+     */
+    int updateParticipationGrades(int activityId, List<Integer> participantIds, BigDecimal evalScore,
+            String feedback, String gradedBy, Integer gradedById);
 }

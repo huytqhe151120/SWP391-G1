@@ -14,6 +14,7 @@
         tabPanes.forEach(function (pane) {
             pane.classList.toggle("active", pane.id === targetId);
         });
+        window.dispatchEvent(new Event("resize"));
     }
 
     tabButtons.forEach(function (button) {
@@ -27,7 +28,7 @@
     });
 
     var currentHash = window.location.hash.slice(1);
-    if (["tab-staff", "tab-info", "tab-partner"].indexOf(currentHash) !== -1) {
+    if (["tab-staff", "tab-info", "tab-partner", "tab-registration", "tab-attendance", "tab-form-info", "tab-form-applications"].indexOf(currentHash) !== -1) {
         switchTab(currentHash);
     }
 })();
@@ -158,7 +159,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         combobox.classList.remove("is-invalid");
         if (selectedCount === 0) {
             label.textContent = initialLabel;
-            count.textContent = "Chưa chọn " + itemLabel;
+            count.textContent = combobox.dataset.emptyCount || ("Chưa chọn " + itemLabel);
         } else if (isSingle) {
             label.textContent = selectedOptions[0].querySelector("span").textContent.trim();
             count.textContent = "Đã chọn " + itemLabel;
@@ -198,6 +199,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         if (disabled) {
             closeDropdown();
         }
+        updateSelection();
     }
 
     function setOptions(items) {
@@ -247,6 +249,9 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     }
 
     trigger.addEventListener("click", function () {
+        if (trigger.disabled || combobox.hasAttribute("data-disabled")) {
+            return;
+        }
         var isExpanded = trigger.getAttribute("aria-expanded") === "true";
         trigger.setAttribute("aria-expanded", String(!isExpanded));
         dropdown.hidden = isExpanded;
@@ -295,6 +300,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         updateSelection();
     }
 
+    updateSelection();
     combobox.comboboxApi = {setDisabled: setDisabled, setOptions: setOptions, setPlaceholder: setPlaceholder};
 });
 (function () {

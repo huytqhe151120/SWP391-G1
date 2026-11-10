@@ -9,9 +9,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý tài khoản | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261020-4">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -123,11 +123,11 @@
             <table class="account-table">
                 <thead>
                 <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Tên đăng nhập</th>
-                    <th scope="col">Loại</th>
-                    <th scope="col">Vai trò</th>
-                    <th scope="col">Trạng thái</th>
+                    <th scope="col" class="col-code">ID</th>
+                    <th scope="col" class="col-object-name">Tên đăng nhập</th>
+                    <th scope="col" class="col-single-line">Loại</th>
+                    <th scope="col" class="col-single-line">Vai trò</th>
+                    <th scope="col" class="col-status">Trạng thái</th>
                     <th scope="col">Thao tác</th>
                 </tr>
                 </thead>
@@ -146,20 +146,24 @@
                     <c:otherwise>
                         <c:forEach items="${accounts}" var="a">
                             <tr>
-                                <td><span class="activity-code"><c:out value="${a.id}"/></span></td>
-                                <td><strong class="activity-name"><c:out value="${a.username}"/></strong></td>
-                                <td><c:out value="${a.type}"/></td>
-                                <td><c:out value="${a.role}"/></td>
-                                <td><span class="badge account-status account-status-${fn:escapeXml(a.status)}">${st:label(a.status)}</span></td>
+                                <td class="col-code"><span class="activity-code"><c:out value="${a.id}"/></span></td>
+                                <td class="col-object-name" title="<c:out value='${a.username}'/>">
+                                    <strong class="activity-name" title="<c:out value='${a.username}'/>"><c:out value="${a.username}"/></strong>
+                                </td>
+                                <td class="col-single-line" title="<c:out value='${a.type}'/>"><c:out value="${a.type}"/></td>
+                                <td class="col-single-line" title="<c:out value='${a.role}'/>"><c:out value="${a.role}"/></td>
+                                <td class="col-status"><span class="badge status-pill account-status account-status-${fn:escapeXml(a.status)}">${st:label(a.status)}</span></td>
                                 <td>
                                     <div class="actions activity-actions">
-                                        <a class="activity-action-link" href="${pageContext.request.contextPath}/accounts/${a.id}">
+                                        <a class="activity-action-link action-btn action-btn--view" href="${pageContext.request.contextPath}/accounts/${a.id}">
+                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
                                             Chi tiết
                                         </a>
                                         <details class="action-menu">
                                             <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
                                             <div class="action-menu__items">
                                                 <a class="action-menu-item action-menu-item--edit" href="${pageContext.request.contextPath}/accounts/${a.id}/edit">
+                                                    <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></span>
                                                     Chỉnh sửa
                                                 </a>
                                             </div>

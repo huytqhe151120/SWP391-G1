@@ -1,8 +1,8 @@
-﻿/* SWP391-G1 Master Stylesheet
+/* SWP391-G1 Master Stylesheet
    Importing modular styles by domain/entity
 */
-@import "base.css";
-@import "activity.css";
+@import "base.css?v=20261107-2";
+@import "activity.css?v=20261107-2";
 @import "account.css";
 @import "auth.css";
 @import "partner-company.css";

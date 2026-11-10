@@ -1,5 +1,5 @@
 /* Activity CSS - SWP391-G1 */
-@import "base.css";
+@import "base.css?v=20261107-3";
 
 .activity-approval-approve {
     border-color: #15803d;
@@ -1452,12 +1452,14 @@ button.activity-action-link:focus-visible {
     row-gap: 17px;
 }
 
-.activity-form-grid label {
+.activity-form-grid label,
+.activity-form-grid .field-label {
     color: #344963;
     font-size: .86rem;
+    font-weight: 600;
 }
 
-.activity-form-grid input,
+.activity-form-grid input:not([type="checkbox"]):not([type="radio"]),
 .activity-form-grid select,
 .activity-form-grid textarea {
     border-color: #dce4ef;
@@ -1466,13 +1468,13 @@ button.activity-action-link:focus-visible {
     transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
 
-.activity-form-grid input:hover,
+.activity-form-grid input:not([type="checkbox"]):not([type="radio"]):hover,
 .activity-form-grid select:hover,
 .activity-form-grid textarea:hover {
     border-color: #b7c7dc;
 }
 
-.activity-form-grid input:focus,
+.activity-form-grid input:not([type="checkbox"]):not([type="radio"]):focus,
 .activity-form-grid select:focus,
 .activity-form-grid textarea:focus {
     border-color: #4675bd;
@@ -1539,9 +1541,18 @@ button.activity-action-link:focus-visible {
     cursor: pointer;
 }
 
-.multi-select-trigger:hover,
+.multi-select-trigger:hover:not(:disabled),
 .multi-select-trigger[aria-expanded="true"] {
     border-color: #9bb2d1;
+}
+
+.multi-select-trigger:disabled,
+.multi-select-combobox[data-disabled] .multi-select-trigger {
+    border-color: #dce4ef;
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.8;
 }
 
 .multi-select-trigger:focus-visible,
@@ -1942,17 +1953,30 @@ button.activity-action-link:focus-visible {
     font-weight: 400;
 }
 
-.checkbox-inline input[type="checkbox"] {
+.checkbox-inline input[type="checkbox"],
+.checkbox-inline input[type="radio"] {
     width: 16px;
     height: 16px;
+    min-height: 16px;
     margin: 0;
     padding: 0;
+    flex: 0 0 auto;
+    accent-color: #2457c5;
     cursor: pointer;
 }
 
 .checkbox-inline label {
     margin: 0;
+    font-weight: 500;
     cursor: pointer;
+}
+
+.target-scope-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 24px;
+    min-height: 36px;
 }
 
 .badge.status-pill {
@@ -2105,3 +2129,391 @@ span.flatpickr-weekday {
     font-size: 1rem;
 }
 
+
+/* ==========================================================================
+   Quy Chuẩn Bổ Sung: Giới Hạn Độ Dài Cột & Chuẩn Hóa Nút Bấm (Button System)
+   ========================================================================== */
+
+.activity-table-wrap th.col-code,
+.activity-table-wrap td.col-code {
+    width: 115px;
+    min-width: 100px;
+    max-width: 120px;
+    white-space: nowrap;
+}
+
+.activity-table-wrap th.col-object-name,
+.activity-table-wrap td.col-object-name {
+    min-width: 160px;
+    max-width: 240px;
+    white-space: normal;
+}
+
+.activity-table-wrap th.col-activity-name,
+.activity-table-wrap td.col-activity-name {
+    min-width: 200px;
+    max-width: 280px;
+    white-space: normal;
+}
+
+.activity-table-wrap .activity-name,
+.activity-table-wrap .cell-clamp-2 {
+    display: -webkit-box;
+    max-width: 280px;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.45;
+}
+
+.activity-table-wrap td.col-object-name .activity-name,
+.activity-table-wrap td.col-object-name .cell-clamp-2 {
+    max-width: 240px;
+}
+
+.activity-table-wrap th.col-semester,
+.activity-table-wrap td.col-semester {
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.activity-table-wrap th.col-single-line,
+.activity-table-wrap td.col-single-line {
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-table-wrap th.col-academic {
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.activity-table-wrap th.col-academic.col-program {
+    min-width: 195px;
+}
+
+.activity-table-wrap td.col-academic {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-table-wrap th.col-number,
+.activity-table-wrap td.col-number,
+.activity-table-wrap th.col-count,
+.activity-table-wrap td.col-count,
+.activity-table-wrap th.col-status,
+.activity-table-wrap td.col-status {
+    text-align: center !important;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.activity-list-page .activity-time,
+.activity-table-wrap .activity-time,
+.activity-list-page .activity-table-wrap .activity-registration-deadline,
+.activity-table-wrap th.col-datetime,
+.activity-table-wrap td.col-datetime {
+    min-width: 160px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.badge.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 28px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: .73rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.badge.status-pill.status-muted {
+    background: #f2f4f7;
+    border-color: #e4e7ed;
+    color: #687386;
+}
+
+.activity-page-back {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    align-self: flex-start;
+    width: 100%;
+}
+
+.activity-page-back .button-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.activity-app-main > .activity-alert {
+    margin-bottom: 0;
+}
+
+.activity-app-main > .activity-alert + .activity-alert {
+    margin-top: -8px;
+}
+
+.activity-table-wrap th.col-status,
+.activity-table-wrap td.col-status,
+.activity-table-wrap th.activity-status-column,
+.activity-table-wrap td.activity-status-column,
+.activity-table-wrap th.activity-order-status-column,
+.activity-table-wrap td.activity-order-status-column,
+.activity-table-wrap th.activity-registration-status-column,
+.activity-table-wrap td.activity-registration-status-column,
+.activity-table-wrap th.activity-run-status,
+.activity-table-wrap td.activity-run-status,
+.activity-table-wrap th.invitation-status-column,
+.activity-table-wrap td.invitation-status-column,
+.activity-table-wrap th.registration-sticky-status,
+.activity-table-wrap td.registration-sticky-status,
+.staff-table-wrap th.col-status,
+.staff-table-wrap td.col-status,
+.student-table-wrap th.col-status,
+.student-table-wrap td.col-status {
+    text-align: center !important;
+}
+
+/* ==========================================================================
+   Hub & Spoke Tabs: Đăng ký tham gia & Điểm danh sinh viên (detail.jsp)
+   Đồng bộ cấu trúc với attendance/list.jsp & registration/detail.jsp
+   ========================================================================== */
+.activity-detail-page .activity-tab-pane.hub-edge-pane {
+    margin: -4px -30px -24px;
+}
+
+.hub-edge-pane .attendance-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 24px;
+    padding: 16px 30px;
+    background: #fbfcfe;
+}
+
+.hub-edge-pane .attendance-summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.hub-edge-pane .attendance-summary-item:first-child {
+    flex: 1 1 200px;
+    min-width: 180px;
+}
+
+.hub-edge-pane .attendance-summary-item > .activity-name,
+.hub-edge-pane .attendance-summary-item > .activity-time,
+.hub-edge-pane .attendance-summary-item > .activity-code,
+.hub-edge-pane .attendance-summary-item > .hub-progress-row,
+.hub-edge-pane .attendance-summary-item > .badge {
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.hub-edge-pane .attendance-summary-progress {
+    flex: 0 0 100%;
+    width: 100%;
+    padding-top: 4px;
+}
+
+.hub-edge-pane .attendance-summary-actions {
+    margin-left: auto;
+    align-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.hub-edge-pane .attendance-summary-label {
+    color: #66758b;
+    font-size: .76rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.hub-edge-pane .attendance-counts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 12px 30px;
+    border-top: 1px solid #edf0f5;
+    list-style: none;
+}
+
+.hub-edge-pane .activity-bulk-toolbar {
+    padding: 12px 30px;
+}
+
+.hub-edge-pane .activity-bulk-selection {
+    margin-right: auto;
+    text-align: left;
+}
+
+.hub-edge-pane .activity-table-wrap {
+    border: 0;
+    border-top: 1px solid #edf0f5;
+    border-radius: 0;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table {
+    width: 100%;
+    min-width: 1020px;
+    table-layout: auto;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td {
+    padding: 13px 16px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-code,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-code {
+    width: 9%;
+    min-width: 100px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-object-name,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-object-name {
+    width: 16%;
+    min-width: 160px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-academic:not(.col-program):not(.col-class),
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-academic:not(.col-program):not(.col-class) {
+    width: 13%;
+    min-width: 120px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-program,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-program {
+    width: 18%;
+    min-width: 195px;
+    max-width: 260px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-class,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-class {
+    width: 9%;
+    min-width: 95px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-datetime,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-datetime {
+    width: 12%;
+    min-width: 150px;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-status,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-status,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.activity-status-column,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table td.activity-status-column {
+    position: sticky;
+    right: 0;
+    z-index: 2;
+    width: 11%;
+    min-width: 150px;
+    background: #fff;
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-status,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table th.activity-status-column {
+    z-index: 3;
+    background: #f7f9fc;
+}
+
+.hub-edge-pane .activity-table-wrap table.hub-recent-table tbody tr:hover td.col-status,
+.hub-edge-pane .activity-table-wrap table.hub-recent-table tbody tr:hover td.activity-status-column {
+    background: #f8faff;
+}
+
+.empty-state-mark.empty-state-mark--icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 1.25rem;
+}
+
+.hub-edge-pane .activity-pagination {
+    padding: 14px 30px;
+}
+
+.hub-progress-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.hub-progress-track {
+    width: 120px;
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.hub-progress-track--full {
+    width: 100%;
+    height: 10px;
+}
+
+.hub-progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: #2457c5;
+    transition: width 0.25s ease;
+}
+
+.hub-progress-fill--success {
+    background: #287143;
+}
+
+@media (max-width: 767px) {
+    .activity-detail-page .activity-tab-pane.hub-edge-pane {
+        margin: -4px -20px -24px;
+    }
+
+    .hub-edge-pane .attendance-summary,
+    .hub-edge-pane .attendance-counts,
+    .hub-edge-pane .activity-bulk-toolbar,
+    .hub-edge-pane .activity-pagination {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .hub-edge-pane .attendance-summary-actions {
+        margin-left: 0;
+        width: 100%;
+    }
+}

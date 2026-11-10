@@ -184,3 +184,4 @@ body {
     .staff-filter { width: 100%; }
     .staff-table-heading { flex-direction: column; align-items: flex-start; }
 }
+.staff-table-wrap th:last-child, .staff-table-wrap td:last-child, .staff-table-wrap th.col-status, .staff-table-wrap td.col-status { text-align: center !important; }

@@ -33,9 +33,13 @@
 .attendance-counts {
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
     gap: 8px;
-    margin: 0 0 0 auto;
-    padding: 0;
+    width: 100%;
+    margin: 0;
+    padding: 12px 26px;
+    border-top: 1px solid #edf0f5;
     list-style: none;
 }
 
@@ -48,7 +52,7 @@
 }
 
 .attendance-status-select {
-    min-width: 150px;
+    min-width: 142px;
     min-height: 34px;
     padding: 5px 8px;
     border: 1px solid #dce4ef;
@@ -122,6 +126,144 @@
 .attendance-status-cell {
     display: inline-flex;
     align-items: center;
+    gap: 6px;
+}
+
+.attendance-point-chip {
+    font-size: .78rem;
+    font-weight: 600;
+    color: #536782;
+    white-space: nowrap;
+}
+
+.col-grade-eval {
+    min-width: 280px;
+}
+
+.col-score {
+    width: 96px;
+    text-align: center !important;
+    white-space: nowrap;
+}
+
+.attendance-grade-inline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.attendance-eval-input {
+    width: 64px;
+    min-height: 32px;
+    padding: 4px 6px;
+    border: 1px solid #dce4ef;
+    border-radius: 7px;
+    background: #fff;
+    color: #172b49;
+    font: inherit;
+    font-size: .84rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.attendance-feedback-input {
+    flex: 1 1 130px;
+    min-width: 110px;
+    min-height: 32px;
+    padding: 4px 8px;
+    border: 1px solid #dce4ef;
+    border-radius: 7px;
+    background: #fff;
+    color: #172b49;
+    font: inherit;
+    font-size: .82rem;
+}
+
+.attendance-eval-input:disabled,
+.attendance-feedback-input:disabled {
+    background: #f4f6f9;
+    color: #8c98a9;
+    cursor: not-allowed;
+}
+
+.attendance-grade-save-btn {
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: .78rem;
+    white-space: nowrap;
+}
+
+.attendance-graded-by {
+    display: block;
+    margin-top: 3px;
+    color: #66758b;
+    font-size: .72rem;
+}
+
+.attendance-score-badge,
+.attendance-final-badge {
+    display: inline-block;
+    min-width: 44px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: .84rem;
+    font-weight: 700;
+}
+
+.attendance-final-badge.is-positive {
+    background: #edf8f0;
+    color: #1f6f43;
+}
+
+.attendance-final-badge.is-negative {
+    background: #fdecec;
+    color: #b42318;
+}
+
+.attendance-batch-grade-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 26px;
+    border-top: 1px solid #dbe6f6;
+    background: #f5f9ff;
+}
+
+.attendance-batch-grade-panel[hidden] {
+    display: none !important;
+}
+
+.attendance-batch-grade-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.attendance-batch-grade-head h3 {
+    margin: 0 0 2px;
+    color: #172b49;
+    font-size: .96rem;
+}
+
+.attendance-batch-grade-head p {
+    margin: 0;
+    color: #536782;
+    font-size: .83rem;
+}
+
+.attendance-batch-grade-fields {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 12px;
+}
+
+.attendance-batch-grade-actions {
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
@@ -130,7 +272,8 @@
     text-align: left;
 }
 
-[data-remove-inputs][hidden] {
+[data-remove-inputs][hidden],
+[data-batch-grade-inputs][hidden] {
     display: none;
 }
 
@@ -143,7 +286,9 @@
 }
 
 .activity-bulk-actions [data-bulk-status][hidden],
-.activity-bulk-actions [data-bulk-status]:disabled {
+.activity-bulk-actions [data-bulk-status]:disabled,
+.activity-bulk-actions [data-batch-grade-trigger][hidden],
+.activity-bulk-actions [data-batch-grade-trigger]:disabled {
     display: none !important;
 }
 
@@ -247,10 +392,15 @@
     .attendance-add-panel {
         grid-template-columns: minmax(0, 1fr);
     }
+
+    .attendance-batch-grade-fields {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 @media (max-width: 640px) {
-    .attendance-add-panel {
+    .attendance-add-panel,
+    .attendance-batch-grade-panel {
         padding-right: 16px;
         padding-left: 16px;
     }
@@ -263,9 +413,5 @@
     .attendance-note {
         padding-right: 16px;
         padding-left: 16px;
-    }
-
-    .attendance-counts {
-        margin-left: 0;
     }
 }

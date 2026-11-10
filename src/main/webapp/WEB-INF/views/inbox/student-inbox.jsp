@@ -5,11 +5,11 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hộp thư của tôi | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-inbox.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-inbox.css?v=20261107-2">
 </head>
 <body class="support-page student-inbox-page">
 <div class="activity-app-shell">

@@ -200,3 +200,4 @@ body {
     .student-filter { width: 100%; }
     .student-table-heading { flex-direction: column; align-items: flex-start; }
 }
+.student-table-wrap th:last-child, .student-table-wrap td:last-child, .student-table-wrap th.col-status, .student-table-wrap td.col-status { text-align: center !important; }

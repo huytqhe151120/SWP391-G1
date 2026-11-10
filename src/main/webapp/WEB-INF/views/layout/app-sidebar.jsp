@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.swp391.g1.dto.CurrentUser" %>
+<%@ page import="com.swp391.g1.service.AccessPolicy" %>
 <%@ page import="com.swp391.g1.util.AuthContext" %>
 <%
     CurrentUser navUser = AuthContext.getCurrentUser(request);
@@ -7,6 +8,7 @@
     boolean navAdmin = "ADMIN".equals(navType);
     boolean navStaff = "STAFF".equals(navType);
     boolean navStudent = "STUDENT".equals(navType);
+    boolean navCanTakeAttendance = AccessPolicy.canTakeAttendance(navUser);
     Object navActiveAttr = request.getAttribute("activeNav");
     String navActive = navActiveAttr == null ? "" : navActiveAttr.toString();
     String reqUri = request.getRequestURI() == null ? "" : request.getRequestURI();
@@ -16,10 +18,12 @@
         else if (reqUri.contains("/student-qa")) navActive = "student-qa";
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
+        else if (reqUri.contains("/student-grades")) navActive = "student-grades";
     }
     boolean isActivityGroupActive = "activities".equals(navActive)
             || "registration-forms".equals(navActive)
             || "attendance".equals(navActive)
+            || "student-grades".equals(navActive)
             || "partner-invitations".equals(navActive);
     boolean isHrGroupActive = "students".equals(navActive)
             || "staff".equals(navActive)
@@ -35,7 +39,7 @@
     pageContext.setAttribute("navAvatarInitial", avatarInitial);
 %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<link rel="stylesheet" href="<%= ctx %>/assets/css/sidebar.css?v=20261030-1">
+<link rel="stylesheet" href="<%= ctx %>/assets/css/sidebar.css?v=20261107-2">
 <aside class="activity-side-nav" id="appSidebar" aria-label="Điều hướng hệ thống">
     <div class="activity-sidebar-head">
         <a class="activity-sidebar-brand" href="<%= ctx %>/home" title="Trang chủ EAMS">
@@ -124,7 +128,7 @@
                     <span class="activity-nav-label">Đơn đăng ký</span>
                 </a>
                 <% } %>
-                <% if (navAdmin || navStaff) { %>
+                <% if (navCanTakeAttendance) { %>
                 <a class="activity-nav-item <%= "attendance".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/attendance"
                    title="Điểm danh sinh viên"
                    <%= "attendance".equals(navActive) ? "aria-current=\"page\"" : "" %>>
@@ -136,6 +140,18 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label">Điểm danh sinh viên</span>
+                </a>
+                <% } %>
+                <% if (navCanTakeAttendance || navStudent) { %>
+                <a class="activity-nav-item <%= "student-grades".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-grades"
+                   title="<%= navStudent ? "Điểm hoạt động của tôi" : "Điểm hoạt động" %>"
+                   <%= "student-grades".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label"><%= navStudent ? "Điểm hoạt động của tôi" : "Điểm hoạt động" %></span>
                 </a>
                 <% } %>
                 <a class="activity-nav-item <%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"

@@ -42,6 +42,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         Timestamp createdAt = rs.getTimestamp("created_at");
         activity.setCreatedAt(createdAt == null ? null : createdAt.toLocalDateTime());
         activity.setActivityTypeId(rs.getInt("activity_type_id"));
+        activity.setOrganizationLevelId(rs.getInt("organization_level_id"));
 
         Timestamp startTime = rs.getTimestamp("start_time");
         activity.setStartTime(startTime == null
@@ -192,6 +193,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         a.*,
         s.code AS semester_code, s.name AS semester_name,
         t.code AS activity_type_code, t.name AS activity_type_name,
+        ol.code AS org_level_code, ol.name AS org_level_name, ol.coefficient AS org_level_coefficient,
         d.code AS dept_code, d.name AS dept_name,
         st.code AS staff_code, st.name AS staff_name,
         pc.code AS company_code, pc.name AS company_name,
@@ -199,6 +201,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
     FROM extracurricular_activity a
     LEFT JOIN semester s ON a.semester_id = s.id
     LEFT JOIN activity_type t ON a.activity_type_id = t.id
+    LEFT JOIN activity_organization_level ol ON a.organization_level_id = ol.id
     LEFT JOIN department d ON a.responsible_department_id = d.id
     LEFT JOIN staff st ON a.responsible_staff_id = st.id
     LEFT JOIN partner_company pc ON a.partner_company_id = pc.id
@@ -220,6 +223,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     dto.setName(rs.getString("name"));
                     dto.setSemesterId(rs.getInt("semester_id"));
                     dto.setActivityTypeId(rs.getInt("activity_type_id"));
+                    dto.setOrganizationLevelId(rs.getInt("organization_level_id"));
                     dto.setResponsibleDepartmentId(rs.getInt("responsible_department_id"));
                     dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
                     dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
@@ -247,6 +251,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     dto.setSemesterName(rs.getString("semester_name"));
                     dto.setActivityTypeCode(rs.getString("activity_type_code"));
                     dto.setActivityTypeName(rs.getString("activity_type_name"));
+                    dto.setOrganizationLevelCode(rs.getString("org_level_code"));
+                    dto.setOrganizationLevelName(rs.getString("org_level_name"));
+                    dto.setOrganizationLevelCoefficient(rs.getBigDecimal("org_level_coefficient"));
                     dto.setResponsibleDepartmentCode(rs.getString("dept_code"));
                     dto.setResponsibleDepartmentName(rs.getString("dept_name"));
                     dto.setResponsibleStaffCode(rs.getString("staff_code"));
@@ -316,8 +323,8 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String sql = "INSERT INTO extracurricular_activity "
                 + "(semester_id, code, name, responsible_department_id, responsible_staff_id, "
                 + "partner_company_id, partner_staff_id, nature, is_summary_required, address, description, "
-                + "activity_status, approval_status, activity_type_id, start_time, end_time, registration_form_required, max_participants, is_public) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "activity_status, approval_status, activity_type_id, organization_level_id, start_time, end_time, registration_form_required, max_participants, is_public) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -350,7 +357,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
-                + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
+                + "address = ?, description = ?, activity_type_id = ?, organization_level_id = ?, start_time = ?, end_time = ?, "
                 + "registration_form_required = ?, max_participants = ?, is_public = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?") + " WHERE id = ?";
 
@@ -376,14 +383,15 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
-            ps.setTimestamp(13, activity.getStartTime() == null
+            ps.setInt(13, activity.getOrganizationLevelId());
+            ps.setTimestamp(14, activity.getStartTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
-            ps.setTimestamp(14, activity.getEndTime() == null
+            ps.setTimestamp(15, activity.getEndTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
-            ps.setBoolean(15, activity.isRegistrationFormRequired());
-            setMaxParticipants(ps, 16, activity);
-            ps.setBoolean(17, activity.isPublic());
-            int next = 18;
+            ps.setBoolean(16, activity.isRegistrationFormRequired());
+            setMaxParticipants(ps, 17, activity);
+            ps.setBoolean(18, activity.isPublic());
+            int next = 19;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
@@ -411,7 +419,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         String sql = "UPDATE a WITH (UPDLOCK,HOLDLOCK) SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
-                + "address = ?, description = ?, activity_type_id = ?, start_time = ?, end_time = ?, "
+                + "address = ?, description = ?, activity_type_id = ?, organization_level_id = ?, start_time = ?, end_time = ?, "
                 + "registration_form_required = ?, max_participants = ?, is_public = ?"
                 + (newApprovalStatus == null ? "" : ", approval_status = ?")
                 + " FROM dbo.extracurricular_activity a "
@@ -446,15 +454,16 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
-            ps.setTimestamp(13, activity.getStartTime() == null
+            ps.setInt(13, activity.getOrganizationLevelId());
+            ps.setTimestamp(14, activity.getStartTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
-            ps.setTimestamp(14, activity.getEndTime() == null
+            ps.setTimestamp(15, activity.getEndTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
-            ps.setBoolean(15, activity.isRegistrationFormRequired());
-            setMaxParticipants(ps, 16, activity);
-            ps.setBoolean(17, activity.isPublic());
+            ps.setBoolean(16, activity.isRegistrationFormRequired());
+            setMaxParticipants(ps, 17, activity);
+            ps.setBoolean(18, activity.isPublic());
 
-            int next = 18;
+            int next = 19;
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
@@ -515,13 +524,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         ps.setString(12, activity.getActivityStatus() == null ? null : activity.getActivityStatus().name());
         ps.setString(13, activity.getApprovalStatus() == null ? null : activity.getApprovalStatus().name());
         ps.setInt(14, activity.getActivityTypeId());
-        ps.setTimestamp(15, activity.getStartTime() == null
+        ps.setInt(15, activity.getOrganizationLevelId());
+        ps.setTimestamp(16, activity.getStartTime() == null
                 ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
-        ps.setTimestamp(16, activity.getEndTime() == null
+        ps.setTimestamp(17, activity.getEndTime() == null
                 ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getEndTime())));
-        ps.setBoolean(17, activity.isRegistrationFormRequired());
-        setMaxParticipants(ps, 18, activity);
-        ps.setBoolean(19, activity.isPublic());
+        ps.setBoolean(18, activity.isRegistrationFormRequired());
+        setMaxParticipants(ps, 19, activity);
+        ps.setBoolean(20, activity.isPublic());
     }
 
     @Override

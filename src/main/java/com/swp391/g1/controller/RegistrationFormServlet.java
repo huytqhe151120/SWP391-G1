@@ -45,7 +45,7 @@ public class RegistrationFormServlet extends HttpServlet {
         String action = param(req, "action", "list");
         try {
             if ("myApplications".equals(action)) {
-                if (!"STUDENT".equals(user.getType())) {
+                if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
                     return;
                 }
@@ -64,7 +64,7 @@ public class RegistrationFormServlet extends HttpServlet {
             }
 
             if ("register".equals(action)) {
-                if (!"STUDENT".equals(user.getType())) {
+                if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
                     return;
                 }
@@ -111,7 +111,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 return;
             }
             if ("myApplication".equals(action)) {
-                if (!"STUDENT".equals(user.getType())) {
+                if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
                     return;
                 }
@@ -136,21 +136,6 @@ public class RegistrationFormServlet extends HttpServlet {
                 resp.sendError(403, "Chỉ STAFF/ADMIN được quản lý form đăng ký.");
                 return;
             }
-            if ("view".equals(action)) {
-                RegistrationForm f = service.getById(id(req));
-                if (f == null) {
-                    resp.sendError(404);
-                    return;
-                }
-                req.setAttribute("form", f);
-                String returnToFallback = "activity".equals(req.getParameter("from"))
-                        ? req.getContextPath() + "/activities?action=detail&id=" + f.getActivityId()
-                        : req.getContextPath() + "/registration-forms";
-                req.setAttribute("returnTo", safeReturnTo(req, returnToFallback));
-                req.setAttribute("applications", service.getApplications(f.getId()));
-                req.getRequestDispatcher("/WEB-INF/views/registration/detail.jsp").forward(req, resp);
-                return;
-            }
             if ("create".equals(action) || "edit".equals(action)) {
                 RegistrationForm f = "edit".equals(action) ? service.getById(id(req)) : new RegistrationForm();
                 if (f == null) {
@@ -158,14 +143,15 @@ public class RegistrationFormServlet extends HttpServlet {
                     return;
                 }
 
-                String returnToFallback = "detail".equals(req.getParameter("from"))
+                String returnToFallback = "edit".equals(action) && f.getId() > 0
                         ? req.getContextPath() + "/registration-forms?action=view&id=" + f.getId()
                         : req.getContextPath() + "/registration-forms";
                 if ("create".equals(action)) {
                     int activityId = parseInt(req.getParameter("activityId"));
                     if (activityId > 0) {
-                        returnToFallback = req.getContextPath()
-                                + "/activities?action=detail&id=" + activityId;
+                        returnToFallback = "detail".equals(req.getParameter("from"))
+                                ? req.getContextPath() + "/registration-forms?action=view&activityId=" + activityId
+                                : req.getContextPath() + "/activities?action=detail&id=" + activityId;
                     }
                 }
                 String returnTo = safeReturnTo(req, returnToFallback);
@@ -187,20 +173,19 @@ public class RegistrationFormServlet extends HttpServlet {
                         if (!activity.isRegistrationFormRequired()) {
                             req.getSession().setAttribute("errorMessage",
                                     "Hoạt động này không bắt buộc điền form nên không cần tạo đợt đăng ký.");
-                            resp.sendRedirect(req.getContextPath() + "/activities?action=detail&id=" + activityId);
+                            resp.sendRedirect(returnTo);
                             return;
                         }
                         if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
                             req.getSession().setAttribute("errorMessage",
                                     "Không thể tạo đợt đăng ký vì hoạt động không ở trạng thái Chưa diễn ra.");
-                            resp.sendRedirect(req.getContextPath()
-                                    + "/activities?action=detail&id=" + activityId);
+                            resp.sendRedirect(returnTo);
                             return;
                         }
                         RegistrationForm existing = service.getByActivityId(activityId);
                         if (existing != null) {
                             resp.sendRedirect(req.getContextPath()
-                                    + "/registration-forms?action=view&id=" + existing.getId() + "&from=activity");
+                                    + "/registration-forms?action=view&id=" + existing.getId());
                             return;
                         }
                         f.setActivityId(activityId);
@@ -221,33 +206,89 @@ public class RegistrationFormServlet extends HttpServlet {
                 return;
             }
             if ("application".equals(action)) {
-                RegistrationApplication application = service.getApplicationById(id(req));
-                if (application == null) {
+                int appId = id(req);
+                int formId = parseInt(req.getParameter("formId"));
+                RegistrationApplication application = appId > 0 ? service.getApplicationById(appId) : null;
+                if (application == null && formId <= 0) {
                     resp.sendError(404);
                     return;
                 }
+                RegistrationForm form = service.getById(application != null ? application.getFormId() : formId);
+                if (form == null) {
+                    resp.sendError(404);
+                    return;
+                }
+                List<RegistrationApplication> applications = service.getApplications(form.getId());
+                if (application == null && !applications.isEmpty()) {
+                    application = service.getApplicationById(applications.get(0).getId());
+                }
                 req.setAttribute("application", application);
-                RegistrationForm form = service.getById(application.getFormId());
+                req.setAttribute("applications", applications);
                 req.setAttribute("form", form);
-                req.setAttribute("applicationDob", applicationDateOfBirth(application));
-                setApplicationQuestionFields(req, form, application);
+                if (application != null) {
+                    req.setAttribute("applicationDob", applicationDateOfBirth(application));
+                    setApplicationQuestionFields(req, form, application);
+                    req.setAttribute("hasEarlierPending",
+                            "SUBMITTED".equals(application.getStatus())
+                                    && service.hasEarlierPendingApplication(application.getId()));
+                }
                 req.getRequestDispatcher("/WEB-INF/views/registration/application-detail.jsp").forward(req, resp);
                 return;
             }
-            List<RegistrationForm> forms = service.getAll();
-            req.setAttribute("forms", forms);
-            LocalDateTime now = DateTimeUtil.now();
-            Set<Integer> extendableFormIds = new HashSet<>();
-            for (RegistrationForm form : forms) {
-                if (!form.isQuick() && form.getRegistrationCount() > 0
-                        && form.getCloseAt() != null && !form.getCloseAt().isAfter(now)) {
-                    extendableFormIds.add(form.getId());
+
+            int formId = id(req);
+            int activityId = parseInt(req.getParameter("activityId"));
+            var allActivities = activityService.getAllActivities();
+            Map<Integer, com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO> activityMap = new HashMap<>();
+            for (var act : allActivities) {
+                activityMap.put(act.getId(), act);
+            }
+            var requiredFormActivities = allActivities.stream()
+                    .filter(com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO::isRegistrationFormRequired)
+                    .toList();
+
+            RegistrationForm f = null;
+            com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO selectedActivity = null;
+            if (formId > 0) {
+                f = service.getById(formId);
+                if (f == null) {
+                    resp.sendError(404);
+                    return;
+                }
+                activityId = f.getActivityId();
+                selectedActivity = activityMap.getOrDefault(activityId,
+                        activityService.getActivityById(activityId));
+            } else if (activityId > 0) {
+                selectedActivity = activityMap.getOrDefault(activityId,
+                        activityService.getActivityById(activityId));
+                if (selectedActivity == null) {
+                    resp.sendError(404);
+                    return;
+                }
+                f = service.getByActivityId(activityId);
+                if (f != null) {
+                    resp.sendRedirect(req.getContextPath() + "/registration-forms?action=view&id=" + f.getId());
+                    return;
                 }
             }
-            req.setAttribute("extendableFormIds", extendableFormIds);
+
+            LocalDateTime now = DateTimeUtil.now();
+            boolean extendableForm = f != null && !f.isQuick() && f.getRegistrationCount() > 0
+                    && f.getCloseAt() != null && !f.getCloseAt().isAfter(now);
+            req.setAttribute("extendableForm", extendableForm);
             req.setAttribute("minimumExtensionTime",
                     DateTimeUtil.formatInput(now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)));
-            req.getRequestDispatcher("/WEB-INF/views/registration/list.jsp").forward(req, resp);
+            req.setAttribute("activities", requiredFormActivities);
+            req.setAttribute("activityMap", activityMap);
+            req.setAttribute("form", f);
+            req.setAttribute("activity", selectedActivity);
+            req.setAttribute("selectedActivityId", activityId);
+            String returnToFallback = activityId > 0
+                    ? req.getContextPath() + "/activities?action=detail&id=" + activityId + "#tab-registration"
+                    : req.getContextPath() + "/activities";
+            req.setAttribute("returnTo", safeReturnTo(req, returnToFallback));
+            req.setAttribute("applications", f != null ? service.getApplications(f.getId()) : List.of());
+            req.getRequestDispatcher("/WEB-INF/views/registration/detail.jsp").forward(req, resp);
         } catch (RuntimeException e) {
             throw new ServletException(e);
         }
@@ -261,7 +302,7 @@ public class RegistrationFormServlet extends HttpServlet {
         String error = null;
         try {
             if ("register".equals(action)) {
-                if (!"STUDENT".equals(user.getType())) {
+                if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
                     return;
                 }
@@ -329,7 +370,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 return;
             }
             if ("registerQuick".equals(action)) {
-                if (!"STUDENT".equals(user.getType())) {
+                if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
                     return;
                 }
@@ -351,7 +392,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 return;
             }
             if ("cancelRegistration".equals(action)) {
-                if (!"STUDENT".equals(user.getType())) {
+                if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
                     return;
                 }
@@ -390,6 +431,21 @@ public class RegistrationFormServlet extends HttpServlet {
                 String[] rawIds = req.getParameterValues("registrationIds");
                 List<Integer> registrationIds = rawIds == null ? List.of()
                         : Arrays.stream(rawIds).map(RegistrationFormServlet::parseInt).toList();
+                Set<Integer> selectedSet = new HashSet<>(registrationIds);
+                boolean seenUnselectedSubmitted = false;
+                boolean outOfOrderBulk = false;
+                for (RegistrationApplication app : service.getApplications(formId)) {
+                    if ("SUBMITTED".equals(app.getStatus())) {
+                        if (selectedSet.contains(app.getId())) {
+                            if (seenUnselectedSubmitted) {
+                                outOfOrderBulk = true;
+                                break;
+                            }
+                        } else {
+                            seenUnselectedSubmitted = true;
+                        }
+                    }
+                }
                 boolean rejecting = "bulkRejectApplications".equals(action);
                 error = rejecting
                         ? service.rejectApplications(formId, registrationIds, req.getParameter("rejectionReason"))
@@ -398,6 +454,10 @@ public class RegistrationFormServlet extends HttpServlet {
                     req.getSession().setAttribute("successMessage",
                             "Đã " + (rejecting ? "từ chối " : "duyệt ") + registrationIds.size()
                                     + " đơn" + (rejecting ? " với cùng một lý do." : "."));
+                    if (outOfOrderBulk) {
+                        req.getSession().setAttribute("warningMessage",
+                                "Cảnh báo: Còn đơn chờ xử lý được gửi trước chưa được xử lý. Hãy lưu ý xử lý các đơn theo thứ tự gửi.");
+                    }
                 } else {
                     req.getSession().setAttribute("errorMessage", error);
                 }
@@ -408,6 +468,8 @@ public class RegistrationFormServlet extends HttpServlet {
             if ("approveApplication".equals(action) || "rejectApplication".equals(action)
                     || "undoApplicationApproval".equals(action) || "undoApplicationRejection".equals(action)) {
                 int registrationId = parseInt(req.getParameter("registrationId"));
+                boolean outOfOrder = ("approveApplication".equals(action) || "rejectApplication".equals(action))
+                        && service.hasEarlierPendingApplication(registrationId);
                 error = switch (action) {
                     case "approveApplication" -> service.reviewApplication(registrationId);
                     case "rejectApplication" -> service.rejectApplication(
@@ -431,7 +493,7 @@ public class RegistrationFormServlet extends HttpServlet {
                         : error.contains("đã đủ số lượng tối đa") ? "capacityError"
                         : error.contains("được gửi trước") ? "fifoError" : "reviewError";
                 resp.sendRedirect(req.getContextPath() + "/registration-forms?action=application&id="
-                        + application.getId() + "&msg=" + message);
+                        + application.getId() + "&msg=" + message + (error == null && outOfOrder ? "&fifoWarn=1" : ""));
                 return;
             }
             if ("extendFormClose".equals(action)) {
@@ -439,15 +501,27 @@ public class RegistrationFormServlet extends HttpServlet {
                 error = service.extendCloseTime(formId, parseDate(req.getParameter("closeAt")));
                 req.getSession().setAttribute(error == null ? "successMessage" : "errorMessage",
                         error == null ? "Đã gia hạn đợt đăng ký." : error);
-                resp.sendRedirect(req.getContextPath() + "/registration-forms");
+                resp.sendRedirect(req.getContextPath() + (formId > 0
+                        ? "/registration-forms?action=view&id=" + formId
+                        : "/registration-forms"));
                 return;
             }
             if ("delete".equals(action)) {
-                error = service.delete(id(req));
+                int delFormId = id(req);
+                RegistrationForm existingForm = service.getById(delFormId);
+                int delActivityId = existingForm != null ? existingForm.getActivityId() : 0;
+                error = service.delete(delFormId);
                 if (error != null) {
                     req.getSession().setAttribute("errorMessage", error);
+                    resp.sendRedirect(req.getContextPath() + (delFormId > 0
+                            ? "/registration-forms?action=view&id=" + delFormId
+                            : "/registration-forms"));
+                } else {
+                    req.getSession().setAttribute("successMessage", "Đã xóa form.");
+                    resp.sendRedirect(req.getContextPath() + (delActivityId > 0
+                            ? "/registration-forms?action=view&activityId=" + delActivityId
+                            : "/registration-forms"));
                 }
-                resp.sendRedirect(req.getContextPath() + "/registration-forms" + (error == null ? "?msg=deleted" : ""));
                 return;
             }
             String rawId = req.getParameter("id");
@@ -504,13 +578,13 @@ public class RegistrationFormServlet extends HttpServlet {
                     }
                     if (error == null) {
                         req.getSession().setAttribute("successMessage", "Đã lưu đợt đăng ký.");
-                        resp.sendRedirect(safeReturnTo(req, req.getContextPath() + "/registration-forms"));
+                        resp.sendRedirect(req.getContextPath() + "/registration-forms?action=view&id=" + f.getId());
                         return;
                     }
                     req.setAttribute("error", error);
                     req.setAttribute("form", f);
                     req.setAttribute("returnTo", safeReturnTo(req,
-                            req.getContextPath() + "/registration-forms"));
+                            req.getContextPath() + "/registration-forms?action=view&id=" + f.getId()));
                     setFormPageAttributes(req, f);
                     req.getRequestDispatcher("/WEB-INF/views/registration/form.jsp").forward(req, resp);
                     return;
@@ -518,7 +592,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 if (existing.getRegistrationCount() > 0) {
                     req.getSession().setAttribute("errorMessage",
                             "Form đã có sinh viên đăng ký nên không thể chỉnh sửa.");
-                    resp.sendRedirect(safeReturnTo(req, req.getContextPath() + "/registration-forms"));
+                    resp.sendRedirect(req.getContextPath() + "/registration-forms?action=view&id=" + f.getId());
                     return;
                 }
                 f.setRegistrationCount(existing.getRegistrationCount());
@@ -536,7 +610,13 @@ public class RegistrationFormServlet extends HttpServlet {
             }
             if (error == null) {
                 req.getSession().setAttribute("successMessage", "Đã lưu đợt đăng ký.");
-                resp.sendRedirect(safeReturnTo(req, req.getContextPath() + "/registration-forms"));
+                RegistrationForm savedForm = f.getId() > 0
+                        ? service.getById(f.getId())
+                        : service.getByActivityId(f.getActivityId());
+                String viewUrl = savedForm != null
+                        ? req.getContextPath() + "/registration-forms?action=view&id=" + savedForm.getId()
+                        : req.getContextPath() + "/registration-forms";
+                resp.sendRedirect(viewUrl);
                 return;
             }
             req.setAttribute("error", error);

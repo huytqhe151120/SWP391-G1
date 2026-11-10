@@ -17,6 +17,7 @@
         else if (reqUri.contains("/student-qa")) navActive = "student-qa";
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
+        else if (reqUri.contains("/registration-forms")) navActive = "registration-forms";
         else if (reqUri.contains("/notification")) navActive = "notifications";
     }
 
@@ -30,6 +31,14 @@
         else if ("edit".equals(actionParam)) breadcrumbCurrent = "Chỉnh sửa hoạt động";
         else if ("detail".equals(actionParam)) breadcrumbCurrent = "Chi tiết hoạt động";
         else breadcrumbCurrent = "Hoạt động ngoại khóa";
+    } else if ("registration-forms".equals(navActive)) {
+        breadcrumbGroup = "Quản lý Hoạt động";
+        if ("create".equals(actionParam)) breadcrumbCurrent = "Tạo đợt đăng ký";
+        else if ("edit".equals(actionParam)) breadcrumbCurrent = "Chỉnh sửa đợt đăng ký";
+        else if ("view".equals(actionParam)) breadcrumbCurrent = "Chi tiết đợt đăng ký";
+        else if ("application".equals(actionParam) || "myApplication".equals(actionParam)) breadcrumbCurrent = "Chi tiết đơn đăng ký";
+        else if ("myApplications".equals(actionParam) || "STUDENT".equals(navType)) breadcrumbCurrent = "Đơn đăng ký";
+        else breadcrumbCurrent = "Đăng ký tham gia";
     } else if ("attendance".equals(navActive)) {
         breadcrumbGroup = "Quản lý Hoạt động";
         breadcrumbCurrent = "Điểm danh sinh viên";
@@ -77,7 +86,7 @@
     pageContext.setAttribute("hdrCurrentKeyword", currentKeyword);
 %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/header.css?v=20261029-4">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/header.css?v=20261107-2">
 <header class="activity-app-header" id="appHeader">
     <!-- Left Zone: Breadcrumb & Navigation Context -->
     <div class="activity-header-left">
@@ -130,7 +139,7 @@
             </button>
 
             <% if (!navType.isEmpty()) { %>
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261029-4">
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261107-2">
             <div class="notif-wrap">
                 <button type="button" id="notifBell" class="notif-bell" aria-label="Thông báo" aria-haspopup="true" aria-expanded="false" title="Thông báo">
                     <svg class="ui-icon notif-bell-icon" viewBox="0 0 24 24" aria-hidden="true">

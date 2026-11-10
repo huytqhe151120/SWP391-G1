@@ -2,6 +2,166 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<%
+    if (request.getAttribute("totalParticipantsCount") == null && request.getAttribute("activity") != null) {
+        com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO actObj =
+                (com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO) request.getAttribute("activity");
+        int actId = actObj.getId();
+        com.swp391.g1.model.RegistrationForm regFormObj =
+                (com.swp391.g1.model.RegistrationForm) request.getAttribute("registrationForm");
+        if (regFormObj == null) {
+            try {
+                regFormObj = new com.swp391.g1.service.impl.RegistrationFormServiceImpl().getByActivityId(actId);
+                request.setAttribute("registrationForm", regFormObj);
+            } catch (Exception ignored) {}
+        }
+        int totalApps = 0;
+        long submittedCnt = 0, approvedCnt = 0, rejectedCnt = 0, cancelledCnt = 0;
+        java.util.List<java.util.Map<String, Object>> recentAppsList = new java.util.ArrayList<>();
+        Integer maxQuota = actObj.getMaxParticipants();
+
+        int totalParts = 0;
+        long attendedCnt = 0, absentCnt = 0, lateOrEarlyCnt = 0, notYetCnt = 0;
+        java.util.Map<com.swp391.g1.model.Enum.ParticipantStatus, Long> stCounts =
+                new java.util.EnumMap<>(com.swp391.g1.model.Enum.ParticipantStatus.class);
+        for (com.swp391.g1.model.Enum.ParticipantStatus ps : com.swp391.g1.model.Enum.ParticipantStatus.values()) {
+            stCounts.put(ps, 0L);
+        }
+        java.util.List<java.util.Map<String, Object>> recentPartsList = new java.util.ArrayList<>();
+
+        try (java.sql.Connection conn = com.swp391.g1.common.DBContext.getConnection()) {
+            if (regFormObj != null) {
+                String appSql = "SELECT r.id, r.status, r.submitted_at, "
+                        + "COALESCE(submitted.student_code, s.code) AS student_code, "
+                        + "COALESCE(submitted.student_name, s.name) AS student_name, "
+                        + "COALESCE(submitted.class_code, mc.code) AS class_code, "
+                        + "p.name AS program_name, m.name AS major_name, d.name AS department_name "
+                        + "FROM dbo.activity_registration r "
+                        + "JOIN dbo.student s ON s.id = r.student_id "
+                        + "LEFT JOIN dbo.main_class mc ON mc.id = s.main_class_id "
+                        + "LEFT JOIN dbo.academic_program p ON p.id = mc.responsible_academic_program_id "
+                        + "LEFT JOIN dbo.major m ON m.id = p.responsible_major_id "
+                        + "LEFT JOIN dbo.department d ON d.id = m.responsible_department_id "
+                        + "LEFT JOIN (SELECT registration_id, "
+                        + "MAX(CASE WHEN field_key='application_student_code' THEN answer_value END) AS student_code, "
+                        + "MAX(CASE WHEN field_key='application_student_name' THEN answer_value END) AS student_name, "
+                        + "MAX(CASE WHEN field_key='application_class_code' THEN answer_value END) AS class_code "
+                        + "FROM dbo.activity_registration_answer GROUP BY registration_id) submitted "
+                        + "ON submitted.registration_id = r.id "
+                        + "WHERE r.form_id = ? "
+                        + "ORDER BY r.submitted_at DESC, r.id DESC";
+                try (java.sql.PreparedStatement ps = conn.prepareStatement(appSql)) {
+                    ps.setInt(1, regFormObj.getId());
+                    try (java.sql.ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            totalApps++;
+                            String st = rs.getString("status");
+                            if ("SUBMITTED".equals(st)) submittedCnt++;
+                            else if ("APPROVED".equals(st)) approvedCnt++;
+                            else if ("REJECTED".equals(st)) rejectedCnt++;
+                            else if ("CANCELLED".equals(st) || "WITHDRAWN".equals(st)) cancelledCnt++;
+                            if (recentAppsList.size() < 5) {
+                                java.util.Map<String, Object> row = new java.util.HashMap<>();
+                                row.put("studentCode", rs.getString("student_code"));
+                                row.put("studentName", rs.getString("student_name"));
+                                row.put("departmentName", rs.getString("department_name"));
+                                row.put("majorName", rs.getString("major_name"));
+                                row.put("academicProgramName", rs.getString("program_name"));
+                                row.put("classCode", rs.getString("class_code"));
+                                java.sql.Timestamp ts = rs.getTimestamp("submitted_at");
+                                row.put("submittedAt", ts != null ? ts.toLocalDateTime() : null);
+                                row.put("status", st);
+                                recentAppsList.add(row);
+                            }
+                        }
+                    }
+                }
+            }
+
+            String partSql = "SELECT ap.id, ap.attendance_status, "
+                    + "s.code AS student_code, s.name AS student_name, mc.code AS class_code, "
+                    + "p.name AS program_name, m.name AS major_name, d.name AS department_name "
+                    + "FROM dbo.activity_participant ap "
+                    + "JOIN dbo.student s ON s.id = ap.student_id "
+                    + "LEFT JOIN dbo.main_class mc ON mc.id = s.main_class_id "
+                    + "LEFT JOIN dbo.academic_program p ON p.id = mc.responsible_academic_program_id "
+                    + "LEFT JOIN dbo.major m ON m.id = p.responsible_major_id "
+                    + "LEFT JOIN dbo.department d ON d.id = m.responsible_department_id "
+                    + "WHERE ap.activity_id = ? "
+                    + "ORDER BY CASE WHEN ap.attendance_status IS NOT NULL AND ap.attendance_status <> 'NOT_YET' THEN 0 ELSE 1 END, "
+                    + "s.name ASC, s.code ASC";
+            try (java.sql.PreparedStatement ps = conn.prepareStatement(partSql)) {
+                ps.setInt(1, actId);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        totalParts++;
+                        String stStr = rs.getString("attendance_status");
+                        com.swp391.g1.model.Enum.ParticipantStatus pst = com.swp391.g1.model.Enum.ParticipantStatus.NOT_YET;
+                        if (stStr != null) {
+                            try {
+                                pst = com.swp391.g1.model.Enum.ParticipantStatus.valueOf(stStr);
+                            } catch (IllegalArgumentException ignored) {}
+                        }
+                        stCounts.put(pst, stCounts.getOrDefault(pst, 0L) + 1L);
+                        if (pst == com.swp391.g1.model.Enum.ParticipantStatus.ATTENDED) attendedCnt++;
+                        else if (pst == com.swp391.g1.model.Enum.ParticipantStatus.ABSENT) absentCnt++;
+                        else if (pst == com.swp391.g1.model.Enum.ParticipantStatus.IN_LATE
+                                || pst == com.swp391.g1.model.Enum.ParticipantStatus.OUT_EARLY) lateOrEarlyCnt++;
+                        else notYetCnt++;
+
+                        if (recentPartsList.size() < 5) {
+                            java.util.Map<String, Object> row = new java.util.HashMap<>();
+                            row.put("studentCode", rs.getString("student_code"));
+                            row.put("studentName", rs.getString("student_name"));
+                            row.put("departmentName", rs.getString("department_name"));
+                            row.put("majorName", rs.getString("major_name"));
+                            row.put("academicProgramName", rs.getString("program_name"));
+                            row.put("mainClassCode", rs.getString("class_code"));
+                            row.put("attendanceStatus", pst);
+                            recentPartsList.add(row);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        int regPct = (maxQuota != null && maxQuota > 0)
+                ? Math.min(100, (int) Math.round((totalApps * 100.0) / maxQuota))
+                : 0;
+        long actualAttended = attendedCnt + lateOrEarlyCnt;
+        int attRatePct = totalParts > 0
+                ? Math.min(100, (int) Math.round((actualAttended * 100.0) / totalParts))
+                : 0;
+
+        request.setAttribute("totalApplicationsCount", totalApps);
+        request.setAttribute("regSubmittedCount", submittedCnt);
+        request.setAttribute("regApprovedCount", approvedCnt);
+        request.setAttribute("regRejectedCount", rejectedCnt);
+        request.setAttribute("regCancelledCount", cancelledCnt);
+        request.setAttribute("recentApplications", recentAppsList);
+        request.setAttribute("registrationMaxQuota", maxQuota);
+        request.setAttribute("registrationProgressPct", regPct);
+
+        request.setAttribute("participantStatuses", com.swp391.g1.model.Enum.ParticipantStatus.values());
+        request.setAttribute("statusCounts", stCounts);
+        request.setAttribute("totalParticipantsCount", totalParts);
+        request.setAttribute("attendedCount", attendedCnt);
+        request.setAttribute("absentCount", absentCnt);
+        request.setAttribute("lateOrEarlyCount", lateOrEarlyCnt);
+        request.setAttribute("notYetCount", notYetCnt);
+        request.setAttribute("actualAttendedCount", actualAttended);
+        request.setAttribute("attendanceRatePct", attRatePct);
+        request.setAttribute("recentParticipants", recentPartsList);
+
+        com.swp391.g1.dto.CurrentUser curUser = com.swp391.g1.util.AuthContext.getCurrentUser(request);
+        boolean canAccAtt = com.swp391.g1.service.AccessPolicy.canTakeAttendance(curUser);
+        request.setAttribute("canAccessAttendance", canAccAtt);
+        boolean canOpenAtt = canAccAtt
+                && actObj.getApprovalStatus() == com.swp391.g1.model.Enum.ApprovalStatus.APPROVED
+                && actObj.getActivityStatus() != com.swp391.g1.model.Enum.ActivityStatus.CANCELLED;
+        request.setAttribute("canOpenAttendancePage", canOpenAtt);
+    }
+%>
 <c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -9,9 +169,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết hoạt động | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261108-6">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -43,36 +203,41 @@
                 <h2>Chi tiết hoạt động</h2>
                 <p>Thông tin tổ chức, thời gian và nhân sự phụ trách hoạt động.</p>
             </div>
-            <c:if test="${canManageActivities}">
-                <div class="activity-heading-actions">
-                    <a class="button button-outline action-btn"
-                       href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
-                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
-                        Điểm danh
-                    </a>
-                    <c:if test="${activity.activityStatus == 'UPCOMING'}">
-                        <a class="button button-primary"
-                           href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
-                    </c:if>
-                </div>
-            </c:if>
             <div class="activity-detail-header-actions">
-                <c:if test="${canManageActivities}">
+                <c:if test="${isStudent}">
                     <c:choose>
-                        <c:when test="${not empty registrationForm}">
-                            <a class="button button-primary-outline"
-                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}&amp;from=activity">
-                                Xem đợt đăng ký
-                            </a>
+                        <c:when test="${activity.nature == 'MANDATORY'}">
+                            <span class="badge status-pill status-green">
+                                Hoạt động bắt buộc tham gia - Bạn đã được tự động ghi danh
+                            </span>
                         </c:when>
-                        <c:when test="${activity.approvalStatus == 'APPROVED' and activity.registrationFormRequired}">
-                            <a class="button button-primary-outline"
-                               href="${pageContext.request.contextPath}/registration-forms?action=create&amp;activityId=${activity.id}">
-                                Tạo đợt đăng ký
-                            </a>
-                        </c:when>
-                        <c:when test="${activity.approvalStatus != 'APPROVED'}">
-                            <span class="field-hint">Chỉ có thể tạo đợt đăng ký sau khi hoạt động được duyệt.</span>
+                        <c:when test="${activity.nature == 'REQUIRE_REGISTRATION'}">
+                            <c:choose>
+                                <c:when test="${canStudentRegister and (empty myRegistration or myRegistration.status eq 'WITHDRAWN')}">
+                                    <c:choose>
+                                        <c:when test="${activity.registrationFormRequired and not empty registrationForm}">
+                                            <a class="button button-primary"
+                                               href="${pageContext.request.contextPath}/registration-forms?action=register&amp;id=${registrationForm.id}&amp;returnTo=${activityReturnUrlParameter}">
+                                                Đợt đăng ký
+                                            </a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <form action="${pageContext.request.contextPath}/registration-forms" method="post" style="display:inline-flex; margin:0;">
+                                                <input type="hidden" name="action" value="registerQuick">
+                                                <input type="hidden" name="activityId" value="${activity.id}">
+                                                <input type="hidden" name="returnTo" value="<c:out value='${activityReturnUrl}'/>">
+                                                <button type="submit" class="button button-primary">Đợt đăng ký</button>
+                                            </form>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:when>
+                                <c:when test="${not empty myRegistration and myRegistration.status eq 'APPROVED'}">
+                                    <span class="badge status-pill status-green">Đã đăng ký tham gia</span>
+                                </c:when>
+                                <c:when test="${not empty myRegistration and myRegistration.status eq 'SUBMITTED'}">
+                                    <span class="badge status-pill status-yellow">Đang chờ duyệt đăng ký</span>
+                                </c:when>
+                            </c:choose>
                         </c:when>
                     </c:choose>
                 </c:if>
@@ -82,6 +247,17 @@
                 </c:if>
             </div>
         </div>
+
+        <c:set var="safeTotalApps" value="${not empty totalApplicationsCount ? totalApplicationsCount : (not empty registrationForm ? registrationForm.registrationCount : 0)}"/>
+        <c:set var="safeRegSubmitted" value="${not empty regSubmittedCount ? regSubmittedCount : 0}"/>
+        <c:set var="safeRegApproved" value="${not empty regApprovedCount ? regApprovedCount : 0}"/>
+        <c:set var="safeRegRejected" value="${not empty regRejectedCount ? regRejectedCount : 0}"/>
+        <c:set var="safeRegCancelled" value="${not empty regCancelledCount ? regCancelledCount : 0}"/>
+        <c:set var="safeRegMaxQuota" value="${not empty registrationMaxQuota ? registrationMaxQuota : (not empty registrationForm and not empty registrationForm.maxParticipants ? registrationForm.maxParticipants : activity.maxParticipants)}"/>
+        <c:set var="safeRegProgressPct" value="${not empty registrationProgressPct ? registrationProgressPct : ((not empty safeRegMaxQuota and safeRegMaxQuota > 0) ? ((safeTotalApps * 100) / safeRegMaxQuota > 100 ? 100 : (safeTotalApps * 100) / safeRegMaxQuota) : 0)}"/>
+        <c:set var="safeTotalParticipants" value="${not empty totalParticipantsCount ? totalParticipantsCount : 0}"/>
+        <c:set var="safeActualAttended" value="${not empty actualAttendedCount ? actualAttendedCount : 0}"/>
+        <c:set var="safeAttendanceRatePct" value="${not empty attendanceRatePct ? attendanceRatePct : 0}"/>
 
         <div class="activity-tabs-nav" role="tablist">
             <button type="button" class="activity-tab-btn active" id="btn-tab-info" data-tab="tab-info" role="tab" aria-selected="true" aria-controls="tab-info">
@@ -93,6 +269,18 @@
             <button type="button" class="activity-tab-btn" id="btn-tab-partner" data-tab="tab-partner" role="tab" aria-selected="false" aria-controls="tab-partner">
                 Đối tác
             </button>
+            <c:if test="${not isStudent}">
+                <c:if test="${activity.registrationFormRequired}">
+                    <button type="button" class="activity-tab-btn" id="btn-tab-registration" data-tab="tab-registration" role="tab" aria-selected="false" aria-controls="tab-registration">
+                        Đăng ký tham gia
+                        <span class="activity-tab-badge"><c:out value="${safeTotalApps}"/></span>
+                    </button>
+                </c:if>
+                <button type="button" class="activity-tab-btn" id="btn-tab-attendance" data-tab="tab-attendance" role="tab" aria-selected="false" aria-controls="tab-attendance">
+                    Điểm danh sinh viên
+                    <span class="activity-tab-badge"><c:out value="${safeTotalParticipants}"/></span>
+                </button>
+            </c:if>
         </div>
 
         <div class="activity-detail-content">
@@ -105,6 +293,17 @@
                         <div class="detail-item"><dt>Tên hoạt động</dt><dd><c:out value="${activity.name}" default="—"/></dd></div>
                         <div class="detail-item"><dt>Học kỳ</dt><dd><c:out value="${activity.semesterCode}" default="—"/> <c:if test="${not empty activity.semesterName}">- <c:out value="${activity.semesterName}"/></c:if></dd></div>
                         <div class="detail-item"><dt>Loại hoạt động</dt><dd><c:out value="${activity.activityTypeCode}" default="—"/> <c:if test="${not empty activity.activityTypeName}">- <c:out value="${activity.activityTypeName}"/></c:if></dd></div>
+                        <div class="detail-item">
+                            <dt>Cấp tổ chức</dt>
+                            <dd>
+                                <c:choose>
+                                    <c:when test="${not empty activity.organizationLevelName}">
+                                        <c:out value="${activity.organizationLevelName}"/> (Hệ số: <c:out value="${activity.formattedOrganizationLevelCoefficient}"/>)
+                                    </c:when>
+                                    <c:otherwise>—</c:otherwise>
+                                </c:choose>
+                            </dd>
+                        </div>
                         <div class="detail-item"><dt>Trạng thái hoạt động</dt><dd><span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span></dd></div>
                         <div class="detail-item"><dt>Trạng thái duyệt</dt><dd><span class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span></dd></div>
                     </dl>
@@ -127,6 +326,7 @@
                         <div class="detail-item"><dt>Bắt buộc điền form</dt><dd><c:out value="${activity.registrationFormRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Yêu cầu bài tổng kết</dt><dd><c:out value="${activity.summaryRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Số lượng tối đa</dt><dd><c:out value="${activity.maxParticipants}" default="Không giới hạn"/></dd></div>
+                        <div class="detail-item field-wide"><dt>Đối tượng tham gia</dt><dd><c:out value="${activity.targetParticipantsSummary}" default="Toàn trường"/></dd></div>
                         <div class="detail-item field-wide"><dt>Địa điểm</dt><dd><c:out value="${activity.address}" default="Chưa cập nhật"/></dd></div>
                         <div class="detail-item field-wide"><dt>Mô tả</dt><dd class="activity-detail-description"><c:out value="${activity.description}" default="Chưa có mô tả"/></dd></div>
                     </dl>
@@ -166,7 +366,7 @@
                                 <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Mã đơn vị</th>
                                 <th scope="col">Tên đơn vị</th>
-                                <th scope="col">Trạng thái đơn vị</th>
+                                <th scope="col" class="col-status">Trạng thái đơn vị</th>
                                 <th scope="col">Thời gian thêm</th>
                                 <c:if test="${canRemoveStaff}">
                                     <th scope="col" class="activity-action-column">Thao tác</th>
@@ -188,7 +388,7 @@
                                             <td>${loop.index + 1}</td>
                                             <td><strong><c:out value="${cd.departmentCode}"/></strong></td>
                                             <td><c:out value="${cd.departmentName}"/></td>
-                                            <td><span class="badge status-pill ${st:css(cd.departmentStatus)}">${st:label(cd.departmentStatus)}</span></td>
+                                            <td class="col-status"><span class="badge status-pill ${st:css(cd.departmentStatus)}">${st:label(cd.departmentStatus)}</span></td>
                                             <td><c:out value="${cd.formattedCreatedAt}"/></td>
                                             <c:if test="${canRemoveStaff}">
                                                 <td class="activity-action-column">
@@ -278,7 +478,7 @@
                                 <th scope="col" class="activity-index-column">STT</th>
                                 <th scope="col">Mã nhân sự</th>
                                 <th scope="col">Họ và tên</th>
-                                <th scope="col">Trạng thái nhân sự</th>
+                                <th scope="col" class="col-status">Trạng thái nhân sự</th>
                                 <th scope="col">Chức vụ</th>
                                 <th scope="col">Thời gian phân công</th>
                                 <c:if test="${canRemoveStaff && activity.activityStatus == 'UPCOMING'}">
@@ -301,7 +501,7 @@
                                             <td>${loop.index + 1}</td>
                                             <td><strong><c:out value="${ast.staffCode}"/></strong></td>
                                             <td><c:out value="${ast.staffName}"/></td>
-                                            <td><span class="badge status-pill ${st:css(ast.staffStatus)}">${st:label(ast.staffStatus)}</span></td>
+                                            <td class="col-status"><span class="badge status-pill ${st:css(ast.staffStatus)}">${st:label(ast.staffStatus)}</span></td>
                                             <td><c:out value="${ast.position}" default="Nhân viên"/></td>
                                             <td><c:out value="${ast.formattedAssignedOn}"/></td>
                                             <c:if test="${canRemoveStaff && activity.activityStatus == 'UPCOMING'}">
@@ -394,7 +594,7 @@
                                 <th scope="col">Phụ trách chính</th>
                                 <th scope="col">Loại lời mời</th>
                                 <th scope="col">Lời nhắn</th>
-                                <th scope="col">Trạng thái</th>
+                                <th scope="col" class="col-status">Trạng thái</th>
                                 <th scope="col">Người mời</th>
                                 <th scope="col">Thời gian mời</th>
                                 <th scope="col" class="activity-action-column">Thao tác</th>
@@ -427,7 +627,7 @@
                                                     </c:otherwise>
                                                 </c:choose>
                                             </td>
-                                            <td>
+                                            <td class="col-status">
                                                 <span class="badge status-pill ${st:css(inv.approvalStatus)}">
                                                     <c:choose>
                                                         <c:when test="${inv.approvalStatus == 'PENDING'}">Chờ phản hồi</c:when>
@@ -607,7 +807,7 @@
                                 <th scope="col">Công ty đối tác</th>
                                 <th scope="col">Phụ trách chính</th>
                                 <th scope="col">Chức vụ</th>
-                                <th scope="col">Trạng thái</th>
+                                <th scope="col" class="col-status">Trạng thái</th>
                                 <th scope="col">Bắt đầu hợp tác</th>
 `                            </tr>
                             </thead>
@@ -627,7 +827,7 @@
                                             <td><strong><c:out value="${partner.partnerCompanyCode}"/></strong> - <c:out value="${partner.partnerCompanyName}"/></td>
                                             <td><c:out value="${partner.partnerStaffName}" default="—"/></td>
                                             <td><c:out value="${partner.partnerStaffPosition}" default="—"/></td>
-                                            <td>
+                                            <td class="col-status">
                                                 <span class="badge status-pill ${partner.active ? 'status-green' : 'status-gray'}">
                                                     ${partner.active ? 'Đang hoạt động' : 'Không hoạt động'}
                                                 </span>
@@ -662,7 +862,7 @@
                                 <th scope="col">Họ và tên</th>
                                 <th scope="col">Công ty</th>
                                 <th scope="col">Chức vụ</th>
-                                <th scope="col">Trạng thái</th>
+                                <th scope="col" class="col-status">Trạng thái</th>
                                 <th scope="col">Thời gian phân công</th>
                                 <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
                                     <th scope="col" class="activity-action-column">Thao tác</th>
@@ -686,7 +886,7 @@
                                             <td><c:out value="${aps.partnerStaffName}"/></td>
                                             <td><c:out value="${aps.companyName}" default="—"/></td>
                                             <td><c:out value="${aps.position}" default="—"/></td>
-                                            <td><span class="badge status-pill ${st:css(aps.status)}">${st:label(aps.status)}</span></td>
+                                            <td class="col-status"><span class="badge status-pill ${st:css(aps.status)}">${st:label(aps.status)}</span></td>
                                             <td><c:out value="${aps.formattedAssignedOn}"/></td>
                                             <c:if test="${canManagePartnerStaff && activity.activityStatus == 'UPCOMING'}">
                                                 <td class="activity-action-column">
@@ -756,6 +956,335 @@
                     </c:if>
                 </section>
             </div>
+
+            <c:if test="${not isStudent}">
+                <c:if test="${activity.registrationFormRequired}">
+                <!-- TAB 4: ĐĂNG KÝ THAM GIA -->
+                <div id="tab-registration" class="activity-tab-pane hub-edge-pane" role="tabpanel" aria-labelledby="btn-tab-registration">
+                    <c:if test="${canManageActivities}">
+                        <div class="attendance-summary-actions">
+                            <c:choose>
+                                <c:when test="${not empty registrationForm}">
+                                    <a class="button button-primary-outline button-sm"
+                                       href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}">
+                                        Quản lý &amp; Cấu hình Đợt đăng ký
+                                    </a>
+                                </c:when>
+                                <c:when test="${activity.approvalStatus == 'APPROVED' and activity.registrationFormRequired}">
+                                    <a class="button button-primary-outline button-sm"
+                                       href="${pageContext.request.contextPath}/registration-forms?action=view&amp;activityId=${activity.id}">
+                                        Quản lý &amp; Cấu hình Đợt đăng ký
+                                    </a>
+                                </c:when>
+                                <c:otherwise>
+                                    <button type="button" class="button button-primary-outline button-sm" disabled
+                                            title="Chỉ có thể tạo và quản lý đợt đăng ký sau khi hoạt động được duyệt">
+                                        Cấu hình Đợt đăng ký
+                                    </button>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </c:if>
+                    <div class="attendance-summary">
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Tiêu đề form</span>
+                            <strong class="activity-name">
+                                <c:choose>
+                                    <c:when test="${not empty registrationForm}"><c:out value="${registrationForm.title}"/></c:when>
+                                    <c:otherwise><c:out value="${activity.name}"/></c:otherwise>
+                                </c:choose>
+                            </strong>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Mở đăng ký</span>
+                            <span class="activity-time">
+                                <c:choose>
+                                    <c:when test="${not empty registrationForm and not empty registrationForm.openAt}"><c:out value="${dt:format(registrationForm.openAt)}"/></c:when>
+                                    <c:when test="${not empty registrationForm}">Không giới hạn</c:when>
+                                    <c:otherwise>Chưa thiết lập</c:otherwise>
+                                </c:choose>
+                            </span>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Đóng đăng ký</span>
+                            <span class="activity-time">
+                                <c:choose>
+                                    <c:when test="${not empty registrationForm and not empty registrationForm.closeAt}"><c:out value="${dt:format(registrationForm.closeAt)}"/></c:when>
+                                    <c:when test="${not empty registrationForm}">Không giới hạn</c:when>
+                                    <c:otherwise>Chưa thiết lập</c:otherwise>
+                                </c:choose>
+                            </span>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Trạng thái đợt đăng ký</span>
+                            <c:choose>
+                                <c:when test="${not empty registrationForm}">
+                                    <span class="badge status-pill ${st:css(registrationForm.status)}">${st:label(registrationForm.status)}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="badge status-pill status-gray">Chưa mở</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Tiến độ chỉ tiêu</span>
+                            <c:choose>
+                                <c:when test="${not empty safeRegMaxQuota and safeRegMaxQuota > 0}">
+                                    <span class="activity-code"><c:out value="${safeTotalApps}"/> / <c:out value="${safeRegMaxQuota}"/> SV</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="activity-code"><c:out value="${safeTotalApps}"/> Không giới hạn SV</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                        <div class="attendance-summary-progress">
+                            <div class="hub-progress-track hub-progress-track--full" role="progressbar"
+                                 aria-valuenow="${safeRegProgressPct}" aria-valuemin="0" aria-valuemax="100">
+                                <div class="hub-progress-fill" style="width: ${safeRegProgressPct}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="attendance-counts" aria-label="Thống kê đơn đăng ký">
+                        <li class="badge status-pill status-yellow">Chờ xử lý: <strong><c:out value="${safeRegSubmitted}"/></strong></li>
+                        <li class="badge status-pill status-green">Đã duyệt: <strong><c:out value="${safeRegApproved}"/></strong></li>
+                        <li class="badge status-pill status-red">Từ chối: <strong><c:out value="${safeRegRejected}"/></strong></li>
+                        <li class="badge status-pill status-gray">Đã hủy / Rút: <strong><c:out value="${safeRegCancelled}"/></strong></li>
+                    </ul>
+
+                    <div class="activity-bulk-toolbar">
+                        <span class="activity-bulk-selection">
+                            Đơn đăng ký mới nhất (hiển thị tối đa 5 đơn gần nhất trong tổng số <c:out value="${safeTotalApps}"/> đơn đăng ký).
+                        </span>
+                        <c:if test="${canManageActivities}">
+                            <div class="activity-bulk-actions">
+                                <c:choose>
+                                    <c:when test="${not empty registrationForm}">
+                                        <a class="button button-primary button-sm"
+                                           href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}&amp;tab=applications#tab-form-applications">
+                                            Xem tất cả đơn đăng ký
+                                        </a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <button type="button" class="button button-primary button-sm" disabled
+                                                title="Chưa có đợt đăng ký để xem danh sách đơn">
+                                            Xem tất cả đơn đăng ký
+                                        </button>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </c:if>
+                    </div>
+
+                    <div class="table-wrap activity-table-wrap">
+                        <table class="hub-recent-table hub-recent-table--registration">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="col-code">Mã SV</th>
+                                <th scope="col" class="col-object-name">Họ tên</th>
+                                <th scope="col" class="col-academic">Khoa</th>
+                                <th scope="col" class="col-academic">Ngành</th>
+                                <th scope="col" class="col-academic col-program">Chương trình đào tạo</th>
+                                <th scope="col" class="col-academic col-class">Lớp</th>
+                                <th scope="col" class="col-datetime">Thời gian gửi</th>
+                                <th scope="col" class="col-status activity-status-column">Trạng thái duyệt</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:choose>
+                                <c:when test="${empty recentApplications}">
+                                    <tr>
+                                        <td class="empty-state activity-empty-state" colspan="8">
+                                            <span class="empty-state-mark empty-state-mark--icon" aria-hidden="true">
+                                                <svg class="ui-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                            </span>
+                                            <strong>Chưa có sinh viên gửi đơn</strong>
+                                            <span>Đơn đăng ký sẽ xuất hiện tại đây sau khi sinh viên gửi form.</span>
+                                        </td>
+                                    </tr>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:forEach items="${recentApplications}" var="appItem">
+                                        <tr>
+                                            <td class="col-code"><span class="activity-code"><c:out value="${appItem.studentCode}" default="—"/></span></td>
+                                            <td class="col-object-name" title="<c:out value='${appItem.studentName}'/>">
+                                                <strong class="activity-name" title="<c:out value='${appItem.studentName}'/>"><c:out value="${appItem.studentName}" default="—"/></strong>
+                                            </td>
+                                            <td class="col-academic" title="<c:out value='${appItem.departmentName}'/>"><c:out value="${appItem.departmentName}" default="—"/></td>
+                                            <td class="col-academic" title="<c:out value='${appItem.majorName}'/>"><c:out value="${appItem.majorName}" default="—"/></td>
+                                            <td class="col-academic col-program" title="<c:out value='${appItem.academicProgramName}'/>"><c:out value="${appItem.academicProgramName}" default="—"/></td>
+                                            <td class="col-academic col-class" title="<c:out value='${appItem.classCode}'/>"><c:out value="${appItem.classCode}" default="—"/></td>
+                                            <td class="col-datetime"><span class="activity-time"><c:out value="${not empty appItem.submittedAt ? dt:format(appItem.submittedAt) : '—'}"/></span></td>
+                                            <td class="col-status activity-status-column">
+                                                <c:choose>
+                                                    <c:when test="${appItem.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
+                                                    <c:when test="${appItem.status eq 'REJECTED'}"><span class="badge status-pill status-red">Từ chối</span></c:when>
+                                                    <c:when test="${appItem.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Sinh viên đã hủy</span></c:when>
+                                                    <c:when test="${appItem.status eq 'WITHDRAWN'}"><span class="badge status-pill status-blue">Sinh viên đã rút đơn</span></c:when>
+                                                    <c:otherwise><span class="badge status-pill status-yellow">Chờ xử lý</span></c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <c:if test="${not empty registrationForm}">
+                        <div class="activity-pagination">
+                            <span class="activity-pagination-summary">
+                                Hiển thị <c:out value="${not empty recentApplications ? recentApplications.size() : 0}"/> trong <c:out value="${safeTotalApps}"/> đơn đăng ký
+                            </span>
+                            <a class="activity-action-link"
+                               href="${pageContext.request.contextPath}/registration-forms?action=view&amp;id=${registrationForm.id}&amp;tab=applications#tab-form-applications">
+                                Xem tất cả <c:out value="${safeTotalApps}"/> đơn đăng ký →
+                            </a>
+                        </div>
+                    </c:if>
+                </div>
+                </c:if>
+
+                <!-- TAB 5: ĐIỂM DANH SINH VIÊN -->
+                <div id="tab-attendance" class="activity-tab-pane hub-edge-pane" role="tabpanel" aria-labelledby="btn-tab-attendance">
+                    <div class="attendance-summary">
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Thời gian bắt đầu</span>
+                            <span class="activity-time">
+                                <c:choose>
+                                    <c:when test="${not empty activity.startTime}">${dt:format(activity.startTime)}</c:when>
+                                    <c:otherwise>Chưa xác định</c:otherwise>
+                                </c:choose>
+                            </span>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Thời gian kết thúc</span>
+                            <span class="activity-time">
+                                <c:choose>
+                                    <c:when test="${not empty activity.endTime}">${dt:format(activity.endTime)}</c:when>
+                                    <c:otherwise>Chưa xác định</c:otherwise>
+                                </c:choose>
+                            </span>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Trạng thái hoạt động</span>
+                            <span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span>
+                        </div>
+                        <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Tỷ lệ tham gia</span>
+                            <span class="activity-code"><c:out value="${safeActualAttended}"/> / <c:out value="${safeTotalParticipants}"/> sinh viên (<c:out value="${safeAttendanceRatePct}"/>%)</span>
+                        </div>
+                        <div class="attendance-summary-progress">
+                            <div class="hub-progress-track hub-progress-track--full" role="progressbar"
+                                 aria-valuenow="${safeAttendanceRatePct}" aria-valuemin="0" aria-valuemax="100">
+                                <div class="hub-progress-fill" style="width: ${safeAttendanceRatePct}%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ul class="attendance-counts" aria-label="Thống kê điểm danh">
+                        <c:choose>
+                            <c:when test="${not empty participantStatuses}">
+                                <c:forEach var="status" items="${participantStatuses}">
+                                    <li class="badge status-pill ${st:css(status)}">${st:label(status)}: <strong><c:out value="${not empty statusCounts[status] ? statusCounts[status] : 0}"/></strong></li>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <li class="badge status-pill status-gray">Chưa điểm danh: <strong>0</strong></li>
+                                <li class="badge status-pill status-green">Có mặt: <strong>0</strong></li>
+                                <li class="badge status-pill status-red">Vắng mặt: <strong>0</strong></li>
+                                <li class="badge status-pill status-yellow">Vào trễ: <strong>0</strong></li>
+                                <li class="badge status-pill status-yellow">Về sớm: <strong>0</strong></li>
+                            </c:otherwise>
+                        </c:choose>
+                    </ul>
+
+                    <div class="activity-bulk-toolbar">
+                        <span class="activity-bulk-selection">
+                            Lịch sử điểm danh gần nhất (hiển thị tối đa 5 sinh viên trong tổng số <c:out value="${safeTotalParticipants}"/> sinh viên tham gia).
+                        </span>
+                        <c:if test="${canAccessAttendance}">
+                            <div class="activity-bulk-actions">
+                                <c:choose>
+                                    <c:when test="${canOpenAttendancePage}">
+                                        <a class="button button-primary button-sm"
+                                           href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
+                                            Xem tất cả &amp; Điểm danh Sinh viên
+                                        </a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <button type="button" class="button button-primary button-sm" disabled
+                                                title="Chỉ có thể điểm danh khi hoạt động Đã duyệt / Đang diễn ra">
+                                            Xem tất cả &amp; Điểm danh Sinh viên
+                                        </button>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </c:if>
+                    </div>
+
+                    <div class="table-wrap activity-table-wrap">
+                        <table class="hub-recent-table hub-recent-table--attendance">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="col-code">Mã SV</th>
+                                <th scope="col" class="col-object-name">Họ tên</th>
+                                <th scope="col" class="col-academic">Khoa</th>
+                                <th scope="col" class="col-academic">Ngành</th>
+                                <th scope="col" class="col-academic col-program">Chương trình đào tạo</th>
+                                <th scope="col" class="col-academic col-class">Lớp</th>
+                                <th scope="col" class="col-status activity-status-column">Trạng thái điểm danh</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:choose>
+                                <c:when test="${empty recentParticipants}">
+                                    <tr>
+                                        <td class="empty-state activity-empty-state" colspan="7">
+                                            <span class="empty-state-mark empty-state-mark--icon" aria-hidden="true">
+                                                <svg class="ui-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                            </span>
+                                            <strong>Chưa có sinh viên tham gia</strong>
+                                            <span>Hoạt động này chưa có sinh viên nào trong danh sách tham gia.</span>
+                                        </td>
+                                    </tr>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:forEach items="${recentParticipants}" var="pItem">
+                                        <tr>
+                                            <td class="col-code"><span class="activity-code"><c:out value="${pItem.studentCode}" default="—"/></span></td>
+                                            <td class="col-object-name" title="<c:out value='${pItem.studentName}'/>">
+                                                <strong class="activity-name" title="<c:out value='${pItem.studentName}'/>"><c:out value="${pItem.studentName}" default="—"/></strong>
+                                            </td>
+                                            <td class="col-academic" title="<c:out value='${pItem.departmentName}'/>"><c:out value="${pItem.departmentName}" default="—"/></td>
+                                            <td class="col-academic" title="<c:out value='${pItem.majorName}'/>"><c:out value="${pItem.majorName}" default="—"/></td>
+                                            <td class="col-academic col-program" title="<c:out value='${pItem.academicProgramName}'/>"><c:out value="${pItem.academicProgramName}" default="—"/></td>
+                                            <td class="col-academic col-class" title="<c:out value='${pItem.mainClassCode}'/>"><c:out value="${pItem.mainClassCode}" default="—"/></td>
+                                            <td class="col-status activity-status-column">
+                                                <span class="badge status-pill ${st:css(pItem.attendanceStatus)}">${st:label(pItem.attendanceStatus)}</span>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <c:if test="${canOpenAttendancePage}">
+                        <div class="activity-pagination">
+                            <span class="activity-pagination-summary">
+                                Hiển thị <c:out value="${not empty recentParticipants ? recentParticipants.size() : 0}"/> trong <c:out value="${safeTotalParticipants}"/> sinh viên
+                            </span>
+                            <a class="activity-action-link"
+                               href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
+                                Xem tất cả <c:out value="${safeTotalParticipants}"/> sinh viên →
+                            </a>
+                        </div>
+                    </c:if>
+                </div>
+            </c:if>
         </div>
 
         <div class="detail-actions activity-detail-actions">
@@ -804,7 +1333,7 @@
     <p id="activity-message-modal-body" style="white-space: pre-wrap; word-break: break-word;"></p>
     <div style="text-align: right;"><button type="button" class="button" id="activity-message-modal-close">Đóng</button></div>
 </dialog>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261107-6"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

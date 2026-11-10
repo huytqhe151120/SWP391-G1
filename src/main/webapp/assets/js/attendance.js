@@ -1,12 +1,21 @@
 (function () {
     var attendanceForm = document.getElementById("attendance-form");
     var removeForm = document.getElementById("remove-participants-form");
+    var batchGradeForm = document.getElementById("batch-grade-form");
+    var batchGradeTrigger = document.querySelector("[data-batch-grade-trigger]");
+    var batchGradeCountSpan = document.querySelector("[data-batch-grade-count]");
+    var batchGradeTargetCount = document.querySelector("[data-batch-grade-target-count]");
+    var batchGradeClose = document.querySelector("[data-batch-grade-close]");
+    var batchGradeInputs = document.querySelector("[data-batch-grade-inputs]");
+
     var selectAll = document.querySelector("[data-select-all-participants]");
     var checkboxes = Array.from(document.querySelectorAll("[data-participant-select]"));
     var selects = Array.from(document.querySelectorAll("[data-attendance-select]"));
     var bulkButtons = Array.from(document.querySelectorAll("[data-bulk-status]"));
     var markAllButtons = Array.from(document.querySelectorAll("[data-mark-all-status]"));
+    var singleGradeButtons = Array.from(document.querySelectorAll("[data-save-single-grade]"));
     var alertBox = document.getElementById("attendance-ajax-alert");
+    var successBox = document.getElementById("attendance-ajax-success");
 
     var removeSelectionLabel = removeForm && removeForm.querySelector("[data-remove-count]");
     var removeSubmit = removeForm && removeForm.querySelector("[data-remove-submit]");
@@ -26,6 +35,11 @@
 
     var pendingRequests = 0;
     var STATUS_CLASSES = ["status-green", "status-yellow", "status-red", "status-gray"];
+    var PRESENT_STATUSES = ["ATTENDED", "IN_LATE", "OUT_EARLY"];
+
+    function isPresentStatus(status) {
+        return PRESENT_STATUSES.indexOf(status) !== -1;
+    }
 
     function getStatusClass(status) {
         switch (status) {
@@ -52,11 +66,27 @@
     }
 
     function showError(message) {
+        if (successBox) {
+            successBox.hidden = true;
+            successBox.textContent = "";
+        }
         if (!alertBox) {
             return;
         }
         alertBox.textContent = message;
         alertBox.hidden = false;
+    }
+
+    function showSuccess(message) {
+        if (alertBox) {
+            alertBox.hidden = true;
+            alertBox.textContent = "";
+        }
+        if (!successBox) {
+            return;
+        }
+        successBox.textContent = message;
+        successBox.hidden = false;
     }
 
     function clearError() {
@@ -78,12 +108,88 @@
         });
     }
 
+    function applyParticipantScores(participantsMap) {
+        if (!participantsMap) {
+            return;
+        }
+        Object.keys(participantsMap).forEach(function (pid) {
+            var info = participantsMap[pid];
+            if (!info) {
+                return;
+            }
+            var attChip = document.querySelector('[data-attendance-score-for="' + pid + '"]');
+            if (attChip && info.attendanceScore !== undefined) {
+                attChip.textContent = "(" + info.attendanceScore + "đ)";
+            }
+            var evalInput = document.querySelector('[data-eval-score-input="' + pid + '"]');
+            var fbInput = document.querySelector('[data-eval-feedback-input="' + pid + '"]');
+            var saveBtn = document.querySelector('[data-save-single-grade="' + pid + '"]');
+            var present = Boolean(info.present);
+            if (evalInput) {
+                evalInput.disabled = !present;
+                if (info.evalScore !== undefined) {
+                    evalInput.value = info.evalScore;
+                }
+            }
+            if (fbInput) {
+                fbInput.disabled = !present;
+                fbInput.placeholder = present ? "Nhận xét / Feedback..." : "Chỉ chấm khi có mặt";
+                if (info.feedback !== undefined) {
+                    fbInput.value = info.feedback;
+                }
+            }
+            if (saveBtn) {
+                saveBtn.disabled = !present;
+            }
+            var partScoreBadge = document.querySelector('[data-participation-score-for="' + pid + '"]');
+            if (partScoreBadge && info.participationScore !== undefined) {
+                partScoreBadge.textContent = info.participationScore;
+            }
+            var finalBadge = document.querySelector('[data-final-point-for="' + pid + '"]');
+            if (finalBadge && info.finalPoint !== undefined) {
+                finalBadge.textContent = info.finalPoint;
+                var numericVal = parseFloat(info.finalPoint) || 0;
+                finalBadge.classList.toggle("is-positive", numericVal > 0);
+                finalBadge.classList.toggle("is-negative", numericVal < 0);
+            }
+            if (info.gradedBy) {
+                var gradedByEl = document.querySelector('[data-graded-by-for="' + pid + '"]');
+                if (!gradedByEl) {
+                    var inlineWrap = document.querySelector('[data-grade-inline="' + pid + '"]');
+                    if (inlineWrap && inlineWrap.parentNode) {
+                        gradedByEl = document.createElement("small");
+                        gradedByEl.className = "attendance-graded-by";
+                        gradedByEl.setAttribute("data-graded-by-for", pid);
+                        inlineWrap.parentNode.appendChild(gradedByEl);
+                    }
+                }
+                if (gradedByEl) {
+                    gradedByEl.textContent = "Chấm bởi: " + info.gradedBy;
+                }
+            }
+        });
+    }
+
     function getParticipantCurrentStatus(participantId) {
         var select = selectByParticipantId[participantId];
         if (!select) {
             return "";
         }
         return select.dataset.savedValue || select.value;
+    }
+
+    function getSelectedPresentParticipantIds() {
+        var ids = [];
+        checkboxes.forEach(function (checkbox) {
+            if (!checkbox.checked) {
+                return;
+            }
+            var pid = checkbox.dataset.participantId;
+            if (isPresentStatus(getParticipantCurrentStatus(pid))) {
+                ids.push(pid);
+            }
+        });
+        return ids;
     }
 
     function getMatchingParticipantsForBulk(button) {
@@ -117,11 +223,28 @@
             return cb.dataset.removable === "true";
         });
         var removableCount = removableCheckboxes.length;
+        var presentIds = getSelectedPresentParticipantIds();
 
         if (selectAll) {
             selectAll.disabled = checkboxes.length === 0;
             selectAll.checked = selectedCount > 0 && selectedCount === checkboxes.length;
             selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+
+        if (batchGradeTrigger) {
+            var gradeDisabled = presentIds.length === 0 || pendingRequests > 0;
+            batchGradeTrigger.disabled = gradeDisabled;
+            batchGradeTrigger.hidden = gradeDisabled;
+            batchGradeTrigger.style.display = gradeDisabled ? "none" : "";
+            if (batchGradeCountSpan) {
+                batchGradeCountSpan.textContent = presentIds.length;
+            }
+            if (batchGradeTargetCount) {
+                batchGradeTargetCount.textContent = presentIds.length;
+            }
+            if (gradeDisabled && batchGradeForm) {
+                batchGradeForm.hidden = true;
+            }
         }
 
         bulkButtons.forEach(function (button) {
@@ -204,23 +327,7 @@
                 if (redirectedUrl.indexOf("/login") !== -1) {
                     throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng tải lại trang và đăng nhập lại.");
                 }
-                return fetch(attendanceForm.getAttribute("action"), {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-                    },
-                    body: new URLSearchParams(Object.assign({action: "save", activityId: activityId},
-                        Object.keys(statusMap).reduce(function (acc, pid) {
-                            acc["status_" + pid] = statusMap[pid];
-                            return acc;
-                        }, {}))).toString()
-                }).then(function (fallbackRes) {
-                    if (!fallbackRes.ok) {
-                        throw new Error("Không thể lưu trạng thái điểm danh.");
-                    }
-                    return {ok: true, fallback: true};
-                });
+                throw new Error("Không thể lưu trạng thái điểm danh.");
             }
             return response.text().then(function (rawText) {
                 var data = null;
@@ -249,7 +356,7 @@
                     var checkbox = checkboxByParticipantId[pid];
                     if (checkbox) {
                         checkbox.dataset.removable = "false";
-                        checkbox.title = "Sinh viên đã được điểm danh (chỉ có thể thao tác điểm danh, không thể xóa khỏi danh sách)";
+                        checkbox.title = "Sinh viên đã được điểm danh (chỉ có thể thao tác điểm danh/chấm điểm, không thể xóa khỏi danh sách)";
                     }
                     if (!data.counts) {
                         var oldBadge = document.querySelector('[data-status-count="' + oldStatus + '"]');
@@ -264,6 +371,7 @@
                 }
             });
             updateStatusCountBadges(data.counts);
+            applyParticipantScores(data.participants);
         }).catch(function (err) {
             participantIds.forEach(function (pid) {
                 var select = selectByParticipantId[pid];
@@ -274,6 +382,67 @@
                 }
             });
             showError(err && err.message ? err.message : "Đã xảy ra lỗi khi lưu điểm danh.");
+        }).finally(function () {
+            pendingRequests = Math.max(0, pendingRequests - 1);
+            refreshSelection();
+        });
+    }
+
+    function saveEvaluationGrades(participantIds, evalScore, feedback, isBatch) {
+        if (!attendanceForm || !participantIds || participantIds.length === 0) {
+            return;
+        }
+        var numericScore = parseFloat(String(evalScore).replace(",", "."));
+        if (isNaN(numericScore) || numericScore < 0 || numericScore > 5) {
+            showError("Điểm đánh giá tham gia phải nằm trong khoảng từ 0 đến 5 điểm.");
+            return;
+        }
+        clearError();
+        var activityId = attendanceForm.dataset.activityId;
+        var params = new URLSearchParams();
+        params.set("action", isBatch ? "batchGradeAjax" : "saveGradeAjax");
+        params.set("activityId", activityId);
+        params.set("evalScore", String(numericScore));
+        params.set("feedback", feedback || "");
+        participantIds.forEach(function (pid) {
+            params.append("participantId", pid);
+        });
+
+        pendingRequests++;
+        refreshSelection();
+
+        fetch(attendanceForm.getAttribute("action"), {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            body: params.toString()
+        }).then(function (response) {
+            return response.text().then(function (rawText) {
+                var data = null;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (e) {
+                    throw new Error("Không thể đọc phản hồi chấm điểm.");
+                }
+                if (!response.ok || !data || !data.ok) {
+                    throw new Error((data && data.error) || "Không thể lưu điểm tham gia.");
+                }
+                return data;
+            });
+        }).then(function (data) {
+            applyParticipantScores(data.participants);
+            if (isBatch) {
+                showSuccess("Đã chấm điểm đánh giá tham gia cho " + (data.updated || participantIds.length) + " sinh viên.");
+                if (batchGradeForm) {
+                    batchGradeForm.hidden = true;
+                }
+            } else {
+                showSuccess("Đã lưu điểm đánh giá tham gia và cập nhật điểm tích lũy.");
+            }
+        }).catch(function (err) {
+            showError(err && err.message ? err.message : "Đã xảy ra lỗi khi lưu điểm tham gia.");
         }).finally(function () {
             pendingRequests = Math.max(0, pendingRequests - 1);
             refreshSelection();
@@ -292,6 +461,48 @@
             saveStatuses(payload);
         });
     });
+
+    singleGradeButtons.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var pid = btn.getAttribute("data-save-single-grade");
+            var scoreInput = document.querySelector('[data-eval-score-input="' + pid + '"]');
+            var fbInput = document.querySelector('[data-eval-feedback-input="' + pid + '"]');
+            if (!scoreInput) {
+                return;
+            }
+            saveEvaluationGrades([pid], scoreInput.value, fbInput ? fbInput.value : "", false);
+        });
+    });
+
+    if (batchGradeTrigger && batchGradeForm) {
+        batchGradeTrigger.addEventListener("click", function () {
+            batchGradeForm.hidden = !batchGradeForm.hidden;
+            if (!batchGradeForm.hidden) {
+                batchGradeForm.scrollIntoView({behavior: "smooth", block: "nearest"});
+            }
+        });
+        if (batchGradeClose) {
+            batchGradeClose.addEventListener("click", function () {
+                batchGradeForm.hidden = true;
+            });
+        }
+        batchGradeForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var presentIds = getSelectedPresentParticipantIds();
+            if (presentIds.length === 0) {
+                showError("Vui lòng chọn ít nhất một sinh viên có mặt để chấm điểm hàng loạt.");
+                return;
+            }
+            var scoreInput = document.getElementById("batch-eval-score");
+            var fbInput = document.getElementById("batch-eval-feedback");
+            saveEvaluationGrades(
+                presentIds,
+                scoreInput ? scoreInput.value : "5",
+                fbInput ? fbInput.value : "",
+                true
+            );
+        });
+    }
 
     bulkButtons.forEach(function (button) {
         button.addEventListener("click", function () {
@@ -390,7 +601,6 @@
     if (!form) {
         return;
     }
-    // Ordered from the broadest to the most specific level; each level is filtered by the ones above it.
     var levels = ["department", "major", "program", "class"].map(function (name) {
         return form.querySelector('[data-group-level="' + name + '"]');
     });
@@ -445,7 +655,6 @@
 })();
 
 (function () {
-    // The "+ Thêm sinh viên" link opens the add panel in place; without JS it loads ?action=add instead.
     var toggle = document.querySelector("[data-add-toggle]");
     var panel = document.getElementById("attendance-add-panel");
     if (!toggle || !panel) {

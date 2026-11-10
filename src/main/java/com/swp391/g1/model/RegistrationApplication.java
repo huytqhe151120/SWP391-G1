@@ -11,6 +11,9 @@ public class RegistrationApplication {
     private String studentCode;
     private String studentName;
     private String classCode;
+    private String departmentName;
+    private String majorName;
+    private String academicProgramName;
     private String email;
     private String phoneNumber;
     private String note;
@@ -44,6 +47,15 @@ public class RegistrationApplication {
 
     public String getClassCode() { return classCode; }
     public void setClassCode(String classCode) { this.classCode = classCode; }
+
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+
+    public String getMajorName() { return majorName; }
+    public void setMajorName(String majorName) { this.majorName = majorName; }
+
+    public String getAcademicProgramName() { return academicProgramName; }
+    public void setAcademicProgramName(String academicProgramName) { this.academicProgramName = academicProgramName; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

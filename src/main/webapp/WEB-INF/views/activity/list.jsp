@@ -9,11 +9,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Hoạt động ngoại khóa</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261104-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=5">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -49,7 +47,7 @@
                         <span class="activity-count"><c:out value="${totalActivityCount}"/> hoạt động</span>
                         <c:if test="${canManageActivities}">
                             <a class="btn-create-activity"
-                               onclick="location.href='${pageContext.request.contextPath}/activities?action=create'">
+                               href="${pageContext.request.contextPath}/activities?action=create">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
                                      stroke-width="2" stroke-linecap="round" aria-hidden="true">
                                     <path d="M8 3v10M3 8h10"/>
@@ -137,7 +135,7 @@
                                    title="Nhập ngày theo định dạng dd/mm/yyyy">
                         </div>
                         <div class="activity-filter-buttons">
-                            <button type="submit" class="button button-primary button-sm">Tìm kiếm & Lọc</button>
+                            <button type="submit" class="button button-primary button-sm">Tìm kiếm &amp; Lọc</button>
                             <c:if test="${filtered}">
                                 <a class="button button-sm"
                                    href="${pageContext.request.contextPath}/activities?pageSize=${pageSize}">Xóa Bộ
@@ -177,29 +175,29 @@
                                            aria-label="Chọn tất cả hoạt động đang chờ duyệt trên trang">
                                 </c:if>
                             </th>
-                            <th scope="col">Mã hoạt động</th>
-                            <th scope="col">Tên hoạt động</th>
-                            <th scope="col">Học kỳ</th>
-                            <th scope="col">Loại hoạt động</th>
-                            <th scope="col">Đơn vị phụ trách chính</th>
-                            <th scope="col">Tính chất</th>
-                            <th scope="col">Tối đa</th>
-                            <th scope="col">Thời gian</th>
-                            <th scope="col" class="activity-run-status ${isStudent ? 'activity-student-run-status' : ''}"><span>Trạng thái</span><span>hoạt động</span>
+                            <th scope="col" class="col-code">Mã hoạt động</th>
+                            <th scope="col" class="col-activity-name">Tên hoạt động</th>
+                            <th scope="col" class="col-semester">Học kỳ</th>
+                            <th scope="col" class="col-single-line">Loại hoạt động</th>
+                            <th scope="col" class="col-single-line">phụ trách chính</th>
+                            <th scope="col" class="col-single-line">Tính chất</th>
+                            <th scope="col" class="col-number">Tối đa</th>
+                            <th scope="col" class="col-datetime">Thời gian</th>
+                            <th scope="col" class="activity-run-status col-status ${isStudent ? 'activity-student-run-status' : ''}"><span>Trạng thái</span><span>hoạt động</span>
                             </th>
                             <c:if test="${isStudent}">
                                 <th scope="col" class="activity-registration-deadline">Hạn đăng ký</th>
                             </c:if>
                             <c:if test="${not isStudent}">
-                                <th scope="col" class="activity-status-column"><span>Trạng thái</span><span>duyệt HĐ</span>
+                                <th scope="col" class="activity-status-column col-status"><span>Trạng thái</span><span>duyệt HĐ</span>
                                 </th>
                             </c:if>
                             <c:if test="${isStudent}">
-                                <th scope="col" class="activity-order-status-column"><span>Trạng thái</span><span>đơn</span>
+                                <th scope="col" class="activity-order-status-column col-status"><span>Trạng thái</span><span>đơn</span>
                                 </th>
                             </c:if>
                             <c:if test="${isStudent}">
-                                <th scope="col" class="activity-registration-status-column"><span>Trạng thái</span><span>đăng ký</span>
+                                <th scope="col" class="activity-registration-status-column col-status"><span>Trạng thái</span><span>đăng ký</span>
                                 </th>
                             </c:if>
                             <th scope="col" class="activity-action-column">Thao tác</th>
@@ -250,20 +248,21 @@
                                                 </c:choose>
                                             </c:if>
                                         </td>
-                                        <td><span class="activity-code"><c:out value="${activity.code}"/></span></td>
-                                        <td><strong class="activity-name"><c:out value="${activity.name}"/></strong>
+                                        <td class="col-code"><span class="activity-code"><c:out value="${activity.code}"/></span></td>
+                                        <td class="col-activity-name" title="<c:out value='${activity.name}'/>">
+                                            <strong class="activity-name" title="<c:out value='${activity.name}'/>"><c:out value="${activity.name}"/></strong>
                                         </td>
-                                        <td>
+                                        <td class="col-semester">
                                             <span class="table-primary-text"><c:out value="${activity.semesterName}"
                                                                                     default="—"/></span>
                                         </td>
-                                        <td><c:out value="${activity.activityTypeName}" default="—"/></td>
-                                        <td><c:out value="${activity.responsibleDepartmentName}" default="—"/></td>
-                                        <td><c:choose><c:when
+                                        <td class="col-single-line" title="<c:out value='${activity.activityTypeName}'/>"><c:out value="${activity.activityTypeName}" default="—"/></td>
+                                        <td class="col-single-line" title="<c:out value='${activity.responsibleDepartmentName}'/>"><c:out value="${activity.responsibleDepartmentName}" default="—"/></td>
+                                        <td class="col-single-line"><c:choose><c:when
                                                 test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký</c:when><c:when
                                                 test="${activity.nature == 'VOLUNTARY'}">Tự nguyện</c:when><c:when
                                                 test="${activity.nature == 'MANDATORY'}">Bắt buộc</c:when><c:otherwise>—</c:otherwise></c:choose></td>
-                                        <td><c:out value="${activity.maxParticipants}" default="—"/></td>
+                                        <td class="col-number"><c:out value="${activity.maxParticipants}" default="—"/></td>
                                         <td class="activity-time">
                                             <c:choose>
                                                 <c:when test="${not empty activity.startTime}">
@@ -273,7 +272,7 @@
                                                 <c:otherwise>Chưa xác định</c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td class="activity-run-status ${isStudent ? 'activity-student-run-status' : ''}"><span
+                                        <td class="activity-run-status col-status ${isStudent ? 'activity-student-run-status' : ''}"><span
                                                 class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span>
                                         </td>
                                         <c:if test="${isStudent}">
@@ -288,12 +287,12 @@
                                             </td>
                                         </c:if>
                                         <c:if test="${not isStudent}">
-                                            <td class="activity-status-column"><span
+                                            <td class="activity-status-column col-status"><span
                                                     class="badge status-pill ${st:css(activity.approvalStatus)}">${st:label(activity.approvalStatus)}</span>
                                             </td>
                                         </c:if>
                                         <c:if test="${isStudent}">
-                                            <td class="activity-order-status-column">
+                                            <td class="activity-order-status-column col-status">
                                                 <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
                                                 <c:choose>
                                                     <c:when test="${not empty activityForm}">
@@ -304,9 +303,10 @@
                                             </td>
                                         </c:if>
                                         <c:if test="${isStudent}">
-                                            <td class="activity-registration-status-column">
+                                            <td class="activity-registration-status-column col-status">
                                                 <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
                                                 <c:choose>
+                                                    <c:when test="${activity.nature eq 'MANDATORY'}"><span class="badge status-pill status-green">Hoạt động bắt buộc</span></c:when>
                                                     <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
                                                     <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
                                                     <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
@@ -459,11 +459,7 @@
                                                                            value="${activity.id}">
                                                                     <button class="action-menu-item action-menu-item--submit"
                                                                             type="submit" name="action" value="submit">
-                                                                        <span class="action-menu-item__icon"
-                                                                              aria-hidden="true"><svg
-                                                                                viewBox="0 0 24 24"><path
-                                                                                d="m22 2-7 20-4-9-9-4Z"/><path
-                                                                                d="M22 2 11 13"/></svg></span>
+                                                                        <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
                                                                         Gửi duyệt
                                                                     </button>
                                                                 </form>
