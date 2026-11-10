@@ -103,7 +103,7 @@
                                 </td>
                                 <td class="col-single-line" title="<c:out value='${staff.position}'/>"><c:out value="${staff.position}" default="—"/></td>
                                 <td class="col-status">
-                                    <span class="badge status-pill ${staff.status == 'ACTIVE' ? 'partner-company-active' : 'partner-company-inactive'}">
+                                    <span class="badge status-pill ${staff.status == 'ACTIVE' ? 'status-green' : 'status-gray'}">
                                         <c:choose>
                                             <c:when test="${staff.status == 'ACTIVE'}">Đang hoạt động</c:when>
                                             <c:otherwise>Không hoạt động</c:otherwise>

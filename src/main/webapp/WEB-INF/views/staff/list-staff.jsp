@@ -7,12 +7,12 @@
 <html lang="vi">
 
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261110-3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261111-2">
     <meta charset="UTF-8">
     <title>Staff List</title>
 
     <link rel="stylesheet"
-          href="${pageContext.request.contextPath}/assets/css/staff.css?v=20261107-2">
+          href="${pageContext.request.contextPath}/assets/css/staff.css?v=20261111-7">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
@@ -160,7 +160,7 @@
                     <th scope="col" class="col-single-line">Ngày sinh</th>
                     <th scope="col" class="col-single-line">Giới tính</th>
                     <th scope="col" class="col-single-line">Account ID</th>
-                    <th scope="col" class="col-status">Trạng thái</th>
+                    <th scope="col" class="col-status activity-status-column">Trạng thái</th>
                     <th scope="col" class="activity-action-column">Thao tác</th>
                 </tr>
 
@@ -208,7 +208,7 @@
                                         <c:otherwise>—</c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td class="col-status"><span class="badge status-pill ${st:css(staff.status)}">${st:label(staff.status)}</span></td>
+                                <td class="col-status activity-status-column"><span class="badge status-pill ${st:css(staff.status)}">${st:label(staff.status)}</span></td>
                                 <td class="activity-action-column">
                                     <div class="actions activity-actions">
                                         <a class="activity-action-link action-btn action-btn--view"

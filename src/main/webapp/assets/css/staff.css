@@ -105,16 +105,34 @@ body {
 }
 
 /* ===== TABLE ===== */
-.staff-table-wrap { width: 100%; overflow-x: auto; }
-
-.staff-table-wrap table {
+.staff-list-page .staff-table-wrap {
     width: 100%;
+    padding: 0 12px;
+    overflow-x: hidden;
+}
+
+.staff-list-page .staff-table-wrap table {
+    width: 100%;
+    min-width: 0;
+    --activity-actions-col-width: 15%;
+    table-layout: fixed;
     border-collapse: collapse;
 }
 
-.staff-table-wrap th {
-    padding: 1rem 1.3rem;
+.staff-list-page .staff-table-wrap th,
+.staff-list-page .staff-table-wrap td {
+    padding: 11px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.staff-list-page .staff-table-wrap th {
     text-align: left;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
     background: #f7f9fc;
     border-top: 1px solid #e8edf5;
     border-bottom: 1px solid #e8edf5;
@@ -125,12 +143,94 @@ body {
     text-transform: uppercase;
 }
 
-.staff-table-wrap td {
-    padding: 1.1rem 1.3rem;
+.staff-list-page .staff-table-wrap td {
     border-bottom: 1px solid #eef1f6;
     border-left: none;
     border-right: none;
     vertical-align: middle;
+}
+
+.staff-list-page .staff-table-wrap th:nth-child(1),
+.staff-list-page .staff-table-wrap td:nth-child(1) { width: 6%; }
+.staff-list-page .staff-table-wrap th:nth-child(2),
+.staff-list-page .staff-table-wrap td:nth-child(2) { width: 13%; }
+.staff-list-page .staff-table-wrap th:nth-child(3),
+.staff-list-page .staff-table-wrap td:nth-child(3) { width: 18%; }
+.staff-list-page .staff-table-wrap th:nth-child(4),
+.staff-list-page .staff-table-wrap td:nth-child(4) { width: 13%; }
+.staff-list-page .staff-table-wrap th:nth-child(5),
+.staff-list-page .staff-table-wrap td:nth-child(5) { width: 10%; }
+.staff-list-page .staff-table-wrap th:nth-child(6),
+.staff-list-page .staff-table-wrap td:nth-child(6) { width: 11%; }
+.staff-list-page .staff-table-wrap th:nth-child(7),
+.staff-list-page .staff-table-wrap td:nth-child(7) { width: 14%; }
+.staff-list-page .staff-table-wrap th:nth-child(8),
+.staff-list-page .staff-table-wrap td:nth-child(8) { width: 15%; }
+
+.staff-list-page .staff-table-wrap th.col-code,
+.staff-list-page .staff-table-wrap td.col-code {
+    min-width: 0;
+    max-width: none;
+}
+
+.staff-list-page .staff-table-wrap th.col-object-name,
+.staff-list-page .staff-table-wrap td.col-object-name {
+    min-width: 0;
+    max-width: none;
+    white-space: nowrap;
+}
+
+.staff-list-page .staff-table-wrap td.col-object-name .activity-name {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-list-page.staff-list-page .staff-table-wrap th.activity-action-column,
+.activity-list-page.staff-list-page .staff-table-wrap td.activity-action-column {
+    position: sticky;
+    right: 0;
+    width: var(--activity-actions-col-width);
+    min-width: var(--activity-actions-col-width);
+    max-width: var(--activity-actions-col-width);
+    z-index: 2;
+    background: #fff;
+    text-align: center;
+}
+
+.activity-list-page.staff-list-page .staff-table-wrap th.activity-status-column,
+.activity-list-page.staff-list-page .staff-table-wrap td.activity-status-column {
+    position: sticky;
+    right: var(--activity-actions-col-width);
+    width: 14%;
+    min-width: 0;
+    max-width: none;
+    z-index: 2;
+    background: #fff;
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+
+.activity-list-page.staff-list-page .staff-table-wrap th.activity-action-column,
+.activity-list-page.staff-list-page .staff-table-wrap th.activity-status-column {
+    z-index: 3;
+    background: #f7f9fc;
+}
+
+.activity-list-page.staff-list-page .staff-table-wrap tbody tr:hover td.activity-action-column,
+.activity-list-page.staff-list-page .staff-table-wrap tbody tr:hover td.activity-status-column {
+    background: #fafcff;
+}
+
+.activity-list-page.staff-list-page .staff-table-wrap .activity-actions {
+    justify-content: center;
+    gap: 8px;
+}
+
+.staff-list-page .staff-table-wrap .activity-action-link {
+    padding-right: 3px;
+    padding-left: 3px;
 }
 
 .staff-table-wrap tbody tr:last-child td { border-bottom: none; }
@@ -183,5 +283,57 @@ body {
     .staff-toolbar { flex-direction: column; }
     .staff-filter { width: 100%; }
     .staff-table-heading { flex-direction: column; align-items: flex-start; }
+
+    .staff-list-page .staff-table-wrap {
+        padding: 0 6px;
+    }
+
+    .staff-list-page .staff-table-wrap th,
+    .staff-list-page .staff-table-wrap td {
+        padding: 8px 4px;
+        font-size: .68rem;
+    }
+
+    .activity-list-page.staff-list-page .staff-table-wrap th.activity-action-column,
+    .activity-list-page.staff-list-page .staff-table-wrap td.activity-action-column {
+        position: sticky;
+        right: 0;
+    }
+
+    .activity-list-page.staff-list-page .staff-table-wrap th.activity-status-column,
+    .activity-list-page.staff-list-page .staff-table-wrap td.activity-status-column {
+        position: sticky;
+        right: var(--activity-actions-col-width, 15%);
+    }
+
+    .staff-list-page .staff-table-wrap .activity-action-link {
+        gap: 2px;
+        font-size: .68rem;
+    }
 }
+
+@media (max-width: 767px) {
+    .activity-list-page.staff-list-page .staff-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
+    .activity-list-page.staff-list-page .staff-table-wrap table:not(.partner-invitation-table) td.activity-action-column {
+        position: sticky;
+        right: 0;
+        z-index: 2;
+        background: #fff;
+    }
+
+    .activity-list-page.staff-list-page .staff-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
+    .activity-list-page.staff-list-page .staff-table-wrap table:not(.partner-invitation-table) td.activity-status-column {
+        position: sticky;
+        right: var(--activity-actions-col-width, 15%);
+        z-index: 2;
+        background: #fff;
+        box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    }
+
+    .activity-list-page.staff-list-page .staff-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
+    .activity-list-page.staff-list-page .staff-table-wrap table:not(.partner-invitation-table) th.activity-status-column {
+        z-index: 3;
+    }
+}
+
 .staff-table-wrap th:last-child, .staff-table-wrap td:last-child, .staff-table-wrap th.col-status, .staff-table-wrap td.col-status { text-align: center !important; }
