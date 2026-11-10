@@ -37,6 +37,7 @@
         <form action="${pageContext.request.contextPath}/assessment" method="post">
             <input type="hidden" name="action" value="submitAttempt"/>
             <input type="hidden" name="attemptId" value="${attempt.id}"/>
+            <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
 
             <input type="hidden" name="assessmentId" value="${assessmentId}"/>
 

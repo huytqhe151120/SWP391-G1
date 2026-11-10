@@ -37,6 +37,7 @@
         <form action="${pageContext.request.contextPath}/assessment" method="post">
             <input type="hidden" name="action" value="create"/>
             <input type="hidden" name="activityId" value="${activityId}"/>
+            <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
 
             <div class="field">
                 <label>Tieu de danh gia <span class="required">*</span></label>

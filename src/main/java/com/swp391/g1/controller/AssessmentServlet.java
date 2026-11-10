@@ -20,16 +20,20 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @WebServlet(name = "AssessmentServlet", urlPatterns = {"/assessment"})
 public class AssessmentServlet extends HttpServlet {
 
     private static final DateTimeFormatter DT_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
+    private static final String CSRF_SESSION_KEY = "com.swp391.g1.assessment.csrfToken";
 
     private final IAssessmentService assessmentService = new AssessmentServiceImpl();
 
@@ -44,6 +48,8 @@ public class AssessmentServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         if (action == null) action = "";
+
+        request.setAttribute("csrfToken", getCsrfToken(request));
 
         try {
             switch (action) {
@@ -97,6 +103,11 @@ public class AssessmentServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         if (action == null) action = "";
+
+        if (!isValidCsrfToken(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "CSRF token khong hop le.");
+            return;
+        }
 
         try {
             switch (action) {
@@ -155,6 +166,10 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         request.setAttribute("assessment", assessment);
+        request.setAttribute("openTimeDisplay", assessment.getOpenTime() != null
+                ? DT_FORMAT.format(assessment.getOpenTime()) : "");
+        request.setAttribute("closeTimeDisplay", assessment.getCloseTime() != null
+                ? DT_FORMAT.format(assessment.getCloseTime()) : "");
         request.getRequestDispatcher("/WEB-INF/views/assessment/staff/edit.jsp")
                 .forward(request, response);
     }
@@ -335,8 +350,17 @@ public class AssessmentServlet extends HttpServlet {
         String openTimeStr = request.getParameter("openTime");
         String closeTimeStr = request.getParameter("closeTime");
 
-        LocalDateTime openTime = parseDateTime(openTimeStr);
-        LocalDateTime closeTime = parseDateTime(closeTimeStr);
+        LocalDateTime openTime;
+        LocalDateTime closeTime;
+        try {
+            openTime = parseDateTime(openTimeStr);
+            closeTime = parseDateTime(closeTimeStr);
+        } catch (IllegalArgumentException e) {
+            HttpSession session = request.getSession();
+            session.setAttribute("errorMessage", e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/assessment?action=create&activityId=" + activityId);
+            return;
+        }
 
         assessmentService.createAssessment(activityId, user, title, description, openTime, closeTime);
         HttpSession session = request.getSession();
@@ -347,26 +371,41 @@ public class AssessmentServlet extends HttpServlet {
     private void handleUpdate(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int id = parseId(request.getParameter("id"));
+        if (id <= 0) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID danh gia khong hop le.");
+            return;
+        }
         String title = request.getParameter("title");
         String description = request.getParameter("description");
         String openTimeStr = request.getParameter("openTime");
         String closeTimeStr = request.getParameter("closeTime");
 
-        LocalDateTime openTime = parseDateTime(openTimeStr);
-        LocalDateTime closeTime = parseDateTime(closeTimeStr);
+        LocalDateTime openTime;
+        LocalDateTime closeTime;
+        try {
+            openTime = parseDateTime(openTimeStr);
+            closeTime = parseDateTime(closeTimeStr);
+        } catch (IllegalArgumentException e) {
+            HttpSession session = request.getSession();
+            session.setAttribute("errorMessage", e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/assessment?action=edit&id=" + id);
+            return;
+        }
 
         assessmentService.updateAssessment(id, user, title, description, openTime, closeTime);
         HttpSession session = request.getSession();
         session.setAttribute("successMessage", "Da cap nhat danh gia thanh cong.");
 
-        com.swp391.g1.model.Assessment a = assessmentService.getAssessmentById(id, user);
-        int activityId = a != null ? a.getActivityId() : 0;
-        response.sendRedirect(request.getContextPath() + "/assessment?action=manage&activityId=" + activityId);
+        response.sendRedirect(request.getContextPath() + "/assessment?action=questions&assessmentId=" + id);
     }
 
     private void handlePublish(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int id = parseId(request.getParameter("id"));
+        if (id <= 0) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID danh gia khong hop le.");
+            return;
+        }
         boolean publish = Boolean.parseBoolean(request.getParameter("publish"));
     private void handleAddQuestion(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
@@ -477,9 +516,13 @@ public class AssessmentServlet extends HttpServlet {
             return;
         }
         int activityId = a.getActivityId();
-        assessmentService.deleteAssessment(id, user);
+        boolean deleted = assessmentService.deleteAssessment(id, user);
         HttpSession session = request.getSession();
-        session.setAttribute("successMessage", "Da xoa danh gia thanh cong.");
+        if (deleted) {
+            session.setAttribute("successMessage", "Da xoa danh gia thanh cong.");
+        } else {
+            session.setAttribute("errorMessage", "Khong the xoa danh gia. Vui long thu lai.");
+        }
         response.sendRedirect(request.getContextPath() + "/assessment?action=manage&activityId=" + activityId);
     }
     private void handleStartAttempt(HttpServletRequest request, HttpServletResponse response,
@@ -537,18 +580,43 @@ public class AssessmentServlet extends HttpServlet {
         }
         int studentId = student.getId();
 
-        HttpSession session = request.getSession();
-        session.setAttribute("successMessage", "Da nop bai thanh cong.");
+        Map<Integer, Object> answers = new HashMap<>();
+        for (String key : request.getParameterMap().keySet()) {
+            if (key.startsWith("q_")) {
+                try {
+                    int questionId = Integer.parseInt(key.substring(2));
+                    answers.put(questionId, request.getParameter(key));
+                } catch (NumberFormatException e) {
+                    // skip invalid keys
+                }
+            }
+        }
+
+        assessmentService.saveAnswers(attemptId, studentId, answers);
 
         com.swp391.g1.model.AssessmentAttempt attempt = assessmentService.submitAttempt(attemptId, studentId);
         int assessmentId = attempt != null ? attempt.getAssessmentId() : 0;
+
+        HttpSession session = request.getSession();
+        session.setAttribute("successMessage", "Da nop bai thanh cong.");
         response.sendRedirect(request.getContextPath() + "/assessment?action=result&assessmentId=" + assessmentId);
     }
 
     private void handleGradeEssay(HttpServletRequest request, HttpServletResponse response,
             CurrentUser user) throws IOException {
         int answerId = parseId(request.getParameter("answerId"));
-        BigDecimal score = new BigDecimal(request.getParameter("score"));
+        String scoreStr = request.getParameter("score");
+        BigDecimal score;
+        try {
+            score = new BigDecimal(scoreStr);
+        } catch (NumberFormatException | NullPointerException e) {
+            HttpSession session = request.getSession();
+            session.setAttribute("errorMessage", "Diem khong hop le.");
+            com.swp391.g1.model.AssessmentAnswer ans = new com.swp391.g1.dao.impl.AssessmentAnswerDAOImpl().findById(answerId);
+            int attemptId2 = ans != null ? ans.getAttemptId() : 0;
+            response.sendRedirect(request.getContextPath() + "/assessment?action=grade&attemptId=" + attemptId2);
+            return;
+        }
         String feedback = request.getParameter("feedback");
         assessmentService.gradeEssay(answerId, score, feedback, user);
         HttpSession session = request.getSession();
@@ -598,10 +666,38 @@ public class AssessmentServlet extends HttpServlet {
         if (value == null || value.trim().isEmpty()) return 0;
         try { return Integer.parseInt(value.trim()); } catch (NumberFormatException e) { return 0; }
     }
+    private String getCsrfToken(HttpServletRequest request) {
+        var session = request.getSession();
+        String token = (String) session.getAttribute(CSRF_SESSION_KEY);
+        if (token == null || token.isEmpty()) {
+            token = UUID.randomUUID().toString();
+            session.setAttribute(CSRF_SESSION_KEY, token);
+        }
+        return token;
+    }
+
+    private boolean isValidCsrfToken(HttpServletRequest request) {
+        var session = request.getSession(false);
+        if (session == null) {
+            return false;
+        }
+        Object expected = session.getAttribute(CSRF_SESSION_KEY);
+        String supplied = request.getParameter("_csrf");
+        if (supplied == null || supplied.isEmpty()) {
+            return false;
+        }
+        return expected instanceof String token
+                && MessageDigest.isEqual(token.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        supplied.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
 
     private LocalDateTime parseDateTime(String value) {
         if (value == null || value.trim().isEmpty()) return null;
-        try { return LocalDateTime.parse(value.trim(), DT_FORMAT); } catch (Exception e) { return null; }
+        try {
+            return LocalDateTime.parse(value.trim(), DT_FORMAT);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Dinh dang thoi gian khong hop le: " + value, e);
+        }
     }
 
     private double parseDouble(String value, double def) {

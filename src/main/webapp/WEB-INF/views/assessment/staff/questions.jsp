@@ -63,6 +63,7 @@
                 <form action="${pageContext.request.contextPath}/assessment" method="post" style="display:inline">
                     <input type="hidden" name="action" value="deleteQuestion"/>
                     <input type="hidden" name="questionId" value="${q.id}"/>
+                    <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
                     <button type="submit" class="button button-sm button-revoke" onclick="return confirm('Xoa cau hoi nay?')">Xoa</button>
                 </form>
             </div>
@@ -76,6 +77,7 @@
         <form action="${pageContext.request.contextPath}/assessment" method="post">
             <input type="hidden" name="action" value="addQuestion"/>
             <input type="hidden" name="assessmentId" value="${assessmentId}"/>
+            <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
 
             <div class="field">
                 <label>Loai cau hoi</label>

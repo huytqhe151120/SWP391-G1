@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
@@ -61,6 +61,7 @@
                     <input type="hidden" name="action" value="updateOption"/>
                     <input type="hidden" name="optionId" value="${o.id}"/>
                     <input type="hidden" name="questionId" value="${questionId}"/>
+                    <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
                     <input type="text" name="optionText" value="<c:out value="${o.optionText}"/>" required style="margin-right:0.5rem;"/>
                     <label style="margin-right:0.5rem;">
                         <input type="checkbox" name="isCorrect" value="true" <c:if test="${o.correct}">checked</c:if>> Dung
@@ -72,6 +73,7 @@
                     <input type="hidden" name="action" value="deleteOption"/>
                     <input type="hidden" name="optionId" value="${o.id}"/>
                     <input type="hidden" name="questionId" value="${questionId}"/>
+                    <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
                     <button type="submit" class="button button-sm button-revoke" onclick="return confirm('Xoa phuong an nay?')">Xoa</button>
                 </form>
             </div>
@@ -85,6 +87,7 @@
         <form action="${pageContext.request.contextPath}/assessment" method="post">
             <input type="hidden" name="action" value="addOption"/>
             <input type="hidden" name="questionId" value="${questionId}"/>
+            <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'"/>"/>
 
             <div class="field">
                 <label>Noi dung phuong an</label>

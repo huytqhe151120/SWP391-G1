@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+﻿<%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="activeNav" value="activities" scope="request"/>
 <!DOCTYPE html>
@@ -66,6 +66,7 @@
                         <input type="hidden" name="action" value="publish"/>
                         <input type="hidden" name="id" value="${assessment.id}"/>
                         <input type="hidden" name="publish" value="false"/>
+                        <input type="hidden" name="_csrf" value="<c:out value=${csrfToken}/>" />
                         <button type="submit" class="button button-sm button-revoke">Huy cong bo</button>
                     </form>
                 </c:when>
@@ -75,11 +76,10 @@
                         <input type="hidden" name="action" value="publish"/>
                         <input type="hidden" name="id" value="${assessment.id}"/>
                         <input type="hidden" name="publish" value="true"/>
+                        <input type="hidden" name="_csrf" value="<c:out value=${csrfToken}/>" />
                         <button type="submit" class="button button-sm button-primary">Cong bo</button>
                     </form>
                 </c:otherwise>
-            </c:choose>
-        </div>
 
         <div class="form-actions">
             <a class="button button-primary" href="${pageContext.request.contextPath}/assessment?action=questions&assessmentId=${assessment.id}">Quan ly cau hoi</a>

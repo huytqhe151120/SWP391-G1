@@ -60,9 +60,10 @@
                         <strong>Cau tra loi cua sinh vien:</strong>
                         <p style="margin:0.5rem 0 0; white-space:pre-wrap;"><c:out value="${a.answerText}"/></p>
                     </div>
-                    <form action="${pageContext.request.contextPath}/assessment" method="post">
-                        <input type="hidden" name="action" value="gradeEssay"/>
-                        <input type="hidden" name="answerId" value="${a.id}"/>
+                <form action="${pageContext.request.contextPath}/assessment" method="post" style="display:inline">
+                    <input type="hidden" name="action" value="gradeEssay"/>
+                    <input type="hidden" name="answerId" value="${a.id}"/>
+                    <input type="hidden" name="_csrf" value="<c:out value='${csrfToken}'/>"/>
                         <div class="field">
                             <label>Diem (0 - <c:out value="${a.question.maxScore}"/>)</label>
                             <input type="number" name="score" step="0.01" min="0" max="<c:out value="${a.question.maxScore}"/>" required value="${a.awardedScore}">
