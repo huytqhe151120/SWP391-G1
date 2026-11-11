@@ -222,6 +222,12 @@ public class AssessmentServiceImpl implements IAssessmentService {
     }
 
     @Override
+    public Assessment getAssessmentByActivityIdForStudent(int activityId) {
+        // Read-only: no attempt creation, no scope check. Student eligibility is verified separately via canStudentTake().
+        return assessmentDAO.findByActivityId(activityId);
+    }
+
+    @Override
     public AssessmentQuestion addQuestion(int assessmentId, CurrentUser user,
             AssessmentQuestion.QuestionType type, String content, double maxScore, int displayOrder) {
         Assessment assessment = assessmentDAO.findById(assessmentId);

@@ -31,6 +31,9 @@ public interface IAssessmentService {
 
     Assessment getAssessmentByActivityId(int activityId, CurrentUser user);
 
+    /** Load assessment by activity ID without activity-scope restrictions. Used for student take eligibility. Read-only. */
+    Assessment getAssessmentByActivityIdForStudent(int activityId);
+
     /* ---------- Question (staff/manager) ---------- */
 
     AssessmentQuestion addQuestion(int assessmentId, CurrentUser user,

@@ -4,6 +4,7 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.request.ExtracurricularActivityRequestDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
+import com.swp391.g1.model.Assessment;
 import com.swp391.g1.model.Department;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.*;
@@ -61,6 +62,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final IRegistrationFormService registrationFormService;
     private final IActivityParticipantService participantService = new ActivityParticipantServiceImpl();
     private final IStudentService studentService = new StudentServiceImpl();
+    private final IAssessmentService assessmentService = new AssessmentServiceImpl();
 
     public ExtracurricularActivityServlet() {
         this.activityPartnerStaffService = new ActivityPartnerStaffServiceImpl();
@@ -532,8 +534,9 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 return;
             }
             boolean studentView = AccessPolicy.hasType(currentUser, "STUDENT");
+            com.swp391.g1.model.Student myStudent = null;
             if (activity != null && studentView) {
-                com.swp391.g1.model.Student myStudent = studentService.getStudentByAccountId(currentUser.getId());
+                myStudent = studentService.getStudentByAccountId(currentUser.getId());
                 if (!activity.isPublic()
                         || activity.getApprovalStatus() != com.swp391.g1.model.Enum.ApprovalStatus.APPROVED
                         || myStudent == null
@@ -710,6 +713,22 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                     request.setAttribute("availablePartnerStaffs",
                             activityPartnerStaffService.getAvailablePartnerStaffsForActivity(id, currentUser));
                 }
+
+                // Assessment integration (read-only, no side effects)
+                Assessment assessment = null;
+                if (AccessPolicy.canManageActivities(currentUser)
+                        || AccessPolicy.hasType(currentUser, "ADMIN")) {
+                    assessment = assessmentService.getAssessmentByActivityId(id, currentUser);
+                } else if (studentView) {
+                    assessment = assessmentService.getAssessmentByActivityIdForStudent(id);
+                }
+                request.setAttribute("assessment", assessment);
+
+                if (studentView && assessment != null && myStudent != null) {
+                    request.setAttribute("canStudentTake",
+                            assessmentService.canStudentTake(assessment.getId(), myStudent.getId()));
+                }
+
                 request.getRequestDispatcher("/WEB-INF/views/activity/detail.jsp").forward(request, response);
                 return;
             }
