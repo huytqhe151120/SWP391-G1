@@ -46,11 +46,42 @@
         b.textContent = n > 99 ? '99+' : n;
         b.hidden = n <= 0;
     }
+    var pendingFeedbackCount = 0;
+    var feedbackNavBadge = document.getElementById('feedbackNavBadge');
+    function loadPendingFeedbackCount() {
+        if (!feedbackNavBadge) return Promise.resolve(0);
+        return fetch((window.APP_CTX || '') + '/activity-feedback?action=reminder', {credentials: 'same-origin'})
+            .then(function (response) {
+                if (!response.ok) throw new Error('Không tải được số feedback đang chờ.');
+                return response.json();
+            })
+            .then(function (data) {
+                var count = Number(data.count);
+                if (!Number.isFinite(count) || count < 0) throw new Error('Số feedback đang chờ không hợp lệ.');
+                pendingFeedbackCount = count;
+                feedbackNavBadge.textContent = count > 99 ? '99+' : String(count);
+                feedbackNavBadge.hidden = count === 0;
+                return count;
+            });
+    }
+    function feedbackReminderHtml(count) {
+        if (!feedbackNavBadge) return '';
+        if (count === null) {
+            return '<p class="notif-feedback-error" role="alert">Không thể tải trạng thái feedback. Vui lòng thử lại sau.</p>';
+        }
+        if (count <= 0) return '';
+        return '<a class="notif-item unread notif-feedback-reminder" data-feedback-reminder href="' +
+            (window.APP_CTX || '') + '/activity-feedback">' +
+            '<strong>Yêu cầu feedback hoạt động</strong>' +
+            '<span>Bạn có ' + count + ' hoạt động đã tham gia cần gửi feedback. Các chức năng khác vẫn dùng bình thường.</span>' +
+            '<small>Cần phản hồi</small></a>';
+    }
     // Đánh dấu đã đọc rồi mới chuyển trang tới chi tiết yêu cầu
     function bindItems(container, onChange) {
         container.addEventListener('click', function (e) {
             var a = e.target.closest('.notif-item');
             if (!a) return;
+            if (a.hasAttribute('data-feedback-reminder')) return;
             e.preventDefault();
             var link = a.dataset.link;
             post({action: 'read', id: a.dataset.id}).catch(function () {}).then(function () {
@@ -66,14 +97,35 @@
             list = document.getElementById('notifDropdownList');
 
         function refreshBadge() {
-            get({action: 'count'}).then(function (d) { setBadge(d.unread); }).catch(function () {});
+            get({action: 'count'}).then(function (d) {
+                return loadPendingFeedbackCount().catch(function (error) {
+                    console.error(error);
+                    return null;
+                }).then(function (feedbackCount) {
+                    setBadge(d.unread + (feedbackCount === null ? 0 : feedbackCount));
+                });
+            }).catch(function (error) { console.error(error); });
         }
         function loadDropdown() {
-            get({action: 'list', size: 8}).then(function (d) {
-                setBadge(d.unread);
-                list.innerHTML = d.items.length ? d.items.map(itemHtml).join('')
-                    : '<p class="notif-empty">Không có thông báo.</p>';
-            }).catch(function () { list.innerHTML = '<p class="notif-empty">Không tải được thông báo.</p>'; });
+            Promise.all([
+                get({action: 'list', size: 8}),
+                loadPendingFeedbackCount().catch(function (error) {
+                    console.error(error);
+                    return null;
+                })
+            ]).then(function (results) {
+                var notifications = results[0];
+                var feedbackCount = results[1];
+                setBadge(notifications.unread + (feedbackCount === null ? 0 : feedbackCount));
+                var feedbackItem = feedbackReminderHtml(feedbackCount);
+                var notificationItems = notifications.items.length
+                    ? notifications.items.map(itemHtml).join('')
+                    : (!feedbackItem ? '<p class="notif-empty">Không có thông báo.</p>' : '');
+                list.innerHTML = feedbackItem + notificationItems;
+            }).catch(function (error) {
+                console.error(error);
+                list.innerHTML = '<p class="notif-empty">Không tải được thông báo.</p>';
+            });
         }
         bell.addEventListener('click', function (e) {
             e.stopPropagation();

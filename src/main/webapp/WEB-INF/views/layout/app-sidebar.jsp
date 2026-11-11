@@ -17,11 +17,13 @@
         else if (reqUri.contains("/organizer-inbox") || reqUri.contains("/organizer-chat")) navActive = "organizer-inbox";
         else if (reqUri.contains("/student-qa")) navActive = "student-qa";
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
+        else if (reqUri.contains("/activity-feedback")) navActive = "activity-feedback";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
         else if (reqUri.contains("/student-grades")) navActive = "student-grades";
     }
     boolean isActivityGroupActive = "activities".equals(navActive)
             || "registration-forms".equals(navActive)
+            || ("activity-feedback".equals(navActive) && AccessPolicy.canManageActivityFeedback(navUser))
             || "attendance".equals(navActive)
             || "student-grades".equals(navActive)
             || "partner-invitations".equals(navActive);
@@ -140,6 +142,19 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label">Điểm danh sinh viên</span>
+                </a>
+                <% } %>
+                <% if (AccessPolicy.canManageActivityFeedback(navUser)) { %>
+                <a class="activity-nav-item <%= "activity-feedback".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/activity-feedback" title="Feedback hoạt động"
+                   <%= "activity-feedback".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>
+                            <path d="M8 10h8M8 14h5"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Feedback hoạt động</span>
                 </a>
                 <% } %>
                 <% if (navCanTakeAttendance || navStudent) { %>
@@ -321,6 +336,18 @@
                 </svg>
             </span>
             <span class="activity-nav-label">Hộp thư của tôi</span>
+        </a>
+        <a class="activity-nav-item <%= "activity-feedback".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/activity-feedback"
+           title="Feedback hoạt động"
+           <%= "activity-feedback".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">
+               <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                   <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>
+                   <path d="M8 10h8M8 14h5"/>
+               </svg>
+            </span>
+            <span class="activity-nav-label">Feedback Activity</span>
+            <span class="feedback-nav-badge" id="feedbackNavBadge" hidden>0</span>
         </a>
         <% } %>
     </nav>

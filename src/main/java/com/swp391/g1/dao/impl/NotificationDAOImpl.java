@@ -103,6 +103,83 @@ public class NotificationDAOImpl implements INotificationDAO {
                 invitationId);
     }
 
+    @Override
+    public int createActivityFeedbackReminder(int activityId) {
+        String pendingRecipientsSql = """
+                SELECT s.account_id
+                FROM dbo.activity_participant ap
+                JOIN dbo.student s ON s.id = ap.student_id
+                JOIN dbo.extracurricular_activity ea ON ea.id = ap.activity_id
+                WHERE ap.activity_id = ?
+                  AND s.account_id IS NOT NULL
+                  AND ap.attendance_status IN ('ATTENDED', 'IN_LATE', 'OUT_EARLY')
+                  AND ea.activity_status = 'COMPLETED'
+                  AND ea.end_time <= SYSUTCDATETIME()
+                  AND NOT EXISTS (
+                      SELECT 1 FROM dbo.activity_feedback f
+                      WHERE f.activity_participant_id = ap.id)
+                """;
+        try (Connection connection = DBContext.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int pendingCount;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "SELECT COUNT(*) FROM (" + pendingRecipientsSql + ") pending_students")) {
+                    statement.setInt(1, activityId);
+                    try (ResultSet rs = statement.executeQuery()) {
+                        rs.next();
+                        pendingCount = rs.getInt(1);
+                    }
+                }
+                if (pendingCount == 0) {
+                    connection.commit();
+                    return 0;
+                }
+
+                int notificationId;
+                String insertNotificationSql = """
+                        INSERT INTO dbo.notifications (title, content, type, event_type, target_url)
+                        SELECT N'Nhắc nhở feedback hoạt động',
+                               CONCAT(N'Bạn chưa gửi feedback cho hoạt động "', ea.name,
+                                      N'". Hãy chia sẻ cảm nhận của bạn.'),
+                               'IN_APP', 'ACTIVITY_FEEDBACK_REMINDER', '/activity-feedback'
+                        FROM dbo.extracurricular_activity ea
+                        WHERE ea.id = ? AND ea.activity_status = 'COMPLETED'
+                          AND ea.end_time <= SYSUTCDATETIME()
+                        """;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        insertNotificationSql, Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setInt(1, activityId);
+                    if (statement.executeUpdate() != 1) {
+                        connection.rollback();
+                        return 0;
+                    }
+                    try (ResultSet rs = statement.getGeneratedKeys()) {
+                        if (!rs.next()) {
+                            throw new SQLException("Notification ID was not generated.");
+                        }
+                        notificationId = rs.getInt(1);
+                    }
+                }
+
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO dbo.user_notifications (notification_id, user_id) "
+                                + pendingRecipientsSql)) {
+                    statement.setInt(1, notificationId);
+                    statement.setInt(2, activityId);
+                    pendingCount = statement.executeUpdate();
+                }
+                connection.commit();
+                return pendingCount;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to send activity feedback reminders.", e);
+        }
+    }
+
     private int createNotificationForRecipients(
             String eventType, String title, String content, String targetUrl,
             String recipientsSql, int... recipientParams) {

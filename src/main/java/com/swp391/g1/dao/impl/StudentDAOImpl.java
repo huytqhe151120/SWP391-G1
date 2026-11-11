@@ -206,7 +206,34 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public Integer insert(Student student) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        if (student == null) {
+            return null;
+        }
+        String sql = "INSERT INTO student "
+                + "(main_class_id, account_id, code, name, dob, gender, email, phone_number, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            setNullableInteger(ps, 1, student.getMainClassId());
+            setNullableInteger(ps, 2, student.getAccountId());
+            ps.setString(3, student.getCode());
+            ps.setString(4, student.getName());
+            setDate(ps, 5, student.getDob());
+            setGender(ps, 6, student.getGender());
+            ps.setString(7, student.getEmail());
+            ps.setString(8, student.getPhoneNumber());
+            ps.setString(9, student.getStatus());
+
+            if (ps.executeUpdate() == 0) {
+                return null;
+            }
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : null;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to insert student.", e);
+        }
     }
 
     @Override
@@ -221,20 +248,8 @@ public class StudentDAOImpl implements IStudentDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, student.getCode());
             ps.setString(2, student.getName());
-            if (student.getDob() == null || student.getDob().isBlank()) {
-                ps.setNull(3, java.sql.Types.DATE);
-            } else {
-                ps.setDate(3, Date.valueOf(student.getDob()));
-            }
-            if (student.getGender() == null || student.getGender().isBlank()) {
-                ps.setNull(4, java.sql.Types.BIT);
-            } else if ("true".equalsIgnoreCase(student.getGender()) || "1".equals(student.getGender())) {
-                ps.setBoolean(4, true);
-            } else if ("false".equalsIgnoreCase(student.getGender()) || "0".equals(student.getGender())) {
-                ps.setBoolean(4, false);
-            } else {
-                throw new IllegalArgumentException("Student gender must be true, false, 1, or 0.");
-            }
+            setDate(ps, 3, student.getDob());
+            setGender(ps, 4, student.getGender());
             ps.setString(5, student.getEmail());
             ps.setString(6, student.getPhoneNumber());
             ps.setString(7, student.getStatus());
@@ -247,6 +262,48 @@ public class StudentDAOImpl implements IStudentDAO {
 
     @Override
     public boolean delete(Integer id) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        if (id == null || id <= 0) {
+            return false;
+        }
+
+        String sql = "DELETE FROM student WHERE id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to delete student.", e);
+        }
+    }
+
+    private static void setNullableInteger(PreparedStatement statement, int parameterIndex, int value)
+            throws SQLException {
+        if (value <= 0) {
+            statement.setNull(parameterIndex, java.sql.Types.INTEGER);
+        } else {
+            statement.setInt(parameterIndex, value);
+        }
+    }
+
+    private static void setDate(PreparedStatement statement, int parameterIndex, String value)
+            throws SQLException {
+        if (value == null || value.isBlank()) {
+            statement.setNull(parameterIndex, java.sql.Types.DATE);
+        } else {
+            statement.setDate(parameterIndex, Date.valueOf(value));
+        }
+    }
+
+    private static void setGender(PreparedStatement statement, int parameterIndex, String value)
+            throws SQLException {
+        if (value == null || value.isBlank()) {
+            statement.setNull(parameterIndex, java.sql.Types.BIT);
+        } else if ("true".equalsIgnoreCase(value) || "1".equals(value)) {
+            statement.setBoolean(parameterIndex, true);
+        } else if ("false".equalsIgnoreCase(value) || "0".equals(value)) {
+            statement.setBoolean(parameterIndex, false);
+        } else {
+            throw new IllegalArgumentException("Student gender must be true, false, 1, or 0.");
+        }
     }
 }

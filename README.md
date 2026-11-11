@@ -73,6 +73,8 @@ DBContext
 
 Before using attendance or registration features, apply the SQL scripts listed in [REGISTRATION-BUSINESS-RULES.md](REGISTRATION-BUSINESS-RULES.md) to the configured SQL Server database.
 
+Before using activity feedback, apply [database/migration_activity_feedback.sql](database/migration_activity_feedback.sql) to the configured SQL Server database. The feedback page is available to students with attended, completed activities; ADMIN and scoped STAFF can review reports.
+
 See [REGISTRATION-BUSINESS-RULES.md](REGISTRATION-BUSINESS-RULES.md) for the detailed rules for creating and managing activity registration forms, accepting applications, capacity limits, and application review.
 
 ## Coding Conventions

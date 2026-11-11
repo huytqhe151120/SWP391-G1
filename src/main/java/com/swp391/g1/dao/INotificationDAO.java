@@ -20,6 +20,8 @@ public interface INotificationDAO {
     int createPartnerInvitationOwnerNotification(
             int invitationId, String eventType, String title, String content, String targetUrl);
 
+    int createActivityFeedbackReminder(int activityId);
+
     /** filter: "all" | "unread" | "read". */
     List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);
 
