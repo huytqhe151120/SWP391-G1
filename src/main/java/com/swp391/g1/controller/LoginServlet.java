@@ -12,9 +12,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.service.AuthenticationException;
 import com.swp391.g1.service.AuthenticationResult;
+import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.service.IAuthenticationService;
 import com.swp391.g1.service.impl.AuthenticationServiceImpl;
+import com.swp391.g1.service.impl.NotificationServiceImpl;
 
 /**
  * Login controller. It only orchestrates request/response: credential checks
@@ -26,6 +28,7 @@ public class LoginServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
     private final IAuthenticationService authenticationService = new AuthenticationServiceImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -60,7 +63,9 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        AuthContext.createSession(request, result.getCurrentUser());
+        CurrentUser currentUser = result.getCurrentUser();
+        AuthContext.createSession(request, currentUser);
+        notificationService.notifyLoginSuccessful(currentUser.getId(), currentUser.getLoginAt());
         response.sendRedirect(contextPath(request) + landingPage(result.getCurrentUser()));
     }
 

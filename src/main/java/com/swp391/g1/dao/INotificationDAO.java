@@ -1,12 +1,15 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.dto.response.NotificationDTO;
+import java.time.Instant;
 import java.util.List;
 
 public interface INotificationDAO {
 
     /** Tạo thông báo yêu cầu duyệt (IN_APP) và gửi tới mọi tài khoản type = ADMIN trong một transaction. Trả về id thông báo. */
     int createApprovalNotification(String title, String content, String targetUrl);
+
+    int createLoginNotification(int accountId, Instant loginAt);
 
     /** Tạo thông báo trạng thái hoạt động và gửi tới nhân sự phụ trách cùng nhân sự đồng phụ trách. */
     int createActivityStatusNotification(

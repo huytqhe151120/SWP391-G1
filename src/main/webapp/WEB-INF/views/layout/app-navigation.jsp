@@ -89,7 +89,7 @@
     pageContext.setAttribute("hdrCurrentKeyword", currentKeyword);
 %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/header.css?v=20261107-2">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/header.css?v=20261111-3">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity-feedback.css?v=20261111-9">
 <header class="activity-app-header" id="appHeader">
     <!-- Left Zone: Breadcrumb & Navigation Context -->
@@ -143,7 +143,7 @@
             </button>
 
             <% if (!navType.isEmpty()) { %>
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261111-3">
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261111-6">
             <div class="notif-wrap">
                 <button type="button" id="notifBell" class="notif-bell" aria-label="Thông báo" aria-haspopup="true" aria-expanded="false" title="Thông báo">
                     <svg class="ui-icon notif-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -168,7 +168,7 @@
                 </div>
             </div>
             <script>window.APP_CTX = '${pageContext.request.contextPath}';</script>
-            <script src="${pageContext.request.contextPath}/assets/js/notification.js?v=20261111-3" defer></script>
+            <script src="${pageContext.request.contextPath}/assets/js/notification.js?v=20261111-6" defer></script>
             <% } %>
         </div>
     </div>

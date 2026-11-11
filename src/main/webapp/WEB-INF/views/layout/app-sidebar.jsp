@@ -359,7 +359,7 @@
                    <path d="M8 10h8M8 14h5"/>
                </svg>
             </span>
-            <span class="activity-nav-label">Feedback Activity</span>
+            <span class="activity-nav-label">Feedback hoạt động</span>
             <span class="feedback-nav-badge" id="feedbackNavBadge" hidden>0</span>
         </a>
         <% } %>

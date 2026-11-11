@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <c:set var="activeNav" value="activity-feedback" scope="request"/>
 <!DOCTYPE html>
@@ -35,7 +36,7 @@
             </c:if>
 
             <section class="feedback-kpi-grid">
-                <article class="feedback-kpi"><span>Điểm đánh giá chung</span><strong><c:out value="${feedbackReport.summary.submittedCount == 0 ? '—' : feedbackReport.summary.averageRating}"/> <small>/ 5</small></strong><p><c:out value="${feedbackReport.summary.submittedCount}"/> phản hồi</p></article>
+                <article class="feedback-kpi"><span>Điểm đánh giá chung</span><strong><c:choose><c:when test="${feedbackReport.summary.submittedCount == 0}">—</c:when><c:otherwise><fmt:formatNumber value="${feedbackReport.summary.averageRating}" minFractionDigits="2" maxFractionDigits="2"/></c:otherwise></c:choose> <small>/ 5</small></strong><p><c:out value="${feedbackReport.summary.submittedCount}"/> phản hồi</p></article>
                 <article class="feedback-kpi"><span>Đã phản hồi</span><strong><c:out value="${feedbackReport.summary.submittedCount}"/> <small>/ <c:out value="${feedbackReport.summary.participantCount}"/></small></strong><p>Sinh viên đã tham dự</p></article>
                 <article class="feedback-kpi"><span>Chưa phản hồi</span><strong><c:out value="${feedbackReport.summary.pendingCount}"/></strong><p>Đã tham dự, chưa gửi</p></article>
                 <article class="feedback-kpi"><span>Có ghi chú</span><strong><c:out value="${feedbackReport.noteCount}"/></strong><p>Trong số phản hồi</p></article>
@@ -44,7 +45,7 @@
             <div class="feedback-report-grid">
                 <section class="feedback-card">
                     <h2>Điểm trung bình theo mục</h2>
-                    <div class="feedback-metric-row"><span>Đánh giá chung</span><span class="feedback-metric-track"><i style="width:${feedbackReport.summary.averageRating * 20}%"></i></span><strong><c:out value="${feedbackReport.summary.averageRating}"/></strong></div>
+                    <div class="feedback-metric-row"><span>Đánh giá chung</span><span class="feedback-metric-track"><i style="width:${feedbackReport.summary.averageRating * 20}%"></i></span><strong><fmt:formatNumber value="${feedbackReport.summary.averageRating}" minFractionDigits="2" maxFractionDigits="2"/></strong></div>
                     <div class="feedback-metric-row"><span>Nội dung hoạt động</span><span class="feedback-metric-track"><i style="width:${feedbackReport.averageContentRating * 20}%"></i></span><strong><c:out value="${feedbackReport.averageContentRating}"/></strong></div>
                     <div class="feedback-metric-row"><span>Công tác tổ chức</span><span class="feedback-metric-track"><i style="width:${feedbackReport.averageOrganizationRating * 20}%"></i></span><strong><c:out value="${feedbackReport.averageOrganizationRating}"/></strong></div>
                     <div class="feedback-metric-row"><span>Địa điểm, thời gian</span><span class="feedback-metric-track"><i style="width:${feedbackReport.averageVenueRating * 20}%"></i></span><strong><c:out value="${feedbackReport.averageVenueRating}"/></strong></div>

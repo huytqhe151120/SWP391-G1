@@ -4,6 +4,8 @@ import com.swp391.g1.dao.INotificationDAO;
 import com.swp391.g1.dao.impl.NotificationDAOImpl;
 import com.swp391.g1.dto.response.NotificationDTO;
 import com.swp391.g1.service.INotificationService;
+import com.swp391.g1.util.DateTimeUtil;
+import java.time.Instant;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,6 +25,16 @@ public class NotificationServiceImpl implements INotificationService {
                     "/activities?action=detail&id=" + activityId);
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, "Could not send admin notification.", e);
+        }
+    }
+
+    @Override
+    public void notifyLoginSuccessful(int accountId, Instant loginAt) {
+        try {
+            notificationDAO.createLoginNotification(accountId, loginAt);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not save successful login notification for account "
+                    + accountId + " at " + DateTimeUtil.format(loginAt) + ".", e);
         }
     }
 

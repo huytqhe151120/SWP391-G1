@@ -3,11 +3,56 @@ package com.swp391.g1.dao.impl;
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.INotificationDAO;
 import com.swp391.g1.dto.response.NotificationDTO;
+import com.swp391.g1.util.DateTimeUtil;
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NotificationDAOImpl implements INotificationDAO {
+
+    @Override
+    public int createLoginNotification(int accountId, Instant loginAt) {
+        if (accountId <= 0 || loginAt == null) {
+            throw new IllegalArgumentException("Login notification requires a valid account and timestamp.");
+        }
+        String timestamp = DateTimeUtil.format(loginAt);
+        try (Connection connection = DBContext.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                int notificationId;
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO notifications (title, content, type, event_type, target_url) "
+                                + "VALUES (?, ?, 'IN_APP', 'USER_LOGIN', '/home')",
+                        Statement.RETURN_GENERATED_KEYS)) {
+                    statement.setString(1, "Đăng nhập thành công");
+                    statement.setString(2, "Bạn vừa đăng nhập lúc " + timestamp + ".");
+                    if (statement.executeUpdate() != 1) {
+                        throw new SQLException("Login notification was not created.");
+                    }
+                    try (ResultSet keys = statement.getGeneratedKeys()) {
+                        if (!keys.next()) {
+                            throw new SQLException("Login notification ID was not generated.");
+                        }
+                        notificationId = keys.getInt(1);
+                    }
+                }
+                try (PreparedStatement statement = connection.prepareStatement(
+                        "INSERT INTO user_notifications (notification_id, user_id) VALUES (?, ?)")) {
+                    statement.setInt(1, notificationId);
+                    statement.setInt(2, accountId);
+                    statement.executeUpdate();
+                }
+                connection.commit();
+                return notificationId;
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create login notification.", e);
+        }
+    }
 
     private static String filterClause(String filter) {
         if ("unread".equals(filter)) return " AND un.is_read = 0";
@@ -225,7 +270,7 @@ public class NotificationDAOImpl implements INotificationDAO {
 
     @Override
     public List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit) {
-        String sql = "SELECT n.id, n.title, n.content, n.target_url, n.created_at, un.is_read "
+        String sql = "SELECT n.id, n.title, n.content, n.event_type, n.target_url, n.created_at, un.is_read "
                 + "FROM user_notifications un JOIN notifications n ON n.id = un.notification_id "
                 + "WHERE un.user_id = ?" + filterClause(filter)
                 + " ORDER BY n.created_at DESC, n.id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
@@ -240,6 +285,7 @@ public class NotificationDAOImpl implements INotificationDAO {
                     d.setId(rs.getInt("id"));
                     d.setTitle(rs.getString("title"));
                     d.setContent(rs.getString("content"));
+                    d.setEventType(rs.getString("event_type"));
                     d.setLink(rs.getString("target_url"));
                     d.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
                     d.setRead(rs.getBoolean("is_read"));

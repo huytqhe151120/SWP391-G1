@@ -56,6 +56,7 @@ public class NotificationApiServlet extends HttpServlet {
                 sb.append("{\"id\":").append(n.getId())
                         .append(",\"title\":").append(quote(n.getTitle()))
                         .append(",\"content\":").append(quote(n.getContent()))
+                        .append(",\"eventType\":").append(quote(n.getEventType()))
                         .append(",\"link\":").append(quote(n.getLink()))
                         .append(",\"createdAt\":").append(quote(n.getCreatedAt().toString()))
                         .append(",\"read\":").append(n.isRead()).append('}');

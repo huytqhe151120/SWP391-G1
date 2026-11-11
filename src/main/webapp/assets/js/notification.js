@@ -35,10 +35,14 @@
         return link && link.charAt(0) === '/' && link.charAt(1) !== '/' ? (window.APP_CTX || '') + link : null;
     }
     function itemHtml(n) {
+        var readStatus = n.read ? 'Đã đọc' : 'Chưa đọc';
+        var statusHtml = n.eventType === 'USER_LOGIN'
+            ? '<small>' + fmt(n.createdAt) + '</small><small class="notif-read-state">' + readStatus + '</small>'
+            : '<small>' + fmt(n.createdAt) + ' · ' + readStatus + '</small>';
         return '<a class="notif-item' + (n.read ? '' : ' unread') + '" href="#" data-id="' + n.id +
             '" data-link="' + esc(safeHref(n.link) || '') + '">' +
             '<strong>' + esc(n.title) + '</strong><span>' + esc(n.content) + '</span>' +
-            '<small>' + fmt(n.createdAt) + ' · ' + (n.read ? 'Đã đọc' : 'Chưa đọc') + '</small></a>';
+            statusHtml + '</a>';
     }
     function setBadge(n) {
         var b = document.getElementById('notifBadge');
@@ -48,6 +52,7 @@
     }
     var pendingFeedbackCount = 0;
     var feedbackNavBadge = document.getElementById('feedbackNavBadge');
+
     function loadPendingFeedbackCount() {
         if (!feedbackNavBadge) return Promise.resolve(0);
         return fetch((window.APP_CTX || '') + '/activity-feedback?action=reminder', {credentials: 'same-origin'})
@@ -107,6 +112,7 @@
             }).catch(function (error) { console.error(error); });
         }
         function loadDropdown() {
+            list.innerHTML = '<p class="notif-empty">Đang tải thông báo...</p>';
             Promise.all([
                 get({action: 'list', size: 8}),
                 loadPendingFeedbackCount().catch(function (error) {

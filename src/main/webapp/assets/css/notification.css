@@ -181,6 +181,10 @@
     margin-top: 5px;
 }
 
+.notif-item .notif-read-state {
+    font-weight: 600;
+}
+
 .notif-empty {
     margin: 0;
     padding: 24px 16px;

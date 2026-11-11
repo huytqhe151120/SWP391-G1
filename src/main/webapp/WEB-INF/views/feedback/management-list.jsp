@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <c:set var="activeNav" value="activity-feedback" scope="request"/>
 <!DOCTYPE html>
@@ -108,7 +109,7 @@
                                     <div class="feedback-progress-cell"><span class="feedback-progress"><i style="width:${summary.participantCount == 0 ? 0 : summary.submittedCount * 100 / summary.participantCount}%"></i></span>
                                         <span><c:out value="${summary.submittedCount}"/> / <c:out value="${summary.participantCount}"/></span></div>
                                 </td>
-                                <td><span class="feedback-average">★ <c:out value="${summary.submittedCount == 0 ? '—' : summary.averageRating}"/></span></td>
+                                <td><span class="feedback-average">★ <c:choose><c:when test="${summary.submittedCount == 0}">—</c:when><c:otherwise><fmt:formatNumber value="${summary.averageRating}" minFractionDigits="2" maxFractionDigits="2"/></c:otherwise></c:choose></span></td>
                                 <td><a class="button button-secondary button-sm" href="${pageContext.request.contextPath}/activity-feedback?action=report&amp;activityId=${summary.activityId}">Xem kết quả</a></td>
                             </tr>
                         </c:forEach>
