@@ -260,7 +260,7 @@
                                         <td class="col-single-line"><c:choose><c:when
                                                 test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký trước</c:when><c:when
                                                 test="${activity.nature == 'VOLUNTARY'}">Tham gia tự do</c:when><c:when
-                                                test="${activity.nature == 'MANDATORY'}">Chỉ định tham gia</c:when><c:otherwise>—</c:otherwise></c:choose></td>>
+                                                test="${activity.nature == 'MANDATORY'}">Chỉ định tham gia</c:when><c:otherwise>—</c:otherwise></c:choose></td>
                                         <td class="col-number"><c:out value="${activity.maxParticipants}" default="—"/></td>
                                         <td class="activity-time">
                                             <c:choose>
