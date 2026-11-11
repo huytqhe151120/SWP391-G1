@@ -34,18 +34,6 @@
                     <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                     Quay lại lịch sử điểm của sinh viên
                 </a>
-                <c:if test="${not isStudent and not empty gradeDetail}">
-                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                        <a class="button button-outline button-sm"
-                           href="${pageContext.request.contextPath}/attendance?activityId=${gradeDetail.activityId}">
-                            Đi tới trang Điểm danh HĐ này →
-                        </a>
-                        <a class="button button-outline button-sm"
-                           href="${pageContext.request.contextPath}/participation-grading?activityId=${gradeDetail.activityId}">
-                            Đi tới trang Chấm điểm tham gia HĐ này →
-                        </a>
-                    </div>
-                </c:if>
             </div>
 
             <section class="card activity-table-card" aria-labelledby="activity-grade-detail-title">
@@ -106,6 +94,16 @@
                 <%-- 2. Thông tin tổng quan --%>
                 <c:if test="${not empty selectedStudent}">
                     <div class="grade-detail-overview">
+                        <c:if test="${not empty gradeDetail}">
+                            <div class="grade-detail-overview-item">
+                                <span>Điểm tích lũy HĐ</span>
+                                <strong>
+                                    <span class="grade-pill ${gradeDetail.accumulatedScore < 0 ? 'grade-pill--minus' : (gradeDetail.accumulatedScore > 0 ? 'grade-pill--plus' : 'grade-pill--neutral')}">
+                                        <c:out value="${gradeDetail.accumulatedScore > 0 ? '+' : ''}${gradeDetail.formattedAccumulatedScore}"/> điểm
+                                    </span>
+                                </strong>
+                            </div>
+                        </c:if>
                         <div class="grade-detail-overview-item">
                             <span>Mã sinh viên</span>
                             <strong><c:out value="${selectedStudent.studentCode}" default="—"/></strong>
@@ -120,39 +118,16 @@
                         </div>
                         <c:if test="${not empty gradeDetail}">
                             <div class="grade-detail-overview-item">
-                                <span>Cấp tổ chức (H<sub>cấp tổ chức</sub>)</span>
+                                <span>Cấp tổ chức</span>
                                 <strong><c:out value="${gradeDetail.organizationLevelName}" default="Mặc định"/> (x<c:out value="${gradeDetail.formattedOrgLevelCoefficient}"/>)</strong>
                             </div>
                             <div class="grade-detail-overview-item">
-                                <span>Hệ số đăng ký (H<sub>đăng ký trước</sub>)</span>
+                                <span>Hệ số đăng ký</span>
                                 <strong><c:out value="${gradeDetail.registrationTypeLabel}"/></strong>
-                            </div>
-                            <div class="grade-detail-overview-item">
-                                <span>Điểm tích lũy HĐ (D<sub>TL</sub>)</span>
-                                <strong>
-                                    <span class="grade-pill ${gradeDetail.accumulatedScore < 0 ? 'grade-pill--minus' : (gradeDetail.accumulatedScore > 0 ? 'grade-pill--plus' : 'grade-pill--neutral')}">
-                                        <c:out value="${gradeDetail.accumulatedScore > 0 ? '+' : ''}${gradeDetail.formattedAccumulatedScore}"/> điểm
-                                    </span>
-                                </strong>
                             </div>
                         </c:if>
                     </div>
                 </c:if>
-
-                <c:if test="${not empty gradeDetail}">
-                    <div class="grade-formula-banner">
-                        <span>
-                            <strong>Công thức áp dụng:</strong>
-                            <code>D_TG = D_điểm_danh + D_đánh_giá = <c:out value="${gradeDetail.formattedParticipationScore}"/></code>
-                            •
-                            <code>ĐTB = <c:out value="${gradeDetail.formattedAverageScore}"/></code>
-                            •
-                            <code>D_TL = ĐTB × <c:out value="${gradeDetail.formattedOrgLevelCoefficient}"/> × <c:out value="${gradeDetail.formattedEarlyRegCoefficient}"/> = <c:out value="${gradeDetail.formattedAccumulatedScore}"/></code>
-                        </span>
-                        <span class="badge status-pill ${st:css(gradeDetail.attendanceStatus)}">${st:label(gradeDetail.attendanceStatus)}</span>
-                    </div>
-                </c:if>
-
                 <%-- 3. Bảng chi tiết đầu điểm --%>
                 <div class="table-wrap activity-table-wrap">
                     <table>

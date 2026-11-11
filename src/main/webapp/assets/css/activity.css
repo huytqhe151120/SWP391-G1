@@ -867,14 +867,29 @@
     background: #f8faff;
 }
 
+.activity-list-page .activity-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    position: relative;
+    border-top: 1px solid #edf0f5;
+}
+
 .activity-list-page .activity-table-wrap table {
     width: 100%;
-    --activity-actions-col-width: 0px;
-    --activity-approval-col-width: 0px;
+    min-width: 1280px;
+    border-collapse: separate;
+    border-spacing: 0;
+    --activity-actions-col-width: 160px;
+    --activity-approval-col-width: 140px;
+    --activity-order-status-col-width: 140px;
+    --activity-registration-status-col-width: 140px;
+    --activity-deadline-col-width: 150px;
+    --activity-run-status-col-width: 140px;
 }
 
 .activity-list-page.student-list-page .activity-table-wrap table {
-    --activity-actions-col-width: 184px;
+    min-width: 1450px;
 }
 
 .activity-list-page .activity-table-wrap th.activity-action-column,
@@ -885,56 +900,71 @@
     z-index: 2;
     background: #fff;
     white-space: nowrap;
+    width: var(--activity-actions-col-width, 160px);
+    min-width: var(--activity-actions-col-width, 160px);
+    max-width: var(--activity-actions-col-width, 160px);
 }
 
 .activity-list-page .activity-table-wrap th.activity-status-column,
 .activity-list-page .activity-table-wrap td.activity-status-column {
     position: sticky;
-    right: var(--activity-actions-col-width, 0px);
+    right: var(--activity-actions-col-width, 160px);
     z-index: 2;
     background: #fff;
-    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    width: var(--activity-approval-col-width, 140px);
+    min-width: var(--activity-approval-col-width, 140px);
+    max-width: var(--activity-approval-col-width, 140px);
 }
 
 .activity-list-page .activity-table-wrap th.activity-order-status-column,
 .activity-list-page .activity-table-wrap td.activity-order-status-column {
     position: sticky;
-    right: calc(var(--activity-actions-col-width, 0px) + var(--activity-registration-status-col-width, 140px));
+    right: calc(var(--activity-actions-col-width, 160px) + var(--activity-registration-status-col-width, 140px));
     z-index: 2;
     background: #fff;
-    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    width: var(--activity-order-status-col-width, 140px);
+    min-width: var(--activity-order-status-col-width, 140px);
+    max-width: var(--activity-order-status-col-width, 140px);
 }
 
 .activity-list-page .activity-table-wrap th.activity-registration-status-column,
 .activity-list-page .activity-table-wrap td.activity-registration-status-column {
     position: sticky;
-    right: var(--activity-actions-col-width, 0px);
+    right: var(--activity-actions-col-width, 160px);
     z-index: 2;
     background: #fff;
-    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    width: var(--activity-registration-status-col-width, 140px);
+    min-width: var(--activity-registration-status-col-width, 140px);
+    max-width: var(--activity-registration-status-col-width, 140px);
 }
 
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-run-status {
     position: sticky;
-    right: calc(var(--activity-approval-col-width, 0px) + var(--activity-actions-col-width, 0px));
+    right: calc(var(--activity-approval-col-width, 140px) + var(--activity-actions-col-width, 160px));
     z-index: 2;
     background: #fff;
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    width: var(--activity-run-status-col-width, 140px);
+    min-width: var(--activity-run-status-col-width, 140px);
+    max-width: var(--activity-run-status-col-width, 140px);
 }
 
 .activity-list-page .activity-table-wrap th.activity-registration-deadline,
 .activity-list-page .activity-table-wrap td.activity-registration-deadline {
     position: sticky;
-    right: calc(var(--activity-actions-col-width, 0px) + var(--activity-registration-status-col-width, 140px) + var(--activity-order-status-col-width, 140px));
-    z-index: 3;
+    right: calc(var(--activity-actions-col-width, 160px) + var(--activity-registration-status-col-width, 140px) + var(--activity-order-status-col-width, 140px));
+    z-index: 2;
     background: #fff;
-    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    width: var(--activity-deadline-col-width, 150px);
+    min-width: var(--activity-deadline-col-width, 150px);
+    max-width: var(--activity-deadline-col-width, 150px);
 }
 
 .activity-list-page .activity-table-wrap th.activity-student-run-status,
 .activity-list-page .activity-table-wrap td.activity-student-run-status {
-    right: calc(var(--activity-deadline-col-width, 150px) + var(--activity-registration-status-col-width, 140px) + var(--activity-order-status-col-width, 140px) + var(--activity-actions-col-width, 0px));
+    right: calc(var(--activity-deadline-col-width, 150px) + var(--activity-registration-status-col-width, 140px) + var(--activity-order-status-col-width, 140px) + var(--activity-actions-col-width, 160px));
+    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
@@ -958,7 +988,9 @@
 }
 
 .activity-list-page .activity-table-wrap .activity-registration-deadline {
+    width: 150px;
     min-width: 150px;
+    max-width: 150px;
     white-space: nowrap;
 }
 
@@ -999,9 +1031,9 @@
 
 .activity-list-page .activity-table-wrap th.activity-action-column,
 .activity-list-page .activity-table-wrap td.activity-action-column {
-    width: var(--activity-actions-col-width, 132px);
-    min-width: var(--activity-actions-col-width, 132px);
-    max-width: var(--activity-actions-col-width, 132px);
+    width: var(--activity-actions-col-width, 160px);
+    min-width: var(--activity-actions-col-width, 160px);
+    max-width: var(--activity-actions-col-width, 160px);
 }
 
 .activity-select-column {
@@ -1837,48 +1869,6 @@ button.activity-action-link:focus-visible {
     .activity-table-wrap td {
         padding-right: 12px;
         padding-left: 12px;
-    }
-
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-run-status,
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-status-column,
-    .activity-list-page .activity-table-wrap th.activity-order-status-column,
-    .activity-list-page .activity-table-wrap td.activity-order-status-column,
-    .activity-list-page .activity-table-wrap th.activity-registration-status-column,
-    .activity-list-page .activity-table-wrap td.activity-registration-status-column,
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
-    .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-action-column,
-    .activity-list-page .activity-table-wrap th.activity-registration-deadline,
-    .activity-list-page .activity-table-wrap td.activity-registration-deadline {
-        position: static;
-        right: auto;
-        box-shadow: none;
-    }
-
-    .activity-list-page.student-list-page .activity-table-wrap th.activity-action-column,
-    .activity-list-page.student-list-page .activity-table-wrap td.activity-action-column {
-        position: sticky;
-        right: 0;
-        background: #fff;
-    }
-
-    .activity-list-page.student-list-page .activity-table-wrap th.activity-status-column,
-    .activity-list-page.student-list-page .activity-table-wrap td.activity-status-column {
-        position: sticky;
-        right: var(--activity-actions-col-width, 184px);
-        background: #fff;
-        box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
-    }
-
-    .activity-list-page.student-list-page .activity-table-wrap th.activity-action-column,
-    .activity-list-page.student-list-page .activity-table-wrap th.activity-status-column {
-        z-index: 3;
-    }
-
-    .activity-list-page.student-list-page .activity-table-wrap td.activity-action-column,
-    .activity-list-page.student-list-page .activity-table-wrap td.activity-status-column {
-        z-index: 2;
     }
 
     .activity-list-page .activity-table-wrap .activity-status-column,

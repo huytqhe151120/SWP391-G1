@@ -52,11 +52,10 @@
                         <p>
                             <c:choose>
                                 <c:when test="${not empty selectedStudent}">
-                                    Khoa / Ngành: <c:out value="${selectedStudent.departmentName}" default="—"/> / <c:out value="${selectedStudent.majorName}" default="—"/> |
-                                    CTĐT / Lớp: <c:out value="${selectedStudent.academicProgramName}" default="—"/> / <c:out value="${selectedStudent.mainClassCode}" default="—"/>
-                                    <c:if test="${not empty selectedSemester}">
-                                        | Học kỳ: <strong><c:out value="${selectedSemester.code}"/> – <c:out value="${selectedSemester.name}"/></strong>
-                                    </c:if>
+                                    Khoa: <c:out value="${selectedStudent.departmentName}" default="—"/> |
+                                    Ngành: <c:out value="${selectedStudent.majorName}" default="—"/> |
+                                    CTĐT: <c:out value="${selectedStudent.academicProgramName}" default="—"/> |
+                                    Lớp: <c:out value="${selectedStudent.mainClassCode}" default="—"/>
                                 </c:when>
                                 <c:otherwise>Chọn sinh viên để tra cứu</c:otherwise>
                             </c:choose>
