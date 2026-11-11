@@ -470,7 +470,7 @@ public class AssessmentServiceImpl implements IAssessmentService {
                 return rs.next();
             }
         } catch (java.sql.SQLException e) {
-            return false;
+            throw new IllegalStateException("Failed to verify assessment participation.", e);
         }
     }
 
