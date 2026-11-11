@@ -245,6 +245,26 @@
                     <a class="button button-primary"
                        href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
                 </c:if>
+
+                <%-- Assessment navigation --%>
+                <c:if test="${not empty assessment}">
+                    <c:if test="${canManageActivities}">
+                        <a class="button button-primary-outline button-sm"
+                           href="${pageContext.request.contextPath}/assessment?action=manage&amp;activityId=${activity.id}">
+                            Quản lý đánh giá
+                        </a>
+                        <a class="button button-primary-outline button-sm"
+                           href="${pageContext.request.contextPath}/assessment?action=submissions&amp;activityId=${activity.id}">
+                            Xem bài nộp
+                        </a>
+                    </c:if>
+                    <c:if test="${isStudent && canStudentTake}">
+                        <a class="button button-primary button-sm"
+                           href="${pageContext.request.contextPath}/assessment?action=take&amp;assessmentId=${assessment.id}">
+                            Làm bài đánh giá
+                        </a>
+                    </c:if>
+                </c:if>
             </div>
         </div>
 
