@@ -170,6 +170,12 @@
         if (!empty && el.id === "endTime" && byId("startTime").value && el.value <= byId("startTime").value) {
             text = "Thời gian kết thúc phải sau thời gian bắt đầu.";
         }
+        if (!empty && el.id === "attendanceSessionCount") {
+            var countVal = Number(el.value);
+            if (!Number.isInteger(countVal) || countVal < 1 || countVal > 50) {
+                text = "Số buổi điểm danh phải là số nguyên từ 1 đến 50.";
+            }
+        }
         msg.textContent = text;
         fieldOf(el).classList.toggle("has-error", !!text);
         return !text;

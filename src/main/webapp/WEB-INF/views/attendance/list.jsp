@@ -8,11 +8,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EAMS | Điểm danh &amp; Chấm điểm tham gia</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-1">
+    <title>EAMS | Danh sách điểm danh sinh viên</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-4">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/attendance.css?v=20261109-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/attendance.css?v=20261109-4">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -23,22 +23,23 @@
         <main class="activity-app-main page activity-list-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
-                    <span class="eyebrow">EAMS <span aria-hidden="true">/</span> ĐIỂM DANH &amp; CHẤM ĐIỂM THAM GIA</span>
-                    <h1>Điểm danh &amp; Chấm điểm tham gia</h1>
-                    <p>Chọn hoạt động để cập nhật trạng thái điểm danh (Có mặt: +5, Đi muộn/Về sớm: +3, Vắng: -5) và chấm điểm đánh giá tham gia (0–5 điểm kèm nhận xét).</p>
+                    <span class="eyebrow">EAMS <span aria-hidden="true">/</span> ĐIỂM DANH SINH VIÊN</span>
+                    <h1>Danh sách điểm danh sinh viên</h1>
+                    <p>Chọn hoạt động và buổi điểm danh để cập nhật trạng thái chuyên cần theo từng buổi (Có mặt: +5, Đi muộn/Về sớm: +3, Vắng: -5). Điểm chuyên cần của hoạt động là trung bình cộng các buổi.</p>
                 </div>
             </header>
 
-            <div class="activity-page-back">
+            <div class="activity-page-back" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <a class="button button-back"
                    href="${pageContext.request.contextPath}/activities<c:if test='${not empty selectedActivity}'>?action=detail&amp;id=${selectedActivity.id}#tab-attendance</c:if>">
                     <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                     Quay lại hoạt động
                 </a>
                 <c:if test="${not empty selectedActivity}">
-                    <a class="button button-outline button-sm"
-                       href="${pageContext.request.contextPath}/student-grades">
-                        Bảng điểm hoạt động sinh viên →
+                    <a class="button button-outline"
+                        href="${pageContext.request.contextPath}/participation-grading?activityId=${selectedActivity.id}">
+                        Chấm điểm tham gia
+                        <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                     </a>
                 </c:if>
             </div>
@@ -55,11 +56,12 @@
     <section class="card activity-table-card" aria-labelledby="attendance-table-title">
         <div class="activity-table-heading">
             <div>
-                <h2 id="attendance-table-title">Danh sách điểm danh &amp; chấm điểm tham gia</h2>
+                <h2 id="attendance-table-title">Danh sách điểm danh sinh viên</h2>
                 <p>
                     <c:choose>
                         <c:when test="${not empty selectedActivity}">
                             <c:out value="${selectedActivity.code}"/> – <c:out value="${selectedActivity.name}"/>
+                            • <strong>Buổi <c:out value="${selectedSessionNumber}"/> / <c:out value="${totalSessions}"/></strong>
                         </c:when>
                         <c:otherwise>Sinh viên tham gia hoạt động ngoại khóa</c:otherwise>
                     </c:choose>
@@ -78,17 +80,50 @@
         </div>
 
         <details class="activity-filter-panel" open>
-            <summary class="activity-filter-toggle"><span>Chọn hoạt động</span></summary>
-            <form class="activity-filter attendance-filter" action="${pageContext.request.contextPath}/attendance" method="get">
+            <summary class="activity-filter-toggle"><span>Chọn hoạt động &amp; buổi điểm danh</span></summary>
+            <form class="activity-filter attendance-filter" action="${pageContext.request.contextPath}/attendance" method="get" data-attendance-activity-form>
                 <div class="activity-filter-field attendance-filter-activity">
-                    <label for="attendance-activity">Hoạt động</label>
-                    <select id="attendance-activity" name="activityId" onchange="this.form.submit()">
-                        <option value="">-- Chọn hoạt động --</option>
-                        <c:forEach var="activity" items="${activities}">
-                            <option value="${activity.id}" ${selectedActivityId == activity.id ? 'selected' : ''}>
-                                <c:out value="${activity.code}"/> – <c:out value="${activity.name}"/><c:if test="${not empty activity.semesterName}"> (<c:out value="${activity.semesterName}"/>)</c:if>
-                            </option>
-                        </c:forEach>
+                    <label id="attendance-activity-label">Hoạt động</label>
+                    <div class="multi-select-combobox" data-multi-select data-single data-auto-submit
+                         data-item-label="hoạt động" data-input-name="activityId">
+                        <button type="button" class="multi-select-trigger" aria-expanded="false"
+                                aria-controls="attendance-activity-options" aria-labelledby="attendance-activity-label">
+                            <span data-selection-label>-- Chọn hoạt động --</span>
+                            <span aria-hidden="true">▾</span>
+                        </button>
+                        <div class="multi-select-dropdown" id="attendance-activity-options" hidden>
+                            <input class="multi-select-search" type="search"
+                                   placeholder="Tìm mã hoặc tên hoạt động..." aria-label="Tìm hoạt động">
+                            <fieldset class="multi-select-options">
+                                <legend class="visually-hidden">Chọn hoạt động</legend>
+                                <c:forEach var="activity" items="${activities}">
+                                    <label class="multi-select-option">
+                                        <input type="radio" name="activityId" value="${activity.id}" ${selectedActivityId == activity.id ? 'checked' : ''}>
+                                        <span><c:out value="${activity.code}"/> – <c:out value="${activity.name}"/><c:if test="${not empty activity.semesterName}"> (<c:out value="${activity.semesterName}"/>)</c:if> [${activity.attendanceSessionCount} buổi]</span>
+                                    </label>
+                                </c:forEach>
+                            </fieldset>
+                            <div class="multi-select-empty" hidden>Không tìm thấy hoạt động phù hợp.</div>
+                        </div>
+                        <span class="multi-select-count" aria-live="polite">Chưa chọn hoạt động</span>
+                    </div>
+                </div>
+                <div class="activity-filter-field attendance-filter-session">
+                    <label for="attendance-session">Buổi điểm danh</label>
+                    <select id="attendance-session" name="sessionNumber"
+                            onchange="this.form.submit()" ${empty selectedActivity ? 'disabled' : ''}>
+                        <c:choose>
+                            <c:when test="${not empty selectedActivity}">
+                                <c:forEach var="sessIdx" begin="1" end="${totalSessions}">
+                                    <option value="${sessIdx}" ${selectedSessionNumber == sessIdx ? 'selected' : ''}>
+                                        Buổi điểm danh số ${sessIdx} (${sessIdx}/${totalSessions})
+                                    </option>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <option value="1">-- Chọn hoạt động trước --</option>
+                            </c:otherwise>
+                        </c:choose>
                     </select>
                 </div>
                 <noscript>
@@ -124,10 +159,9 @@
                     </span>
                 </div>
                 <div class="attendance-summary-item">
-                    <span class="attendance-summary-label">Cấp tổ chức (Hệ số)</span>
+                    <span class="attendance-summary-label">Buổi điểm danh đang chọn</span>
                     <span class="activity-time">
-                        <c:out value="${selectedActivity.organizationLevelName}" default="Mặc định"/>
-                        (x<c:out value="${not empty selectedActivity.formattedOrganizationLevelCoefficient ? selectedActivity.formattedOrganizationLevelCoefficient : '1.00'}"/>)
+                        <strong>Buổi <c:out value="${selectedSessionNumber}"/> / <c:out value="${totalSessions}"/> buổi</strong>
                     </span>
                 </div>
                 <div class="attendance-summary-item">
@@ -139,6 +173,7 @@
             <%-- Hidden filter fields shared by every POST form, so the redirect keeps the current filters. --%>
             <c:set var="filterHiddenFields">
                 <input type="hidden" name="activityId" value="${selectedActivity.id}">
+                <input type="hidden" name="sessionNumber" value="${selectedSessionNumber}">
                 <input type="hidden" name="keyword" value="<c:out value='${keyword}'/>">
                 <input type="hidden" name="department" value="<c:out value='${selectedDepartment}'/>">
                 <input type="hidden" name="academicProgram" value="<c:out value='${selectedAcademicProgram}'/>">
@@ -158,6 +193,7 @@
                 </summary>
                 <form class="activity-filter" action="${pageContext.request.contextPath}/attendance" method="get">
                     <input type="hidden" name="activityId" value="${selectedActivity.id}">
+                    <input type="hidden" name="sessionNumber" value="${selectedSessionNumber}">
                     <input type="hidden" name="pageSize" value="${pageSize}">
                     <div class="activity-filter-field">
                         <label for="filter-keyword">Tìm kiếm</label>
@@ -201,7 +237,7 @@
                         </select>
                     </div>
                     <div class="activity-filter-field">
-                        <label for="filter-attendance-status">Trạng thái điểm danh</label>
+                        <label for="filter-attendance-status">Trạng thái điểm danh (Buổi ${selectedSessionNumber})</label>
                         <select id="filter-attendance-status" name="attendanceStatus">
                             <option value="">Tất cả</option>
                             <c:forEach var="status" items="${participantStatuses}">
@@ -212,15 +248,15 @@
                     <div class="activity-filter-buttons">
                         <button type="submit" class="button button-primary button-sm">Tìm kiếm &amp; Lọc</button>
                         <c:if test="${filtered}">
-                            <a class="button button-sm" href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&amp;pageSize=${pageSize}">Xóa Bộ lọc</a>
+                            <a class="button button-sm" href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&amp;sessionNumber=${selectedSessionNumber}&amp;pageSize=${pageSize}">Xóa Bộ lọc</a>
                         </c:if>
                     </div>
                 </form>
             </details>
 
-            <ul class="attendance-counts" aria-label="Thống kê điểm danh">
+            <ul class="attendance-counts" aria-label="Thống kê điểm danh buổi ${selectedSessionNumber}">
                 <c:forEach var="status" items="${participantStatuses}">
-                    <li class="badge status-pill ${st:css(status)}">${st:label(status)}: <strong data-status-count="${status}"><c:out value="${statusCounts[status]}"/></strong></li>
+                    <li class="badge status-pill ${st:css(status)}">${st:label(status)} (Buổi ${selectedSessionNumber}): <strong data-status-count="${status}"><c:out value="${statusCounts[status]}"/></strong></li>
                 </c:forEach>
             </ul>
 
@@ -230,18 +266,13 @@
             <c:choose>
                 <c:when test="${canTakeAttendance && not empty participants}">
                     <form id="attendance-form" class="activity-bulk-toolbar" action="${pageContext.request.contextPath}/attendance" method="post"
-                          data-attendance-autosave data-activity-id="${selectedActivity.id}">
+                          data-attendance-autosave data-activity-id="${selectedActivity.id}" data-session-number="${selectedSessionNumber}">
                         <input type="hidden" name="action" value="save">
                         ${filterHiddenFields}
                         <span class="activity-bulk-selection" data-attendance-selection-hint>
-                            Tick chọn sinh viên để điểm danh hoặc chấm điểm tham gia hàng loạt<c:if test="${filtered || totalPages > 1}"> (đang hiển thị <c:out value="${participants.size()}"/> sinh viên<c:if test="${filtered}"> theo bộ lọc</c:if><c:if test="${totalPages > 1}"> ở trang <c:out value="${currentPage}"/></c:if>)</c:if>.
+                            Tick chọn sinh viên để điểm danh hàng loạt cho <strong>Buổi <c:out value="${selectedSessionNumber}"/></strong>
                         </span>
                         <div class="activity-bulk-actions">
-                            <button type="button" class="button button-sm button-primary action-btn" id="btn-toggle-batch-grade"
-                                    data-batch-grade-trigger disabled hidden style="display: none;">
-                                <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
-                                Chấm điểm tham gia (<span data-batch-grade-count>0</span>)
-                            </button>
                             <button type="button" class="button button-sm action-btn action-btn--bulk-approve" data-bulk-status
                                     data-to="ATTENDED" data-label="Có mặt" disabled hidden style="display: none;">
                                 <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span>
@@ -268,51 +299,20 @@
                                     <button type="button" class="action-menu-item action-menu-item--approve" data-mark-all-status="ATTENDED"
                                             data-label="Đánh dấu tất cả có mặt">
                                         <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span>
-                                        Đánh dấu tất cả có mặt
+                                        Đánh dấu tất cả có mặt (Buổi ${selectedSessionNumber})
                                     </button>
                                     <button type="button" class="action-menu-item action-menu-item--reject" data-mark-all-status="ABSENT"
                                             data-label="Đánh dấu tất cả vắng mặt">
                                         <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg></span>
-                                        Đánh dấu tất cả vắng mặt
+                                        Đánh dấu tất cả vắng mặt (Buổi ${selectedSessionNumber})
                                     </button>
                                 </div>
                             </details>
                         </div>
                     </form>
-
-                    <%-- Batch Grading Panel for multiple selected present students --%>
-                    <form id="batch-grade-form" class="attendance-batch-grade-panel"
-                          action="${pageContext.request.contextPath}/attendance" method="post" hidden>
-                        <input type="hidden" name="action" value="batchGrade">
-                        ${filterHiddenFields}
-                        <div data-batch-grade-inputs hidden></div>
-                        <div class="attendance-batch-grade-head">
-                            <div>
-                                <h3>Chấm điểm đánh giá tham gia hàng loạt</h3>
-                                <p>Áp dụng chung điểm đánh giá thái độ/mức độ tham gia (tối đa 5.0 điểm) và nhận xét cho <strong data-batch-grade-target-count>0</strong> sinh viên có mặt đã chọn.</p>
-                            </div>
-                            <button type="button" class="button button-sm button-outline" data-batch-grade-close>Đóng</button>
-                        </div>
-                        <div class="attendance-batch-grade-fields">
-                            <div class="activity-filter-field attendance-batch-score-field">
-                                <label for="batch-eval-score">Điểm đánh giá tham gia (0 – 5)</label>
-                                <input id="batch-eval-score" type="number" name="evalScore" min="0" max="5" step="0.5" value="5" required>
-                            </div>
-                            <div class="activity-filter-field attendance-batch-feedback-field">
-                                <label for="batch-eval-feedback">Nhận xét / Feedback chung</label>
-                                <input id="batch-eval-feedback" type="text" name="feedback" maxlength="1000"
-                                       placeholder="Ví dụ: Tích cực, hăng hái tham gia hoạt động">
-                            </div>
-                            <div class="attendance-batch-grade-actions">
-                                <button type="submit" class="button button-primary button-sm" data-batch-grade-submit>
-                                    Lưu điểm hàng loạt
-                                </button>
-                            </div>
-                        </div>
-                    </form>
                 </c:when>
                 <c:when test="${not canTakeAttendance}">
-                    <p class="attendance-note">Chỉ điểm danh và chấm điểm tham gia khi hoạt động đang diễn ra hoặc đã hoàn thành.</p>
+                    <p class="attendance-note">Chỉ điểm danh khi hoạt động đang diễn ra hoặc đã hoàn thành.</p>
                 </c:when>
             </c:choose>
 
@@ -332,7 +332,7 @@
                     <div class="activity-bulk-actions">
                         <a class="button button-primary button-sm action-btn" data-add-toggle
                            aria-controls="attendance-add-panel" aria-expanded="${openAddPanel ? 'true' : 'false'}"
-                           href="${pageContext.request.contextPath}/attendance?action=add&amp;activityId=${selectedActivity.id}<c:out value='${filterQuery}${pagingQuery}'/>">
+                           href="${pageContext.request.contextPath}/attendance?action=add&amp;activityId=${selectedActivity.id}&amp;sessionNumber=${selectedSessionNumber}<c:out value='${filterQuery}${pagingQuery}'/>">
                             <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
                             Thêm sinh viên
                         </a>
@@ -450,7 +450,7 @@
         </c:if>
 
         <c:set var="showSelectColumn" value="${canManageParticipants or canTakeAttendance}"/>
-        <c:set var="columnCount" value="${showSelectColumn ? 10 : 9}"/>
+        <c:set var="columnCount" value="${showSelectColumn ? 8 : 7}"/>
         <div class="table-wrap activity-table-wrap">
             <table>
                 <thead>
@@ -464,10 +464,9 @@
                     <th scope="col" class="col-code">Mã SV</th>
                     <th scope="col" class="col-object-name">Họ tên</th>
                     <th scope="col" class="col-academic">Khoa / Ngành</th>
-                    <th scope="col" class="col-academic">Lớp</th>
-                    <th scope="col" class="col-status">Điểm danh</th>
-                    <th scope="col" class="col-grade-eval">Đánh giá tham gia</th>
-                    <th scope="col" class="col-score">Điểm tham gia</th>
+                    <th scope="col" class="col-academic">CTĐT / Lớp</th>
+                    <th scope="col" class="col-status">Điểm danh<c:if test="${not empty selectedSessionNumber}"> (Buổi ${selectedSessionNumber})</c:if></th>
+                    <th scope="col" class="col-score">Tổng hợp chuyên cần</th>
                     <th scope="col" class="activity-action-column">Chi tiết</th>
                 </tr>
                 </thead>
@@ -477,7 +476,7 @@
                         <tr>
                             <td class="empty-state activity-empty-state" colspan="${columnCount}">
                                 <span class="empty-state-mark" aria-hidden="true">✓</span>
-                                <strong>Chọn hoạt động để xem danh sách điểm danh &amp; chấm điểm</strong>
+                                <strong>Chọn hoạt động để xem danh sách điểm danh sinh viên</strong>
                                 <span>Danh sách sinh viên tham gia sẽ hiển thị tại đây.</span>
                             </td>
                         </tr>
@@ -510,7 +509,7 @@
                                                data-participant-id="${p.participantId}"
                                                data-removable="${p.removable ? 'true' : 'false'}"
                                                aria-label="Chọn <c:out value='${p.studentName}'/>"
-                                               title="${canManageParticipants and not p.removable ? 'Sinh viên đã được điểm danh (chỉ có thể thao tác điểm danh/chấm điểm, không thể xóa khỏi danh sách)' : 'Chọn sinh viên'}">
+                                               title="${canManageParticipants and not p.removable ? 'Sinh viên đã được điểm danh (chỉ có thể thao tác điểm danh, không thể xóa khỏi danh sách)' : 'Chọn sinh viên'}">
                                     </td>
                                 </c:if>
                                 <td class="col-code"><span class="activity-code"><c:out value="${p.studentCode}" default="—"/></span></td>
@@ -521,85 +520,52 @@
                                     <c:out value="${p.departmentName}" default="—"/>
                                     <c:if test="${not empty p.majorName}"><br><small class="text-muted"><c:out value="${p.majorName}"/></small></c:if>
                                 </td>
-                                <td class="col-academic" title="<c:out value='${p.mainClassCode}'/>"><c:out value="${p.mainClassCode}" default="—"/></td>
+                                <td class="col-academic" title="<c:out value='${p.academicProgramName} - ${p.mainClassCode}'/>">
+                                    <c:out value="${p.academicProgramName}" default="—"/>
+                                    <c:if test="${not empty p.mainClassCode}"><br><small class="text-muted"><c:out value="${p.mainClassCode}"/></small></c:if>
+                                </td>
                                 <td class="col-status">
                                     <c:choose>
                                         <c:when test="${canTakeAttendance}">
                                             <div class="attendance-status-cell">
-                                                <select class="attendance-status-select ${st:css(p.attendanceStatus)}" name="status_${p.participantId}"
+                                                <select class="attendance-status-select ${st:css(p.sessionAttendanceStatus)}" name="status_${p.participantId}"
                                                         form="attendance-form" data-attendance-select
                                                         data-participant-id="${p.participantId}"
-                                                        data-saved-value="${p.attendanceStatus}"
-                                                        aria-label="Trạng thái điểm danh của <c:out value='${p.studentName}'/>">
+                                                        data-saved-value="${p.sessionAttendanceStatus}"
+                                                        aria-label="Trạng thái điểm danh buổi ${selectedSessionNumber} của <c:out value='${p.studentName}'/>">
                                                     <c:forEach var="status" items="${participantStatuses}">
-                                                        <option value="${status}" class="${st:css(status)}" ${p.attendanceStatus == status ? 'selected' : ''}>${st:label(status)}</option>
+                                                        <option value="${status}" class="${st:css(status)}" ${p.sessionAttendanceStatus == status ? 'selected' : ''}>${st:label(status)}</option>
                                                     </c:forEach>
                                                 </select>
-                                                <span class="attendance-point-chip" data-attendance-score-for="${p.participantId}">
-                                                    (<c:out value="${p.formattedAttendanceScore}"/>đ)
+                                                <span class="attendance-point-chip" data-session-score-for="${p.participantId}">
+                                                    (<c:out value="${p.formattedSessionAttendanceScore}"/>đ)
                                                 </span>
                                             </div>
                                         </c:when>
                                         <c:otherwise>
-                                            <span class="badge status-pill ${st:css(p.attendanceStatus)}">${st:label(p.attendanceStatus)} (<c:out value="${p.formattedAttendanceScore}"/>đ)</span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </td>
-                                <td class="col-grade-eval">
-                                    <c:choose>
-                                        <c:when test="${canTakeAttendance}">
-                                            <div class="attendance-grade-inline" data-grade-inline="${p.participantId}">
-                                                <input type="number" class="attendance-eval-input"
-                                                       min="0" max="5" step="0.5"
-                                                       placeholder="0-5"
-                                                       value="<c:out value='${p.formattedEvalScore}'/>"
-                                                       data-eval-score-input="${p.participantId}"
-                                                       ${p.presentStatus ? '' : 'disabled'}
-                                                       aria-label="Điểm đánh giá tham gia của <c:out value='${p.studentName}'/>">
-                                                <input type="text" class="attendance-feedback-input"
-                                                       maxlength="1000"
-                                                       placeholder="${p.presentStatus ? 'Nhận xét / Feedback...' : 'Chỉ chấm khi có mặt'}"
-                                                       value="<c:out value='${p.participationFeedback}'/>"
-                                                       data-eval-feedback-input="${p.participantId}"
-                                                       ${p.presentStatus ? '' : 'disabled'}
-                                                       aria-label="Nhận xét tham gia của <c:out value='${p.studentName}'/>">
-                                                <button type="button" class="button button-sm button-outline attendance-grade-save-btn"
-                                                        data-save-single-grade="${p.participantId}"
-                                                        ${p.presentStatus ? '' : 'disabled'}
-                                                        title="Lưu điểm đánh giá tham gia">
-                                                    Lưu
-                                                </button>
-                                            </div>
-                                            <c:if test="${not empty p.participationGradedBy}">
-                                                <small class="attendance-graded-by" data-graded-by-for="${p.participantId}">
-                                                    Chấm bởi: <c:out value="${p.participationGradedBy}"/>
-                                                </small>
-                                            </c:if>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <c:choose>
-                                                <c:when test="${p.presentStatus and not empty p.participationEvalScore}">
-                                                    <strong><c:out value="${p.formattedEvalScore}"/> / 5</strong>
-                                                    <c:if test="${not empty p.participationFeedback}">
-                                                        <div class="text-muted"><c:out value="${p.participationFeedback}"/></div>
-                                                    </c:if>
-                                                </c:when>
-                                                <c:otherwise><span class="text-muted">—</span></c:otherwise>
-                                            </c:choose>
+                                            <span class="badge status-pill ${st:css(p.sessionAttendanceStatus)}">${st:label(p.sessionAttendanceStatus)} (<c:out value="${p.formattedSessionAttendanceScore}"/>đ)</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td class="col-score">
-                                    <strong class="attendance-score-badge" data-participation-score-for="${p.participantId}">
-                                        <c:out value="${p.formattedParticipationScore}"/>
-                                    </strong>
+                                    <div style="display:flex; flex-direction:column; gap:2px;">
+                                        <small class="text-muted" data-session-progress-for="${p.participantId}">
+                                            Có mặt: <strong><c:out value="${p.attendedSessionCount}"/>/<c:out value="${p.totalSessions}"/></strong> buổi
+                                        </small>
+                                        <strong class="attendance-score-badge" data-attendance-score-for="${p.participantId}" title="Điểm chuyên cần trung bình các buổi">
+                                            TB: <c:out value="${p.formattedAttendanceScore}"/>đ
+                                        </strong>
+                                    </div>
                                 </td>
                                 <td class="activity-action-column">
-                                    <a class="button button-sm button-outline"
-                                       href="${pageContext.request.contextPath}/student-grades?action=activityDetail&amp;studentId=${p.studentId}&amp;activityId=${selectedActivity.id}"
-                                       title="Xem chi tiết các đầu điểm của sinh viên trong hoạt động này">
-                                        Chi tiết
-                                    </a>
+                                    <div class="actions activity-actions">
+                                        <a class="activity-action-link action-btn action-btn--view"
+                                           href="${pageContext.request.contextPath}/attendance?action=detail&amp;activityId=${selectedActivity.id}&amp;participantId=${p.participantId}&amp;sessionNumber=${selectedSessionNumber}"
+                                           title="Xem chi tiết điểm danh các buổi và lịch sử điểm danh của sinh viên">
+                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                                            Chi tiết
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -609,10 +575,11 @@
             </table>
         </div>
         <c:if test="${not empty selectedActivity && filteredParticipantCount > 0}">
-            <c:set var="pageBaseUrl" value="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&pageSize=${pageSize}${filterQuery}"/>
+            <c:set var="pageBaseUrl" value="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&sessionNumber=${selectedSessionNumber}&pageSize=${pageSize}${filterQuery}"/>
             <div class="activity-pagination">
                 <form class="activity-page-size" action="${pageContext.request.contextPath}/attendance" method="get">
                     <input type="hidden" name="activityId" value="${selectedActivity.id}">
+                    <input type="hidden" name="sessionNumber" value="${selectedSessionNumber}">
                     <input type="hidden" name="page" value="1">
                     <input type="hidden" name="keyword" value="<c:out value='${keyword}'/>">
                     <input type="hidden" name="department" value="<c:out value='${selectedDepartment}'/>">
@@ -663,7 +630,7 @@
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
-<script src="${pageContext.request.contextPath}/assets/js/attendance.js?v=20261109-1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261109-4"></script>
+<script src="${pageContext.request.contextPath}/assets/js/attendance.js?v=20261109-4"></script>
 </body>
 </html>

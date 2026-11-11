@@ -24,6 +24,15 @@ public class ExtracurricularActivity {
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
     private boolean isPublic = true;
+    private int attendanceSessionCount = 1;
+
+    public int getAttendanceSessionCount() {
+        return attendanceSessionCount > 0 ? attendanceSessionCount : 1;
+    }
+
+    public void setAttendanceSessionCount(int attendanceSessionCount) {
+        this.attendanceSessionCount = attendanceSessionCount > 0 ? attendanceSessionCount : 1;
+    }
 
     public boolean isPublic() { return isPublic; }
 

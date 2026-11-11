@@ -346,6 +346,7 @@
                         <div class="detail-item"><dt>Bắt buộc điền form</dt><dd><c:out value="${activity.registrationFormRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Yêu cầu bài tổng kết</dt><dd><c:out value="${activity.summaryRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Số lượng tối đa</dt><dd><c:out value="${activity.maxParticipants}" default="Không giới hạn"/></dd></div>
+                        <div class="detail-item"><dt>Số buổi điểm danh</dt><dd><c:out value="${activity.attendanceSessionCount > 0 ? activity.attendanceSessionCount : 1}"/> buổi</dd></div>
                         <div class="detail-item field-wide"><dt>Đối tượng tham gia</dt><dd><c:out value="${activity.targetParticipantsSummary}" default="Toàn trường"/></dd></div>
                         <div class="detail-item field-wide"><dt>Địa điểm</dt><dd><c:out value="${activity.address}" default="Chưa cập nhật"/></dd></div>
                         <div class="detail-item field-wide"><dt>Mô tả</dt><dd class="activity-detail-description"><c:out value="${activity.description}" default="Chưa có mô tả"/></dd></div>
@@ -1188,6 +1189,10 @@
                             </span>
                         </div>
                         <div class="attendance-summary-item">
+                            <span class="attendance-summary-label">Số buổi điểm danh</span>
+                            <span class="activity-code"><c:out value="${activity.attendanceSessionCount > 0 ? activity.attendanceSessionCount : 1}"/> buổi</span>
+                        </div>
+                        <div class="attendance-summary-item">
                             <span class="attendance-summary-label">Trạng thái hoạt động</span>
                             <span class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span>
                         </div>
@@ -1230,13 +1235,21 @@
                                     <c:when test="${canOpenAttendancePage}">
                                         <a class="button button-primary button-sm"
                                            href="${pageContext.request.contextPath}/attendance?activityId=${activity.id}">
-                                            Xem tất cả &amp; Điểm danh Sinh viên
+                                            Điểm danh Sinh viên
+                                        </a>
+                                        <a class="button button-primary-outline button-sm"
+                                           href="${pageContext.request.contextPath}/participation-grading?activityId=${activity.id}">
+                                            Chấm điểm tham gia
                                         </a>
                                     </c:when>
                                     <c:otherwise>
                                         <button type="button" class="button button-primary button-sm" disabled
                                                 title="Chỉ có thể điểm danh khi hoạt động Đã duyệt / Đang diễn ra">
-                                            Xem tất cả &amp; Điểm danh Sinh viên
+                                            Điểm danh Sinh viên
+                                        </button>
+                                        <button type="button" class="button button-primary-outline button-sm" disabled
+                                                title="Chỉ có thể chấm điểm tham gia khi hoạt động Đã duyệt / Đang diễn ra">
+                                            Chấm điểm tham gia
                                         </button>
                                     </c:otherwise>
                                 </c:choose>

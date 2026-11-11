@@ -670,7 +670,7 @@
     font-weight: 600;
 }
 
-.activity-filter-field input,
+.activity-filter-field input:not([type="checkbox"]):not([type="radio"]),
 .activity-filter-field select {
     width: 100%;
     min-height: 38px;
@@ -1562,6 +1562,8 @@ button.activity-action-link:focus-visible {
 }
 
 .multi-select-trigger [data-selection-label] {
+    min-width: 0;
+    flex: 1 1 0%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

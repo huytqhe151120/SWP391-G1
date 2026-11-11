@@ -10,6 +10,7 @@ public class ExtracurricularActivityRequestDTO {
     private String nature;                  // REQUIRE_REGISTRATION, VOLUNTARY or MANDATORY
     private String summaryRequired;         // "true" when the toggle is on
     private String maxParticipants;
+    private String attendanceSessionCount = "1";
     private String address;
     private String description;
     private String startTime;                // Received as String from form, then convert to LocalDateTime in the controller
@@ -91,6 +92,14 @@ public class ExtracurricularActivityRequestDTO {
 
     public void setMaxParticipants(String maxParticipants) {
         this.maxParticipants = maxParticipants;
+    }
+
+    public String getAttendanceSessionCount() {
+        return attendanceSessionCount;
+    }
+
+    public void setAttendanceSessionCount(String attendanceSessionCount) {
+        this.attendanceSessionCount = attendanceSessionCount;
     }
 
     public String getAddress() {

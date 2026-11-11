@@ -2,8 +2,10 @@ package com.swp391.g1.service;
 
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
+import com.swp391.g1.dto.response.AttendanceHistoryDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.ParticipantCandidateDTO;
+import com.swp391.g1.dto.response.ParticipantSessionAttendanceDTO;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -12,11 +14,20 @@ import java.util.Map;
 public interface IActivityParticipantService {
     List<ActivityParticipantResponseDTO> getParticipants(int activityId);
 
+    default List<ActivityParticipantResponseDTO> getParticipants(int activityId, int sessionNumber) {
+        return getParticipants(activityId);
+    }
+
     /** Attendance can only be taken while the activity is ongoing or after it has completed. */
     boolean canTakeAttendance(ExtracurricularActivityResponseDTO activity);
 
     /** statusByParticipantId: participantId -> ParticipantStatus name. Returns the number of changed rows. */
     int saveAttendance(int activityId, Map<Integer, String> statusByParticipantId, CurrentUser user);
+
+    default int saveAttendance(int activityId, int sessionNumber,
+            Map<Integer, String> statusByParticipantId, CurrentUser user) {
+        return saveAttendance(activityId, statusByParticipantId, user);
+    }
 
     /**
      * Grades participation evaluation (0-5) and feedback for one or many participants (batch grading).
@@ -50,4 +61,12 @@ public interface IActivityParticipantService {
 
     /** Removes participants that have not been marked yet. Returns the number of removed rows. */
     int removeParticipants(int activityId, List<Integer> participantIds);
+
+    default List<ParticipantSessionAttendanceDTO> getSessionAttendances(int activityId, int participantId, int totalSessions) {
+        return List.of();
+    }
+
+    default List<AttendanceHistoryDTO> getAttendanceHistory(int activityId, int participantId) {
+        return List.of();
+    }
 }

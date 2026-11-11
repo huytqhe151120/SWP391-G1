@@ -2,7 +2,7 @@
 
 .grade-summary-cards {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 14px;
     padding: 18px 26px;
     border-top: 1px solid #edf0f5;

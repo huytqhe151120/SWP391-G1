@@ -43,6 +43,7 @@ public class ExtracurricularActivityResponseDTO {
     private Enum.ActivityNature nature;
     private boolean summaryRequired;
     private Integer maxParticipants;
+    private int attendanceSessionCount = 1;
     private String address;
     private String description;
     private Enum.ActivityStatus activityStatus;        // UPCOMING, ONGOING, COMPLETED, CANCELLED[cite: 1]
@@ -325,6 +326,14 @@ public class ExtracurricularActivityResponseDTO {
 
     public void setMaxParticipants(Integer maxParticipants) {
         this.maxParticipants = maxParticipants;
+    }
+
+    public int getAttendanceSessionCount() {
+        return attendanceSessionCount > 0 ? attendanceSessionCount : 1;
+    }
+
+    public void setAttendanceSessionCount(int attendanceSessionCount) {
+        this.attendanceSessionCount = attendanceSessionCount > 0 ? attendanceSessionCount : 1;
     }
 
     public String getAddress() {

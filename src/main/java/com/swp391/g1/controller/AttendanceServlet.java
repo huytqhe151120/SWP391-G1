@@ -43,7 +43,7 @@ public class AttendanceServlet extends HttpServlet {
 
     private static final String STATUS_PARAM_PREFIX = "status_";
     private static final Set<String> POST_ACTIONS = Set.of(
-            "save", "saveAjax", "batchGrade", "batchGradeAjax", "saveGradeAjax",
+            "save", "saveAjax", "saveStudentSession", "batchGrade", "batchGradeAjax", "saveGradeAjax",
             "addStudents", "addGroup", "remove");
     private static final Set<String> AJAX_ACTIONS = Set.of("saveAjax", "batchGradeAjax", "saveGradeAjax");
     private static final Set<String> ADD_ACTIONS = Set.of("addStudents", "addGroup");
@@ -80,8 +80,13 @@ public class AttendanceServlet extends HttpServlet {
             request.setAttribute("activities", activities);
 
             int activityId = parseId(request.getParameter("activityId"));
+            String action = request.getParameter("action");
+            if ("detail".equals(action)) {
+                handleParticipantDetailGet(request, response, activities, activityId);
+                return;
+            }
             // The add-students form lives inside the list page; action=add only opens it.
-            boolean openAddPanel = "add".equals(request.getParameter("action"));
+            boolean openAddPanel = "add".equals(action);
             if (openAddPanel && activityId <= 0) {
                 response.sendRedirect(request.getContextPath() + "/attendance");
                 return;
@@ -93,8 +98,14 @@ public class AttendanceServlet extends HttpServlet {
                             "Bạn không có quyền điểm danh hoạt động này.");
                     return;
                 }
+                int totalSessions = Math.max(1, selectedActivity.getAttendanceSessionCount());
+                int requestedSession = parseId(request.getParameter("sessionNumber"));
+                int selectedSessionNumber = requestedSession <= 0
+                        ? 1
+                        : Math.min(requestedSession, totalSessions);
+
                 List<ActivityParticipantResponseDTO> allParticipants =
-                        participantService.getParticipants(activityId);
+                        participantService.getParticipants(activityId, selectedSessionNumber);
                 Map<ParticipantStatus, Long> statusCounts = countByStatus(allParticipants);
                 Set<String> departments = new TreeSet<>();
                 Set<String> programs = new TreeSet<>();
@@ -126,6 +137,8 @@ public class AttendanceServlet extends HttpServlet {
 
                 request.setAttribute("selectedActivity", selectedActivity);
                 request.setAttribute("selectedActivityId", activityId);
+                request.setAttribute("selectedSessionNumber", selectedSessionNumber);
+                request.setAttribute("totalSessions", totalSessions);
                 request.setAttribute("participants", participants);
                 request.setAttribute("filteredParticipantCount", filteredCount);
                 request.setAttribute("pageSize", pageSize);
@@ -158,6 +171,7 @@ public class AttendanceServlet extends HttpServlet {
                     request.getSession().setAttribute("errorMessage",
                             "Không thể thay đổi danh sách sinh viên của hoạt động đã hủy.");
                     response.sendRedirect(request.getContextPath() + "/attendance?activityId=" + activityId
+                            + "&sessionNumber=" + selectedSessionNumber
                             + filter.toQuery() + pagingQuery(currentPage, pageSize));
                     return;
                 }
@@ -171,11 +185,70 @@ public class AttendanceServlet extends HttpServlet {
         }
     }
 
+    private void handleParticipantDetailGet(HttpServletRequest request, HttpServletResponse response,
+            List<ExtracurricularActivityResponseDTO> activities, int activityId)
+            throws ServletException, IOException {
+        if (activityId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/attendance");
+            return;
+        }
+        ExtracurricularActivityResponseDTO selectedActivity = findById(activities, activityId);
+        if (selectedActivity == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền xem chi tiết điểm danh của hoạt động này.");
+            return;
+        }
+        int totalSessions = Math.max(1, selectedActivity.getAttendanceSessionCount());
+        int requestedSession = parseId(request.getParameter("sessionNumber"));
+        int selectedSessionNumber = requestedSession <= 0
+                ? 1
+                : Math.min(requestedSession, totalSessions);
+
+        List<ActivityParticipantResponseDTO> allParticipants =
+                participantService.getParticipants(activityId, selectedSessionNumber);
+        int participantId = parseId(request.getParameter("participantId"));
+        int studentId = parseId(request.getParameter("studentId"));
+
+        ActivityParticipantResponseDTO selectedParticipant = null;
+        for (ActivityParticipantResponseDTO p : allParticipants) {
+            if ((participantId > 0 && p.getParticipantId() == participantId)
+                    || (participantId <= 0 && studentId > 0 && p.getStudentId() == studentId)) {
+                selectedParticipant = p;
+                break;
+            }
+        }
+        if (selectedParticipant == null && !allParticipants.isEmpty()) {
+            selectedParticipant = allParticipants.get(0);
+        }
+        if (selectedParticipant == null) {
+            request.getSession().setAttribute("errorMessage",
+                    "Không tìm thấy sinh viên trong danh sách điểm danh của hoạt động này.");
+            response.sendRedirect(request.getContextPath() + "/attendance?activityId=" + activityId
+                    + "&sessionNumber=" + selectedSessionNumber);
+            return;
+        }
+
+        request.setAttribute("selectedActivity", selectedActivity);
+        request.setAttribute("selectedActivityId", activityId);
+        request.setAttribute("selectedSessionNumber", selectedSessionNumber);
+        request.setAttribute("totalSessions", totalSessions);
+        request.setAttribute("participant", selectedParticipant);
+        request.setAttribute("allParticipants", allParticipants);
+        request.setAttribute("sessionAttendances",
+                participantService.getSessionAttendances(activityId, selectedParticipant.getParticipantId(), totalSessions));
+        request.setAttribute("attendanceHistory",
+                participantService.getAttendanceHistory(activityId, selectedParticipant.getParticipantId()));
+        request.setAttribute("canTakeAttendance", participantService.canTakeAttendance(selectedActivity));
+        request.setAttribute("participantStatuses", ParticipantStatus.values());
+        request.getRequestDispatcher("/WEB-INF/views/attendance/detail.jsp").forward(request, response);
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         int activityId = parseId(request.getParameter("activityId"));
+        int sessionNumber = Math.max(1, parseId(request.getParameter("sessionNumber")));
         String action = request.getParameter("action");
         boolean isAjax = action != null && AJAX_ACTIONS.contains(action);
         // Set.of(...).contains(null) throws, so check null first.
@@ -208,11 +281,11 @@ public class AttendanceServlet extends HttpServlet {
         }
 
         if ("saveAjax".equals(action)) {
-            saveAttendanceAjax(request, response, activityId, currentUser);
+            saveAttendanceAjax(request, response, activityId, sessionNumber, currentUser);
             return;
         }
         if ("batchGradeAjax".equals(action) || "saveGradeAjax".equals(action)) {
-            saveGradesAjax(request, response, activityId, currentUser);
+            saveGradesAjax(request, response, activityId, sessionNumber, currentUser);
             return;
         }
 
@@ -221,10 +294,26 @@ public class AttendanceServlet extends HttpServlet {
         try {
             switch (action) {
                 case "save" -> {
-                    int changed = participantService.saveAttendance(activityId, readStatuses(request), currentUser);
+                    int changed = participantService.saveAttendance(activityId, sessionNumber, readStatuses(request), currentUser);
                     session.setAttribute("successMessage", changed == 0
-                            ? "Không có thay đổi nào về trạng thái điểm danh."
-                            : "Đã cập nhật điểm danh cho " + changed + " sinh viên.");
+                            ? "Không có thay đổi nào về trạng thái điểm danh buổi " + sessionNumber + "."
+                            : "Đã cập nhật điểm danh buổi " + sessionNumber + " cho " + changed + " sinh viên.");
+                }
+                case "saveStudentSession" -> {
+                    int participantId = parseId(request.getParameter("participantId"));
+                    int targetSession = Math.max(1, parseId(request.getParameter("targetSessionNumber")));
+                    String newStatus = request.getParameter("attendanceStatusValue");
+                    Map<Integer, String> statusMap = new LinkedHashMap<>();
+                    if (participantId > 0 && newStatus != null) {
+                        statusMap.put(participantId, newStatus);
+                    }
+                    int changed = participantService.saveAttendance(activityId, targetSession, statusMap, currentUser);
+                    session.setAttribute("successMessage", changed == 0
+                            ? "Trạng thái điểm danh buổi " + targetSession + " không thay đổi."
+                            : "Đã cập nhật điểm danh buổi " + targetSession + " của sinh viên.");
+                    response.sendRedirect(request.getContextPath() + "/attendance?action=detail&activityId=" + activityId
+                            + "&participantId=" + participantId + "&sessionNumber=" + sessionNumber);
+                    return;
                 }
                 case "batchGrade" -> {
                     List<Integer> participantIds = parseIds(request.getParameterValues("participantId"));
@@ -264,21 +353,28 @@ public class AttendanceServlet extends HttpServlet {
             session.setAttribute("errorMessage", "Đã xảy ra lỗi khi cập nhật danh sách: " + e.getMessage());
             failed = true;
         }
+        if ("saveStudentSession".equals(action)) {
+            int participantId = parseId(request.getParameter("participantId"));
+            response.sendRedirect(request.getContextPath() + "/attendance?action=detail&activityId=" + activityId
+                    + "&participantId=" + participantId + "&sessionNumber=" + sessionNumber);
+            return;
+        }
         // A failed add reopens the add panel of the list page; everything else just returns to the list.
         // Both keep the filters the user was working with.
         boolean backToAddPage = failed && ADD_ACTIONS.contains(action);
         response.sendRedirect(request.getContextPath() + "/attendance?"
                 + (backToAddPage ? "action=add&" : "") + "activityId=" + activityId
+                + "&sessionNumber=" + sessionNumber
                 + ParticipantFilter.from(request).toQuery()
                 + pagingQuery(parseId(request.getParameter("page")), parsePageSize(request.getParameter("pageSize"))));
     }
 
     private void saveAttendanceAjax(HttpServletRequest request, HttpServletResponse response,
-            int activityId, CurrentUser currentUser) throws IOException {
+            int activityId, int sessionNumber, CurrentUser currentUser) throws IOException {
         try {
             Map<Integer, String> statuses = readStatuses(request);
-            int changed = participantService.saveAttendance(activityId, statuses, currentUser);
-            List<ActivityParticipantResponseDTO> allParticipants = participantService.getParticipants(activityId);
+            int changed = participantService.saveAttendance(activityId, sessionNumber, statuses, currentUser);
+            List<ActivityParticipantResponseDTO> allParticipants = participantService.getParticipants(activityId, sessionNumber);
             Map<ParticipantStatus, Long> counts = countByStatus(allParticipants);
             StringBuilder body = new StringBuilder("{\"ok\":true,\"changed\":").append(changed).append(",\"counts\":{");
             boolean first = true;
@@ -303,14 +399,14 @@ public class AttendanceServlet extends HttpServlet {
     }
 
     private void saveGradesAjax(HttpServletRequest request, HttpServletResponse response,
-            int activityId, CurrentUser currentUser) throws IOException {
+            int activityId, int sessionNumber, CurrentUser currentUser) throws IOException {
         try {
             List<Integer> participantIds = parseIds(request.getParameterValues("participantId"));
             BigDecimal evalScore = parseScore(request.getParameter("evalScore"));
             String feedback = request.getParameter("feedback");
             int updated = participantService.saveParticipationGrades(
                     activityId, participantIds, evalScore, feedback, currentUser);
-            List<ActivityParticipantResponseDTO> allParticipants = participantService.getParticipants(activityId);
+            List<ActivityParticipantResponseDTO> allParticipants = participantService.getParticipants(activityId, sessionNumber);
             StringBuilder body = new StringBuilder("{\"ok\":true,\"updated\":").append(updated)
                     .append(",\"participants\":{");
             appendParticipantScoresJson(body, allParticipants, Set.copyOf(participantIds));
@@ -338,6 +434,10 @@ public class AttendanceServlet extends HttpServlet {
             first = false;
             body.append('"').append(p.getParticipantId()).append("\":{")
                     .append("\"present\":").append(p.isPresentStatus())
+                    .append(",\"removable\":").append(p.isRemovable())
+                    .append(",\"sessionAttendanceScore\":\"").append(escapeJson(p.getFormattedSessionAttendanceScore())).append('"')
+                    .append(",\"attendedSessionCount\":").append(p.getAttendedSessionCount())
+                    .append(",\"totalSessions\":").append(p.getTotalSessions())
                     .append(",\"attendanceScore\":\"").append(escapeJson(p.getFormattedAttendanceScore())).append('"')
                     .append(",\"evalScore\":\"").append(escapeJson(p.getFormattedEvalScore())).append('"')
                     .append(",\"feedback\":\"").append(escapeJson(p.getParticipationFeedback())).append('"')
@@ -365,7 +465,7 @@ public class AttendanceServlet extends HttpServlet {
             statusCounts.put(status, 0L);
         }
         for (ActivityParticipantResponseDTO participant : participants) {
-            statusCounts.merge(participant.getAttendanceStatus(), 1L, Long::sum);
+            statusCounts.merge(participant.getSessionAttendanceStatus(), 1L, Long::sum);
         }
         return statusCounts;
     }
@@ -601,7 +701,7 @@ public class AttendanceServlet extends HttpServlet {
                     && matchesValue(major, participant.getMajorName())
                     && matchesValue(mainClass, participant.getMainClassCode())
                     && (attendanceStatus.isEmpty()
-                            || attendanceStatus.equals(String.valueOf(participant.getAttendanceStatus())));
+                            || attendanceStatus.equals(String.valueOf(participant.getSessionAttendanceStatus())));
         }
 
         int activeCount() {
