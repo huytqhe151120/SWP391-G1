@@ -7,9 +7,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Danh sách điểm hoạt động của sinh viên</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261109-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261110-1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -29,8 +30,16 @@
             <section class="card activity-table-card" aria-labelledby="grade-list-title">
                 <div class="activity-table-heading">
                     <div>
-                        <h2 id="grade-list-title">Bảng điểm tổng kết hoạt động sinh viên</h2>
-                        <p>Tổng hợp điểm tích lũy từ các hoạt động ngoại khóa sinh viên đã tham gia</p>
+                        <h2 id="grade-list-title">
+                            Bảng điểm tổng kết hoạt động sinh viên
+                            <c:choose>
+                                <c:when test="${not empty selectedSemester}">
+                                    – <c:out value="${selectedSemester.code}"/> (<c:out value="${selectedSemester.name}"/>)
+                                </c:when>
+                                <c:otherwise>– Tất cả học kỳ</c:otherwise>
+                            </c:choose>
+                        </h2>
+                        <p>Các đầu điểm trong học kỳ được ghi nhận theo tổng điểm của các hoạt động ngoại khóa sinh viên tham gia trong học kỳ</p>
                     </div>
                     <div class="activity-heading-actions">
                         <span class="activity-count">
@@ -56,6 +65,17 @@
                     <form class="activity-filter" action="${pageContext.request.contextPath}/student-grades" method="get">
                         <input type="hidden" name="action" value="list">
                         <input type="hidden" name="pageSize" value="${pageSize}">
+                        <div class="activity-filter-field">
+                            <label for="filter-semester">Học kỳ</label>
+                            <select id="filter-semester" name="semesterId">
+                                <option value="0" ${selectedSemesterId == 0 ? 'selected' : ''}>Tất cả học kỳ</option>
+                                <c:forEach var="sem" items="${semesters}">
+                                    <option value="${sem.id}" ${selectedSemesterId == sem.id ? 'selected' : ''}>
+                                        <c:out value="${sem.code}"/> – <c:out value="${sem.name}"/><c:if test="${sem.status == 'ACTIVE'}"> (Đang hoạt động)</c:if>
+                                    </option>
+                                </c:forEach>
+                            </select>
+                        </div>
                         <div class="activity-filter-field">
                             <label for="filter-keyword">Từ khóa (Mã SV / Tên SV)</label>
                             <input id="filter-keyword" type="search" name="keyword" value="<c:out value='${keyword}'/>"
@@ -113,11 +133,11 @@
                             <th scope="col" class="activity-index-column">STT</th>
                             <th scope="col" class="col-code">Mã sinh viên</th>
                             <th scope="col" class="col-object-name">Tên sinh viên</th>
-                            <th scope="col" class="col-academic">Khoa</th>
-                            <th scope="col" class="col-academic">Ngành</th>
-                            <th scope="col" class="col-academic">CT đào tạo</th>
-                            <th scope="col" class="col-academic">Lớp</th>
-                            <th scope="col" style="text-align: center;" title="Số hoạt động có mặt / Tổng số hoạt động đăng ký">Số HĐ tham gia</th>
+                            <th scope="col" class="col-academic">Khoa / Ngành</th>
+                            <th scope="col" class="col-academic">CTĐT / Lớp</th>
+                            <th scope="col" style="text-align: center;" title="Số hoạt động có mặt / Tổng số hoạt động đăng ký trong học kỳ">Số HĐ tham gia</th>
+                            <th scope="col" style="text-align: center;" title="Tổng điểm tham gia (Chuyên cần + Đánh giá) của các hoạt động trong học kỳ">Điểm tham gia</th>
+                            <th scope="col" style="text-align: center;" title="Tổng điểm bài thu hoạch của các hoạt động trong học kỳ">Điểm thu hoạch</th>
                             <th scope="col" style="text-align: center;">Tổng điểm cộng</th>
                             <th scope="col" style="text-align: center;">Tổng điểm trừ</th>
                             <th scope="col" style="text-align: center;">Tổng điểm tích lũy</th>
@@ -143,14 +163,24 @@
                                         <td class="col-object-name" title="<c:out value='${item.studentName}'/>">
                                             <strong class="activity-name"><c:out value="${item.studentName}" default="—"/></strong>
                                         </td>
-                                        <td class="col-academic" title="<c:out value='${item.departmentName}'/>"><c:out value="${item.departmentName}" default="—"/></td>
-                                        <td class="col-academic" title="<c:out value='${item.majorName}'/>"><c:out value="${item.majorName}" default="—"/></td>
-                                        <td class="col-academic" title="<c:out value='${item.academicProgramName}'/>"><c:out value="${item.academicProgramName}" default="—"/></td>
-                                        <td class="col-academic" title="<c:out value='${item.mainClassCode}'/>"><c:out value="${item.mainClassCode}" default="—"/></td>
+                                        <td class="col-academic" title="<c:out value='${item.departmentName} - ${item.majorName}'/>">
+                                            <c:out value="${item.departmentName}" default="—"/>
+                                            <c:if test="${not empty item.majorName}"><br><small class="text-muted"><c:out value="${item.majorName}"/></small></c:if>
+                                        </td>
+                                        <td class="col-academic" title="<c:out value='${item.academicProgramName} - ${item.mainClassCode}'/>">
+                                            <c:out value="${item.academicProgramName}" default="—"/>
+                                            <c:if test="${not empty item.mainClassCode}"><br><small class="text-muted">Lớp: <c:out value="${item.mainClassCode}"/></small></c:if>
+                                        </td>
                                         <td style="text-align: center;">
                                             <span class="grade-ratio-badge" title="Có mặt ${item.attendedActivityCount} / Đăng ký ${item.registeredActivityCount} hoạt động">
                                                 <c:out value="${item.participationRatioText}"/>
                                             </span>
+                                        </td>
+                                        <td style="text-align: center;" title="Chuyên cần: ${item.formattedAttendanceScore}đ | Đánh giá: ${item.formattedParticipationEvalScore}đ">
+                                            <strong><c:out value="${item.formattedParticipationScore}"/></strong>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <strong><c:out value="${item.formattedSummaryScore}"/></strong>
                                         </td>
                                         <td style="text-align: center;">
                                             <span class="grade-pill ${item.totalPlusPoints > 0 ? 'grade-pill--plus' : 'grade-pill--neutral'}">
@@ -168,10 +198,14 @@
                                             </span>
                                         </td>
                                         <td class="activity-action-column">
-                                            <a class="button button-primary button-sm"
-                                               href="${pageContext.request.contextPath}/student-grades?action=studentDetail&amp;studentId=${item.studentId}">
-                                                Xem chi tiết
-                                            </a>
+                                            <div class="actions activity-actions">
+                                                <a class="activity-action-link action-btn action-btn--view"
+                                                   href="${pageContext.request.contextPath}/student-grades?action=studentDetail&amp;studentId=${item.studentId}&amp;semesterId=${selectedSemesterId}"
+                                                   title="Xem chi tiết điểm hoạt động của sinh viên">
+                                                    <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                                                    Chi tiết
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 </c:forEach>
@@ -187,6 +221,7 @@
                         <form class="activity-page-size" action="${pageContext.request.contextPath}/student-grades" method="get">
                             <input type="hidden" name="action" value="list">
                             <input type="hidden" name="page" value="1">
+                            <input type="hidden" name="semesterId" value="${selectedSemesterId}">
                             <input type="hidden" name="keyword" value="<c:out value='${keyword}'/>">
                             <input type="hidden" name="department" value="<c:out value='${selectedDepartment}'/>">
                             <input type="hidden" name="major" value="<c:out value='${selectedMajor}'/>">

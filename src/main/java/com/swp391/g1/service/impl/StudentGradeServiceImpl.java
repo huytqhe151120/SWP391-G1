@@ -18,17 +18,32 @@ public class StudentGradeServiceImpl implements IStudentGradeService {
 
     @Override
     public List<StudentGradeSummaryDTO> getAllStudentGradeSummaries() {
-        return studentGradeDAO.findAllStudentGradeSummaries();
+        return studentGradeDAO.findAllStudentGradeSummaries(0);
+    }
+
+    @Override
+    public List<StudentGradeSummaryDTO> getAllStudentGradeSummaries(int semesterId) {
+        return studentGradeDAO.findAllStudentGradeSummaries(semesterId);
     }
 
     @Override
     public StudentGradeSummaryDTO getStudentGradeSummaryById(int studentId) {
-        return studentGradeDAO.findStudentGradeSummaryById(studentId);
+        return studentGradeDAO.findStudentGradeSummaryById(studentId, 0);
+    }
+
+    @Override
+    public StudentGradeSummaryDTO getStudentGradeSummaryById(int studentId, int semesterId) {
+        return studentGradeDAO.findStudentGradeSummaryById(studentId, semesterId);
     }
 
     @Override
     public List<StudentActivityGradeDTO> getActivityGradesByStudentId(int studentId) {
-        return studentGradeDAO.findActivityGradesByStudentId(studentId);
+        return studentGradeDAO.findActivityGradesByStudentId(studentId, 0);
+    }
+
+    @Override
+    public List<StudentActivityGradeDTO> getActivityGradesByStudentId(int studentId, int semesterId) {
+        return studentGradeDAO.findActivityGradesByStudentId(studentId, semesterId);
     }
 
     @Override

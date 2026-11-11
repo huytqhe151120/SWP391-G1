@@ -17,12 +17,14 @@
         else if (reqUri.contains("/organizer-inbox") || reqUri.contains("/organizer-chat")) navActive = "organizer-inbox";
         else if (reqUri.contains("/student-qa")) navActive = "student-qa";
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
+        else if (reqUri.contains("/participation-grading")) navActive = "participation-grading";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
         else if (reqUri.contains("/student-grades")) navActive = "student-grades";
     }
     boolean isActivityGroupActive = "activities".equals(navActive)
             || "registration-forms".equals(navActive)
             || "attendance".equals(navActive)
+            || "participation-grading".equals(navActive)
             || "student-grades".equals(navActive)
             || "partner-invitations".equals(navActive);
     boolean isHrGroupActive = "students".equals(navActive)
@@ -140,6 +142,17 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label">Điểm danh sinh viên</span>
+                </a>
+                <a class="activity-nav-item <%= "participation-grading".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/participation-grading"
+                   title="Chấm điểm tham gia"
+                   <%= "participation-grading".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M12 20h9"/>
+                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Chấm điểm tham gia</span>
                 </a>
                 <% } %>
                 <% if (navCanTakeAttendance || navStudent) { %>

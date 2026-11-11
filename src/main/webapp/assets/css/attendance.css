@@ -1,11 +1,109 @@
 /* Attendance page: layout comes from activity.css, these rules only cover attendance-specific pieces. */
 
-.attendance-filter {
+.activity-list-page .activity-table-card {
+    overflow: visible;
+}
+
+.activity-filter.attendance-filter {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+    align-items: end;
+    gap: 14px;
+}
+
+.activity-filter.attendance-filter.attendance-filter--single {
     grid-template-columns: minmax(0, 1fr);
 }
 
 .attendance-filter-activity {
-    max-width: 640px;
+    max-width: none;
+    min-width: 0;
+}
+
+.activity-filter-field .multi-select-combobox,
+.attendance-filter-activity .multi-select-combobox {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+.activity-filter-field .multi-select-trigger,
+.attendance-filter-activity .multi-select-trigger {
+    min-width: 0;
+    max-width: 100%;
+    min-height: 38px;
+    padding: 7px 10px;
+    font-size: .88rem;
+}
+
+.activity-filter-field .multi-select-option input[type="radio"],
+.activity-filter-field .multi-select-option input[type="checkbox"],
+.attendance-filter-activity .multi-select-option input[type="radio"],
+.attendance-filter-activity .multi-select-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    min-height: 16px;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 16px;
+}
+
+.attendance-filter-activity .multi-select-count {
+    display: none;
+}
+
+.attendance-filter-session {
+    min-width: 0;
+}
+
+.attendance-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px 24px;
+    padding: 18px 26px;
+    border-top: 1px solid #edf0f5;
+    background: #fbfcfe;
+}
+
+.attendance-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.attendance-detail-item span {
+    color: #66758b;
+    font-size: .76rem;
+    font-weight: 600;
+}
+
+.attendance-detail-item strong {
+    color: #172b49;
+    font-size: .92rem;
+    font-weight: 650;
+}
+
+.attendance-detail-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 26px 12px;
+    border-top: 1px solid #edf0f5;
+}
+
+.attendance-detail-section-head h3 {
+    margin: 0;
+    color: #172b49;
+    font-size: 1rem;
+}
+
+.attendance-detail-section-head p {
+    margin: 2px 0 0;
+    color: #66758b;
+    font-size: .83rem;
 }
 
 .attendance-summary {
@@ -138,6 +236,209 @@
 
 .col-grade-eval {
     min-width: 280px;
+}
+
+.col-eval-score {
+    width: 96px;
+    max-width: 110px;
+    text-align: center !important;
+    white-space: nowrap;
+}
+
+.col-eval-feedback {
+    min-width: 320px;
+    width: 36%;
+    white-space: normal !important;
+}
+
+.attendance-eval-score-cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.attendance-score-badge.is-graded {
+    background: #eef4ff;
+    color: #1d4ed8;
+    border: 1px solid #cfe0ff;
+}
+
+.attendance-score-badge.is-empty {
+    background: #f8fafc;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.attendance-feedback-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.attendance-feedback-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attendance-grade-modal-btn {
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 4px 10px;
+    font-size: .78rem;
+    white-space: nowrap;
+}
+
+.attendance-grade-modal-btn:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+.attendance-feedback-cell {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: background-color .15s ease, border-color .15s ease;
+}
+
+.attendance-feedback-cell.is-editable {
+    cursor: pointer;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.attendance-feedback-cell.is-editable:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.attendance-feedback-text {
+    color: #1e293b;
+    font-size: .84rem;
+    line-height: 1.45;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.attendance-feedback-text.is-placeholder {
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.attendance-grade-modal {
+    width: min(520px, calc(100vw - 32px));
+    padding: 0;
+    border: 1px solid #dbe4f0;
+    border-radius: 16px;
+    background: #fff;
+    color: #172b49;
+    box-shadow: 0 20px 48px rgba(15, 23, 42, .22);
+}
+
+.attendance-grade-modal::backdrop {
+    background: rgba(15, 23, 42, .45);
+    backdrop-filter: blur(2px);
+}
+
+.attendance-grade-modal__form {
+    display: flex;
+    flex-direction: column;
+}
+
+.attendance-grade-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid #edf1f7;
+}
+
+.attendance-grade-modal__eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: #2457c5;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+.attendance-grade-modal__header h3 {
+    margin: 0;
+    color: #172b49;
+    font-size: 1.08rem;
+}
+
+.attendance-grade-modal__student {
+    margin: 4px 0 0;
+    color: #536782;
+    font-size: .86rem;
+    font-weight: 600;
+}
+
+.attendance-grade-modal__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.attendance-grade-modal__close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.attendance-grade-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 22px;
+}
+
+.attendance-grade-modal__body textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d5dfec;
+    border-radius: 9px;
+    background: #fff;
+    color: #172b49;
+    font: inherit;
+    font-size: .88rem;
+    line-height: 1.45;
+    resize: vertical;
+}
+
+.attendance-grade-modal__body textarea:focus,
+.attendance-grade-modal__body input:focus {
+    outline: 2px solid #2457c5;
+    outline-offset: 1px;
+}
+
+.attendance-grade-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 22px 18px;
+    border-top: 1px solid #edf1f7;
+    background: #f8fafc;
+    border-radius: 0 0 16px 16px;
 }
 
 .col-score {
@@ -389,6 +690,10 @@
 }
 
 @media (max-width: 960px) {
+    .attendance-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .attendance-add-panel {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -399,6 +704,15 @@
 }
 
 @media (max-width: 640px) {
+    .attendance-detail-grid {
+        grid-template-columns: minmax(0, 1fr);
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+
+    .activity-filter.attendance-filter {
+        grid-template-columns: minmax(0, 1fr);
+    }
     .attendance-add-panel,
     .attendance-batch-grade-panel {
         padding-right: 16px;

@@ -1034,7 +1034,7 @@
 }
 
 .registration-detail-card {
-    overflow: hidden;
+    overflow: visible;
 }
 
 .registration-detail-actions {
@@ -1479,7 +1479,7 @@
 
 /* Đồng bộ giao diện Chi tiết đợt đăng ký với Điểm danh sinh viên */
 .registration-detail-card.activity-table-card {
-    overflow: hidden;
+    overflow: visible;
     border-radius: 20px;
 }
 

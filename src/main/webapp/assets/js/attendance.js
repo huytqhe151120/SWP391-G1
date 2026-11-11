@@ -117,9 +117,27 @@
             if (!info) {
                 return;
             }
+            var sessScoreChip = document.querySelector('[data-session-score-for="' + pid + '"]');
+            if (sessScoreChip && info.sessionAttendanceScore !== undefined) {
+                sessScoreChip.textContent = "(" + info.sessionAttendanceScore + "đ)";
+            }
+            var sessProgressEl = document.querySelector('[data-session-progress-for="' + pid + '"]');
+            if (sessProgressEl && info.attendedSessionCount !== undefined && info.totalSessions !== undefined) {
+                sessProgressEl.innerHTML = "Có mặt: <strong>" + info.attendedSessionCount + "/" + info.totalSessions + "</strong> buổi";
+            }
             var attChip = document.querySelector('[data-attendance-score-for="' + pid + '"]');
             if (attChip && info.attendanceScore !== undefined) {
-                attChip.textContent = "(" + info.attendanceScore + "đ)";
+                if (attChip.classList.contains("attendance-score-badge")) {
+                    attChip.textContent = "TB: " + info.attendanceScore + "đ";
+                } else {
+                    attChip.textContent = "(" + info.attendanceScore + "đ)";
+                }
+            }
+            if (info.removable !== undefined) {
+                var cb = checkboxByParticipantId[pid];
+                if (cb) {
+                    cb.dataset.removable = info.removable ? "true" : "false";
+                }
             }
             var evalInput = document.querySelector('[data-eval-score-input="' + pid + '"]');
             var fbInput = document.querySelector('[data-eval-feedback-input="' + pid + '"]');
@@ -133,13 +151,59 @@
             }
             if (fbInput) {
                 fbInput.disabled = !present;
-                fbInput.placeholder = present ? "Nhận xét / Feedback..." : "Chỉ chấm khi có mặt";
+                fbInput.placeholder = present ? "Nhận xét / Feedback..." : "Chỉ chấm khi có mặt ít nhất 1 buổi";
                 if (info.feedback !== undefined) {
                     fbInput.value = info.feedback;
                 }
             }
             if (saveBtn) {
                 saveBtn.disabled = !present;
+            }
+            var hasScore = info.evalScore !== undefined && String(info.evalScore).trim() !== "";
+            var scoreStateEl = document.querySelector('[data-eval-score-state="' + pid + '"]');
+            if (scoreStateEl) {
+                scoreStateEl.dataset.present = present ? "true" : "false";
+                scoreStateEl.dataset.isGraded = (present && hasScore) ? "true" : "false";
+            }
+            var scoreDisplayEl = document.querySelector('[data-eval-score-display="' + pid + '"]');
+            if (scoreDisplayEl) {
+                if (present && hasScore) {
+                    scoreDisplayEl.textContent = info.evalScore + " / 5";
+                    scoreDisplayEl.classList.add("is-graded");
+                    scoreDisplayEl.classList.remove("is-empty");
+                } else {
+                    scoreDisplayEl.textContent = "—";
+                    scoreDisplayEl.classList.remove("is-graded");
+                    scoreDisplayEl.classList.add("is-empty");
+                }
+            }
+            var modalBtn = document.querySelector('[data-open-grade-modal="' + pid + '"]');
+            if (modalBtn) {
+                modalBtn.disabled = !present;
+                if (info.evalScore !== undefined) {
+                    modalBtn.dataset.evalScore = info.evalScore;
+                }
+                if (info.feedback !== undefined) {
+                    modalBtn.dataset.feedback = info.feedback;
+                }
+            }
+            var modalBtnLabel = document.querySelector('[data-grade-btn-label="' + pid + '"]');
+            if (modalBtnLabel) {
+                modalBtnLabel.textContent = hasScore ? "Sửa" : "Chấm";
+            }
+            var fbDisplayEl = document.querySelector('[data-eval-feedback-display="' + pid + '"]');
+            if (fbDisplayEl && info.feedback !== undefined) {
+                var fbText = String(info.feedback).trim();
+                if (fbText !== "") {
+                    fbDisplayEl.textContent = fbText;
+                    fbDisplayEl.classList.remove("is-placeholder");
+                } else if (!present) {
+                    fbDisplayEl.textContent = "Chỉ chấm khi có mặt ít nhất 1 buổi";
+                    fbDisplayEl.classList.add("is-placeholder");
+                } else {
+                    fbDisplayEl.textContent = modalBtn ? 'Nhấn "Chấm" hoặc kích vào đây để nhập nhận xét...' : "—";
+                    fbDisplayEl.classList.add("is-placeholder");
+                }
             }
             var partScoreBadge = document.querySelector('[data-participation-score-for="' + pid + '"]');
             if (partScoreBadge && info.participationScore !== undefined) {
@@ -164,10 +228,61 @@
                     }
                 }
                 if (gradedByEl) {
+                    gradedByEl.hidden = false;
                     gradedByEl.textContent = "Chấm bởi: " + info.gradedBy;
                 }
             }
         });
+        if (participantsMap && typeof updateGradingCountBadges === "function") {
+            updateGradingCountBadges();
+        }
+    }
+
+    function updateGradingCountBadges() {
+        var gradedBadge = document.querySelector('[data-grading-count="GRADED"]');
+        var ungradedBadge = document.querySelector('[data-grading-count="UNGRADED"]');
+        if (!gradedBadge && !ungradedBadge) {
+            return;
+        }
+        var gradedCount = 0;
+        var ungradedCount = 0;
+        var stateEls = Array.from(document.querySelectorAll("[data-eval-score-state]"));
+        if (stateEls.length > 0) {
+            stateEls.forEach(function (el) {
+                if (el.dataset.present !== "true") {
+                    return;
+                }
+                if (el.dataset.isGraded === "true") {
+                    gradedCount++;
+                } else {
+                    ungradedCount++;
+                }
+            });
+            if (gradedBadge) {
+                gradedBadge.textContent = gradedCount;
+            }
+            if (ungradedBadge) {
+                ungradedBadge.textContent = ungradedCount;
+            }
+            return;
+        }
+        var evalInputs = Array.from(document.querySelectorAll("[data-eval-score-input]"));
+        evalInputs.forEach(function (inp) {
+            if (inp.disabled) {
+                return;
+            }
+            if (inp.value && inp.value.trim() !== "") {
+                gradedCount++;
+            } else {
+                ungradedCount++;
+            }
+        });
+        if (gradedBadge && evalInputs.length > 0) {
+            gradedBadge.textContent = gradedCount;
+        }
+        if (ungradedBadge && evalInputs.length > 0) {
+            ungradedBadge.textContent = ungradedCount;
+        }
     }
 
     function getParticipantCurrentStatus(participantId) {
@@ -185,7 +300,7 @@
                 return;
             }
             var pid = checkbox.dataset.participantId;
-            if (isPresentStatus(getParticipantCurrentStatus(pid))) {
+            if (checkbox.dataset.present === "true" || isPresentStatus(getParticipantCurrentStatus(pid))) {
                 ids.push(pid);
             }
         });
@@ -295,9 +410,11 @@
 
         clearError();
         var activityId = attendanceForm.dataset.activityId;
+        var sessionNumber = attendanceForm.dataset.sessionNumber || "1";
         var params = new URLSearchParams();
         params.set("action", "saveAjax");
         params.set("activityId", activityId);
+        params.set("sessionNumber", sessionNumber);
 
         var previousValues = {};
         participantIds.forEach(function (pid) {
@@ -388,13 +505,18 @@
         });
     }
 
-    function saveEvaluationGrades(participantIds, evalScore, feedback, isBatch) {
+    function saveEvaluationGrades(participantIds, evalScore, feedback, isBatch, onSuccess, onError) {
         if (!attendanceForm || !participantIds || participantIds.length === 0) {
             return;
         }
         var numericScore = parseFloat(String(evalScore).replace(",", "."));
         if (isNaN(numericScore) || numericScore < 0 || numericScore > 5) {
-            showError("Điểm đánh giá tham gia phải nằm trong khoảng từ 0 đến 5 điểm.");
+            var msg = "Điểm đánh giá tham gia phải nằm trong khoảng từ 0 đến 5 điểm.";
+            if (typeof onError === "function") {
+                onError(msg);
+            } else {
+                showError(msg);
+            }
             return;
         }
         clearError();
@@ -433,6 +555,9 @@
             });
         }).then(function (data) {
             applyParticipantScores(data.participants);
+            if (typeof onSuccess === "function") {
+                onSuccess(data);
+            }
             if (isBatch) {
                 showSuccess("Đã chấm điểm đánh giá tham gia cho " + (data.updated || participantIds.length) + " sinh viên.");
                 if (batchGradeForm) {
@@ -442,7 +567,12 @@
                 showSuccess("Đã lưu điểm đánh giá tham gia và cập nhật điểm tích lũy.");
             }
         }).catch(function (err) {
-            showError(err && err.message ? err.message : "Đã xảy ra lỗi khi lưu điểm tham gia.");
+            var errMsg = err && err.message ? err.message : "Đã xảy ra lỗi khi lưu điểm tham gia.";
+            if (typeof onError === "function") {
+                onError(errMsg);
+            } else {
+                showError(errMsg);
+            }
         }).finally(function () {
             pendingRequests = Math.max(0, pendingRequests - 1);
             refreshSelection();
@@ -473,6 +603,137 @@
             saveEvaluationGrades([pid], scoreInput.value, fbInput ? fbInput.value : "", false);
         });
     });
+
+    var singleGradeModal = document.getElementById("single-grade-modal");
+    var singleGradeModalForm = document.getElementById("single-grade-modal-form");
+    var singleGradePidInput = document.getElementById("single-grade-participant-id");
+    var singleGradeStudentInfo = document.getElementById("single-grade-student-info");
+    var singleGradeScoreInput = document.getElementById("single-grade-eval-score");
+    var singleGradeFeedbackInput = document.getElementById("single-grade-eval-feedback");
+    var singleGradeModalError = document.getElementById("single-grade-modal-error");
+    var singleGradeSubmitBtn = document.getElementById("single-grade-submit-btn");
+
+    function openSingleGradeModalForParticipant(pid) {
+        if (!singleGradeModal || !pid) {
+            return;
+        }
+        var btn = document.querySelector('[data-open-grade-modal="' + pid + '"]');
+        if (!btn || btn.disabled) {
+            return;
+        }
+        var studentCode = btn.dataset.studentCode || "";
+        var studentName = btn.dataset.studentName || "";
+        var currentScore = btn.dataset.evalScore || "";
+        var currentFeedback = btn.dataset.feedback || "";
+
+        if (singleGradePidInput) {
+            singleGradePidInput.value = pid;
+        }
+        if (singleGradeStudentInfo) {
+            singleGradeStudentInfo.textContent = (studentCode ? studentCode + " — " : "") + (studentName || "Sinh viên");
+        }
+        if (singleGradeScoreInput) {
+            singleGradeScoreInput.value = currentScore !== "" ? currentScore : "5";
+        }
+        if (singleGradeFeedbackInput) {
+            singleGradeFeedbackInput.value = currentFeedback;
+        }
+        if (singleGradeModalError) {
+            singleGradeModalError.hidden = true;
+            singleGradeModalError.textContent = "";
+        }
+        if (singleGradeSubmitBtn) {
+            singleGradeSubmitBtn.disabled = false;
+        }
+        if (typeof singleGradeModal.showModal === "function") {
+            singleGradeModal.showModal();
+        } else {
+            singleGradeModal.setAttribute("open", "");
+        }
+        if (singleGradeScoreInput) {
+            setTimeout(function () {
+                singleGradeScoreInput.focus();
+                singleGradeScoreInput.select();
+            }, 30);
+        }
+    }
+
+    function closeSingleGradeModal() {
+        if (!singleGradeModal) {
+            return;
+        }
+        if (typeof singleGradeModal.close === "function" && singleGradeModal.open) {
+            singleGradeModal.close();
+        } else {
+            singleGradeModal.removeAttribute("open");
+        }
+    }
+
+    if (singleGradeModal) {
+        document.querySelectorAll("[data-open-grade-modal]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                openSingleGradeModalForParticipant(btn.getAttribute("data-open-grade-modal"));
+            });
+        });
+
+        document.querySelectorAll("[data-trigger-grade-modal]").forEach(function (cell) {
+            cell.addEventListener("click", function () {
+                openSingleGradeModalForParticipant(cell.getAttribute("data-trigger-grade-modal"));
+            });
+        });
+
+        singleGradeModal.querySelectorAll("[data-close-grade-modal]").forEach(function (closeBtn) {
+            closeBtn.addEventListener("click", closeSingleGradeModal);
+        });
+
+        singleGradeModal.addEventListener("click", function (event) {
+            if (event.target === singleGradeModal) {
+                closeSingleGradeModal();
+            }
+        });
+
+        if (singleGradeModalForm) {
+            singleGradeModalForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                var pid = singleGradePidInput ? singleGradePidInput.value : "";
+                if (!pid) {
+                    return;
+                }
+                var scoreVal = singleGradeScoreInput ? singleGradeScoreInput.value : "";
+                var fbVal = singleGradeFeedbackInput ? singleGradeFeedbackInput.value : "";
+                if (singleGradeSubmitBtn) {
+                    singleGradeSubmitBtn.disabled = true;
+                }
+                if (singleGradeModalError) {
+                    singleGradeModalError.hidden = true;
+                    singleGradeModalError.textContent = "";
+                }
+                saveEvaluationGrades(
+                    [pid],
+                    scoreVal,
+                    fbVal,
+                    false,
+                    function () {
+                        if (singleGradeSubmitBtn) {
+                            singleGradeSubmitBtn.disabled = false;
+                        }
+                        closeSingleGradeModal();
+                    },
+                    function (errMsg) {
+                        if (singleGradeSubmitBtn) {
+                            singleGradeSubmitBtn.disabled = false;
+                        }
+                        if (singleGradeModalError) {
+                            singleGradeModalError.textContent = errMsg;
+                            singleGradeModalError.hidden = false;
+                        } else {
+                            showError(errMsg);
+                        }
+                    }
+                );
+            });
+        }
+    }
 
     if (batchGradeTrigger && batchGradeForm) {
         batchGradeTrigger.addEventListener("click", function () {
@@ -681,4 +942,33 @@
     if (!panel.hidden) {
         panel.scrollIntoView({block: "nearest"});
     }
+})();
+
+(function () {
+    document.querySelectorAll(".multi-select-combobox[data-auto-submit]").forEach(function (combobox) {
+        var form = combobox.closest("form");
+        if (!form) {
+            return;
+        }
+        combobox.addEventListener("change", function (event) {
+            var input = event.target;
+            if (!input || input.type !== "radio" || !input.checked) {
+                return;
+            }
+            if (input.name === "activityId") {
+                var sessSelect = form.querySelector("#attendance-session");
+                if (sessSelect) {
+                    sessSelect.value = "1";
+                }
+                form.querySelectorAll('input[name="participantId"]').forEach(function (el) {
+                    if (el.type === "radio" || el.type === "checkbox") {
+                        el.checked = false;
+                    } else {
+                        el.value = "";
+                    }
+                });
+            }
+            form.submit();
+        });
+    });
 })();
