@@ -189,6 +189,16 @@
     font-size: 0.88rem;
 }
 
+.notif-feedback-error {
+    display: block;
+    margin: 0;
+    padding: 13px 16px;
+    border-bottom: 1px solid #fecaca;
+    background: #fff1f2;
+    color: #9f1239;
+    font-size: .85rem;
+}
+
 .notif-toolbar {
     display: flex;
     gap: 8px;

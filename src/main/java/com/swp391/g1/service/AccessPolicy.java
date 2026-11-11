@@ -105,6 +105,15 @@ public final class AccessPolicy {
         return hasType(user, "STUDENT");
     }
 
+    /** Only students submit feedback; ADMIN and scoped STAFF can review reports. */
+    public static boolean canSubmitActivityFeedback(CurrentUser user) {
+        return hasType(user, "STUDENT");
+    }
+
+    public static boolean canManageActivityFeedback(CurrentUser user) {
+        return canManageActivities(user) && (hasType(user, ADMIN_TYPE) || canUseStaffActivityScope(user));
+    }
+
     /** Any authenticated account can open notifications; the DAO only returns rows addressed to that account. */
     public static boolean canViewNotifications(CurrentUser user) {
         return user != null;

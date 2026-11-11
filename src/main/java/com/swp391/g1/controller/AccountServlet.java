@@ -1,6 +1,7 @@
 package com.swp391.g1.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.servlet.RequestDispatcher;
@@ -90,21 +91,66 @@ public class AccountServlet extends HttpServlet {
 
     private void showList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String id = ParamUtil.getString(request, "id", "");
         String search = ParamUtil.getString(request, "search", "");
         String type = ParamUtil.getString(request, "type", "");
         String role = ParamUtil.getString(request, "role", "");
         String status = ParamUtil.getString(request, "status", "");
+        int page = ParamUtil.getInt(request, "page", 1);
+        int pageSize = ParamUtil.getInt(request, "pageSize", 10);
+        if (pageSize != 5 && pageSize != 10 && pageSize != 20 && pageSize != 25) {
+            pageSize = 10;
+        }
+
         try {
-            List<Account> accounts = accountService.searchAccounts(search, type, role, status);
-            request.setAttribute("accounts", accounts);
+            List<Account> allAccounts = accountService.searchAccounts(id, search, type, role, status);
+            int totalAccountCount = allAccounts.size();
+            int totalPages = Math.max(1, (int) Math.ceil((double) totalAccountCount / pageSize));
+            int currentPage = Math.max(1, Math.min(page, totalPages));
+            int pageWindowStart = ((currentPage - 1) / 3) * 3 + 1;
+            int pageWindowEnd = Math.min(pageWindowStart + 2, totalPages);
+
+            int fromIndex = Math.min((currentPage - 1) * pageSize, totalAccountCount);
+            int toIndex = Math.min(fromIndex + pageSize, totalAccountCount);
+
+            List<Account> pageAccounts = new ArrayList<>(allAccounts.subList(fromIndex, toIndex));
+
+            request.setAttribute("accounts", pageAccounts);
             request.setAttribute("accountTypes", accountService.getAccountTypes());
             request.setAttribute("accountRoles", accountService.getAccountRoles());
+            request.setAttribute("pageSize", pageSize);
+            request.setAttribute("currentPage", currentPage);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("pageWindowStart", pageWindowStart);
+            request.setAttribute("pageWindowEnd", pageWindowEnd);
+            request.setAttribute("totalAccountCount", totalAccountCount);
+            request.setAttribute("firstAccountNumber", totalAccountCount == 0 ? 0 : fromIndex + 1);
+            request.setAttribute("lastAccountNumber", toIndex);
+
+            boolean filtered = !id.isEmpty() || !search.isEmpty() || !type.isEmpty() || !role.isEmpty() || !status.isEmpty();
+            request.setAttribute("filtered", filtered);
+            request.setAttribute("activeFilterCount",
+                    (id.isEmpty() ? 0 : 1) + (search.isEmpty() ? 0 : 1) + (type.isEmpty() ? 0 : 1)
+                    + (role.isEmpty() ? 0 : 1) + (status.isEmpty() ? 0 : 1));
+            request.setAttribute("filterQuery", buildFilterQuery(id, search, type, role, status));
         } catch (AccountServiceException e) {
             request.setAttribute("generalError", e.getMessage());
             request.setAttribute("accounts", List.of());
             request.setAttribute("accountTypes", List.of());
             request.setAttribute("accountRoles", List.of());
+            request.setAttribute("pageSize", pageSize);
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
+            request.setAttribute("pageWindowStart", 1);
+            request.setAttribute("pageWindowEnd", 1);
+            request.setAttribute("totalAccountCount", 0);
+            request.setAttribute("firstAccountNumber", 0);
+            request.setAttribute("lastAccountNumber", 0);
+            request.setAttribute("filtered", false);
+            request.setAttribute("activeFilterCount", 0);
+            request.setAttribute("filterQuery", "");
         }
+        request.setAttribute("filterId", id);
         request.setAttribute("search", search);
         request.setAttribute("filterType", type);
         request.setAttribute("filterRole", role);
@@ -300,5 +346,22 @@ public class AccountServlet extends HttpServlet {
             throws ServletException, IOException {
         RequestDispatcher dispatcher = request.getRequestDispatcher("/WEB-INF/views/" + view);
         dispatcher.forward(request, response);
+    }
+
+    private String buildFilterQuery(String id, String search, String type, String role, String status) {
+        StringBuilder query = new StringBuilder();
+        appendParam(query, "id", id);
+        appendParam(query, "search", search);
+        appendParam(query, "type", type);
+        appendParam(query, "role", role);
+        appendParam(query, "status", status);
+        return query.toString();
+    }
+
+    private void appendParam(StringBuilder query, String name, String value) {
+        if (value != null && !value.isEmpty()) {
+            query.append('&').append(name).append('=')
+                    .append(java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8));
+        }
     }
 }

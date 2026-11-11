@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cập nhật tài khoản | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261110-3">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 <body>
@@ -35,6 +35,11 @@
     </c:if>
     <c:if test="${not empty fieldErrors['id']}">
         <div class="alert alert-error activity-alert" role="alert"><c:out value="${fieldErrors['id']}"/></div>
+    </c:if>
+    <c:if test="${not empty fieldErrors and empty fieldErrors['id']}">
+        <div class="alert alert-error activity-alert" role="alert">
+            Vui lòng kiểm tra các trường được đánh dấu bên dưới trước khi lưu.
+        </div>
     </c:if>
 
     <section class="card activity-form-card">

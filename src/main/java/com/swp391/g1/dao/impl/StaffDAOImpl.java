@@ -48,6 +48,82 @@ public class StaffDAOImpl implements IStaffDAO {
         return staffs;
     }
 
+    public List<Staff> searchStaff(String keyword, String id, String code, String name, String dob,
+                                   String gender, String accountId, String status) {
+        List<Staff> staffs = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM staff");
+        List<String> conditions = new ArrayList<>();
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            conditions.add("(code LIKE ? OR name LIKE ?)");
+        }
+        if (id != null && !id.trim().isEmpty()) {
+            conditions.add("CAST(id AS VARCHAR(20)) LIKE ?");
+        }
+        if (code != null && !code.trim().isEmpty()) {
+            conditions.add("code LIKE ?");
+        }
+        if (name != null && !name.trim().isEmpty()) {
+            conditions.add("name LIKE ?");
+        }
+        if (dob != null && !dob.trim().isEmpty()) {
+            conditions.add("CONVERT(VARCHAR(10), dob, 23) LIKE ?");
+        }
+        if (gender != null && !gender.trim().isEmpty()) {
+            conditions.add("gender = ?");
+        }
+        if (accountId != null && !accountId.trim().isEmpty()) {
+            conditions.add("CAST(account_id AS VARCHAR(20)) LIKE ?");
+        }
+        if (status != null && !status.trim().isEmpty()) {
+            conditions.add("status = ?");
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ").append(String.join(" AND ", conditions));
+        }
+
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int paramIndex = 1;
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String searchPattern = "%" + keyword.trim() + "%";
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+            }
+            if (id != null && !id.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + id.trim() + "%");
+            }
+            if (code != null && !code.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + code.trim() + "%");
+            }
+            if (name != null && !name.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + name.trim() + "%");
+            }
+            if (dob != null && !dob.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + dob.trim() + "%");
+            }
+            if (gender != null && !gender.trim().isEmpty()) {
+                ps.setString(paramIndex++, gender.trim());
+            }
+            if (accountId != null && !accountId.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + accountId.trim() + "%");
+            }
+            if (status != null && !status.trim().isEmpty()) {
+                ps.setString(paramIndex++, status.trim());
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    staffs.add(mapStaff(rs));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to search staff.", e);
+        }
+        return staffs;
+    }
+
     @Override
     public Staff findById(Integer id) {
         String sql = "SELECT * FROM staff WHERE id = ?";

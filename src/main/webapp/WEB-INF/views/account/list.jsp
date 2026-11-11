@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quản lý tài khoản | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261110-3">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
@@ -54,52 +54,6 @@
         </div>
     </c:if>
 
-    <section class="card account-filter-card">
-        <div class="activity-table-heading">
-            <div>
-                <h2>Bộ lọc tài khoản</h2>
-                <p>Tìm kiếm theo tên đăng nhập, loại, vai trò hoặc trạng thái.</p>
-            </div>
-        </div>
-        <form class="account-filters" method="get" action="${pageContext.request.contextPath}/accounts">
-            <div class="field">
-                <label for="search">Tìm kiếm</label>
-                <input id="search" type="search" name="search" value="<c:out value='${search}'/>" placeholder="Tên đăng nhập">
-            </div>
-            <div class="field">
-                <label for="type">Loại tài khoản</label>
-                <select id="type" name="type">
-                    <option value="">Tất cả</option>
-                    <c:forEach items="${accountTypes}" var="t">
-                        <option value="${fn:escapeXml(t)}" <c:if test="${t == filterType}">selected</c:if>><c:out value="${t}"/></option>
-                    </c:forEach>
-                </select>
-            </div>
-            <div class="field">
-                <label for="role">Vai trò</label>
-                <select id="role" name="role">
-                    <option value="">Tất cả</option>
-                    <c:forEach items="${accountRoles}" var="r">
-                        <option value="${fn:escapeXml(r)}" <c:if test="${r == filterRole}">selected</c:if>><c:out value="${r}"/></option>
-                    </c:forEach>
-                </select>
-            </div>
-            <div class="field">
-                <label for="status">Trạng thái</label>
-                <select id="status" name="status">
-                    <option value="">Tất cả</option>
-                    <c:forEach items="${accountStatuses}" var="s">
-                        <option value="${fn:escapeXml(s)}" <c:if test="${s == filterStatus}">selected</c:if>><c:out value="${s}"/></option>
-                    </c:forEach>
-                </select>
-            </div>
-            <div class="account-filter-actions">
-                <button class="button button-primary" type="submit">Lọc danh sách</button>
-                <a class="button" href="${pageContext.request.contextPath}/accounts">Đặt lại</a>
-            </div>
-        </form>
-    </section>
-
     <section class="card activity-table-card account-table-card" aria-labelledby="account-table-title">
         <div class="activity-table-heading">
             <div>
@@ -107,18 +61,69 @@
                 <p>Các tài khoản phù hợp với tiêu chí đã chọn</p>
             </div>
             <div class="activity-heading-actions">
-                <span class="activity-count">
-                    <c:choose>
-                        <c:when test="${empty accounts}">0 tài khoản</c:when>
-                        <c:otherwise><c:out value="${accounts.size()}"/> tài khoản</c:otherwise>
-                    </c:choose>
-                </span>
+                <span class="activity-count"><c:out value="${totalAccountCount}"/> tài khoản</span>
                 <a class="btn-create-activity" href="${pageContext.request.contextPath}/accounts/create">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
                     Tạo tài khoản
                 </a>
             </div>
         </div>
+
+        <details class="activity-filter-panel activity-filter-panel-white" id="account-filter-panel" open>
+            <summary class="activity-filter-toggle">
+                <span>Tìm kiếm &amp; Bộ lọc</span>
+                <c:if test="${activeFilterCount > 0}">
+                    <span class="activity-filter-badge"><c:out value="${activeFilterCount}"/></span>
+                </c:if>
+            </summary>
+            <form class="activity-filter" action="${pageContext.request.contextPath}/accounts" method="get">
+                <input type="hidden" name="pageSize" value="${pageSize}">
+                <div class="activity-filter-field activity-filter-search">
+                    <label for="filter-search">Tìm kiếm</label>
+                    <input id="filter-search" type="search" name="search" value="<c:out value='${search}'/>"
+                           placeholder="Tên đăng nhập">
+                </div>
+                <div class="activity-filter-field activity-filter-search">
+                    <label for="filter-id">ID</label>
+                    <input id="filter-id" type="search" name="id" value="<c:out value='${filterId}'/>"
+                           placeholder="Nhập ID">
+                </div>
+                <div class="activity-filter-field">
+                    <label for="filter-type">Loại tài khoản</label>
+                    <select id="filter-type" name="type">
+                        <option value="">Tất cả</option>
+                        <c:forEach items="${accountTypes}" var="t">
+                            <option value="${fn:escapeXml(t)}" ${t == filterType ? 'selected' : ''}><c:out value="${t}"/></option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="activity-filter-field">
+                    <label for="filter-role">Vai trò</label>
+                    <select id="filter-role" name="role">
+                        <option value="">Tất cả</option>
+                        <c:forEach items="${accountRoles}" var="r">
+                            <option value="${fn:escapeXml(r)}" ${r == filterRole ? 'selected' : ''}><c:out value="${r}"/></option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="activity-filter-field">
+                    <label for="filter-status">Trạng thái</label>
+                    <select id="filter-status" name="status">
+                        <option value="">Tất cả</option>
+                        <c:forEach items="${accountStatuses}" var="s">
+                            <option value="${fn:escapeXml(s)}" ${s == filterStatus ? 'selected' : ''}>${st:label(s)}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+                <div class="activity-filter-buttons">
+                    <button type="submit" class="button button-primary button-sm">Tìm kiếm &amp; Lọc</button>
+                    <c:if test="${filtered}">
+                        <a class="button button-sm"
+                           href="${pageContext.request.contextPath}/accounts?pageSize=${pageSize}">Xóa Bộ lọc</a>
+                    </c:if>
+                </div>
+            </form>
+        </details>
         <div class="table-wrap activity-table-wrap">
             <table class="account-table">
                 <thead>
@@ -137,9 +142,17 @@
                         <tr>
                             <td class="empty-state activity-empty-state" colspan="6">
                                 <span class="empty-state-mark" aria-hidden="true">+</span>
-                                <strong>Không tìm thấy tài khoản</strong>
-                                <span>Thử thay đổi bộ lọc hoặc tạo tài khoản mới.</span>
-                                <a class="button button-primary" href="${pageContext.request.contextPath}/accounts/create">Tạo tài khoản</a>
+                                <c:choose>
+                                    <c:when test="${filtered}">
+                                        <strong>Không tìm thấy tài khoản phù hợp</strong>
+                                        <span>Hãy thử thay đổi từ khóa hoặc bộ lọc.</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <strong>Chưa có tài khoản nào</strong>
+                                        <span>Tạo tài khoản mới để bắt đầu quản lý danh sách.</span>
+                                        <a class="button button-primary" href="${pageContext.request.contextPath}/accounts/create">Tạo tài khoản đầu tiên</a>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                         </tr>
                     </c:when>
@@ -176,6 +189,71 @@
                 </c:choose>
                 </tbody>
             </table>
+        </div>
+        <div class="activity-pagination">
+            <form class="activity-page-size" action="${pageContext.request.contextPath}/accounts"
+                  method="get">
+                <input type="hidden" name="page" value="1">
+                <input type="hidden" name="id" value="<c:out value='${filterId}'/>">
+                <input type="hidden" name="search" value="<c:out value='${search}'/>">
+                <input type="hidden" name="type" value="<c:out value='${filterType}'/>">
+                <input type="hidden" name="role" value="<c:out value='${filterRole}'/>">
+                <input type="hidden" name="status" value="<c:out value='${filterStatus}'/>">
+                <label for="account-page-size">Hiển thị</label>
+                <select id="account-page-size" name="pageSize" onchange="this.form.submit()">
+                    <option value="5" ${pageSize == 5 ? 'selected' : ''}>5</option>
+                    <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
+                    <option value="20" ${pageSize == 20 ? 'selected' : ''}>20</option>
+                    <option value="25" ${pageSize == 25 ? 'selected' : ''}>25</option>
+                </select>
+                <span>bản ghi mỗi trang</span>
+            </form>
+            <span class="activity-pagination-summary">
+                Hiển thị <c:out value="${firstAccountNumber}"/>–<c:out value="${lastAccountNumber}"/>
+                trong <c:out value="${totalAccountCount}"/> tài khoản
+            </span>
+            <c:if test="${totalPages > 1}">
+                <nav class="activity-pagination-nav" aria-label="Phân trang danh sách tài khoản">
+                    <c:choose>
+                        <c:when test="${currentPage > 1}">
+                            <a class="activity-page-link"
+                               href="${pageContext.request.contextPath}/accounts?page=${currentPage - 1}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                               aria-label="Trang trước">‹</a>
+                        </c:when>
+                        <c:otherwise><span class="activity-page-link is-disabled"
+                                           aria-hidden="true">‹</span></c:otherwise>
+                    </c:choose>
+                    <c:if test="${pageWindowStart > 1}">
+                        <a class="activity-page-link"
+                           href="${pageContext.request.contextPath}/accounts?page=1&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>">1</a>
+                        <c:if test="${pageWindowStart > 2}">
+                            <span class="activity-page-ellipsis" aria-hidden="true">...</span>
+                        </c:if>
+                    </c:if>
+                    <c:forEach var="pageNumber" begin="${pageWindowStart}" end="${pageWindowEnd}">
+                        <a class="activity-page-link${pageNumber == currentPage ? ' is-active' : ''}"
+                           href="${pageContext.request.contextPath}/accounts?page=${pageNumber}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                           aria-current="${pageNumber == currentPage ? 'page' : ''}"><c:out value="${pageNumber}"/></a>
+                    </c:forEach>
+                    <c:if test="${pageWindowEnd < totalPages - 1}">
+                        <span class="activity-page-ellipsis" aria-hidden="true">...</span>
+                    </c:if>
+                    <c:if test="${pageWindowEnd < totalPages}">
+                        <a class="activity-page-link${totalPages == currentPage ? ' is-active' : ''}"
+                           href="${pageContext.request.contextPath}/accounts?page=${totalPages}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                           aria-current="${totalPages == currentPage ? 'page' : ''}"><c:out value="${totalPages}"/></a>
+                    </c:if>
+                    <c:choose>
+                        <c:when test="${currentPage < totalPages}">
+                            <a class="activity-page-link"
+                               href="${pageContext.request.contextPath}/accounts?page=${currentPage + 1}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                               aria-label="Trang tiếp theo">›</a>
+                        </c:when>
+                        <c:otherwise><span class="activity-page-link is-disabled"
+                                           aria-hidden="true">›</span></c:otherwise>
+                    </c:choose>
+                </nav>
+            </c:if>
         </div>
     </section>
 </main>
