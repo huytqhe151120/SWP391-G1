@@ -4,6 +4,8 @@
     font-family: "Segoe UI", Arial, sans-serif;
     color: #172033;
     background: #f3f6fb;
+    --surface-secondary: #f8fafc;
+    --border: #e2e8f0;
 }
 
 * {
@@ -46,8 +48,9 @@ a:hover {
 }
 
 .page {
-    width: min(1180px, calc(100% - 40px));
-    margin: 36px auto;
+    width: min(1440px, calc(100% - clamp(24px, 4vw, 64px)));
+    min-width: 0;
+    margin: clamp(20px, 3vw, 36px) auto;
 }
 
 .page-header,
@@ -74,6 +77,13 @@ h1 {
     color: #64718a;
 }
 
+.error-msg,
+.field-error {
+    color: #dc2626;
+    font-size: .81rem;
+    line-height: 1.4;
+}
+
 .card {
     padding: 24px;
     border: 1px solid #e2e8f2;
@@ -91,6 +101,7 @@ h1 {
     min-height: 40px;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     padding: 9px 15px;
     border: 1px solid #d4dceb;
     border-radius: 8px;
@@ -98,12 +109,19 @@ h1 {
     color: #24324a;
     font: inherit;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
 .button:hover {
     background: #f5f7fb;
     text-decoration: none;
+}
+
+.button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .button-primary {
@@ -112,70 +130,119 @@ h1 {
     color: #fff;
 }
 
-.button-primary:hover {
+.button-primary:hover:not(:disabled) {
+    border-color: #1948ad;
     background: #1948ad;
+    color: #fff;
 }
 
 .button-sm {
-    min-height: 30px;
+    min-height: 32px;
     padding: 5px 11px;
     font-size: .78rem;
     font-weight: 600;
     border-radius: 6px;
-
 }
 
-/* Nút hủy duyệt: Màu cam trắng */
-.button-cancel-approval {
-    background-color: #FFFFFF;
-    color: #B45309;
-    border: 1px solid #D97706;
+/*
+ * Nhóm nút theo ngữ nghĩa (dùng chung toàn hệ thống):
+ *   button-send-approval : xanh dương đậm - gửi đi chờ xử lý
+ *   button-approve       : xanh lá        - đồng ý / chấp nhận
+ *   button-reject        : đỏ             - từ chối / ngừng
+ *   button-revoke        : xám            - hoàn tác (hủy duyệt, hủy từ chối, hủy lời mời)
+ *   button-back          : xám nhạt       - quay lại
+ *   button-secondary     : trắng viền xám - thao tác phụ
+ */
+.button-revoke {
+    background-color: #E5E7EB;
+    color: #4B5563;
+    border: 1px solid #D1D5DB;
+}
+
+.button.button-revoke:hover:not(:disabled) {
+    background-color: #D1D5DB;
+    border-color: #9CA3AF;
+    color: #374151;
 }
 
 .button-reject {
-    background-color: #DC2626;
-    color: #FFFFFF;
-    border: 1px solid #DC2626;
-
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
 }
 
-/* Hover nút Từ chối: giữ nền đỏ, chuyển sang đỏ đậm */
-.button.button-reject:hover {
-    background-color: #B91C1C;
-    border-color: #B91C1C;
-    color: #FFFFFF;
+.button.button-reject:hover:not(:disabled) {
+    background-color: #fee2e2;
+    border-color: #f87171;
+    color: #991b1b;
 }
 
-/* Nút Gửi duyệt: xanh dương */
 .button-send-approval {
-    background-color: #2563EB;
-    color: #FFFFFF;
-    border: 1px solid #2563EB;
+    background-color: #1d4ed8;
+    color: #fff;
+    border: 1px solid #1d4ed8;
 }
 
-.button-send-approval:hover {
-    background-color: #1D4ED8;
-    border-color: #1D4ED8;
-    color: #FFFFFF;
+.button-send-approval:hover:not(:disabled) {
+    background-color: #1e40af;
+    border-color: #1e40af;
+    color: #fff;
 }
 
-/* Nút Duyệt: xanh lá */
 .button-approve {
-    background-color: #16A34A;
-    color: #FFFFFF;
-    border: 1px solid #16A34A;
+    background-color: #15803d;
+    color: #fff;
+    border: 1px solid #15803d;
 }
 
-.button-approve:hover {
-    background-color: #15803D;
-    border-color: #15803D;
-    color: #FFFFFF;
+.button-approve:hover:not(:disabled) {
+    background-color: #166534;
+    border-color: #166534;
+    color: #fff;
 }
 
+.button-back {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
 
+.button.button-back:hover:not(:disabled) {
+    background-color: #e2e8f0;
+    border-color: #94a3b8;
+    color: #334155;
+}
+
+.button-secondary {
+    background-color: #fff;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.button.button-secondary:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.button-primary-outline {
+    background-color: #fff;
+    color: #2457c5;
+    border: 1px solid #2457c5;
+}
+
+.button.button-primary-outline:hover:not(:disabled) {
+    background-color: #eff6ff;
+    border-color: #1d4ed8;
+    color: #1d4ed8;
+}
 
 .table-wrap {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
 }
 
 table {
@@ -200,6 +267,123 @@ th {
 
 tbody tr:hover {
     background: #fafbfe;
+}
+
+/* ==========================================================================
+   Quy Chuẩn Độ Dài Cột & Xử Lý Tràn Văn Bản (Column Truncation System)
+   ========================================================================== */
+
+/* 1. Mã nghiệp vụ (Mã HĐ, Mã SV, Mã NV, Mã đối tác): cố định ~100px - 120px, không xuống dòng */
+th.col-code,
+td.col-code {
+    width: 115px;
+    min-width: 100px;
+    max-width: 120px;
+    white-space: nowrap;
+}
+
+/* 2. Họ tên / Tên đối tượng: tối đa 2 dòng + dấu ba chấm (...) */
+th.col-object-name,
+td.col-object-name {
+    min-width: 160px;
+    max-width: 240px;
+    white-space: normal;
+}
+
+/* 3. Tên Hoạt động: tối đa 2 dòng + dấu ba chấm (...) */
+th.col-activity-name,
+td.col-activity-name {
+    min-width: 200px;
+    max-width: 280px;
+    white-space: normal;
+}
+
+.cell-clamp-2,
+td.col-object-name > strong,
+td.col-object-name > span,
+td.col-activity-name > strong,
+td.col-activity-name > span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.45;
+}
+
+/* 4. Học kỳ: cố định chuỗi, không xuống dòng */
+th.col-semester,
+td.col-semester {
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+/* 5. Loại / Tính chất / Đơn vị: tối đa 1 dòng + ellipsis */
+th.col-single-line,
+td.col-single-line {
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 6. Khoa / Ngành / Lớp / CTĐT: hiển thị 1 dòng + ellipsis cho dữ liệu, tiêu đề cột không bị cắt */
+th.col-academic {
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+th.col-academic.col-program {
+    min-width: 195px;
+}
+
+td.col-academic {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cell-ellipsis {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 7. Số lượng / Tối đa & Trạng thái: căn giữa */
+th.col-number,
+td.col-number,
+th.col-count,
+td.col-count,
+th.col-status,
+td.col-status,
+th.activity-status-column,
+td.activity-status-column,
+th.activity-order-status-column,
+td.activity-order-status-column,
+th.activity-registration-status-column,
+td.activity-registration-status-column,
+th.activity-run-status,
+td.activity-run-status,
+th.invitation-status-column,
+td.invitation-status-column,
+th.registration-sticky-status,
+td.registration-sticky-status {
+    text-align: center !important;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 8. Thời gian / Ngày tháng: định dạng dd/mm/yyyy hh:mm, tối thiểu 160px */
+th.col-datetime,
+td.col-datetime {
+    min-width: 160px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
 .actions {
@@ -246,13 +430,14 @@ tbody tr:hover {
     grid-column: 1 / -1;
 }
 
-label {
+label,
+.field-label {
     color: #35425a;
     font-size: .92rem;
     font-weight: 600;
 }
 
-input,
+input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
     width: 100%;
@@ -270,7 +455,7 @@ textarea {
     resize: vertical;
 }
 
-input:focus,
+input:not([type="checkbox"]):not([type="radio"]):focus,
 select:focus,
 textarea:focus {
     border-color: #5880da;
@@ -304,14 +489,20 @@ textarea:focus {
     overflow-wrap: anywhere;
 }
 
+/* 9. Badge Trạng thái: kích thước bo góc cố định (Pill Badge) */
 .badge {
-    display: inline-block;
-    padding: 4px 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 4px 10px;
     border-radius: 999px;
     background: #edf2ff;
     color: #294ea3;
-    font-size: .82rem;
+    font-size: .75rem;
     font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 .eyebrow {
@@ -322,9 +513,9 @@ textarea:focus {
     letter-spacing: .14em;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 760px) {
     .page {
-        width: min(100% - 24px, 1180px);
+        width: min(100% - 24px, 1440px);
         margin: 20px auto;
     }
 

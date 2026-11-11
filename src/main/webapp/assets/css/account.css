@@ -1,6 +1,6 @@
-﻿/* Account Management CSS - SWP391-G1 */
-@import "base.css";
-@import "activity.css";
+/* Account Management CSS - SWP391-G1 */
+@import "base.css?v=20261107-2";
+@import "activity.css?v=20261110-3";
 
 .account-page .account-hero-actions {
     position: relative;
@@ -81,6 +81,16 @@
     font-size: .88rem;
 }
 
+.account-table th:last-child,
+.account-table td:last-child {
+    width: 150px;
+    min-width: 150px;
+}
+
+.account-table .activity-actions {
+    justify-content: flex-start;
+}
+
 .account-table tbody tr:last-child td {
     border-bottom: 0;
 }
@@ -119,7 +129,7 @@
 }
 
 .field-error {
-    color: #a33b43;
+    color: #dc2626;
     font-size: .81rem;
     line-height: 1.4;
 }

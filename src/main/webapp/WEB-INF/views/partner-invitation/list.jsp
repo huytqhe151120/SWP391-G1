@@ -1,0 +1,300 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.swp391.g1.dto.CurrentUser" %>
+<%@ page import="com.swp391.g1.util.AuthContext" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="st" uri="http://swp391.g1/status" %>
+<%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<%
+    CurrentUser invNavUser = AuthContext.getCurrentUser(request);
+    String invNavType = invNavUser == null ? "" : invNavUser.getType();
+    boolean showCompanyColumn = "ADMIN".equals(invNavType) || "STAFF".equals(invNavType);
+    pageContext.setAttribute("showCompanyColumn", showCompanyColumn);
+%>
+<c:set var="activeNav" value="partner-invitations" scope="request"/>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lời mời hợp tác | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
+</head>
+<body>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+        <div class="activity-app-main">
+<main class="page activity-list-page">
+    <header class="activity-hero">
+        <div class="activity-hero-copy">
+            <span class="eyebrow">SWP391-G1 <span aria-hidden="true">/</span> QUẢN LÝ ĐỐI TÁC</span>
+            <h1>Lời mời hợp tác</h1>
+            <p>Danh sách lời mời hợp tác trong các hoạt động ngoại khóa.</p>
+        </div>
+    </header>
+
+    <c:if test="${not empty sessionScope.successMessage}">
+        <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
+        <c:remove var="successMessage" scope="session"/>
+    </c:if>
+    <c:if test="${not empty sessionScope.errorMessage}">
+        <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
+        <c:remove var="errorMessage" scope="session"/>
+    </c:if>
+
+    <section class="card activity-table-card" aria-labelledby="invitation-table-title">
+        <div class="activity-table-heading">
+            <div>
+                <h2 id="invitation-table-title">Danh sách lời mời hợp tác</h2>
+                <p>Lời nhắn, trạng thái lời mời và thao tác luôn hiển thị cố định bên phải</p>
+            </div>
+            <span class="activity-count"><c:out value="${totalCount}"/> lời mời</span>
+        </div>
+        <details class="activity-filter-panel" id="invitation-filter-panel">
+        <summary class="activity-filter-toggle">
+            <span>Tìm kiếm &amp; Bộ lọc</span>
+            <c:if test="${activeFilterCount > 0}">
+                <span class="activity-filter-badge"><c:out value="${activeFilterCount}"/></span>
+            </c:if>
+        </summary>
+        <form class="activity-filter" action="${pageContext.request.contextPath}/partner-invitations" method="get">
+            <input type="hidden" name="pageSize" value="${pageSize}">
+            <div class="activity-filter-field activity-filter-search">
+                <label for="filter-keyword">Tìm kiếm</label>
+                <input id="filter-keyword" type="search" name="keyword" value="<c:out value='${keyword}'/>"
+                       placeholder="${showCompanyColumn ? 'Tên công ty, mã hoặc tên hoạt động' : 'Mã hoặc tên hoạt động'}">
+            </div>
+            <div class="activity-filter-field">
+                <label for="filter-type">Loại hoạt động</label>
+                <select id="filter-type" name="activityType">
+                    <option value="">Tất cả</option>
+                    <c:forEach var="type" items="${activityTypes}">
+                        <option value="<c:out value='${type}'/>" ${selectedActivityType == type ? 'selected' : ''}><c:out value="${type}"/></option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="activity-filter-field">
+                <label for="filter-activity-approval">Trạng thái duyệt HĐ</label>
+                <select id="filter-activity-approval" name="activityApprovalStatus">
+                    <option value="">Tất cả</option>
+                    <c:forEach var="status" items="${approvalStatuses}">
+                        <option value="${status}" ${selectedActivityApprovalStatus == status.name() ? 'selected' : ''}>${st:label(status)}</option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="activity-filter-field">
+                <label for="filter-activity-status">Trạng thái hoạt động</label>
+                <select id="filter-activity-status" name="activityStatus">
+                    <option value="">Tất cả</option>
+                    <c:forEach var="status" items="${activityStatuses}">
+                        <option value="${status}" ${selectedActivityStatus == status.name() ? 'selected' : ''}>${st:label(status)}</option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="activity-filter-field">
+                <label for="filter-invitation-status">Trạng thái lời mời</label>
+                <select id="filter-invitation-status" name="invitationStatus">
+                    <option value="">Tất cả</option>
+                    <c:forEach var="status" items="${invitationStatuses}">
+                        <option value="${status}" ${selectedInvitationStatus == status ? 'selected' : ''}>${st:label(status)}</option>
+                    </c:forEach>
+                </select>
+            </div>
+            <div class="activity-filter-buttons">
+                <button type="submit" class="button button-primary button-sm">Tìm kiếm &amp; Lọc</button>
+                <c:if test="${filtered}">
+                    <a class="button button-sm" href="${pageContext.request.contextPath}/partner-invitations?pageSize=${pageSize}">Xóa Bộ lọc</a>
+                </c:if>
+            </div>
+        </form>
+        </details>
+        <div class="table-wrap activity-table-wrap">
+            <table class="partner-invitation-table">
+                <thead>
+                <tr>
+                    <c:if test="${showCompanyColumn}">
+                        <th scope="col" class="col-object-name">Tên công ty</th>
+                    </c:if>
+                    <th scope="col" class="col-code">Mã hoạt động</th>
+                    <th scope="col" class="col-activity-name">Tên hoạt động</th>
+                    <th scope="col" class="col-single-line">Loại hoạt động</th>
+                    <th scope="col" class="col-wrap col-status">Trạng thái duyệt HĐ</th>
+                    <th scope="col" class="col-datetime">Thời gian</th>
+                    <th scope="col" class="activity-run-status col-status"><span>Trạng thái</span><span>hoạt động</span></th>
+                    <th scope="col" class="freeze freeze-message">Lời nhắn</th>
+                    <th scope="col" class="freeze freeze-status invitation-status-column col-status"><span>Trạng thái</span><span>lời mời</span></th>
+                    <th scope="col" class="freeze freeze-actions">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:choose>
+                    <c:when test="${empty invitations}">
+                        <tr>
+                            <td class="empty-state activity-empty-state" colspan="${showCompanyColumn ? 10 : 9}">
+                                <c:choose>
+                                    <c:when test="${filtered}"><strong>Không tìm thấy lời mời phù hợp</strong></c:when>
+                                    <c:otherwise><strong>Chưa có lời mời hợp tác nào</strong></c:otherwise>
+                                </c:choose>
+                            </td>
+                        </tr>
+                    </c:when>
+                    <c:otherwise>
+                        <c:forEach var="inv" items="${invitations}">
+                            <tr>
+                                <c:if test="${showCompanyColumn}">
+                                    <td class="col-object-name" title="<c:out value='${inv.partnerCompanyName}'/>">
+                                        <strong class="activity-name" title="<c:out value='${inv.partnerCompanyName}'/>"><c:out value="${inv.partnerCompanyName}" default="—"/></strong>
+                                    </td>
+                                </c:if>
+                                <td class="col-code"><span class="activity-code"><c:out value="${inv.activityCode}"/></span></td>
+                                <td class="col-activity-name" title="<c:out value='${inv.activityName}'/>">
+                                    <strong class="activity-name" title="<c:out value='${inv.activityName}'/>"><c:out value="${inv.activityName}"/></strong>
+                                </td>
+                                <td class="col-single-line" title="<c:out value='${inv.activityTypeName}'/>"><c:out value="${inv.activityTypeName}" default="—"/></td>
+                                <td class="col-wrap col-status"><span class="badge status-pill ${st:css(inv.activityApprovalStatus)}">${st:label(inv.activityApprovalStatus)}</span></td>
+                                <td class="activity-time">
+                                    <c:choose>
+                                        <c:when test="${not empty inv.activityStartTime}">
+                                            ${dt:format(inv.activityStartTime)}
+                                            <c:if test="${not empty inv.activityEndTime}"><span>đến</span>${dt:format(inv.activityEndTime)}</c:if>
+                                        </c:when>
+                                        <c:otherwise>Chưa xác định</c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td class="activity-run-status col-status"><span class="badge status-pill ${st:css(inv.activityStatus)}">${st:label(inv.activityStatus)}</span></td>
+                                <td class="freeze freeze-message">
+                                    <c:choose>
+                                        <c:when test="${empty inv.message}">—</c:when>
+                                        <c:otherwise>
+                                            <button type="button" class="button button-sm action-btn action-btn--view invitation-message-view"
+                                                    data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
+                                                    data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
+                                            </button>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td class="freeze freeze-status invitation-status-column col-status">
+                                    <span class="badge status-pill ${st:css(inv.approvalStatus)}">
+                                        <c:choose>
+                                            <c:when test="${inv.approvalStatus == 'PENDING'}">Chờ phản hồi</c:when>
+                                            <c:when test="${!inv.termination && inv.approvalStatus == 'APPROVED' && inv.collaborationStatus != 'ACTIVE'}">Đã ngừng hợp tác</c:when>
+                                            <c:otherwise>${st:label(inv.approvalStatus)}</c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </td>
+                                <td class="freeze freeze-actions">
+                                    <div class="actions activity-actions">
+                                        <a class="activity-action-link action-btn action-btn--view" href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${inv.activityId}">
+                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                                            Chi tiết
+                                        </a>
+                                        <c:if test="${inv.canRespond || inv.canRevoke}">
+                                            <details class="action-menu">
+                                                <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
+                                                <div class="action-menu__items">
+                                                    <c:if test="${inv.canRespond}">
+                                                        <form action="${pageContext.request.contextPath}/activities" method="post">
+                                                            <input type="hidden" name="action" value="respondInvitation">
+                                                            <input type="hidden" name="returnTo" value="partner-invitations">
+                                                            <input type="hidden" name="activityId" value="${inv.activityId}">
+                                                            <input type="hidden" name="invitationId" value="${inv.id}">
+                                                            <button type="submit" name="decision" value="accept" class="action-menu-item action-menu-item--approve">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span>
+                                                                Chấp nhận lời mời
+                                                            </button>
+                                                            <button type="submit" name="decision" value="reject" class="action-menu-item action-menu-item--reject">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg></span>
+                                                                Từ chối lời mời
+                                                            </button>
+                                                        </form>
+                                                    </c:if>
+                                                    <c:if test="${inv.canRevoke}">
+                                                        <form action="${pageContext.request.contextPath}/activities" method="post"
+                                                              data-confirm="Hủy phản hồi sẽ đưa lời mời về trạng thái chờ phản hồi${inv.approvalStatus == 'APPROVED' ? ' và gỡ các nhân sự đối tác của công ty khỏi hoạt động' : ''}. Bạn có chắc chắn?">
+                                                            <input type="hidden" name="action" value="revokeInvitation">
+                                                            <input type="hidden" name="returnTo" value="partner-invitations">
+                                                            <input type="hidden" name="activityId" value="${inv.activityId}">
+                                                            <input type="hidden" name="invitationId" value="${inv.id}">
+                                                            <button type="submit" class="action-menu-item action-menu-item--undo">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M5.5 13a8 8 0 1 0 2-7L3 11"/></svg></span>
+                                                                ${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}
+                                                            </button>
+                                                        </form>
+                                                    </c:if>
+                                                </div>
+                                            </details>
+                                        </c:if>
+                                    </div>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </c:otherwise>
+                </c:choose>
+                </tbody>
+            </table>
+        </div>
+        <div class="activity-pagination">
+            <form class="activity-page-size" action="${pageContext.request.contextPath}/partner-invitations" method="get">
+                <input type="hidden" name="page" value="1">
+                <input type="hidden" name="keyword" value="<c:out value='${keyword}'/>">
+                <input type="hidden" name="activityType" value="<c:out value='${selectedActivityType}'/>">
+                <input type="hidden" name="activityStatus" value="<c:out value='${selectedActivityStatus}'/>">
+                <input type="hidden" name="activityApprovalStatus" value="<c:out value='${selectedActivityApprovalStatus}'/>">
+                <input type="hidden" name="invitationStatus" value="<c:out value='${selectedInvitationStatus}'/>">
+                <label for="invitation-page-size">Hiển thị</label>
+                <select id="invitation-page-size" name="pageSize" onchange="this.form.submit()">
+                    <option value="5" ${pageSize == 5 ? 'selected' : ''}>5</option>
+                    <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
+                    <option value="20" ${pageSize == 20 ? 'selected' : ''}>20</option>
+                    <option value="25" ${pageSize == 25 ? 'selected' : ''}>25</option>
+                </select>
+                <span>bản ghi mỗi trang</span>
+            </form>
+            <span class="activity-pagination-summary">
+                Hiển thị <c:out value="${firstNumber}"/>–<c:out value="${lastNumber}"/>
+                trong <c:out value="${totalCount}"/> lời mời
+            </span>
+            <c:if test="${totalPages > 1}">
+                <nav class="activity-pagination-nav" aria-label="Phân trang danh sách lời mời">
+                    <c:choose>
+                        <c:when test="${currentPage > 1}">
+                            <a class="activity-page-link"
+                               href="${pageContext.request.contextPath}/partner-invitations?page=${currentPage - 1}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                               aria-label="Trang trước">‹</a>
+                        </c:when>
+                        <c:otherwise><span class="activity-page-link is-disabled" aria-hidden="true">‹</span></c:otherwise>
+                    </c:choose>
+                    <c:forEach var="pageNumber" begin="1" end="${totalPages}">
+                        <a class="activity-page-link${pageNumber == currentPage ? ' is-active' : ''}"
+                           href="${pageContext.request.contextPath}/partner-invitations?page=${pageNumber}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                           aria-current="${pageNumber == currentPage ? 'page' : ''}"><c:out value="${pageNumber}"/></a>
+                    </c:forEach>
+                    <c:choose>
+                        <c:when test="${currentPage < totalPages}">
+                            <a class="activity-page-link"
+                               href="${pageContext.request.contextPath}/partner-invitations?page=${currentPage + 1}&amp;pageSize=${pageSize}<c:out value="${filterQuery}"/>"
+                               aria-label="Trang tiếp theo">›</a>
+                        </c:when>
+                        <c:otherwise><span class="activity-page-link is-disabled" aria-hidden="true">›</span></c:otherwise>
+                    </c:choose>
+                </nav>
+            </c:if>
+        </div>    </section>
+</main>
+        </div>
+    </div>
+</div>
+
+<dialog id="invitation-message-modal" class="invitation-message-modal">
+    <h3 id="invitation-message-modal-title" style="margin-top: 0;">Lời nhắn</h3>
+    <p id="invitation-message-modal-body" style="white-space: pre-wrap; word-break: break-word;"></p>
+    <div style="text-align: right;"><button type="button" class="button" id="invitation-message-modal-close">Đóng</button></div>
+</dialog>
+<script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
+<script src="${pageContext.request.contextPath}/assets/js/partner-invitation.js?v=8"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+</body>
+</html>

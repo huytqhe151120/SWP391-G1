@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261015">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Q&A - SWP391 G1</title>
@@ -227,13 +227,13 @@
             .container { padding: 1rem; }
         }
     </style>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
 </head>
 <body class="support-page qa-management-page">
 <div class="activity-app-shell">
-    <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-    <div class="activity-app-layout">
-        <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
         <div class="activity-app-main">
 
 <header class="header">

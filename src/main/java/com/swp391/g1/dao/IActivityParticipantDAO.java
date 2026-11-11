@@ -1,0 +1,72 @@
+package com.swp391.g1.dao;
+
+import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
+import com.swp391.g1.dto.response.AttendanceHistoryDTO;
+import com.swp391.g1.dto.response.ParticipantCandidateDTO;
+import com.swp391.g1.dto.response.ParticipantSessionAttendanceDTO;
+import com.swp391.g1.model.Enum.ParticipantStatus;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+
+public interface IActivityParticipantDAO {
+    List<ActivityParticipantResponseDTO> findByActivityId(int activityId);
+
+    default List<ActivityParticipantResponseDTO> findByActivityId(int activityId, int sessionNumber) {
+        return findByActivityId(activityId);
+    }
+
+    /** Active students that are not yet participants of the activity. */
+    List<ParticipantCandidateDTO> findCandidates(int activityId);
+
+    int countByActivityId(int activityId);
+
+    /** Distinct students in the attendance roster or holding an active registration seat. */
+    int countOccupiedByActivityId(int activityId);
+
+    /**
+     * Adds active students that are not yet in the activity, in one transaction. Returns the number of
+     * inserted rows, or -1 (nothing inserted) when the result would exceed maxParticipants (null = no limit).
+     */
+    int insertParticipants(int activityId, List<Integer> studentIds, Integer maxParticipants);
+
+    default int insertParticipants(int activityId, List<Integer> studentIds, Integer maxParticipants, Integer registrationBy) {
+        return insertParticipants(activityId, studentIds, maxParticipants);
+    }
+
+    /**
+     * Deletes participants that are still NOT_YET and have no attendance history, so no attendance
+     * data is lost. Other ids are skipped. Returns the number of deleted rows.
+     */
+    int deleteRemovable(int activityId, List<Integer> participantIds);
+
+    /**
+     * Updates attendance statuses of participants in one activity and records each actual change
+     * in activity_attendance_history, all in one transaction. Returns the number of changed rows.
+     */
+    int updateStatuses(int activityId, Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy);
+
+    default int updateStatuses(int activityId, int sessionNumber,
+            Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy) {
+        return updateStatuses(activityId, statusByParticipantId, changedBy);
+    }
+
+    default void syncActivityResults(int activityId) {
+    }
+
+    default List<ParticipantSessionAttendanceDTO> findSessionAttendances(int activityId, int participantId, int totalSessions) {
+        return List.of();
+    }
+
+    default List<AttendanceHistoryDTO> findAttendanceHistory(int activityId, int participantId) {
+        return List.of();
+    }
+
+    /**
+     * Updates participation evaluation score (0-5) and feedback for one or many participants (batch grading),
+     * records audit trail in activity_grade_history, and recalculates student_activity_result.
+     */
+    int updateParticipationGrades(int activityId, List<Integer> participantIds, BigDecimal evalScore,
+            String feedback, String gradedBy, Integer gradedById);
+}

@@ -2,9 +2,7 @@ package com.swp391.g1.common;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
