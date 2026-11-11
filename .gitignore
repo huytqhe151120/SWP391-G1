@@ -61,6 +61,6 @@ src/main/resources/ConnectDB.properties
 # AI Prompts & Local Instructions
 # ------------------------------------------------------------------
 .prompts/
-database
+.prompts/database_migration
 .mcp.json
 *.md.local

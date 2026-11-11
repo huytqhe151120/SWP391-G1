@@ -380,7 +380,7 @@ public class StudentActivityGradeDTO {
 
     public String getFormattedSummaryScore() {
         if (!summaryRequired) {
-            return "N/A";
+            return "-";
         }
         return summaryScore == null ? "Chưa chấm" : formatScore(summaryScore);
     }

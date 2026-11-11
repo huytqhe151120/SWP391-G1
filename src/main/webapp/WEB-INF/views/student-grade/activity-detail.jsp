@@ -11,7 +11,7 @@
     <title>EAMS | Chi tiết điểm một hoạt động</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261109-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261111-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -120,15 +120,15 @@
                         </div>
                         <c:if test="${not empty gradeDetail}">
                             <div class="grade-detail-overview-item">
-                                <span>Cấp tổ chức ($H_{cấp\_tổ\_chức}$)</span>
+                                <span>Cấp tổ chức (H<sub>cấp tổ chức</sub>)</span>
                                 <strong><c:out value="${gradeDetail.organizationLevelName}" default="Mặc định"/> (x<c:out value="${gradeDetail.formattedOrgLevelCoefficient}"/>)</strong>
                             </div>
                             <div class="grade-detail-overview-item">
-                                <span>Hệ số đăng ký ($H_{đăng\_ký\_trước}$)</span>
+                                <span>Hệ số đăng ký (H<sub>đăng ký trước</sub>)</span>
                                 <strong><c:out value="${gradeDetail.registrationTypeLabel}"/></strong>
                             </div>
                             <div class="grade-detail-overview-item">
-                                <span>Điểm tích lũy HĐ ($D_{TL}$)</span>
+                                <span>Điểm tích lũy HĐ (D<sub>TL</sub>)</span>
                                 <strong>
                                     <span class="grade-pill ${gradeDetail.accumulatedScore < 0 ? 'grade-pill--minus' : (gradeDetail.accumulatedScore > 0 ? 'grade-pill--plus' : 'grade-pill--neutral')}">
                                         <c:out value="${gradeDetail.accumulatedScore > 0 ? '+' : ''}${gradeDetail.formattedAccumulatedScore}"/> điểm
@@ -266,7 +266,7 @@
                                     <td style="text-align: center;">
                                         <c:choose>
                                             <c:when test="${not gradeDetail.summaryRequired}">
-                                                <span class="grade-pill grade-pill--neutral">N/A</span>
+                                                <span class="grade-pill grade-pill--neutral">-</span>
                                             </c:when>
                                             <c:when test="${not empty gradeDetail.summaryScore}">
                                                 <span class="grade-pill grade-pill--plus"><c:out value="${gradeDetail.formattedSummaryScore}"/> / 10.0</span>

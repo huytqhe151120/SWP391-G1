@@ -76,6 +76,10 @@ public class StudentGradeSummaryDTO {
         this.academicProgramName = academicProgramName;
     }
 
+    public String getCurriculumCode() {
+        return academicProgramName;
+    }
+
     public String getMainClassCode() {
         return mainClassCode;
     }
@@ -188,6 +192,10 @@ public class StudentGradeSummaryDTO {
         this.totalAccumulatedPoints = totalAccumulatedPoints == null ? BigDecimal.ZERO : totalAccumulatedPoints;
     }
 
+    public BigDecimal getAccumulatedPoints() {
+        return totalAccumulatedPoints;
+    }
+
     public String getParticipationRatioText() {
         return attendedActivityCount + "/" + registeredActivityCount;
     }
@@ -196,7 +204,15 @@ public class StudentGradeSummaryDTO {
         return formatScore(totalAttendanceScore);
     }
 
+    public String getFormattedTotalAttendanceScore() {
+        return formatScore(totalAttendanceScore);
+    }
+
     public String getFormattedParticipationEvalScore() {
+        return formatScore(totalParticipationEvalScore);
+    }
+
+    public String getFormattedTotalParticipationEvalScore() {
         return formatScore(totalParticipationEvalScore);
     }
 
@@ -204,11 +220,23 @@ public class StudentGradeSummaryDTO {
         return formatScore(totalParticipationScore);
     }
 
+    public String getFormattedTotalParticipationScore() {
+        return formatScore(totalParticipationScore);
+    }
+
     public String getFormattedSummaryScore() {
         return formatScore(totalSummaryScore);
     }
 
+    public String getFormattedTotalSummaryScore() {
+        return formatScore(totalSummaryScore);
+    }
+
     public String getFormattedAverageScore() {
+        return formatScore(totalAverageScore);
+    }
+
+    public String getFormattedTotalAverageScore() {
         return formatScore(totalAverageScore);
     }
 

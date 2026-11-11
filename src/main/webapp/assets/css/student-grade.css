@@ -1,8 +1,22 @@
 /* Student Activity Grade Views: extends activity.css design language */
 
+.activity-table-card.grade-detail-card {
+    overflow: visible;
+}
+
+.activity-table-card.grade-detail-card > .activity-table-heading {
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.activity-table-card.grade-detail-card > .activity-table-wrap {
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
 .grade-summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 14px;
     padding: 18px 26px;
     border-top: 1px solid #edf0f5;
@@ -19,11 +33,12 @@
     border-radius: 12px;
     background: #ffffff;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    min-width: 0;
 }
 
 .grade-summary-card-label {
     color: #64748b;
-    font-size: .76rem;
+    font-size: .75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: .02em;
@@ -34,11 +49,13 @@
     font-size: 1.15rem;
     font-weight: 700;
     line-height: 1.25;
+    overflow-wrap: anywhere;
 }
 
 .grade-summary-card-sub {
     color: #64748b;
     font-size: .78rem;
+    line-height: 1.35;
 }
 
 .grade-summary-card.is-plus {
@@ -120,17 +137,23 @@
 
 .grade-selector-bar {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 14px;
+    grid-template-columns: minmax(220px, 320px) minmax(280px, 1fr);
+    gap: 16px;
     padding: 16px 26px;
     border-top: 1px solid #edf0f5;
     background: #f8fafc;
+    align-items: end;
+}
+
+.grade-selector-bar.is-single-field {
+    grid-template-columns: minmax(220px, 360px);
 }
 
 .grade-selector-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
 }
 
 .grade-selector-field label {
@@ -141,14 +164,184 @@
 
 .grade-selector-field select,
 .grade-selector-field input {
-    min-height: 38px;
-    padding: 7px 11px;
+    min-height: 40px;
+    padding: 8px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     background: #ffffff;
     color: #0f172a;
     font: inherit;
     font-size: .88rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.grade-selector-field select:focus,
+.grade-selector-field input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+/* Searchable Combobox for Student Selection */
+.grade-combobox {
+    position: relative;
+    width: 100%;
+}
+
+.grade-combobox-control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.grade-combobox-search-icon {
+    position: absolute;
+    left: 11px;
+    width: 16px;
+    height: 16px;
+    color: #64748b;
+    pointer-events: none;
+}
+
+.grade-combobox-input {
+    width: 100%;
+    padding-left: 34px !important;
+    padding-right: 62px !important;
+    cursor: text;
+}
+
+.grade-combobox-actions {
+    position: absolute;
+    right: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.grade-combobox-clear,
+.grade-combobox-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.grade-combobox-clear:hover,
+.grade-combobox-toggle:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.grade-combobox-clear[hidden] {
+    display: none !important;
+}
+
+.grade-combobox.is-open .grade-combobox-toggle svg {
+    transform: rotate(180deg);
+}
+
+.grade-combobox-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 120;
+    max-height: 280px;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.grade-combobox-dropdown[hidden] {
+    display: none !important;
+}
+
+.grade-combobox-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    color: #1e293b;
+    font-size: .87rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.12s ease;
+}
+
+.grade-combobox-option:hover,
+.grade-combobox-option.is-active {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.grade-combobox-option.is-selected {
+    background: #dbeafe;
+    color: #1e40af;
+    font-weight: 600;
+}
+
+.grade-combobox-option-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.grade-combobox-code {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: .78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.grade-combobox-option.is-selected .grade-combobox-code,
+.grade-combobox-option.is-active .grade-combobox-code {
+    background: #ffffff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.grade-combobox-class {
+    color: #64748b;
+    font-size: .78rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.grade-combobox-empty {
+    padding: 14px 12px;
+    text-align: center;
+    color: #64748b;
+    font-size: .85rem;
+}
+
+.activity-table-wrap td.activity-empty-state {
+    text-align: center !important;
+    white-space: normal !important;
 }
 
 .grade-detail-overview {
@@ -199,7 +392,17 @@
     font-weight: 600;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1360px) {
+    .grade-summary-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .grade-selector-bar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .grade-summary-cards {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
