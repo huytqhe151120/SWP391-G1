@@ -179,10 +179,10 @@
                             <th scope="col" class="col-activity-name">Tên hoạt động</th>
                             <th scope="col" class="col-semester">Học kỳ</th>
                             <th scope="col" class="col-single-line">Loại hoạt động</th>
-                            <th scope="col" class="col-single-line">phụ trách chính</th>
                             <th scope="col" class="col-single-line">Tính chất</th>
                             <th scope="col" class="col-number">Tối đa</th>
                             <th scope="col" class="col-datetime">Thời gian</th>
+                            <th scope="col" class="col-single-line">phụ trách chính</th>
                             <th scope="col" class="activity-run-status col-status ${isStudent ? 'activity-student-run-status' : ''}"><span>Trạng thái</span><span>hoạt động</span>
                             </th>
                             <c:if test="${isStudent}">
@@ -257,7 +257,6 @@
                                                                                     default="—"/></span>
                                         </td>
                                         <td class="col-single-line" title="<c:out value='${activity.activityTypeName}'/>"><c:out value="${activity.activityTypeName}" default="—"/></td>
-                                        <td class="col-single-line" title="<c:out value='${activity.responsibleDepartmentName}'/>"><c:out value="${activity.responsibleDepartmentName}" default="—"/></td>
                                         <td class="col-single-line"><c:choose><c:when
                                                 test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký</c:when><c:when
                                                 test="${activity.nature == 'VOLUNTARY'}">Tự nguyện</c:when><c:when
@@ -272,6 +271,7 @@
                                                 <c:otherwise>Chưa xác định</c:otherwise>
                                             </c:choose>
                                         </td>
+                                        <td class="col-single-line" title="<c:out value='${activity.responsibleDepartmentName}'/>"><c:out value="${activity.responsibleDepartmentName}" default="—"/></td>
                                         <td class="activity-run-status col-status ${isStudent ? 'activity-student-run-status' : ''}"><span
                                                 class="badge status-pill ${st:css(activity.activityStatus)}">${st:label(activity.activityStatus)}</span>
                                         </td>

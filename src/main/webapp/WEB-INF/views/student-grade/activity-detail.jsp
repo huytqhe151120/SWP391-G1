@@ -35,10 +35,16 @@
                     Quay lại lịch sử điểm của sinh viên
                 </a>
                 <c:if test="${not isStudent and not empty gradeDetail}">
-                    <a class="button button-outline button-sm"
-                       href="${pageContext.request.contextPath}/attendance?activityId=${gradeDetail.activityId}">
-                        Đi tới trang Điểm danh &amp; Chấm điểm HĐ này →
-                    </a>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <a class="button button-outline button-sm"
+                           href="${pageContext.request.contextPath}/attendance?activityId=${gradeDetail.activityId}">
+                            Đi tới trang Điểm danh HĐ này →
+                        </a>
+                        <a class="button button-outline button-sm"
+                           href="${pageContext.request.contextPath}/participation-grading?activityId=${gradeDetail.activityId}">
+                            Đi tới trang Chấm điểm tham gia HĐ này →
+                        </a>
+                    </div>
                 </c:if>
             </div>
 
@@ -172,17 +178,19 @@
                             <c:otherwise>
                                 <%-- Đầu điểm 1: Điểm danh --%>
                                 <tr>
-                                    <td><strong>Điểm danh có mặt</strong></td>
+                                    <td>
+                                        <strong>Điểm danh chuyên cần</strong>
+                                        <div class="text-muted" style="font-size: .78rem;">
+                                            Có mặt: <strong><c:out value="${gradeDetail.attendedSessionCount}"/>/<c:out value="${gradeDetail.totalSessions}"/></strong> buổi
+                                        </div>
+                                    </td>
                                     <td style="text-align: center;">
                                         <c:choose>
-                                            <c:when test="${gradeDetail.attendanceStatus == 'ATTENDED'}">
-                                                <span class="grade-pill grade-pill--plus">5.0 / 5.0</span>
+                                            <c:when test="${gradeDetail.attendanceScore > 0}">
+                                                <span class="grade-pill grade-pill--plus"><c:out value="${gradeDetail.formattedAttendanceScore}"/> / 5.0</span>
                                             </c:when>
-                                            <c:when test="${gradeDetail.attendanceStatus == 'IN_LATE' or gradeDetail.attendanceStatus == 'OUT_EARLY'}">
-                                                <span class="grade-pill grade-pill--plus">3.0 / 5.0</span>
-                                            </c:when>
-                                            <c:when test="${gradeDetail.attendanceStatus == 'ABSENT'}">
-                                                <span class="grade-pill grade-pill--minus">-5.0</span>
+                                            <c:when test="${gradeDetail.attendanceScore < 0}">
+                                                <span class="grade-pill grade-pill--minus"><c:out value="${gradeDetail.formattedAttendanceScore}"/></span>
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="grade-pill grade-pill--neutral">0.0 / 5.0</span>
@@ -191,20 +199,14 @@
                                     </td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${gradeDetail.attendanceStatus == 'ATTENDED'}">
-                                                Sinh viên có mặt đầy đủ tại hoạt động (+5.0 điểm).
-                                            </c:when>
-                                            <c:when test="${gradeDetail.attendanceStatus == 'IN_LATE'}">
-                                                Sinh viên đi muộn tại hoạt động (+3.0 điểm).
-                                            </c:when>
-                                            <c:when test="${gradeDetail.attendanceStatus == 'OUT_EARLY'}">
-                                                Sinh viên về sớm tại hoạt động (+3.0 điểm).
+                                            <c:when test="${gradeDetail.present}">
+                                                Sinh viên có mặt <strong><c:out value="${gradeDetail.attendedSessionCount}"/>/<c:out value="${gradeDetail.totalSessions}"/></strong> buổi điểm danh. Điểm chuyên cần trung bình các buổi: <strong><c:out value="${gradeDetail.formattedAttendanceScore}"/> điểm</strong>.
                                             </c:when>
                                             <c:when test="${gradeDetail.attendanceStatus == 'ABSENT'}">
-                                                Sinh viên vắng mặt tại hoạt động (Bị trừ 5.0 điểm).
+                                                Sinh viên vắng mặt (0/<c:out value="${gradeDetail.totalSessions}"/> buổi có mặt). Điểm chuyên cần trung bình: <strong><c:out value="${gradeDetail.formattedAttendanceScore}"/> điểm</strong>.
                                             </c:when>
                                             <c:otherwise>
-                                                Chưa thực hiện điểm danh.
+                                                Chưa thực hiện điểm danh (<c:out value="${gradeDetail.totalSessions}"/> buổi).
                                             </c:otherwise>
                                         </c:choose>
                                     </td>

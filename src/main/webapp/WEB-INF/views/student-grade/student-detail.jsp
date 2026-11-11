@@ -9,9 +9,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Chi tiết điểm hoạt động của sinh viên</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261109-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261110-1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -30,7 +31,7 @@
 
             <c:if test="${not isStudent}">
                 <div class="activity-page-back">
-                    <a class="button button-back" href="${pageContext.request.contextPath}/student-grades">
+                    <a class="button button-back" href="${pageContext.request.contextPath}/student-grades?semesterId=${selectedSemesterId}">
                         <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                         Quay lại danh sách điểm sinh viên
                     </a>
@@ -51,9 +52,11 @@
                         <p>
                             <c:choose>
                                 <c:when test="${not empty selectedStudent}">
-                                    Khoa: <c:out value="${selectedStudent.departmentName}" default="—"/> |
-                                    Ngành: <c:out value="${selectedStudent.majorName}" default="—"/> |
-                                    Lớp: <c:out value="${selectedStudent.mainClassCode}" default="—"/>
+                                    Khoa / Ngành: <c:out value="${selectedStudent.departmentName}" default="—"/> / <c:out value="${selectedStudent.majorName}" default="—"/> |
+                                    CTĐT / Lớp: <c:out value="${selectedStudent.curriculumCode}" default="—"/> / <c:out value="${selectedStudent.mainClassCode}" default="—"/>
+                                    <c:if test="${not empty selectedSemester}">
+                                        | Học kỳ: <strong><c:out value="${selectedSemester.code}"/> – <c:out value="${selectedSemester.name}"/></strong>
+                                    </c:if>
                                 </c:when>
                                 <c:otherwise>Chọn sinh viên để tra cứu</c:otherwise>
                             </c:choose>
@@ -68,10 +71,21 @@
                     </c:if>
                 </div>
 
-                <%-- 1. Bộ chọn Sinh viên (Combobox tìm kiếm nhanh theo Mã/Tên sinh viên) --%>
-                <c:if test="${not isStudent}">
-                    <form class="grade-selector-bar" action="${pageContext.request.contextPath}/student-grades" method="get">
-                        <input type="hidden" name="action" value="studentDetail">
+                <%-- 1. Bộ chọn Học kỳ & Sinh viên --%>
+                <form class="grade-selector-bar" action="${pageContext.request.contextPath}/student-grades" method="get">
+                    <input type="hidden" name="action" value="studentDetail">
+                    <div class="grade-selector-field">
+                        <label for="semester-selector">Học kỳ</label>
+                        <select id="semester-selector" name="semesterId" onchange="this.form.submit()">
+                            <option value="0" ${selectedSemesterId == 0 ? 'selected' : ''}>Tất cả học kỳ</option>
+                            <c:forEach var="sem" items="${semesters}">
+                                <option value="${sem.id}" ${selectedSemesterId == sem.id ? 'selected' : ''}>
+                                    <c:out value="${sem.code}"/> – <c:out value="${sem.name}"/><c:if test="${sem.id == activeSemesterId}"> (Đang diễn ra)</c:if>
+                                </option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <c:if test="${not isStudent}">
                         <div class="grade-selector-field">
                             <label for="student-quick-filter">Tìm nhanh sinh viên (theo Mã hoặc Tên)</label>
                             <input id="student-quick-filter" type="search" placeholder="Gõ mã SV hoặc họ tên để lọc danh sách..." autocomplete="off">
@@ -86,21 +100,26 @@
                                 </c:forEach>
                             </select>
                         </div>
-                    </form>
-                </c:if>
+                    </c:if>
+                </form>
 
                 <%-- 2. Thẻ Thông tin Tổng quan (Summary Cards) --%>
                 <c:if test="${not empty selectedStudent}">
                     <div class="grade-summary-cards" aria-label="Thẻ thông tin tổng quan điểm sinh viên">
                         <div class="grade-summary-card">
-                            <span class="grade-summary-card-label">Mã sinh viên</span>
+                            <span class="grade-summary-card-label">Sinh viên</span>
                             <strong class="grade-summary-card-value"><c:out value="${selectedStudent.studentCode}" default="—"/></strong>
-                            <span class="grade-summary-card-sub">Lớp: <c:out value="${selectedStudent.mainClassCode}" default="—"/></span>
+                            <span class="grade-summary-card-sub"><c:out value="${selectedStudent.studentName}" default="—"/> (<c:out value="${selectedStudent.participationRatioText}"/> HĐ)</span>
                         </div>
                         <div class="grade-summary-card">
-                            <span class="grade-summary-card-label">Tên sinh viên</span>
-                            <strong class="grade-summary-card-value"><c:out value="${selectedStudent.studentName}" default="—"/></strong>
-                            <span class="grade-summary-card-sub">Số HĐ có mặt: <c:out value="${selectedStudent.participationRatioText}"/></span>
+                            <span class="grade-summary-card-label">Tổng điểm tham gia</span>
+                            <strong class="grade-summary-card-value"><c:out value="${selectedStudent.formattedTotalParticipationScore}"/></strong>
+                            <span class="grade-summary-card-sub">ĐD: <c:out value="${selectedStudent.formattedTotalAttendanceScore}"/> | ĐG: <c:out value="${selectedStudent.formattedTotalParticipationEvalScore}"/></span>
+                        </div>
+                        <div class="grade-summary-card">
+                            <span class="grade-summary-card-label">Tổng điểm thu hoạch</span>
+                            <strong class="grade-summary-card-value"><c:out value="${selectedStudent.formattedTotalSummaryScore}"/></strong>
+                            <span class="grade-summary-card-sub">Tổng điểm TB: <c:out value="${selectedStudent.formattedTotalAverageScore}"/></span>
                         </div>
                         <div class="grade-summary-card is-plus">
                             <span class="grade-summary-card-label">Tổng số điểm cộng</span>
@@ -193,16 +212,36 @@
                                             </c:choose>
                                         </td>
                                         <td class="activity-action-column">
-                                            <a class="button button-primary button-sm"
-                                               href="${pageContext.request.contextPath}/student-grades?action=activityDetail&amp;studentId=${selectedStudent.studentId}&amp;activityId=${ag.activityId}">
-                                                Xem chi tiết HĐ
-                                            </a>
+                                            <div class="actions activity-actions">
+                                                <a class="activity-action-link action-btn action-btn--view"
+                                                   href="${pageContext.request.contextPath}/student-grades?action=activityDetail&amp;studentId=${selectedStudent.studentId}&amp;activityId=${ag.activityId}"
+                                                   title="Xem chi tiết điểm hoạt động">
+                                                    <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                                                    Chi tiết
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 </c:forEach>
                             </c:otherwise>
                         </c:choose>
                         </tbody>
+                        <c:if test="${not empty activityGrades and not empty selectedStudent}">
+                            <tfoot>
+                            <tr style="background: #f8fafc; font-weight: 700;">
+                                <td colspan="4" style="text-align: right;">Tổng các đầu điểm trong học kỳ:</td>
+                                <td style="text-align: center;"><c:out value="${selectedStudent.formattedTotalParticipationScore}"/></td>
+                                <td style="text-align: center;"><c:out value="${selectedStudent.formattedTotalSummaryScore}"/></td>
+                                <td style="text-align: center;"><c:out value="${selectedStudent.formattedTotalAverageScore}"/></td>
+                                <td style="text-align: center;">
+                                    <span class="grade-pill ${selectedStudent.accumulatedPoints < 0 ? 'grade-pill--minus' : (selectedStudent.accumulatedPoints > 0 ? 'grade-pill--plus' : 'grade-pill--neutral')}">
+                                        <c:out value="${selectedStudent.formattedAccumulatedPoints}"/>
+                                    </span>
+                                </td>
+                                <td></td>
+                            </tr>
+                            </tfoot>
+                        </c:if>
                     </table>
                 </div>
             </section>

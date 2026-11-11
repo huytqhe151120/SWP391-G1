@@ -30,11 +30,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Chi tiết đợt đăng ký</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261110-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/attendance.css?v=20261107-3">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261107-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/attendance.css?v=20261110-1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261110-1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -149,20 +149,35 @@
 
                 <details class="activity-filter-panel" open>
                     <summary class="activity-filter-toggle"><span>Chọn hoạt động</span></summary>
-                    <form class="activity-filter attendance-filter" action="${pageContext.request.contextPath}/registration-forms" method="get">
+                    <form class="activity-filter attendance-filter attendance-filter--single" action="${pageContext.request.contextPath}/registration-forms" method="get" data-registration-activity-form>
                         <input type="hidden" name="action" value="view">
                         <div class="activity-filter-field attendance-filter-activity">
-                            <label for="registration-activity">Hoạt động</label>
-                            <select id="registration-activity" name="activityId" onchange="if (this.value) this.form.submit()">
-                                <option value="">-- Chọn hoạt động --</option>
-                                <c:forEach var="actOption" items="${activities}">
-                                    <c:if test="${actOption.registrationFormRequired}">
-                                        <option value="${actOption.id}" ${(not empty activity and activity.id == actOption.id) or (not empty form and form.activityId == actOption.id) ? 'selected' : ''}>
-                                            <c:out value="${actOption.code}"/> – <c:out value="${actOption.name}"/><c:if test="${not empty actOption.semesterName}"> (<c:out value="${actOption.semesterName}"/>)</c:if>
-                                        </option>
-                                    </c:if>
-                                </c:forEach>
-                            </select>
+                            <label id="registration-activity-label">Hoạt động</label>
+                            <div class="multi-select-combobox" data-multi-select data-single data-auto-submit
+                                 data-item-label="hoạt động" data-input-name="activityId">
+                                <button type="button" class="multi-select-trigger" aria-expanded="false"
+                                        aria-controls="registration-activity-options" aria-labelledby="registration-activity-label">
+                                    <span data-selection-label>-- Chọn hoạt động --</span>
+                                    <span aria-hidden="true">▾</span>
+                                </button>
+                                <div class="multi-select-dropdown" id="registration-activity-options" hidden>
+                                    <input class="multi-select-search" type="search"
+                                           placeholder="Tìm mã hoặc tên hoạt động..." aria-label="Tìm hoạt động">
+                                    <fieldset class="multi-select-options">
+                                        <legend class="visually-hidden">Chọn hoạt động</legend>
+                                        <c:forEach var="actOption" items="${activities}">
+                                            <c:if test="${actOption.registrationFormRequired}">
+                                                <label class="multi-select-option">
+                                                    <input type="radio" name="activityId" value="${actOption.id}" ${(not empty activity and activity.id == actOption.id) or (not empty form and form.activityId == actOption.id) ? 'checked' : ''}>
+                                                    <span><c:out value="${actOption.code}"/> – <c:out value="${actOption.name}"/><c:if test="${not empty actOption.semesterName}"> (<c:out value="${actOption.semesterName}"/>)</c:if><c:if test="${not empty actOption.organizationLevelName}"> [<c:out value="${actOption.organizationLevelName}"/>]</c:if></span>
+                                                </label>
+                                            </c:if>
+                                        </c:forEach>
+                                    </fieldset>
+                                    <div class="multi-select-empty" hidden>Không tìm thấy hoạt động phù hợp.</div>
+                                </div>
+                                <span class="multi-select-count" aria-live="polite">Chưa chọn hoạt động</span>
+                            </div>
                         </div>
                         <noscript>
                             <div class="activity-filter-buttons">
@@ -198,6 +213,15 @@
                     <div class="attendance-summary-item">
                         <span class="attendance-summary-label">Tiêu đề form</span>
                         <strong class="activity-name"><c:out value="${form.title}"/></strong>
+                    </div>
+                    <div class="attendance-summary-item">
+                        <span class="attendance-summary-label">Cấp tổ chức (Hệ số)</span>
+                        <span class="activity-time">
+                            <c:out value="${not empty activity and not empty activity.organizationLevelName ? activity.organizationLevelName : 'Mặc định'}"/>
+                            <c:if test="${not empty activity and not empty activity.formattedOrganizationLevelCoefficient}">
+                                (x<c:out value="${activity.formattedOrganizationLevelCoefficient}"/>)
+                            </c:if>
+                        </span>
                     </div>
                     <div class="attendance-summary-item">
                         <span class="attendance-summary-label">Mở đăng ký</span>
@@ -378,7 +402,7 @@
                         </form>
                     </c:if>
 
-                    <c:set var="appColCount" value="${form.quick ? 10 : 11}"/>
+                    <c:set var="appColCount" value="${form.quick ? 8 : 9}"/>
                     <div class="table-wrap activity-table-wrap">
                         <table>
                             <thead>
@@ -393,10 +417,8 @@
                                 </c:if>
                                 <th scope="col" class="col-code">Mã SV</th>
                                 <th scope="col" class="col-object-name">Họ tên</th>
-                                <th scope="col" class="col-academic">Khoa</th>
-                                <th scope="col" class="col-academic">Ngành</th>
-                                <th scope="col" class="col-academic">Chương trình đào tạo</th>
-                                <th scope="col" class="col-academic">Lớp</th>
+                                <th scope="col" class="col-academic">Khoa / Ngành</th>
+                                <th scope="col" class="col-academic">CTĐT / Lớp</th>
                                 <th scope="col" class="col-single-line">Email</th>
                                 <th scope="col" class="col-datetime">Thời gian gửi</th>
                                 <th scope="col" class="col-status activity-status-column">Trạng thái duyệt</th>
@@ -448,17 +470,13 @@
                                             <td class="col-object-name" title="<c:out value='${application.studentName}'/>">
                                                 <strong class="activity-name" title="<c:out value='${application.studentName}'/>"><c:out value="${application.studentName}" default="—"/></strong>
                                             </td>
-                                            <td class="col-academic" title="<c:out value='${application.departmentName}'/>">
+                                            <td class="col-academic" title="<c:out value='${application.departmentName} - ${application.majorName}'/>">
                                                 <c:out value="${application.departmentName}" default="—"/>
+                                                <c:if test="${not empty application.majorName}"><br><small class="text-muted"><c:out value="${application.majorName}"/></small></c:if>
                                             </td>
-                                            <td class="col-academic" title="<c:out value='${application.majorName}'/>">
-                                                <c:out value="${application.majorName}" default="—"/>
-                                            </td>
-                                            <td class="col-academic" title="<c:out value='${application.academicProgramName}'/>">
+                                            <td class="col-academic" title="<c:out value='${application.academicProgramName} - ${application.classCode}'/>">
                                                 <c:out value="${application.academicProgramName}" default="—"/>
-                                            </td>
-                                            <td class="col-academic" title="<c:out value='${application.classCode}'/>">
-                                                <c:out value="${application.classCode}" default="—"/>
+                                                <c:if test="${not empty application.classCode}"><br><small class="text-muted"><c:out value="${application.classCode}"/></small></c:if>
                                             </td>
                                             <td class="col-single-line" title="<c:out value='${application.email}'/>">
                                                 <c:out value="${application.email}" default="—"/>
@@ -762,6 +780,16 @@
                 tabPane.classList.add('active');
             }
         }
+
+        document.querySelectorAll('.multi-select-combobox[data-auto-submit]').forEach(function(combobox) {
+            const form = combobox.closest('form');
+            if (!form) return;
+            combobox.addEventListener('change', function(event) {
+                const input = event.target;
+                if (!input || input.type !== 'radio' || !input.checked) return;
+                form.submit();
+            });
+        });
     })();
 </script>
 </body>

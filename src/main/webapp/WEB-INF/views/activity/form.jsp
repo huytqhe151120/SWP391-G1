@@ -23,6 +23,7 @@
 <c:set var="staffValue" value="${not empty formData ? formData.responsibleStaffId : activity.responsibleStaffId}"/>
 <c:set var="registrationValue" value="${not empty formData ? formData.registrationFormRequired == 'true' : activity.registrationFormRequired}"/>
 <c:set var="summaryValue" value="${not empty formData ? formData.summaryRequired == 'true' : activity.summaryRequired}"/>
+<c:set var="attendanceSessionCountValue" value="${not empty formData and not empty formData.attendanceSessionCount ? formData.attendanceSessionCount : (not empty activity and activity.attendanceSessionCount > 0 ? activity.attendanceSessionCount : 1)}"/>
 <c:set var="targetScopeValue" value="${not empty formData ? formData.targetScope : (not empty activity ? activity.targetScope : 'ALL')}"/>
 <c:set var="selectedTargetDepts" value="${not empty formData ? formData.targetDepartmentIds : (not empty activity ? activity.targetDepartmentIdStrings : null)}"/>
 <c:set var="selectedTargetCohorts" value="${not empty formData ? formData.targetCohortIds : (not empty activity ? activity.targetCohortIdStrings : null)}"/>
@@ -424,6 +425,14 @@
                                 <input id="maxParticipants" name="maxParticipants" type="number" min="1" max="99999" step="1"
                                        placeholder="Không giới hạn"
                                        value="<c:out value='${not empty formData ? formData.maxParticipants : activity.maxParticipants}'/>">
+                            </div>
+                            <div class="field form-group-custom">
+                                <label for="attendanceSessionCount">Số buổi điểm danh <span class="required-mark">*</span></label>
+                                <input id="attendanceSessionCount" name="attendanceSessionCount" type="number" min="1" max="50" step="1" data-required
+                                       placeholder="Nhập số buổi điểm danh (VD: 1, 2, 3...)"
+                                       value="<c:out value='${attendanceSessionCountValue}'/>">
+                                <small class="field-hint helper-text">Hệ thống sẽ tự động tạo tương ứng Buổi 1, Buổi 2,... theo số lượng đã nhập.</small>
+                                <small class="text-danger error-msg"></small>
                             </div>
                             <div class="checkbox-group-container activity-checkbox-row">
                                 <div class="checkbox-inline">

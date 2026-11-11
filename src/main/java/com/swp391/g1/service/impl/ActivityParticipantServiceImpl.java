@@ -4,8 +4,10 @@ import com.swp391.g1.dao.IActivityParticipantDAO;
 import com.swp391.g1.dao.impl.ActivityParticipantDAOImpl;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
+import com.swp391.g1.dto.response.AttendanceHistoryDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.ParticipantCandidateDTO;
+import com.swp391.g1.dto.response.ParticipantSessionAttendanceDTO;
 import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ParticipantStatus;
 import com.swp391.g1.service.AccessPolicy;
@@ -35,10 +37,15 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     @Override
     public List<ActivityParticipantResponseDTO> getParticipants(int activityId) {
+        return getParticipants(activityId, 1);
+    }
+
+    @Override
+    public List<ActivityParticipantResponseDTO> getParticipants(int activityId, int sessionNumber) {
         if (activityId <= 0) {
             return List.of();
         }
-        return participantDAO.findByActivityId(activityId);
+        return participantDAO.findByActivityId(activityId, Math.max(1, sessionNumber));
     }
 
     @Override
@@ -50,6 +57,11 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     @Override
     public int saveAttendance(int activityId, Map<Integer, String> statusByParticipantId, CurrentUser user) {
+        return saveAttendance(activityId, 1, statusByParticipantId, user);
+    }
+
+    @Override
+    public int saveAttendance(int activityId, int sessionNumber, Map<Integer, String> statusByParticipantId, CurrentUser user) {
         if (activityId <= 0 || user == null || !AccessPolicy.canTakeAttendance(user)) {
             throw new IllegalArgumentException("Thông tin điểm danh không hợp lệ.");
         }
@@ -61,6 +73,11 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             throw new IllegalArgumentException(
                     "Chỉ được điểm danh khi hoạt động đang diễn ra hoặc đã hoàn thành.");
         }
+        int totalSessions = Math.max(1, activity.getAttendanceSessionCount());
+        if (sessionNumber < 1 || sessionNumber > totalSessions) {
+            throw new IllegalArgumentException(
+                    "Buổi điểm danh không hợp lệ. Hoạt động này có " + totalSessions + " buổi điểm danh.");
+        }
         Map<Integer, ParticipantStatus> statuses = new LinkedHashMap<>();
         for (Map.Entry<Integer, String> entry : statusByParticipantId.entrySet()) {
             ParticipantStatus status = parseStatus(entry.getValue());
@@ -71,8 +88,8 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
         if (statuses.isEmpty()) {
             return 0;
         }
-        String actorLabel = buildActorLabel(user);
-        return participantDAO.updateStatuses(activityId, statuses, actorLabel);
+        String actorId = String.valueOf(user.getId());
+        return participantDAO.updateStatuses(activityId, sessionNumber, statuses, actorId);
     }
 
     @Override
@@ -190,6 +207,22 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên.");
         }
         return participantDAO.deleteRemovable(activityId, ids);
+    }
+
+    @Override
+    public List<ParticipantSessionAttendanceDTO> getSessionAttendances(int activityId, int participantId, int totalSessions) {
+        if (activityId <= 0 || participantId <= 0) {
+            return List.of();
+        }
+        return participantDAO.findSessionAttendances(activityId, participantId, Math.max(1, totalSessions));
+    }
+
+    @Override
+    public List<AttendanceHistoryDTO> getAttendanceHistory(int activityId, int participantId) {
+        if (activityId <= 0 || participantId <= 0) {
+            return List.of();
+        }
+        return participantDAO.findAttendanceHistory(activityId, participantId);
     }
 
     private ExtracurricularActivityResponseDTO requireManageableActivity(int activityId) {
