@@ -9,7 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>EAMS | Hoạt động ngoại khóa</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261112-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
@@ -19,7 +19,7 @@
 
     <div class="activity-app-main-wrapper">
         <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-        <main class="activity-app-main page activity-list-page">
+        <main class="activity-app-main page activity-list-page ${isStudent ? 'student-list-page' : ''}">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ HOẠT ĐỘNG NGOẠI KHÓA</span>
@@ -623,7 +623,7 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261020-2"></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261112-1"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

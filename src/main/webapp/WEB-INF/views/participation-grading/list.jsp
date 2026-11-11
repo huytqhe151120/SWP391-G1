@@ -31,16 +31,10 @@
 
             <div class="activity-page-back" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <a class="button button-back"
-                   href="${pageContext.request.contextPath}/activities<c:if test='${not empty selectedActivity}'>?action=detail&amp;id=${selectedActivity.id}#tab-attendance</c:if>">
+                    href="${pageContext.request.contextPath}/activities<c:if test='${not empty selectedActivity}'>?action=detail&amp;id=${selectedActivity.id}#tab-attendance</c:if>">
                     <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                    Quay lại hoạt động
+                    Điểm danh sinh viên
                 </a>
-                <c:if test="${not empty selectedActivity}">
-                    <a class="button button-outline"
-                       href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}">
-                        ← Chuyển sang Điểm danh sinh viên
-                    </a>
-                </c:if>
             </div>
 
     <c:if test="${not empty sessionScope.successMessage}">
