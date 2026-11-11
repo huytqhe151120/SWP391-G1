@@ -163,6 +163,59 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
     }
 
+    @Override
+    public List<ExtracurricularActivityResponseDTO> findAllWithDetailsForPartnerStaff(int accountId) {
+        if (accountId <= 0) {
+            return List.of();
+        }
+        return queryActivitiesWithDetails(partnerStaffActivityScope(), accountId);
+    }
+
+    @Override
+    public boolean isInPartnerStaffActivityScope(int activityId, int accountId) {
+        if (activityId <= 0 || accountId <= 0) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM extracurricular_activity a WHERE a.id = ? AND "
+                + partnerStaffActivityScope();
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, activityId);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check partner staff activity access.", e);
+        }
+    }
+
+    private String partnerStaffActivityScope() {
+        return """
+                EXISTS (
+                    SELECT 1
+                    FROM partner_staff own_staff
+                    WHERE own_staff.account_id = ?
+                      AND (
+                          own_staff.id = a.partner_staff_id
+                          OR EXISTS (
+                              SELECT 1
+                              FROM activity_partner_staff assigned
+                              WHERE assigned.activity_id = a.id
+                                AND assigned.partner_staff_id = own_staff.id
+                          )
+                          OR EXISTS (
+                              SELECT 1
+                              FROM activity_partner_company collaboration
+                              WHERE collaboration.activity_id = a.id
+                                AND collaboration.partner_company_id = own_staff.company_id
+                                AND collaboration.collaboration_status = 'ACTIVE'
+                          )
+                      )
+                )
+                """;
+    }
+
     private String staffScopePredicate(String role) {
         if ("STAFF".equals(role)) {
             return """

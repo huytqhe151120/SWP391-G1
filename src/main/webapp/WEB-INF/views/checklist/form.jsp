@@ -27,7 +27,12 @@
                         <p class="checklist-eyebrow">QUẢN LÝ CÔNG VIỆC</p>
                         <h1><c:choose><c:when test="${isEdit}">Chỉnh sửa công việc checklist</c:when>
                             <c:otherwise>Tạo công việc checklist</c:otherwise></c:choose></h1>
-                        <p class="subtitle">Nhập thông tin và chọn nhân sự được phân công.</p>
+                        <p class="subtitle">
+                            <c:choose>
+                                <c:when test="${isChecklistAdmin}">Nhập thông tin và chọn nhân sự được phân công.</c:when>
+                                <c:otherwise>Công việc mới sẽ được tự động giao cho bạn.</c:otherwise>
+                            </c:choose>
+                        </p>
                     </div>
                     <a class="checklist-back-link" href="${checklistUrl}">Quay lại checklist</a>
                 </header>
@@ -150,27 +155,37 @@
                                 </dialog>
                             </div>
                             <div class="checklist-field">
-                                <label for="status">Trạng thái <span>*</span></label>
-                                <select id="status" name="status" required>
-                                    <option value="Chưa hoàn thành" ${formStatus == 'Chưa hoàn thành' ? 'selected' : ''}>Chưa hoàn thành</option>
-                                    <option value="Đang hoàn thành" data-advanced-status ${formStatus == 'Đang hoàn thành' ? 'selected' : ''}>Đang hoàn thành</option>
-                                    <option value="Đã hoàn thành" data-advanced-status ${formStatus == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
-                                </select>
-                                <small data-prerequisite-status-help hidden>
-                                    Chỉ có thể bắt đầu công việc sau khi tất cả công việc tiên quyết hoàn thành.
-                                </small>
+                                <c:choose>
+                                    <c:when test="${isChecklistAdmin}">
+                                        <label for="status">Trạng thái <span>*</span></label>
+                                        <select id="status" name="status" required>
+                                            <option value="Chưa hoàn thành" ${formStatus == 'Chưa hoàn thành' ? 'selected' : ''}>Chưa hoàn thành</option>
+                                            <option value="Đang hoàn thành" data-advanced-status ${formStatus == 'Đang hoàn thành' ? 'selected' : ''}>Đang hoàn thành</option>
+                                            <option value="Đã hoàn thành" data-advanced-status ${formStatus == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
+                                        </select>
+                                        <small data-prerequisite-status-help hidden>
+                                            Chỉ có thể bắt đầu công việc sau khi tất cả công việc tiên quyết hoàn thành.
+                                        </small>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <label>Trạng thái</label>
+                                        <p>Chưa hoàn thành</p>
+                                        <input type="hidden" name="status" value="Chưa hoàn thành">
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </div>
                     </section>
 
-                    <section class="checklist-form-section">
-                        <div class="checklist-assignee-heading">
-                            <div>
-                                <h2>Phân công nhân sự</h2>
-                                <p>Có thể chọn nhiều nhân viên và đối tác cho cùng một công việc.</p>
+                    <c:if test="${isChecklistAdmin}">
+                        <section class="checklist-form-section">
+                            <div class="checklist-assignee-heading">
+                                <div>
+                                    <h2>Phân công nhân sự</h2>
+                                    <p>Có thể chọn nhiều nhân viên và đối tác cho cùng một công việc.</p>
+                                </div>
                             </div>
-                        </div>
-                        <div class="checklist-assignee-grid">
+                            <div class="checklist-assignee-grid">
                             <fieldset class="checklist-assignee-group">
                                 <legend>Nhân viên nội bộ</legend>
                                 <c:choose>
@@ -254,8 +269,9 @@
                                     </c:otherwise>
                                 </c:choose>
                             </fieldset>
-                        </div>
-                    </section>
+                            </div>
+                        </section>
+                    </c:if>
 
                     <div class="checklist-form-actions">
                         <a class="checklist-cancel-button" href="${checklistUrl}">Hủy</a>
@@ -269,6 +285,6 @@
         </div>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/checklist-form.js?v=20261106-1" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/checklist-form.js?v=20261111-2" defer></script>
 </body>
 </html>

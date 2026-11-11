@@ -22,19 +22,26 @@ public interface IChecklistTaskService {
 
     int createTask(int activityId, String phase, String priority, String code, String name, String description,
                    LocalDateTime deadline, String status, List<Integer> staffIds,
-                   List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
+                   List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds, int assignedByAccountId);
 
-    boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds);
+    boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds,
+                         int assignedByAccountId);
 
     ChecklistTaskDetailResponseDTO getTaskDetail(int taskId);
 
-    boolean isTaskAssignedToAccount(int taskId, int accountId);
+    boolean isTaskAssignedToStaffAccount(int taskId, int accountId);
+
+    boolean isTaskAssignedToPartnerStaffAccount(int taskId, int accountId);
+
+    int getActiveStaffIdForAccount(int accountId);
+
+    int getActivePartnerStaffIdForAccount(int accountId);
 
     ChecklistAssignmentIdsDTO getAssigneeIds(int taskId);
 
     int updateTask(int taskId, int activityId, String phase, String priority, String code, String name,
                    String description, LocalDateTime deadline, String status, List<Integer> staffIds,
-                   List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
+                   List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds, int assignedByAccountId);
 
     boolean updateTaskStatus(int taskId, String status);
 

@@ -36,8 +36,7 @@
     const taskStatusSelect = document.querySelector("#status");
     const prerequisiteStatusHelp = document.querySelector("[data-prerequisite-status-help]");
     if (activitySelect && prerequisiteDialog && prerequisiteOptions && noPrerequisitesMessage
-        && prerequisiteButton && prerequisiteSummary && prerequisiteSearch && noPrerequisiteResults
-        && taskStatusSelect && prerequisiteStatusHelp) {
+        && prerequisiteButton && prerequisiteSummary && prerequisiteSearch && noPrerequisiteResults) {
         const currentTaskId = document.querySelector('input[name="id"]')?.value || "";
         const options = Array.from(prerequisiteOptions.querySelectorAll("[data-prerequisite-option]"));
         const checks = options.map((option) => option.querySelector('input[name="prerequisiteTaskIds"]'));
@@ -52,12 +51,14 @@
             const incomplete = checks.some((checkbox) => checkbox.checked
                 && !checkbox.disabled
                 && checkbox.dataset.taskStatus !== "Đã hoàn thành");
-            taskStatusSelect.querySelectorAll("[data-advanced-status]").forEach((option) => {
-                option.disabled = incomplete;
-            });
-            prerequisiteStatusHelp.hidden = !incomplete;
-            if (incomplete && taskStatusSelect.value !== "Chưa hoàn thành") {
-                taskStatusSelect.value = "Chưa hoàn thành";
+            if (taskStatusSelect && prerequisiteStatusHelp) {
+                taskStatusSelect.querySelectorAll("[data-advanced-status]").forEach((option) => {
+                    option.disabled = incomplete;
+                });
+                prerequisiteStatusHelp.hidden = !incomplete;
+                if (incomplete && taskStatusSelect.value !== "Chưa hoàn thành") {
+                    taskStatusSelect.value = "Chưa hoàn thành";
+                }
             }
         };
 

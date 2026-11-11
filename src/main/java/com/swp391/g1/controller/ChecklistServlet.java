@@ -5,6 +5,7 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ChecklistAssignmentIdsDTO;
 import com.swp391.g1.dto.response.ChecklistTaskDetailResponseDTO;
 import com.swp391.g1.dto.response.ChecklistTaskResponseDTO;
+import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.service.IExtracurricularActivityService;
 import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.model.ChecklistTaskStatus;
@@ -63,6 +64,7 @@ public class ChecklistServlet extends HttpServlet {
         CurrentUser user = AuthContext.getCurrentUser(request);
         String action = request.getParameter("action");
         boolean checklistManager = AccessPolicy.canViewChecklist(user);
+        boolean checklistAdmin = AccessPolicy.hasType(user, "ADMIN");
         if (!checklistManager && !"detail".equals(action)) {
             authorize(user, response);
             return;
@@ -71,13 +73,18 @@ public class ChecklistServlet extends HttpServlet {
         try {
             if ("create".equals(action)) {
                 try {
-                    request.setAttribute("formActivityId",
-                            parseOptionalActivityId(request.getParameter("activityId")));
+                    int activityId = parseOptionalActivityId(request.getParameter("activityId"));
+                    if (activityId > 0 && !canCreateChecklistInActivity(activityId, user)) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                                "Bạn không được tạo công việc trong hoạt động này.");
+                        return;
+                    }
+                    request.setAttribute("formActivityId", activityId);
                 } catch (IllegalArgumentException e) {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hoạt động không hợp lệ.");
                     return;
                 }
-                showTaskForm(request, response, null);
+                showTaskForm(request, response, null, user);
             } else if ("edit".equals(action) || "detail".equals(action)) {
                 int taskId = parseTaskId(request.getParameter("id"));
                 ChecklistTaskDetailResponseDTO detail = checklistTaskService.getTaskDetail(taskId);
@@ -85,13 +92,17 @@ public class ChecklistServlet extends HttpServlet {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy công việc checklist.");
                     return;
                 }
-                if (!checklistManager
-                        && (user == null || !checklistTaskService.isTaskAssignedToAccount(taskId, user.getId()))) {
+                if (!hasTaskAccess(user, taskId)) {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN,
                             "Bạn không được phân công công việc checklist này.");
                     return;
                 }
                 if ("edit".equals(action)) {
+                    if (!checklistAdmin) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                                "Chỉ quản trị viên được chỉnh sửa công việc checklist.");
+                        return;
+                    }
                     ChecklistAssignmentIdsDTO assignees = checklistTaskService.getAssigneeIds(taskId);
                     request.setAttribute("formCode", detail.getTask().getCode());
                     request.setAttribute("formName", detail.getTask().getName());
@@ -108,11 +119,21 @@ public class ChecklistServlet extends HttpServlet {
                     request.setAttribute("selectedPrerequisiteTaskIds",
                             new LinkedHashSet<>(assignees.getPrerequisiteTaskIds()));
                     request.setAttribute("taskId", taskId);
-                    showTaskForm(request, response, taskId);
+                    showTaskForm(request, response, taskId, user);
                 } else {
                     request.setAttribute("taskDetail", detail);
+                    request.setAttribute("visiblePrerequisiteTasks", detail.getPrerequisiteTasks().stream()
+                            .filter(task -> hasTaskAccess(user, task.getId()))
+                            .toList());
+                    request.setAttribute("visibleNextTasks", detail.getNextTasks().stream()
+                            .filter(task -> hasTaskAccess(user, task.getId()))
+                            .toList());
                     request.setAttribute("activeNav", "checklist");
-                    request.setAttribute("canManageChecklist", checklistManager);
+                    request.setAttribute("canManageChecklist", checklistAdmin);
+                    request.setAttribute("isChecklistAdmin", checklistAdmin);
+                    request.setAttribute("isPersonalChecklist", !checklistAdmin);
+                    request.setAttribute("checklistPersonalName",
+                            user == null ? "" : user.getDisplayName());
                     request.getRequestDispatcher("/WEB-INF/views/checklist/detail.jsp").forward(request, response);
                 }
             } else {
@@ -123,14 +144,49 @@ public class ChecklistServlet extends HttpServlet {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Hoạt động không hợp lệ.");
                     return;
                 }
-                request.setAttribute("activities", activityService.getAllActivities());
                 request.setAttribute("selectedActivityId", activityId);
-                List<ChecklistTaskResponseDTO> checklistTasks = activityId == 0
-                        ? List.of() : checklistTaskService.getTasksForActivity(activityId);
-                request.setAttribute("quickAssignTaskOptions", checklistTasks);
-                request.setAttribute("quickAssignStaffOptions", checklistTaskService.getActiveStaff());
-                request.setAttribute("quickAssignPartnerOptions",
-                        checklistTaskService.getActivePartnerStaff());
+                request.setAttribute("isChecklistAdmin", checklistAdmin);
+                request.setAttribute("isPersonalChecklist", !checklistAdmin);
+                request.setAttribute("checklistPersonalName",
+                        user == null ? "" : user.getDisplayName());
+                if (AccessPolicy.hasType(user, "ADMIN")) {
+                    request.setAttribute("checklistScopeLabel", "Checklist hoạt động");
+                } else if (AccessPolicy.hasType(user, "STAFF")) {
+                    request.setAttribute("checklistScopeLabel", "Checklist của tôi");
+                } else if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+                    request.setAttribute("checklistScopeLabel", "Checklist của tôi");
+                }
+                List<ChecklistTaskResponseDTO> checklistTasks;
+                if (AccessPolicy.hasType(user, "ADMIN")) {
+                    checklistTasks = activityId == 0 ? List.of() : checklistTaskService.getTasksForActivity(activityId);
+                } else if (AccessPolicy.hasType(user, "STAFF")) {
+                    checklistTasks = checklistTaskService.getTasksForStaffAccount(user.getId());
+                    if (activityId > 0) {
+                        checklistTasks = checklistTasks.stream()
+                                .filter(task -> task.getActivityId() == activityId)
+                                .toList();
+                    }
+                } else if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+                    checklistTasks = checklistTaskService.getTasksForPartnerStaffAccount(user.getId());
+                    if (activityId > 0) {
+                        checklistTasks = checklistTasks.stream()
+                                .filter(task -> task.getActivityId() == activityId)
+                                .toList();
+                    }
+                } else {
+                    checklistTasks = List.of();
+                }
+                request.setAttribute("activities", getChecklistActivities(user));
+                if (checklistAdmin) {
+                    request.setAttribute("quickAssignTaskOptions", checklistTasks);
+                    request.setAttribute("quickAssignStaffOptions", checklistTaskService.getActiveStaff());
+                    request.setAttribute("quickAssignPartnerOptions",
+                            checklistTaskService.getActivePartnerStaff());
+                } else {
+                    request.setAttribute("quickAssignTaskOptions", List.of());
+                    request.setAttribute("quickAssignStaffOptions", List.of());
+                    request.setAttribute("quickAssignPartnerOptions", List.of());
+                }
                 long completedTaskCount = checklistTasks.stream()
                         .filter(task -> ChecklistTaskStatus.COMPLETED.equals(task.getStatusValue()))
                         .count();
@@ -155,24 +211,34 @@ public class ChecklistServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        if (!authorize(AuthContext.getCurrentUser(request), response)) {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (!authorize(currentUser, response)) {
             return;
         }
         String action = request.getParameter("action");
         if ("quickAssign".equals(action)) {
-            quickAssign(request, response);
+            if (!requireChecklistAdmin(currentUser, response)) {
+                return;
+            }
+            quickAssign(request, response, currentUser);
             return;
         }
         if ("delete".equals(action)) {
-            deleteTask(request, response);
+            if (!requireChecklistAdmin(currentUser, response)) {
+                return;
+            }
+            deleteTask(request, response, currentUser);
             return;
         }
         if ("updateStatus".equals(action)) {
-            updateTaskStatus(request, response);
+            updateTaskStatus(request, response, currentUser);
             return;
         }
         if ("updateStatuses".equals(action)) {
-            updateTaskStatuses(request, response);
+            if (!requireChecklistAdmin(currentUser, response)) {
+                return;
+            }
+            updateTaskStatuses(request, response, currentUser);
             return;
         }
         if (!"create".equals(action) && !"update".equals(action)) {
@@ -187,6 +253,16 @@ public class ChecklistServlet extends HttpServlet {
                 taskId = parseTaskId(request.getParameter("id"));
             } catch (IllegalArgumentException e) {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã công việc không hợp lệ.");
+                return;
+            }
+            if (!hasTaskAccess(currentUser, taskId)) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Bạn không được chỉnh sửa công việc checklist này.");
+                return;
+            }
+            if (!AccessPolicy.hasType(currentUser, "ADMIN")) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Chỉ quản trị viên được chỉnh sửa công việc checklist.");
                 return;
             }
         }
@@ -209,21 +285,53 @@ public class ChecklistServlet extends HttpServlet {
         Set<Integer> prerequisiteTaskIds;
 
         try {
-            staffIds = parseIds(request.getParameterValues("staffIds"));
-            partnerStaffIds = parseIds(request.getParameterValues("partnerStaffIds"));
+            if (AccessPolicy.hasType(currentUser, "ADMIN")) {
+                staffIds = parseIds(request.getParameterValues("staffIds"));
+                partnerStaffIds = parseIds(request.getParameterValues("partnerStaffIds"));
+            } else if (AccessPolicy.hasType(currentUser, "STAFF")) {
+                int staffId = checklistTaskService.getActiveStaffIdForAccount(currentUser.getId());
+                if (staffId <= 0) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Tài khoản chưa được liên kết với hồ sơ nhân viên đang hoạt động.");
+                    return;
+                }
+                staffIds = new LinkedHashSet<>(Set.of(staffId));
+                partnerStaffIds = new LinkedHashSet<>();
+            } else {
+                int partnerStaffId = checklistTaskService.getActivePartnerStaffIdForAccount(currentUser.getId());
+                if (partnerStaffId <= 0) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Tài khoản chưa được liên kết với hồ sơ nhân viên đối tác đang hoạt động.");
+                    return;
+                }
+                staffIds = new LinkedHashSet<>();
+                partnerStaffIds = new LinkedHashSet<>(Set.of(partnerStaffId));
+            }
             prerequisiteTaskIds = parseIds(request.getParameterValues("prerequisiteTaskIds"));
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", "Danh sách nhân sự hoặc công việc tiên quyết không hợp lệ.");
             preserveForm(request, activityId, phase, priority, trim(request.getParameter("code")),
                     trim(request.getParameter("name")), trim(request.getParameter("description")),
                     trim(request.getParameter("deadline")), status, Set.of(), Set.of(), Set.of());
-            showTaskForm(request, response, taskId == 0 ? null : taskId);
+            showTaskForm(request, response, taskId == 0 ? null : taskId, currentUser);
             return;
         }
 
         LocalDateTime deadline = null;
+        if ("create".equals(action) && !canCreateChecklistInActivity(activityId, currentUser)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn chỉ được tạo công việc trong hoạt động mình được phép tham gia.");
+            return;
+        }
+        if (!AccessPolicy.hasType(currentUser, "ADMIN")) {
+            status = ChecklistTaskStatus.NOT_COMPLETED;
+        }
         String error = validate(activityId, phase, priority, code, name, deadlineValue, status,
                 staffIds, partnerStaffIds, prerequisiteTaskIds);
+        if (error == null && !AccessPolicy.hasType(currentUser, "ADMIN")
+                && !hasPrerequisiteScope(currentUser, activityId, prerequisiteTaskIds)) {
+            error = "Chỉ có thể chọn công việc tiên quyết được giao cho mình trong cùng hoạt động.";
+        }
         if (error == null) {
             try {
                 deadline = LocalDateTime.parse(deadlineValue);
@@ -245,7 +353,7 @@ public class ChecklistServlet extends HttpServlet {
             request.setAttribute("selectedPartnerStaffIds", partnerStaffIds);
             request.setAttribute("selectedPrerequisiteTaskIds", prerequisiteTaskIds);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            showTaskForm(request, response, taskId == 0 ? null : taskId);
+            showTaskForm(request, response, taskId == 0 ? null : taskId, currentUser);
             return;
         }
 
@@ -253,14 +361,15 @@ public class ChecklistServlet extends HttpServlet {
             if ("create".equals(action)) {
                 int createdTaskId = checklistTaskService.createTask(activityId, phase, priority, code, name, description,
                         deadline, status, new ArrayList<>(staffIds), new ArrayList<>(partnerStaffIds),
-                        new ArrayList<>(prerequisiteTaskIds));
+                        new ArrayList<>(prerequisiteTaskIds), currentUser.getId());
                 notificationService.notifyChecklistTaskAssignment(createdTaskId);
                 response.sendRedirect(request.getContextPath()
                         + "/checklist?created=1&activityId=" + activityId);
             } else {
                 int updated = checklistTaskService.updateTask(taskId, activityId, phase, priority,
                         code, name, description, deadline, status, new ArrayList<>(staffIds),
-                        new ArrayList<>(partnerStaffIds), new ArrayList<>(prerequisiteTaskIds));
+                        new ArrayList<>(partnerStaffIds), new ArrayList<>(prerequisiteTaskIds),
+                        currentUser.getId());
                 if (updated > 0) {
                     notificationService.notifyChecklistTaskAssignment(taskId);
                 }
@@ -275,7 +384,7 @@ public class ChecklistServlet extends HttpServlet {
             preserveForm(request, activityId, phase, priority, code, name, description, deadlineValue,
                     status, staffIds, partnerStaffIds, prerequisiteTaskIds);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            showTaskForm(request, response, taskId == 0 ? null : taskId);
+            showTaskForm(request, response, taskId == 0 ? null : taskId, currentUser);
         } catch (DataAccessException e) {
             request.setAttribute("errorMessage", e.isDuplicateKey()
                     ? "Mã công việc đã tồn tại. Vui lòng nhập mã khác."
@@ -283,7 +392,7 @@ public class ChecklistServlet extends HttpServlet {
             preserveForm(request, activityId, phase, priority, code, name, description, deadlineValue,
                     status, staffIds, partnerStaffIds, prerequisiteTaskIds);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            showTaskForm(request, response, taskId == 0 ? null : taskId);
+            showTaskForm(request, response, taskId == 0 ? null : taskId, currentUser);
         }
     }
 
@@ -304,12 +413,24 @@ public class ChecklistServlet extends HttpServlet {
         request.setAttribute("selectedPrerequisiteTaskIds", prerequisiteTaskIds);
     }
 
-    private void showTaskForm(HttpServletRequest request, HttpServletResponse response, Integer taskId)
+    private void showTaskForm(HttpServletRequest request, HttpServletResponse response, Integer taskId,
+                              CurrentUser user)
             throws ServletException, IOException {
         request.setAttribute("activeNav", "checklist");
         request.setAttribute("isEdit", taskId != null);
-        request.setAttribute("activityOptions", activityService.getAllActivities());
-        request.setAttribute("taskOptions", checklistTaskService.getAllTasks());
+        request.setAttribute("activityOptions", getChecklistActivities(user));
+        request.setAttribute("isChecklistAdmin", AccessPolicy.hasType(user, "ADMIN"));
+        List<ChecklistTaskResponseDTO> taskOptions;
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            taskOptions = checklistTaskService.getAllTasks();
+        } else if (AccessPolicy.hasType(user, "STAFF")) {
+            taskOptions = checklistTaskService.getTasksForStaffAccount(user.getId());
+        } else if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+            taskOptions = checklistTaskService.getTasksForPartnerStaffAccount(user.getId());
+        } else {
+            taskOptions = List.of();
+        }
+        request.setAttribute("taskOptions", taskOptions);
         if (taskId != null) {
             request.setAttribute("taskId", taskId);
         }
@@ -329,19 +450,29 @@ public class ChecklistServlet extends HttpServlet {
             request.setAttribute("selectedPrerequisiteTaskIds", Set.of());
         }
         int assignmentTaskId = taskId == null ? 0 : taskId;
-        request.setAttribute("staffOptions", checklistTaskService.getActiveStaff(assignmentTaskId));
-        request.setAttribute("partnerStaffOptions",
-                checklistTaskService.getActivePartnerStaff(assignmentTaskId));
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            request.setAttribute("staffOptions", checklistTaskService.getActiveStaff(assignmentTaskId));
+            request.setAttribute("partnerStaffOptions",
+                    checklistTaskService.getActivePartnerStaff(assignmentTaskId));
+        } else {
+            request.setAttribute("staffOptions", List.of());
+            request.setAttribute("partnerStaffOptions", List.of());
+        }
         request.getRequestDispatcher("/WEB-INF/views/checklist/form.jsp").forward(request, response);
     }
 
-    private void deleteTask(HttpServletRequest request, HttpServletResponse response)
+    private void deleteTask(HttpServletRequest request, HttpServletResponse response, CurrentUser user)
             throws IOException {
         int taskId;
         try {
             taskId = parseTaskId(request.getParameter("id"));
         } catch (IllegalArgumentException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã công việc không hợp lệ.");
+            return;
+        }
+        if (!hasTaskAccess(user, taskId)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không được xóa công việc checklist này.");
             return;
         }
         try {
@@ -355,13 +486,18 @@ public class ChecklistServlet extends HttpServlet {
         }
     }
 
-    private void updateTaskStatus(HttpServletRequest request, HttpServletResponse response)
+    private void updateTaskStatus(HttpServletRequest request, HttpServletResponse response, CurrentUser user)
             throws IOException {
         int taskId;
         try {
             taskId = parseTaskId(request.getParameter("id"));
         } catch (IllegalArgumentException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mã công việc không hợp lệ.");
+            return;
+        }
+        if (!hasTaskAccess(user, taskId)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không được cập nhật công việc checklist này.");
             return;
         }
         String status = trim(request.getParameter("status"));
@@ -384,7 +520,7 @@ public class ChecklistServlet extends HttpServlet {
         }
     }
 
-    private void updateTaskStatuses(HttpServletRequest request, HttpServletResponse response)
+    private void updateTaskStatuses(HttpServletRequest request, HttpServletResponse response, CurrentUser user)
             throws IOException {
         int activityId;
         Set<Integer> taskIds;
@@ -398,6 +534,12 @@ public class ChecklistServlet extends HttpServlet {
         } catch (IllegalArgumentException e) {
             response.sendRedirect(request.getContextPath()
                     + "/checklist?bulkStatusError=1" + activityQuery(request.getParameter("activityId")));
+            return;
+        }
+
+        if (taskIds.stream().anyMatch(taskId -> !hasTaskAccess(user, taskId))) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn chỉ được cập nhật công việc checklist được phân công cho mình.");
             return;
         }
 
@@ -418,7 +560,7 @@ public class ChecklistServlet extends HttpServlet {
         }
     }
 
-    private void quickAssign(HttpServletRequest request, HttpServletResponse response)
+    private void quickAssign(HttpServletRequest request, HttpServletResponse response, CurrentUser user)
             throws IOException {
         int activityId;
         int taskId;
@@ -441,6 +583,11 @@ public class ChecklistServlet extends HttpServlet {
                     + activityQuery(Integer.toString(activityId)));
             return;
         }
+        if (!hasTaskAccess(user, taskId)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không được phân công thêm người cho công việc checklist này.");
+            return;
+        }
 
         try {
             ChecklistTaskDetailResponseDTO detail = checklistTaskService.getTaskDetail(taskId);
@@ -450,7 +597,7 @@ public class ChecklistServlet extends HttpServlet {
                 return;
             }
             boolean assigned = checklistTaskService.addAssignees(taskId,
-                    new ArrayList<>(staffIds), new ArrayList<>(partnerStaffIds));
+                    new ArrayList<>(staffIds), new ArrayList<>(partnerStaffIds), user.getId());
             if (assigned) {
                 notificationService.notifyChecklistTaskAssignment(taskId);
             }
@@ -505,8 +652,92 @@ public class ChecklistServlet extends HttpServlet {
         if (AccessPolicy.canViewChecklist(user)) {
             return true;
         }
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền quản lý checklist.");
+        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền xem hoặc tạo checklist.");
         return false;
+    }
+
+    private boolean requireChecklistAdmin(CurrentUser user, HttpServletResponse response) throws IOException {
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return true;
+        }
+        response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                "Thao tác này chỉ dành cho quản trị viên.");
+        return false;
+    }
+
+    private boolean hasTaskAccess(CurrentUser user, int taskId) {
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return true;
+        }
+        if (AccessPolicy.hasType(user, "STAFF")) {
+            return checklistTaskService.isTaskAssignedToStaffAccount(taskId, user.getId());
+        }
+        if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+            return checklistTaskService.isTaskAssignedToPartnerStaffAccount(taskId, user.getId());
+        }
+        return false;
+    }
+
+    private boolean hasPrerequisiteScope(CurrentUser user, int activityId, Set<Integer> prerequisiteTaskIds) {
+        if (prerequisiteTaskIds.isEmpty()) {
+            return true;
+        }
+        List<ChecklistTaskResponseDTO> ownTasks;
+        if (AccessPolicy.hasType(user, "STAFF")) {
+            ownTasks = checklistTaskService.getTasksForStaffAccount(user.getId());
+        } else if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+            ownTasks = checklistTaskService.getTasksForPartnerStaffAccount(user.getId());
+        } else {
+            return false;
+        }
+        Set<Integer> ownTaskIds = ownTasks.stream()
+                .filter(task -> task.getActivityId() == activityId)
+                .map(ChecklistTaskResponseDTO::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        return ownTaskIds.containsAll(prerequisiteTaskIds);
+    }
+
+    private List<ExtracurricularActivityResponseDTO> getChecklistActivities(CurrentUser user) {
+        if (AccessPolicy.hasType(user, "ADMIN")) {
+            return activityService.getAllActivities();
+        }
+
+        List<ChecklistTaskResponseDTO> ownTasks = getTasksForUser(user);
+        Set<Integer> ownActivityIds = ownTasks.stream()
+                .map(ChecklistTaskResponseDTO::getActivityId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<ExtracurricularActivityResponseDTO> activities =
+                new ArrayList<>(activityService.getActivitiesVisibleTo(user));
+        Set<Integer> includedIds = activities.stream()
+                .map(ExtracurricularActivityResponseDTO::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        for (ExtracurricularActivityResponseDTO activity : activityService.getAllActivities()) {
+            if (ownActivityIds.contains(activity.getId()) && includedIds.add(activity.getId())) {
+                activities.add(activity);
+            }
+        }
+        return activities;
+    }
+
+    private boolean canCreateChecklistInActivity(int activityId, CurrentUser user) {
+        if (activityService.canAccessActivity(activityId, user)) {
+            return true;
+        }
+        if (!AccessPolicy.hasType(user, "STAFF") && !AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+            return false;
+        }
+        return getTasksForUser(user).stream()
+                .anyMatch(task -> task.getActivityId() == activityId);
+    }
+
+    private List<ChecklistTaskResponseDTO> getTasksForUser(CurrentUser user) {
+        if (AccessPolicy.hasType(user, "STAFF")) {
+            return checklistTaskService.getTasksForStaffAccount(user.getId());
+        }
+        if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+            return checklistTaskService.getTasksForPartnerStaffAccount(user.getId());
+        }
+        return List.of();
     }
 
     private String validate(int activityId, String phase, String priority, String code, String name,

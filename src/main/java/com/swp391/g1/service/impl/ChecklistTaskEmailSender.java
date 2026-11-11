@@ -23,9 +23,19 @@ final class ChecklistTaskEmailSender {
     private static final int SMTP_TIMEOUT_MILLIS = 10_000;
 
     void send(ChecklistTaskAlertDTO task) {
+        send(task, "Cảnh báo công việc ưu tiên cao: " + task.code(),
+                "Công việc checklist có mức ưu tiên cao.");
+    }
+
+    void sendOverdue(ChecklistTaskAlertDTO task) {
+        send(task, "Cảnh báo công việc checklist quá hạn: " + task.code(),
+                "Công việc checklist đã quá hạn và chưa hoàn thành.");
+    }
+
+    private void send(ChecklistTaskAlertDTO task, String subject, String introduction) {
         List<InternetAddress> recipients = validRecipients(task.recipientEmails());
         if (recipients.isEmpty()) {
-            LOGGER.warning("No email addresses are available for the high-priority checklist task.");
+            LOGGER.warning("No email addresses are available for the checklist alert.");
             return;
         }
 
@@ -35,11 +45,11 @@ final class ChecklistTaskEmailSender {
         String password = setting("MAIL_PASSWORD");
         String port = settingOrDefault("MAIL_PORT", "587");
         if (host == null || from == null) {
-            LOGGER.warning("High-priority checklist email was not sent: MAIL_HOST or MAIL_FROM is not configured.");
+            LOGGER.warning("Checklist email was not sent: MAIL_HOST or MAIL_FROM is not configured.");
             return;
         }
         if ((username == null) != (password == null)) {
-            LOGGER.warning("High-priority checklist email was not sent: configure both MAIL_USERNAME and MAIL_PASSWORD.");
+            LOGGER.warning("Checklist email was not sent: configure both MAIL_USERNAME and MAIL_PASSWORD.");
             return;
         }
 
@@ -71,11 +81,11 @@ final class ChecklistTaskEmailSender {
             for (InternetAddress recipient : recipients) {
                 message.addRecipient(Message.RecipientType.BCC, recipient);
             }
-            message.setSubject("Cảnh báo công việc ưu tiên cao: " + task.code(), StandardCharsets.UTF_8.name());
-            message.setText(emailBody(task), StandardCharsets.UTF_8.name());
+            message.setSubject(subject, StandardCharsets.UTF_8.name());
+            message.setText(emailBody(task, introduction), StandardCharsets.UTF_8.name());
             Transport.send(message);
         } catch (MessagingException e) {
-            LOGGER.log(Level.WARNING, "Could not send high-priority checklist email.", e);
+            LOGGER.log(Level.WARNING, "Could not send checklist email.", e);
         }
     }
 
@@ -90,17 +100,17 @@ final class ChecklistTaskEmailSender {
                 recipient.validate();
                 recipients.add(recipient);
             } catch (MessagingException | NullPointerException e) {
-                LOGGER.warning("Skipping an invalid email address for a high-priority checklist task.");
+                LOGGER.warning("Skipping an invalid email address for a checklist alert.");
             }
         }
         return recipients;
     }
 
-    private String emailBody(ChecklistTaskAlertDTO task) {
+    private String emailBody(ChecklistTaskAlertDTO task, String introduction) {
         String baseUrl = setting("APP_BASE_URL");
         String link = baseUrl == null ? task.targetUrl()
                 : baseUrl.replaceAll("/+$", "") + task.targetUrl();
-        return "Công việc checklist có mức ưu tiên cao.\n\n"
+        return introduction + "\n\n"
                 + "Mã công việc: " + task.code() + "\n"
                 + "Tên công việc: " + task.name() + "\n"
                 + "Deadline: " + task.deadlineDisplay() + "\n\n"

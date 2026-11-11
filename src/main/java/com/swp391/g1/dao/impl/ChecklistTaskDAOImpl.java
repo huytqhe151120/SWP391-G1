@@ -16,9 +16,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
@@ -26,6 +30,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
     private static final String TASK_COLUMNS =
             """
             SELECT DISTINCT t.id, t.activity_id, t.code, t.name, t.description, t.deadline, t.status,
+                   CASE WHEN t.deadline IS NULL THEN 1 ELSE 0 END AS deadline_sort,
                    t.phase, t.progress, t.priority,
                    COALESCE((
                        SELECT STRING_AGG(CONVERT(nvarchar(max), assigned.name), N', ')
@@ -76,7 +81,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                 FROM checklist_task t
                 ORDER BY t.deadline, t.code
                 """;
-        return findTasks(sql, null, "all accounts");
+        return findTasks(sql, "all accounts");
     }
 
     @Override
@@ -86,7 +91,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                 WHERE t.activity_id = ?
                 ORDER BY t.deadline, t.code
                 """;
-        return findTasks(sql, activityId, "activity");
+        return findTasks(sql, "activity", activityId);
     }
 
     @Override
@@ -177,7 +182,8 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
     @Override
     public int create(int activityId, String phase, String priority, String code, String name,
                       String description, LocalDateTime deadline, String status, List<Integer> staffIds,
-                      List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds) {
+                      List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds,
+                      int assignedByAccountId) {
         Set<Integer> uniqueStaffIds = new HashSet<>(staffIds);
         Set<Integer> uniquePartnerStaffIds = new HashSet<>(partnerStaffIds);
         Set<Integer> uniquePrerequisiteTaskIds = new HashSet<>(prerequisiteTaskIds);
@@ -217,6 +223,7 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                 insertAssignments(conn, "checklist_task_staff", "staff_id", taskId, uniqueStaffIds);
                 insertAssignments(conn, "checklist_task_partner_staff", "partner_staff_id",
                         taskId, uniquePartnerStaffIds);
+                recordTaskAssigner(conn, taskId, assignedByAccountId);
                 insertAssignmentHistory(conn, taskId, "STAFF", uniqueStaffIds, "ASSIGNED");
                 insertAssignmentHistory(conn, taskId, "PARTNER_STAFF", uniquePartnerStaffIds, "ASSIGNED");
                 insertPrerequisites(conn, taskId, uniquePrerequisiteTaskIds);
@@ -235,7 +242,8 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
     }
 
     @Override
-    public boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds) {
+    public boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds,
+                                int assignedByAccountId) {
         Set<Integer> newStaffIds = new HashSet<>(staffIds);
         Set<Integer> newPartnerStaffIds = new HashSet<>(partnerStaffIds);
         try (Connection conn = DBContext.getConnection()) {
@@ -256,9 +264,13 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                         taskId));
                 allPartnerStaffIds.addAll(newPartnerStaffIds);
 
-                syncAssignments(conn, taskId, "checklist_task_staff", "staff_id", "STAFF", allStaffIds);
-                syncAssignments(conn, taskId, "checklist_task_partner_staff", "partner_staff_id",
-                        "PARTNER_STAFF", allPartnerStaffIds);
+                boolean staffChanged = syncAssignments(
+                        conn, taskId, "checklist_task_staff", "staff_id", "STAFF", allStaffIds);
+                boolean partnerStaffChanged = syncAssignments(conn, taskId, "checklist_task_partner_staff",
+                        "partner_staff_id", "PARTNER_STAFF", allPartnerStaffIds);
+                if (staffChanged || partnerStaffChanged) {
+                    recordTaskAssigner(conn, taskId, assignedByAccountId);
+                }
                 conn.commit();
                 return true;
             } catch (SQLException | IllegalArgumentException e) {
@@ -320,14 +332,31 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
     }
 
     @Override
-    public boolean isAssignedToAccount(int taskId, int accountId) {
+    public boolean isStaffAssignedToAccount(int taskId, int accountId) {
         String sql = """
                 SELECT CASE WHEN EXISTS (
                     SELECT 1
                     FROM checklist_task_staff assignment
                     JOIN staff s ON s.id = assignment.staff_id
                     WHERE assignment.task_id = ? AND s.account_id = ?
-                ) OR EXISTS (
+                ) THEN 1 ELSE 0 END
+                """;
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            ps.setInt(2, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getBoolean(1);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Could not verify staff checklist task assignment.", e);
+        }
+    }
+
+    @Override
+    public boolean isPartnerStaffAssignedToAccount(int taskId, int accountId) {
+        String sql = """
+                SELECT CASE WHEN EXISTS (
                     SELECT 1
                     FROM checklist_task_partner_staff assignment
                     JOIN partner_staff ps ON ps.id = assignment.partner_staff_id
@@ -338,13 +367,37 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, taskId);
             ps.setInt(2, accountId);
-            ps.setInt(3, taskId);
-            ps.setInt(4, accountId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() && rs.getBoolean(1);
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Could not verify checklist task assignment.", e);
+            throw new DataAccessException("Could not verify partner checklist task assignment.", e);
+        }
+    }
+
+    @Override
+    public int findActiveStaffIdForAccount(int accountId) {
+        return findActiveAssigneeId("staff", accountId);
+    }
+
+    @Override
+    public int findActivePartnerStaffIdForAccount(int accountId) {
+        return findActiveAssigneeId("partner_staff", accountId);
+    }
+
+    private int findActiveAssigneeId(String table, int accountId) {
+        if (!"staff".equals(table) && !"partner_staff".equals(table)) {
+            throw new IllegalArgumentException("Invalid checklist assignee type.");
+        }
+        String sql = "SELECT id FROM " + table + " WHERE account_id = ? AND status = 'ACTIVE'";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, accountId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("id") : 0;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Could not find active checklist assignee.", e);
         }
     }
 
@@ -413,7 +466,8 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
     @Override
     public int update(int taskId, int activityId, String phase, String priority, String code, String name,
                       String description, LocalDateTime deadline, String status, List<Integer> staffIds,
-                      List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds) {
+                      List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds,
+                      int assignedByAccountId) {
         Set<Integer> uniqueStaffIds = new HashSet<>(staffIds);
         Set<Integer> uniquePartnerStaffIds = new HashSet<>(partnerStaffIds);
         Set<Integer> uniquePrerequisiteTaskIds = new HashSet<>(prerequisiteTaskIds);
@@ -449,10 +503,13 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                     }
                 }
 
-                syncAssignments(conn, taskId, "checklist_task_staff", "staff_id", "STAFF",
-                        uniqueStaffIds);
-                syncAssignments(conn, taskId, "checklist_task_partner_staff", "partner_staff_id",
-                        "PARTNER_STAFF", uniquePartnerStaffIds);
+                boolean staffChanged = syncAssignments(conn, taskId, "checklist_task_staff",
+                        "staff_id", "STAFF", uniqueStaffIds);
+                boolean partnerStaffChanged = syncAssignments(conn, taskId, "checklist_task_partner_staff",
+                        "partner_staff_id", "PARTNER_STAFF", uniquePartnerStaffIds);
+                if (staffChanged || partnerStaffChanged) {
+                    recordTaskAssigner(conn, taskId, assignedByAccountId);
+                }
                 deleteAssignments(conn, "checklist_task_dependency", taskId);
                 insertPrerequisites(conn, taskId, uniquePrerequisiteTaskIds);
                 conn.commit();
@@ -508,7 +565,10 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
 
     @Override
     public int updateStatuses(int activityId, List<Integer> taskIds, String status) {
-        Set<Integer> uniqueTaskIds = new HashSet<>(taskIds);
+        if (!ChecklistTaskStatus.isValid(status)) {
+            throw new IllegalArgumentException("Invalid checklist task status.");
+        }
+        Set<Integer> uniqueTaskIds = new LinkedHashSet<>(taskIds);
         if (uniqueTaskIds.isEmpty()) {
             throw new IllegalArgumentException("At least one checklist task must be selected.");
         }
@@ -516,21 +576,33 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
         String placeholders = String.join(",", java.util.Collections.nCopies(uniqueTaskIds.size(), "?"));
         String selectedTasksSql = "SELECT COUNT(*) FROM checklist_task WHERE activity_id = ? AND id IN ("
                 + placeholders + ")";
-        String incompletePrerequisitesSql = """
-                SELECT COUNT(DISTINCT dependency.task_id)
-                FROM checklist_task_dependency dependency
-                JOIN checklist_task prerequisite ON prerequisite.id = dependency.depends_on_task_id
-                JOIN checklist_task selected_task ON selected_task.id = dependency.task_id
+        String dependenciesSql = """
+                SELECT dependency.task_id, dependency.depends_on_task_id, prerequisite.status
+                FROM checklist_task_dependency dependency WITH (UPDLOCK, HOLDLOCK)
+                JOIN checklist_task prerequisite WITH (UPDLOCK, HOLDLOCK)
+                  ON prerequisite.id = dependency.depends_on_task_id
                 WHERE dependency.task_id IN (__IDS__)
-                  AND UPPER(LTRIM(RTRIM(selected_task.status))) <> ?
-                  AND UPPER(LTRIM(RTRIM(prerequisite.status)))
-                      NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
                 """.replace("__IDS__", placeholders);
         String updateSql = "UPDATE checklist_task SET status = ? WHERE activity_id = ? AND id IN ("
                 + placeholders + ")";
+        String updateSingleSql = """
+                UPDATE checklist_task
+                SET status = ?
+                WHERE id = ? AND activity_id = ?
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM checklist_task_dependency dependency
+                      JOIN checklist_task prerequisite
+                        ON prerequisite.id = dependency.depends_on_task_id
+                      WHERE dependency.task_id = checklist_task.id
+                        AND UPPER(LTRIM(RTRIM(prerequisite.status)))
+                            NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                  )
+                """;
         String databaseStatus = ChecklistTaskStatus.toDatabaseValue(status);
 
         try (Connection conn = DBContext.getConnection()) {
+            conn.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             conn.setAutoCommit(false);
             try {
                 try (PreparedStatement ps = conn.prepareStatement(selectedTasksSql)) {
@@ -544,31 +616,62 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
                     }
                 }
 
-                if (!"TODO".equals(databaseStatus)) {
-                    try (PreparedStatement ps = conn.prepareStatement(incompletePrerequisitesSql)) {
-                        bindIds(ps, uniqueTaskIds, 1);
-                        ps.setString(uniqueTaskIds.size() + 1, databaseStatus);
-                        try (ResultSet rs = ps.executeQuery()) {
-                            rs.next();
-                            if (rs.getInt(1) > 0) {
+                Map<Integer, Integer> pendingPrerequisiteCount = new HashMap<>();
+                Map<Integer, List<Integer>> dependentsByPrerequisite = new HashMap<>();
+                Set<Integer> tasksWithIncompletePrerequisites = new HashSet<>();
+                uniqueTaskIds.forEach(taskId -> pendingPrerequisiteCount.put(taskId, 0));
+                try (PreparedStatement ps = conn.prepareStatement(dependenciesSql)) {
+                    bindIds(ps, uniqueTaskIds, 1);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int taskId = rs.getInt("task_id");
+                            int prerequisiteId = rs.getInt("depends_on_task_id");
+                            boolean prerequisiteCompleted = isCompletedStatus(rs.getString("status"));
+                            if (!prerequisiteCompleted) {
+                                tasksWithIncompletePrerequisites.add(taskId);
+                            }
+                            if (uniqueTaskIds.contains(prerequisiteId)) {
+                                pendingPrerequisiteCount.compute(taskId, (ignored, count) -> count + 1);
+                                dependentsByPrerequisite
+                                        .computeIfAbsent(prerequisiteId, ignored -> new ArrayList<>())
+                                        .add(taskId);
+                            } else if ("COMPLETED".equals(databaseStatus)
+                                    || (!prerequisiteCompleted && !"TODO".equals(databaseStatus))) {
                                 throw new IllegalArgumentException("PREREQUISITES_INCOMPLETE");
                             }
                         }
                     }
                 }
 
-                int updated;
-                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                    ps.setString(1, databaseStatus);
-                    ps.setInt(2, activityId);
-                    bindIds(ps, uniqueTaskIds, 3);
-                    updated = ps.executeUpdate();
-                }
-                if (updated != uniqueTaskIds.size()) {
-                    throw new IllegalStateException("Checklist task status update was incomplete.");
+                if ("COMPLETED".equals(databaseStatus)) {
+                    List<Integer> completionOrder = topologicalOrder(
+                            uniqueTaskIds, pendingPrerequisiteCount, dependentsByPrerequisite);
+                    for (int taskId : completionOrder) {
+                        try (PreparedStatement ps = conn.prepareStatement(updateSingleSql)) {
+                            ps.setString(1, databaseStatus);
+                            ps.setInt(2, taskId);
+                            ps.setInt(3, activityId);
+                            if (ps.executeUpdate() != 1) {
+                                throw new IllegalArgumentException("PREREQUISITES_INCOMPLETE");
+                            }
+                        }
+                    }
+                } else {
+                    if ("IN_PROGRESS".equals(databaseStatus) && !tasksWithIncompletePrerequisites.isEmpty()) {
+                        throw new IllegalArgumentException("PREREQUISITES_INCOMPLETE");
+                    }
+
+                    try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                        ps.setString(1, databaseStatus);
+                        ps.setInt(2, activityId);
+                        bindIds(ps, uniqueTaskIds, 3);
+                        if (ps.executeUpdate() != uniqueTaskIds.size()) {
+                            throw new IllegalStateException("Checklist task status update was incomplete.");
+                        }
+                    }
                 }
                 conn.commit();
-                return updated;
+                return uniqueTaskIds.size();
             } catch (SQLException | IllegalArgumentException | IllegalStateException e) {
                 rollback(conn, e);
                 if (e instanceof SQLException sqlException) {
@@ -579,6 +682,43 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
         } catch (SQLException e) {
             throw translate("update checklist task statuses", e);
         }
+    }
+
+    private List<Integer> topologicalOrder(
+            Set<Integer> taskIds,
+            Map<Integer, Integer> pendingPrerequisiteCount,
+            Map<Integer, List<Integer>> dependentsByPrerequisite) {
+        ArrayDeque<Integer> readyTasks = new ArrayDeque<>();
+        pendingPrerequisiteCount.forEach((taskId, count) -> {
+            if (count == 0) {
+                readyTasks.addLast(taskId);
+            }
+        });
+
+        List<Integer> orderedTaskIds = new ArrayList<>(taskIds.size());
+        while (!readyTasks.isEmpty()) {
+            int completedPrerequisiteId = readyTasks.removeFirst();
+            orderedTaskIds.add(completedPrerequisiteId);
+            for (int dependentId : dependentsByPrerequisite.getOrDefault(
+                    completedPrerequisiteId, List.of())) {
+                int remainingPrerequisites = pendingPrerequisiteCount.compute(
+                        dependentId, (ignored, count) -> count - 1);
+                if (remainingPrerequisites == 0) {
+                    readyTasks.addLast(dependentId);
+                }
+            }
+        }
+
+        if (orderedTaskIds.size() != taskIds.size()) {
+            throw new IllegalArgumentException("Selected checklist tasks contain a prerequisite cycle.");
+        }
+        return orderedTaskIds;
+    }
+
+    private boolean isCompletedStatus(String status) {
+        return status != null
+                && ("COMPLETED".equalsIgnoreCase(status.trim())
+                || "ĐÃ HOÀN THÀNH".equalsIgnoreCase(status.trim()));
     }
 
     private void bindIds(PreparedStatement ps, Set<Integer> ids, int startIndex) throws SQLException {
@@ -731,8 +871,8 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
         }
     }
 
-    private void syncAssignments(Connection conn, int taskId, String table, String idColumn,
-                                 String assigneeType, Set<Integer> newIds) throws SQLException {
+    private boolean syncAssignments(Connection conn, int taskId, String table, String idColumn,
+                                    String assigneeType, Set<Integer> newIds) throws SQLException {
         Set<Integer> currentIds = new HashSet<>();
         String selectSql = "SELECT " + idColumn + " FROM " + table + " WHERE task_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
@@ -763,6 +903,24 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
         addedIds.removeAll(currentIds);
         insertAssignments(conn, table, idColumn, taskId, addedIds);
         insertAssignmentHistory(conn, taskId, assigneeType, addedIds, "ASSIGNED");
+        return !removedIds.isEmpty() || !addedIds.isEmpty();
+    }
+
+    private void recordTaskAssigner(Connection conn, int taskId, int assignedByAccountId)
+            throws SQLException {
+        String sql = """
+                INSERT INTO checklist_task_history
+                    (task_id, action_type, field_name, old_value, new_value, note,
+                     changed_by_account_id, changed_at)
+                VALUES (?, 'UPDATED', N'ASSIGNING_ACCOUNT_ID', NULL, ?, N'Người thực hiện phân công.',
+                        ?, SYSUTCDATETIME())
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            ps.setString(2, Integer.toString(assignedByAccountId));
+            ps.setInt(3, assignedByAccountId);
+            ps.executeUpdate();
+        }
     }
 
     private void insertAssignmentHistory(Connection conn, int taskId, String assigneeType,
@@ -914,34 +1072,65 @@ public class ChecklistTaskDAOImpl implements IChecklistTaskDAO {
 
     @Override
     public List<ChecklistTaskResponseDTO> findForStaffAccount(int accountId) {
-        String sql = TASK_COLUMNS + """
+        String visiblePrerequisiteFilter = """
+                        AND EXISTS (
+                            SELECT 1
+                            FROM checklist_task_staff prerequisite_assignment
+                            JOIN staff prerequisite_staff
+                              ON prerequisite_staff.id = prerequisite_assignment.staff_id
+                            WHERE prerequisite_assignment.task_id = prerequisite.id
+                              AND prerequisite_staff.account_id = ?
+                        )
+                """;
+        String taskColumns = taskColumnsWithPrerequisiteFilter(visiblePrerequisiteFilter);
+        String sql = taskColumns + """
                 FROM checklist_task t
                 JOIN checklist_task_staff cts ON cts.task_id = t.id
                 JOIN staff s ON s.id = cts.staff_id
                 WHERE s.account_id = ?
-                ORDER BY CASE WHEN t.deadline IS NULL THEN 1 ELSE 0 END, t.deadline, t.code
+                ORDER BY deadline_sort, t.deadline, t.code
                 """;
-        return findTasks(sql, accountId, "staff");
+        return findTasks(sql, "staff", accountId, accountId);
     }
 
     @Override
     public List<ChecklistTaskResponseDTO> findForPartnerStaffAccount(int accountId) {
-        String sql = TASK_COLUMNS + """
+        String visiblePrerequisiteFilter = """
+                        AND EXISTS (
+                            SELECT 1
+                            FROM checklist_task_partner_staff prerequisite_assignment
+                            JOIN partner_staff prerequisite_staff
+                              ON prerequisite_staff.id = prerequisite_assignment.partner_staff_id
+                            WHERE prerequisite_assignment.task_id = prerequisite.id
+                              AND prerequisite_staff.account_id = ?
+                        )
+                """;
+        String taskColumns = taskColumnsWithPrerequisiteFilter(visiblePrerequisiteFilter);
+        String sql = taskColumns + """
                 FROM checklist_task t
                 JOIN checklist_task_partner_staff ctps ON ctps.task_id = t.id
                 JOIN partner_staff ps ON ps.id = ctps.partner_staff_id
                 WHERE ps.account_id = ?
-                ORDER BY CASE WHEN t.deadline IS NULL THEN 1 ELSE 0 END, t.deadline, t.code
+                ORDER BY deadline_sort, t.deadline, t.code
                 """;
-        return findTasks(sql, accountId, "partner staff");
+        return findTasks(sql, "partner staff", accountId, accountId);
     }
 
-    private List<ChecklistTaskResponseDTO> findTasks(String sql, Integer accountId, String accountType) {
+    private String taskColumnsWithPrerequisiteFilter(String filter) {
+        int aliasIndex = TASK_COLUMNS.indexOf("AS prerequisites");
+        int subqueryEnd = TASK_COLUMNS.lastIndexOf("), N'')", aliasIndex);
+        if (aliasIndex < 0 || subqueryEnd < 0) {
+            throw new IllegalStateException("Could not locate checklist prerequisite query.");
+        }
+        return TASK_COLUMNS.substring(0, subqueryEnd) + filter + TASK_COLUMNS.substring(subqueryEnd);
+    }
+
+    private List<ChecklistTaskResponseDTO> findTasks(String sql, String accountType, int... accountIds) {
         List<ChecklistTaskResponseDTO> tasks = new ArrayList<>();
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (accountId != null) {
-                ps.setInt(1, accountId);
+            for (int i = 0; i < accountIds.length; i++) {
+                ps.setInt(i + 1, accountIds[i]);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

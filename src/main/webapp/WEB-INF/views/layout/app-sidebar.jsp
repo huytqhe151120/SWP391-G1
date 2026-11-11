@@ -6,6 +6,7 @@
     String navType = navUser == null ? "" : navUser.getType();
     boolean navAdmin = "ADMIN".equals(navType);
     boolean navStaff = "STAFF".equals(navType);
+    boolean navPartnerStaff = "PARTNER_STAFF".equals(navType);
     boolean navStudent = "STUDENT".equals(navType);
     Object navActiveAttr = request.getAttribute("activeNav");
     String navActive = navActiveAttr == null ? "" : navActiveAttr.toString();
@@ -25,10 +26,10 @@
            <%= "activities".equals(navActive) ? "aria-current=\"page\"" : "" %>>
             <span class="activity-nav-icon" aria-hidden="true">◷</span>Hoạt động ngoại khóa
         </a>
-        <% if (navAdmin) { %>
+        <% if (navAdmin || navStaff || navPartnerStaff) { %>
         <a class="<%= "checklist".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/checklist"
            <%= "checklist".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">☑</span>Checklist công việc
+            <span class="activity-nav-icon" aria-hidden="true">☑</span><%= navAdmin ? "Checklist công việc" : "Checklist của tôi" %>
         </a>
         <% } %>
         <a class="<%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"

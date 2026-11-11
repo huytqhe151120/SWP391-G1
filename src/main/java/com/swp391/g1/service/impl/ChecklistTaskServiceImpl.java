@@ -57,14 +57,15 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     public int createTask(int activityId, String phase, String priority, String code, String name,
                           String description, LocalDateTime deadline, String status,
                           List<Integer> staffIds, List<Integer> partnerStaffIds,
-                          List<Integer> prerequisiteTaskIds) {
+                          List<Integer> prerequisiteTaskIds, int assignedByAccountId) {
         return checklistTaskDAO.create(activityId, phase, priority, code, name, description, deadline,
-                status, staffIds, partnerStaffIds, prerequisiteTaskIds);
+                status, staffIds, partnerStaffIds, prerequisiteTaskIds, assignedByAccountId);
     }
 
     @Override
-    public boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds) {
-        return checklistTaskDAO.addAssignees(taskId, staffIds, partnerStaffIds);
+    public boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds,
+                                int assignedByAccountId) {
+        return checklistTaskDAO.addAssignees(taskId, staffIds, partnerStaffIds, assignedByAccountId);
     }
 
     @Override
@@ -73,8 +74,23 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     }
 
     @Override
-    public boolean isTaskAssignedToAccount(int taskId, int accountId) {
-        return checklistTaskDAO.isAssignedToAccount(taskId, accountId);
+    public boolean isTaskAssignedToStaffAccount(int taskId, int accountId) {
+        return checklistTaskDAO.isStaffAssignedToAccount(taskId, accountId);
+    }
+
+    @Override
+    public boolean isTaskAssignedToPartnerStaffAccount(int taskId, int accountId) {
+        return checklistTaskDAO.isPartnerStaffAssignedToAccount(taskId, accountId);
+    }
+
+    @Override
+    public int getActiveStaffIdForAccount(int accountId) {
+        return checklistTaskDAO.findActiveStaffIdForAccount(accountId);
+    }
+
+    @Override
+    public int getActivePartnerStaffIdForAccount(int accountId) {
+        return checklistTaskDAO.findActivePartnerStaffIdForAccount(accountId);
     }
 
     @Override
@@ -86,9 +102,9 @@ public class ChecklistTaskServiceImpl implements IChecklistTaskService {
     public int updateTask(int taskId, int activityId, String phase, String priority, String code,
                           String name, String description, LocalDateTime deadline, String status,
                           List<Integer> staffIds, List<Integer> partnerStaffIds,
-                          List<Integer> prerequisiteTaskIds) {
+                          List<Integer> prerequisiteTaskIds, int assignedByAccountId) {
         return checklistTaskDAO.update(taskId, activityId, phase, priority, code, name, description, deadline,
-                status, staffIds, partnerStaffIds, prerequisiteTaskIds);
+                status, staffIds, partnerStaffIds, prerequisiteTaskIds, assignedByAccountId);
     }
 
     @Override

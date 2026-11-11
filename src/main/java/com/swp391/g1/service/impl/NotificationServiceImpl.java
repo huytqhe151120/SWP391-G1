@@ -94,7 +94,13 @@ public class NotificationServiceImpl implements INotificationService {
 
     @Override
     public int notifyOverdueChecklistTasks() {
-        return notificationDAO.createOverdueChecklistTaskNotifications();
+        List<ChecklistTaskAlertDTO> alerts = notificationDAO.createOverdueChecklistTaskNotifications();
+        for (ChecklistTaskAlertDTO alert : alerts) {
+            if (!alert.recipientEmails().isEmpty()) {
+                checklistTaskEmailSender.sendOverdue(alert);
+            }
+        }
+        return alerts.size();
     }
 
     private void notifyPartnerInvitation(int invitationId, String eventType, String title, String content) {

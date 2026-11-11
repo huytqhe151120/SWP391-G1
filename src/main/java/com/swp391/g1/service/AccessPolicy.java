@@ -83,9 +83,9 @@ public final class AccessPolicy {
         return user != null;
     }
 
-    /** Checklist access is temporarily limited to administrators. */
+    /** Checklist access is available to administrators and the staff/partner staff assigned to a task or activity. */
     public static boolean canViewChecklist(CurrentUser user) {
-        return hasType(user, ADMIN_TYPE);
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF") || hasType(user, "PARTNER_STAFF");
     }
 
     /** ADMIN organizers and STAFF can access their resolved 1-to-1 inbox. */

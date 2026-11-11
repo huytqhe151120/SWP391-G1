@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Checklist công việc | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261106-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261111-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css">
 </head>
 <body>
@@ -23,7 +23,12 @@
                     <div>
                         <p class="checklist-eyebrow">CÔNG VIỆC ĐƯỢC GIAO</p>
                         <h1>Checklist công việc</h1>
-                        <p class="subtitle">Chọn hoạt động để xem danh sách checklist tương ứng.</p>
+                        <p class="subtitle">
+                            <c:choose>
+                                <c:when test="${not empty checklistScopeLabel}"><c:out value="${checklistScopeLabel}"/></c:when>
+                                <c:otherwise>Chọn hoạt động để xem danh sách checklist tương ứng.</c:otherwise>
+                            </c:choose>
+                        </p>
                     </div>
                     <div class="checklist-header-actions">
                         <c:choose>
@@ -66,7 +71,8 @@
                 </c:if>
                 <c:if test="${param.bulkStatusBlocked == '1'}">
                     <div class="checklist-error" role="alert">
-                        Chưa cập nhật công việc nào. Hãy hoàn thành tất cả công việc tiên quyết trước.
+                        Chưa cập nhật công việc nào. Khi chọn “Đã hoàn thành”, hãy chọn tất cả công việc
+                        tiên quyết của các công việc đã chọn trong cùng lượt.
                     </div>
                 </c:if>
                 <c:if test="${param.bulkStatusError == '1'}">
@@ -100,12 +106,12 @@
                             </option>
                         </c:forEach>
                     </select>
-                    <c:if test="${selectedActivityId > 0}">
+                    <c:if test="${selectedActivityId > 0 and isChecklistAdmin}">
                         <button type="button" data-open-quick-assign>Phân công nhanh</button>
                     </c:if>
                 </form>
 
-                <c:if test="${selectedActivityId > 0}">
+                <c:if test="${selectedActivityId > 0 and isChecklistAdmin}">
                     <dialog class="checklist-quick-assign-dialog" data-quick-assign-dialog>
                         <form class="checklist-quick-assign-form" method="post"
                               action="${pageContext.request.contextPath}/checklist">
@@ -221,16 +227,18 @@
                                     <input id="taskSearch" type="search" data-filter="search"
                                            placeholder="Nhập mã, tên, nội dung công việc...">
                                 </div>
-                                <div class="checklist-filter-field">
-                                    <label for="staffFilter">Nhân viên phụ trách</label>
-                                    <input id="staffFilter" type="search" data-filter="staff"
-                                           placeholder="Tên nhân viên nội bộ">
-                                </div>
-                                <div class="checklist-filter-field">
-                                    <label for="partnerFilter">Đối tác phụ trách</label>
-                                    <input id="partnerFilter" type="search" data-filter="partner"
-                                           placeholder="Tên nhân viên đối tác">
-                                </div>
+                                <c:if test="${isChecklistAdmin}">
+                                    <div class="checklist-filter-field">
+                                        <label for="staffFilter">Nhân viên phụ trách</label>
+                                        <input id="staffFilter" type="search" data-filter="staff"
+                                               placeholder="Tên nhân viên nội bộ">
+                                    </div>
+                                    <div class="checklist-filter-field">
+                                        <label for="partnerFilter">Đối tác phụ trách</label>
+                                        <input id="partnerFilter" type="search" data-filter="partner"
+                                               placeholder="Tên nhân viên đối tác">
+                                    </div>
+                                </c:if>
                                 <div class="checklist-filter-field">
                                     <label for="phaseFilter">Giai đoạn</label>
                                     <select id="phaseFilter" data-filter="phase">
@@ -263,28 +271,36 @@
                             </div>
                         </section>
                         <section class="checklist-table-wrap" aria-label="Danh sách công việc">
-                            <form id="bulkStatusForm" class="checklist-bulk-status"
-                                  method="post" action="${pageContext.request.contextPath}/checklist">
-                                <input type="hidden" name="action" value="updateStatuses">
-                                <input type="hidden" name="activityId" value="${selectedActivityId}">
-                                <label for="bulkStatus">Trạng thái cho công việc đã chọn</label>
-                                <select id="bulkStatus" name="status" required>
-                                    <option value="">-- Chọn trạng thái --</option>
-                                    <option value="Chưa hoàn thành">Chưa hoàn thành</option>
-                                    <option value="Đang hoàn thành">Đang hoàn thành</option>
-                                    <option value="Đã hoàn thành">Đã hoàn thành</option>
-                                </select>
-                                <span data-bulk-selected-count>Chưa chọn công việc</span>
-                                <button type="submit" class="checklist-create-button"
-                                        data-bulk-status-submit disabled>Cập nhật nhanh</button>
-                            </form>
+                            <c:if test="${isChecklistAdmin}">
+                                <form id="bulkStatusForm" class="checklist-bulk-status"
+                                      method="post" action="${pageContext.request.contextPath}/checklist">
+                                    <input type="hidden" name="action" value="updateStatuses">
+                                    <input type="hidden" name="activityId" value="${selectedActivityId}">
+                                    <label for="bulkStatus">Trạng thái cho công việc đã chọn</label>
+                                    <select id="bulkStatus" name="status" required>
+                                        <option value="">-- Chọn trạng thái --</option>
+                                        <option value="Chưa hoàn thành">Chưa hoàn thành</option>
+                                        <option value="Đang hoàn thành">Đang hoàn thành</option>
+                                        <option value="Đã hoàn thành">Đã hoàn thành</option>
+                                    </select>
+                                    <span data-bulk-selected-count>Chưa chọn công việc</span>
+                                    <button type="submit" class="checklist-create-button"
+                                            data-bulk-status-submit disabled>Cập nhật nhanh</button>
+                                    <small class="checklist-bulk-status-help">
+                                        Khi chọn “Đã hoàn thành”, hãy tích cả các công việc tiên quyết, kể cả công việc
+                                        đã hoàn thành; hệ thống cập nhật theo đúng thứ tự.
+                                    </small>
+                                </form>
+                            </c:if>
                             <table class="checklist-table">
                                 <thead>
                                 <tr>
-                                    <th scope="col">
-                                        <input type="checkbox" aria-label="Chọn tất cả công việc đang hiển thị"
-                                               data-select-visible-tasks>
-                                    </th>
+                                    <c:if test="${isChecklistAdmin}">
+                                        <th scope="col">
+                                            <input type="checkbox" aria-label="Chọn tất cả công việc đang hiển thị"
+                                                   data-select-visible-tasks>
+                                        </th>
+                                    </c:if>
                                     <th scope="col">Mã công việc</th>
                                     <th scope="col">Tên công việc</th>
                                     <th scope="col">Người phụ trách</th>
@@ -302,19 +318,26 @@
                                         data-code="<c:out value='${task.code}'/>"
                                         data-name="<c:out value='${task.name}'/>"
                                         data-description="<c:out value='${task.description}'/>"
-                                        data-assignees="<c:out value='${task.assignees}'/>"
-                                        data-staff="<c:out value='${task.staffAssignees}'/>"
-                                        data-partner="<c:out value='${task.partnerStaffAssignees}'/>"
+                                        data-assignees="<c:out value='${isPersonalChecklist ? checklistPersonalName : task.assignees}'/>"
+                                        data-staff="<c:out value='${isPersonalChecklist ? checklistPersonalName : task.staffAssignees}'/>"
+                                        data-partner="<c:if test='${isChecklistAdmin}'><c:out value='${task.partnerStaffAssignees}'/></c:if>"
                                         data-phase="<c:out value='${task.phase}'/>"
                                         data-status="<c:out value='${task.statusValue}'/>"
                                         data-deadline="<c:out value='${task.deadlineFilterValue}'/>">
-                                        <td><input type="checkbox" name="taskIds" value="${task.id}"
-                                                   form="bulkStatusForm" data-bulk-task-checkbox
-                                                   aria-label="Chọn công việc"></td>
+                                        <c:if test="${isChecklistAdmin}">
+                                            <td>
+                                                <input type="checkbox" name="taskIds" value="${task.id}"
+                                                       form="bulkStatusForm" data-bulk-task-checkbox
+                                                       aria-label="Chọn công việc">
+                                            </td>
+                                        </c:if>
                                         <td class="checklist-table-code"><c:out value="${task.code}"/></td>
                                         <td class="checklist-table-name"><c:out value="${task.name}"/></td>
                                         <td class="checklist-table-description">
                                             <c:choose>
+                                                <c:when test="${isPersonalChecklist}">
+                                                    <c:out value="${checklistPersonalName}"/>
+                                                </c:when>
                                                 <c:when test="${not empty task.assignees}">
                                                     <c:out value="${task.assignees}"/>
                                                 </c:when>
@@ -323,6 +346,15 @@
                                         </td>
                                         <td class="checklist-table-description">
                                             <c:choose>
+                                                <c:when test="${isPersonalChecklist}">
+                                                    <c:choose>
+                                                        <c:when test="${not empty task.prerequisites}">
+                                                            <c:out value="${task.prerequisites}"/>
+                                                        </c:when>
+                                                        <c:when test="${task.prerequisitesCompleted}">Không có</c:when>
+                                                        <c:otherwise>Đang chờ công việc tiên quyết</c:otherwise>
+                                                    </c:choose>
+                                                </c:when>
                                                 <c:when test="${not empty task.prerequisites}">
                                                     <c:out value="${task.prerequisites}"/>
                                                 </c:when>
@@ -353,6 +385,11 @@
                                                         ${task.statusValue == 'Đã hoàn thành' ? 'selected' : ''}>Đã hoàn thành</option>
                                                 </select>
                                             </form>
+                                            <c:if test="${task.overdue}">
+                                                <span class="checklist-overdue-badge" title="Deadline đã qua, công việc chưa hoàn thành">
+                                                    Quá hạn
+                                                </span>
+                                            </c:if>
                                             <c:if test="${not task.prerequisitesCompleted}">
                                                 <small class="checklist-prerequisite-locked">
                                                     Đang chờ công việc tiên quyết hoàn thành
@@ -363,22 +400,24 @@
                                             <div class="checklist-actions">
                                                 <a class="checklist-detail-link"
                                                    href="${pageContext.request.contextPath}/checklist?action=detail&amp;id=${task.id}&amp;activityId=${selectedActivityId}">Chi tiết</a>
-                                                <details class="action-menu">
-                                                    <summary class="action-menu__summary">Thao tác</summary>
-                                                    <div class="action-menu__items">
-                                                        <a class="action-menu-item action-menu-item--edit"
-                                                           href="${pageContext.request.contextPath}/checklist?action=edit&amp;id=${task.id}&amp;activityId=${selectedActivityId}">
-                                                            Chỉnh sửa
-                                                        </a>
-                                                        <form method="post" action="${pageContext.request.contextPath}/checklist"
-                                                              onsubmit="return confirm('Bạn có chắc muốn xóa công việc này không?');">
-                                                            <input type="hidden" name="action" value="delete">
-                                                            <input type="hidden" name="id" value="${task.id}">
-                                                            <input type="hidden" name="activityId" value="${selectedActivityId}">
-                                                            <button class="action-menu-item action-menu-item--delete" type="submit">Xóa</button>
-                                                        </form>
-                                                    </div>
-                                                </details>
+                                                <c:if test="${isChecklistAdmin}">
+                                                    <details class="action-menu">
+                                                        <summary class="action-menu__summary">Thao tác</summary>
+                                                        <div class="action-menu__items">
+                                                            <a class="action-menu-item action-menu-item--edit"
+                                                               href="${pageContext.request.contextPath}/checklist?action=edit&amp;id=${task.id}&amp;activityId=${selectedActivityId}">
+                                                                Chỉnh sửa
+                                                            </a>
+                                                            <form method="post" action="${pageContext.request.contextPath}/checklist"
+                                                                  onsubmit="return confirm('Bạn có chắc muốn xóa công việc này không?');">
+                                                                <input type="hidden" name="action" value="delete">
+                                                                <input type="hidden" name="id" value="${task.id}">
+                                                                <input type="hidden" name="activityId" value="${selectedActivityId}">
+                                                                <button class="action-menu-item action-menu-item--delete" type="submit">Xóa</button>
+                                                            </form>
+                                                        </div>
+                                                    </details>
+                                                </c:if>
                                             </div>
                                         </td>
                                     </tr>

@@ -55,13 +55,19 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (user == null) {
             return List.of();
         }
-        if (!AccessPolicy.hasType(user, "STAFF")) {
+        if (AccessPolicy.hasType(user, "ADMIN")) {
             return getAllActivities();
         }
-        if (!AccessPolicy.canUseStaffActivityScope(user) || user.getId() <= 0) {
-            return List.of();
+        if (AccessPolicy.hasType(user, "PARTNER_STAFF")) {
+            return activityDAO.findAllWithDetailsForPartnerStaff(user.getId());
         }
-        return activityDAO.findAllWithDetailsForStaff(user.getId(), user.getRole());
+        if (AccessPolicy.hasType(user, "STAFF")) {
+            if (!AccessPolicy.canUseStaffActivityScope(user) || user.getId() <= 0) {
+                return List.of();
+            }
+            return activityDAO.findAllWithDetailsForStaff(user.getId(), user.getRole());
+        }
+        return getAllActivities();
     }
 
     @Override
@@ -84,9 +90,13 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         if (AccessPolicy.hasType(user, "ADMIN")) {
             return activityDAO.findById(id) != null;
         }
-        return AccessPolicy.canUseStaffActivityScope(user)
-                && user.getId() > 0
-                && activityDAO.isInStaffActivityScope(id, user.getId(), user.getRole());
+        if (AccessPolicy.hasType(user, "STAFF")) {
+            return AccessPolicy.canUseStaffActivityScope(user)
+                    && user.getId() > 0
+                    && activityDAO.isInStaffActivityScope(id, user.getId(), user.getRole());
+        }
+        return AccessPolicy.hasType(user, "PARTNER_STAFF")
+                && activityDAO.isInPartnerStaffActivityScope(id, user.getId());
     }
 
     @Override

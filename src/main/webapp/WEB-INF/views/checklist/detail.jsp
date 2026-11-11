@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chi tiết công việc | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261106-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/checklist.css?v=20261111-2">
 </head>
 <body>
 <div class="activity-app-shell">
@@ -35,7 +35,9 @@
                             </c:when>
                             <c:otherwise>
                                 <a class="checklist-back-link"
-                                   href="${pageContext.request.contextPath}/notifications">Quay lại thông báo</a>
+                                   href="${pageContext.request.contextPath}/checklist?activityId=${taskDetail.task.activityId}">
+                                    Quay lại checklist của tôi
+                                </a>
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -53,7 +55,14 @@
                                 <c:out value="${taskDetail.task.priorityDisplay}"/>
                             </span>
                         </dd></div>
-                        <div><dt>Trạng thái</dt><dd><span class="checklist-status"><c:out value="${taskDetail.task.statusDisplay}"/></span></dd></div>
+                        <div><dt>Trạng thái</dt><dd>
+                            <span class="checklist-status"><c:out value="${taskDetail.task.statusDisplay}"/></span>
+                            <c:if test="${taskDetail.task.overdue}">
+                                <span class="checklist-overdue-badge" title="Deadline đã qua, công việc chưa hoàn thành">
+                                    Quá hạn
+                                </span>
+                            </c:if>
+                        </dd></div>
                         <div class="checklist-detail-wide">
                             <dt>Công việc chuẩn bị</dt>
                             <dd>
@@ -71,7 +80,7 @@
                 <section class="checklist-detail-card">
                     <h2>Công việc tiên quyết</h2>
                     <c:choose>
-                        <c:when test="${empty taskDetail.prerequisiteTasks}">
+                        <c:when test="${empty visiblePrerequisiteTasks}">
                             <p class="checklist-detail-empty">Công việc này không có công việc tiên quyết.</p>
                         </c:when>
                         <c:otherwise>
@@ -79,7 +88,7 @@
                                 <table class="checklist-table checklist-detail-table">
                                     <thead><tr><th>STT</th><th>Mã công việc</th><th>Tên công việc</th><th>Trạng thái</th></tr></thead>
                                     <tbody>
-                                    <c:forEach var="relatedTask" items="${taskDetail.prerequisiteTasks}" varStatus="row">
+                                    <c:forEach var="relatedTask" items="${visiblePrerequisiteTasks}" varStatus="row">
                                         <tr>
                                             <td><c:out value="${row.index + 1}"/></td>
                                             <td><a href="${pageContext.request.contextPath}/checklist?action=detail&amp;id=${relatedTask.id}&amp;activityId=${taskDetail.task.activityId}"><c:out value="${relatedTask.code}"/></a></td>
@@ -104,7 +113,7 @@
                 <section class="checklist-detail-card">
                     <h2>Công việc kế tiếp</h2>
                     <c:choose>
-                        <c:when test="${empty taskDetail.nextTasks}">
+                        <c:when test="${empty visibleNextTasks}">
                             <p class="checklist-detail-empty">Chưa có công việc nào phụ thuộc vào công việc này.</p>
                         </c:when>
                         <c:otherwise>
@@ -112,7 +121,7 @@
                                 <table class="checklist-table checklist-detail-table">
                                     <thead><tr><th>STT</th><th>Mã công việc</th><th>Tên công việc</th><th>Trạng thái</th></tr></thead>
                                     <tbody>
-                                    <c:forEach var="relatedTask" items="${taskDetail.nextTasks}" varStatus="row">
+                                    <c:forEach var="relatedTask" items="${visibleNextTasks}" varStatus="row">
                                         <tr>
                                             <td><c:out value="${row.index + 1}"/></td>
                                             <td><a href="${pageContext.request.contextPath}/checklist?action=detail&amp;id=${relatedTask.id}&amp;activityId=${taskDetail.task.activityId}"><c:out value="${relatedTask.code}"/></a></td>
@@ -134,68 +143,70 @@
                     </c:choose>
                 </section>
 
-                <section class="checklist-detail-card">
-                    <h2>Nhân viên nội bộ được phân công</h2>
-                    <c:choose>
-                        <c:when test="${empty taskDetail.staff}">
-                            <p class="checklist-detail-empty">Chưa phân công nhân viên nội bộ.</p>
-                        </c:when>
-                        <c:otherwise>
-                            <div class="checklist-table-wrap">
-                                <table class="checklist-table checklist-assignee-table">
-                                    <thead><tr>
-                                        <th>STT</th><th>Mã nhân sự</th><th>Họ và tên</th>
-                                        <th>Trạng thái nhân sự</th><th>Chức vụ</th><th>Thời gian phân công</th>
-                                    </tr></thead>
-                                    <tbody>
-                                    <c:forEach var="staff" items="${taskDetail.staff}" varStatus="row">
-                                        <tr>
-                                            <td><c:out value="${row.index + 1}"/></td>
-                                            <td><c:out value="${staff.code}"/></td>
-                                            <td><c:out value="${staff.name}"/></td>
-                                            <td><c:out value="${staff.statusDisplay}"/></td>
-                                            <td><c:out value="${empty staff.position ? 'Chưa cập nhật' : staff.position}"/></td>
-                                            <td><c:out value="${staff.assignedAtDisplay}"/></td>
-                                        </tr>
-                                    </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </c:otherwise>
-                    </c:choose>
-                </section>
+                <c:if test="${canManageChecklist}">
+                    <section class="checklist-detail-card">
+                        <h2>Nhân viên nội bộ được phân công</h2>
+                        <c:choose>
+                            <c:when test="${empty taskDetail.staff}">
+                                <p class="checklist-detail-empty">Chưa phân công nhân viên nội bộ.</p>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="checklist-table-wrap">
+                                    <table class="checklist-table checklist-assignee-table">
+                                        <thead><tr>
+                                            <th>STT</th><th>Mã nhân sự</th><th>Họ và tên</th>
+                                            <th>Trạng thái nhân sự</th><th>Chức vụ</th><th>Thời gian phân công</th>
+                                        </tr></thead>
+                                        <tbody>
+                                        <c:forEach var="staff" items="${taskDetail.staff}" varStatus="row">
+                                            <tr>
+                                                <td><c:out value="${row.index + 1}"/></td>
+                                                <td><c:out value="${staff.code}"/></td>
+                                                <td><c:out value="${staff.name}"/></td>
+                                                <td><c:out value="${staff.statusDisplay}"/></td>
+                                                <td><c:out value="${empty staff.position ? 'Chưa cập nhật' : staff.position}"/></td>
+                                                <td><c:out value="${staff.assignedAtDisplay}"/></td>
+                                            </tr>
+                                        </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </section>
 
-                <section class="checklist-detail-card">
-                    <h2>Nhân viên đối tác được phân công</h2>
-                    <c:choose>
-                        <c:when test="${empty taskDetail.partnerStaff}">
-                            <p class="checklist-detail-empty">Chưa phân công nhân viên đối tác.</p>
-                        </c:when>
-                        <c:otherwise>
-                            <div class="checklist-table-wrap">
-                                <table class="checklist-table checklist-assignee-table">
-                                    <thead><tr>
-                                        <th>STT</th><th>Mã đối tác</th><th>Họ và tên</th><th>Công ty</th>
-                                        <th>Trạng thái nhân sự</th><th>Chức vụ</th><th>Thời gian phân công</th>
-                                    </tr></thead>
-                                    <tbody>
-                                    <c:forEach var="partnerStaff" items="${taskDetail.partnerStaff}" varStatus="row">
-                                        <tr>
-                                            <td><c:out value="${row.index + 1}"/></td>
-                                            <td><c:out value="${partnerStaff.code}"/></td>
-                                            <td><c:out value="${partnerStaff.name}"/></td>
-                                            <td><c:out value="${empty partnerStaff.companyName ? 'Chưa cập nhật' : partnerStaff.companyName}"/></td>
-                                            <td><c:out value="${partnerStaff.statusDisplay}"/></td>
-                                            <td><c:out value="${empty partnerStaff.position ? 'Chưa cập nhật' : partnerStaff.position}"/></td>
-                                            <td><c:out value="${partnerStaff.assignedAtDisplay}"/></td>
-                                        </tr>
-                                    </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </c:otherwise>
-                    </c:choose>
-                </section>
+                    <section class="checklist-detail-card">
+                        <h2>Nhân viên đối tác được phân công</h2>
+                        <c:choose>
+                            <c:when test="${empty taskDetail.partnerStaff}">
+                                <p class="checklist-detail-empty">Chưa phân công nhân viên đối tác.</p>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="checklist-table-wrap">
+                                    <table class="checklist-table checklist-assignee-table">
+                                        <thead><tr>
+                                            <th>STT</th><th>Mã đối tác</th><th>Họ và tên</th><th>Công ty</th>
+                                            <th>Trạng thái nhân sự</th><th>Chức vụ</th><th>Thời gian phân công</th>
+                                        </tr></thead>
+                                        <tbody>
+                                        <c:forEach var="partnerStaff" items="${taskDetail.partnerStaff}" varStatus="row">
+                                            <tr>
+                                                <td><c:out value="${row.index + 1}"/></td>
+                                                <td><c:out value="${partnerStaff.code}"/></td>
+                                                <td><c:out value="${partnerStaff.name}"/></td>
+                                                <td><c:out value="${empty partnerStaff.companyName ? 'Chưa cập nhật' : partnerStaff.companyName}"/></td>
+                                                <td><c:out value="${partnerStaff.statusDisplay}"/></td>
+                                                <td><c:out value="${empty partnerStaff.position ? 'Chưa cập nhật' : partnerStaff.position}"/></td>
+                                                <td><c:out value="${partnerStaff.assignedAtDisplay}"/></td>
+                                            </tr>
+                                        </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </section>
+                </c:if>
             </main>
         </div>
     </div>

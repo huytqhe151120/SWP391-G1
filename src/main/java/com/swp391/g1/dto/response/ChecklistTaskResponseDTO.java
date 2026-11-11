@@ -1,6 +1,7 @@
 package com.swp391.g1.dto.response;
 
 import com.swp391.g1.model.ChecklistTaskStatus;
+import com.swp391.g1.util.DateTimeUtil;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -86,6 +87,12 @@ public class ChecklistTaskResponseDTO {
 
     public String getStatusValue() {
         return ChecklistTaskStatus.normalize(status);
+    }
+
+    public boolean isOverdue() {
+        return deadline != null
+                && deadline.isBefore(DateTimeUtil.now())
+                && !ChecklistTaskStatus.COMPLETED.equals(getStatusValue());
     }
 
     public String getAssignees() {

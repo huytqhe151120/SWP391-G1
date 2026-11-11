@@ -95,19 +95,46 @@ public class NotificationDAOImpl implements INotificationDAO {
     }
 
     @Override
-    public int createOverdueChecklistTaskNotifications() {
+    public List<ChecklistTaskAlertDTO> createOverdueChecklistTaskNotifications() {
         String overdueTasksSql = """
-                SELECT id, activity_id, code, name, deadline
-                FROM checklist_task WITH (UPDLOCK, HOLDLOCK)
-                WHERE deadline < CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
-                  AND UPPER(LTRIM(RTRIM(status))) NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
-                ORDER BY deadline, id
+                SELECT task.id, task.activity_id, task.code, task.name, task.deadline,
+                       CASE WHEN EXISTS (
+                           SELECT 1
+                           FROM checklist_task_overdue_alert overdue_alert
+                           WHERE overdue_alert.task_id = task.id
+                             AND overdue_alert.sent_at <= DATEADD(HOUR, -24, SYSUTCDATETIME())
+                       ) THEN 1 ELSE 0 END AS escalation_due
+                FROM checklist_task task WITH (UPDLOCK, HOLDLOCK)
+                WHERE task.deadline < CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
+                  AND UPPER(LTRIM(RTRIM(task.status))) NOT IN ('COMPLETED', N'ĐÃ HOÀN THÀNH')
+                ORDER BY task.deadline, task.id
+                """;
+        String escalationStateSql = """
+                SELECT
+                    (SELECT TOP 1 TRY_CONVERT(INT, history.new_value)
+                     FROM checklist_task_history history WITH (UPDLOCK, HOLDLOCK)
+                     WHERE history.task_id = ?
+                       AND history.action_type = 'UPDATED'
+                       AND history.field_name = N'ASSIGNING_ACCOUNT_ID'
+                     ORDER BY history.changed_at DESC, history.id DESC) AS assigning_account_id,
+                    CASE WHEN EXISTS (
+                        SELECT 1
+                        FROM checklist_task_history history WITH (UPDLOCK, HOLDLOCK)
+                        WHERE history.task_id = ?
+                          AND history.action_type = 'UPDATED'
+                          AND history.field_name = N'OVERDUE_ESCALATED'
+                    ) THEN 1 ELSE 0 END AS already_escalated
                 """;
         String alreadyAlertedSql = """
                 SELECT 1
                 FROM checklist_task_overdue_alert WITH (UPDLOCK, HOLDLOCK)
                 WHERE task_id = ?
                   AND alert_date = CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATE)
+                """;
+        String hasPriorAlertSql = """
+                SELECT 1
+                FROM checklist_task_overdue_alert WITH (UPDLOCK, HOLDLOCK)
+                WHERE task_id = ?
                 """;
         String insertAlertSql = """
                 INSERT INTO checklist_task_overdue_alert (task_id, alert_date)
@@ -128,18 +155,55 @@ public class NotificationDAOImpl implements INotificationDAO {
                                     rs.getInt("activity_id"),
                                     rs.getString("code"),
                                     rs.getString("name"),
-                                    deadline == null ? "" : deadline.toLocalDateTime().format(deadlineFormat)));
+                                    deadline == null ? "" : deadline.toLocalDateTime().format(deadlineFormat),
+                                    rs.getBoolean("escalation_due")));
                         }
                     }
                 }
 
-                int notificationCount = 0;
+                List<ChecklistTaskAlertDTO> createdAlerts = new ArrayList<>();
                 for (OverdueChecklistTask task : overdueTasks) {
+                    Integer assigningAccountId;
+                    boolean alreadyEscalated;
+                    try (PreparedStatement ps = c.prepareStatement(escalationStateSql)) {
+                        ps.setInt(1, task.id());
+                        ps.setInt(2, task.id());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            if (!rs.next()) {
+                                throw new SQLException("Could not read checklist task history for task "
+                                        + task.id() + ".");
+                            }
+                            int accountId = rs.getInt("assigning_account_id");
+                            assigningAccountId = rs.wasNull() ? null : accountId;
+                            alreadyEscalated = rs.getBoolean("already_escalated");
+                        }
+                    }
+
+                    if (alreadyEscalated) {
+                        continue;
+                    }
+
+                    if (task.escalationDue()) {
+                        EscalationAssignee assignee = findEscalationAssignee(
+                                c, task, assigningAccountId);
+                        if (assignee == null) {
+                            continue;
+                        }
+                        ensureEscalationAssignee(c, task.id(), assignee);
+                        recordOverdueEscalation(c, task.id(), assignee);
+                        createOverdueNotification(c, task, findChecklistTaskRecipientIds(c, task.id()),
+                                "Công việc quá hạn 24 giờ đã được giao bổ sung",
+                                "Công việc " + task.code() + " - " + task.name()
+                                        + " đã quá hạn hơn 24 giờ. Người giao việc được thêm vào danh sách phụ trách.",
+                                "CHECKLIST_TASK_ESCALATED");
+                        createdAlerts.add(toAlertDTO(task, List.of()));
+                        continue;
+                    }
+
                     List<Integer> recipientIds = findChecklistTaskRecipientIds(c, task.id());
                     if (recipientIds.isEmpty()) {
                         continue;
                     }
-
                     boolean alreadyAlerted;
                     try (PreparedStatement ps = c.prepareStatement(alreadyAlertedSql)) {
                         ps.setInt(1, task.id());
@@ -147,48 +211,31 @@ public class NotificationDAOImpl implements INotificationDAO {
                             alreadyAlerted = rs.next();
                         }
                     }
-                    if (alreadyAlerted) {
-                        continue;
-                    }
+                    if (alreadyAlerted) continue;
 
+                    boolean firstOverdueAlert;
+                    try (PreparedStatement ps = c.prepareStatement(hasPriorAlertSql)) {
+                        ps.setInt(1, task.id());
+                        try (ResultSet rs = ps.executeQuery()) {
+                            firstOverdueAlert = !rs.next();
+                        }
+                    }
                     try (PreparedStatement ps = c.prepareStatement(insertAlertSql)) {
                         ps.setInt(1, task.id());
                         ps.executeUpdate();
                     }
-
-                    String targetUrl = "/checklist?action=detail&id=" + task.id()
-                            + "&activityId=" + task.activityId();
-                    int notificationId;
-                    try (PreparedStatement ps = c.prepareStatement(
-                            "INSERT INTO notifications (title, content, type, event_type, target_url) "
-                                    + "VALUES (?, ?, 'IN_APP', 'CHECKLIST_TASK_OVERDUE', ?)",
-                            Statement.RETURN_GENERATED_KEYS)) {
-                        ps.setString(1, "Công việc checklist đã quá hạn");
-                        ps.setString(2, "Công việc " + task.code() + " - " + task.name()
-                                + " đã quá hạn từ " + task.deadlineDisplay() + ".");
-                        ps.setString(3, targetUrl);
-                        ps.executeUpdate();
-                        try (ResultSet rs = ps.getGeneratedKeys()) {
-                            if (!rs.next()) {
-                                throw new SQLException("Overdue checklist notification ID was not generated.");
-                            }
-                            notificationId = rs.getInt(1);
-                        }
-                    }
-                    try (PreparedStatement ps = c.prepareStatement(
-                            "INSERT INTO user_notifications (notification_id, user_id) VALUES (?, ?)")) {
-                        for (int recipientId : recipientIds) {
-                            ps.setInt(1, notificationId);
-                            ps.setInt(2, recipientId);
-                            ps.addBatch();
-                        }
-                        ps.executeBatch();
-                    }
-                    notificationCount++;
+                    createOverdueNotification(c, task, recipientIds,
+                            "Công việc checklist đã quá hạn",
+                            "Công việc " + task.code() + " - " + task.name()
+                                    + " đã quá hạn từ " + task.deadlineDisplay() + ".",
+                            "CHECKLIST_TASK_OVERDUE");
+                    List<String> recipientEmails = firstOverdueAlert
+                            ? findChecklistTaskRecipientEmails(c, task.id()) : List.of();
+                    createdAlerts.add(toAlertDTO(task, recipientEmails));
                 }
 
                 c.commit();
-                return notificationCount;
+                return createdAlerts;
             } catch (SQLException e) {
                 c.rollback();
                 throw e;
@@ -199,7 +246,136 @@ public class NotificationDAOImpl implements INotificationDAO {
     }
 
     private record OverdueChecklistTask(
-            int id, int activityId, String code, String name, String deadlineDisplay) {
+            int id, int activityId, String code, String name, String deadlineDisplay, boolean escalationDue) {
+    }
+
+    private record EscalationAssignee(String type, int id) {
+    }
+
+    private ChecklistTaskAlertDTO toAlertDTO(
+            OverdueChecklistTask task, List<String> recipientEmails) {
+        return new ChecklistTaskAlertDTO(
+                task.code(),
+                task.name(),
+                "OVERDUE",
+                task.deadlineDisplay(),
+                "/checklist?action=detail&id=" + task.id() + "&activityId=" + task.activityId(),
+                recipientEmails);
+    }
+
+    private EscalationAssignee findEscalationAssignee(
+            Connection c, OverdueChecklistTask task, Integer assigningAccountId) throws SQLException {
+        if (assigningAccountId != null) {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT id FROM staff WHERE account_id = ? AND status = 'ACTIVE'")) {
+                ps.setInt(1, assigningAccountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return new EscalationAssignee("STAFF", rs.getInt(1));
+                }
+            }
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT id FROM partner_staff WHERE account_id = ? AND status = 'ACTIVE'")) {
+                ps.setInt(1, assigningAccountId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return new EscalationAssignee("PARTNER_STAFF", rs.getInt(1));
+                }
+            }
+        }
+
+        try (PreparedStatement ps = c.prepareStatement("""
+                SELECT staff.id
+                FROM extracurricular_activity activity
+                JOIN staff ON staff.id = activity.responsible_staff_id
+                WHERE activity.id = ? AND staff.status = 'ACTIVE'
+                """)) {
+            ps.setInt(1, task.activityId());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? new EscalationAssignee("STAFF", rs.getInt(1)) : null;
+            }
+        }
+    }
+
+    private void ensureEscalationAssignee(
+            Connection c, int taskId, EscalationAssignee assignee) throws SQLException {
+        String table = "STAFF".equals(assignee.type())
+                ? "checklist_task_staff" : "checklist_task_partner_staff";
+        String idColumn = "STAFF".equals(assignee.type()) ? "staff_id" : "partner_staff_id";
+        String existsSql = "SELECT 1 FROM " + table + " WHERE task_id = ? AND " + idColumn + " = ?";
+        try (PreparedStatement ps = c.prepareStatement(existsSql)) {
+            ps.setInt(1, taskId);
+            ps.setInt(2, assignee.id());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return;
+            }
+        }
+
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO " + table + " (task_id, " + idColumn + ") VALUES (?, ?)")) {
+            ps.setInt(1, taskId);
+            ps.setInt(2, assignee.id());
+            ps.executeUpdate();
+        }
+        try (PreparedStatement ps = c.prepareStatement("""
+                INSERT INTO checklist_task_assignment_history
+                    (task_id, assignee_type, assignee_id, action_type, assigned_at, ended_at)
+                VALUES (?, ?, ?, 'ASSIGNED', SYSUTCDATETIME(), NULL)
+                """)) {
+            ps.setInt(1, taskId);
+            ps.setString(2, assignee.type());
+            ps.setInt(3, assignee.id());
+            ps.executeUpdate();
+        }
+    }
+
+    private void recordOverdueEscalation(
+            Connection c, int taskId, EscalationAssignee assignee) throws SQLException {
+        String sql = """
+                INSERT INTO checklist_task_history
+                    (task_id, action_type, field_name, old_value, new_value, note,
+                     changed_by_account_id, changed_at)
+                VALUES (?, 'UPDATED', N'OVERDUE_ESCALATED', NULL, ?, N'Đã quá hạn 24 giờ; thêm người giao việc.',
+                        NULL, SYSUTCDATETIME())
+                """;
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, taskId);
+            ps.setString(2, assignee.type() + ":" + assignee.id());
+            ps.executeUpdate();
+        }
+    }
+
+    private void createOverdueNotification(
+            Connection c, OverdueChecklistTask task, List<Integer> recipientIds,
+            String title, String content, String eventType) throws SQLException {
+        if (recipientIds.isEmpty()) return;
+
+        String targetUrl = "/checklist?action=detail&id=" + task.id()
+                + "&activityId=" + task.activityId();
+        int notificationId;
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO notifications (title, content, type, event_type, target_url) "
+                        + "VALUES (?, ?, 'IN_APP', ?, ?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, title);
+            ps.setString(2, content);
+            ps.setString(3, eventType);
+            ps.setString(4, targetUrl);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (!rs.next()) {
+                    throw new SQLException("Overdue checklist notification ID was not generated.");
+                }
+                notificationId = rs.getInt(1);
+            }
+        }
+        try (PreparedStatement ps = c.prepareStatement(
+                "INSERT INTO user_notifications (notification_id, user_id) VALUES (?, ?)")) {
+            for (int recipientId : recipientIds) {
+                ps.setInt(1, notificationId);
+                ps.setInt(2, recipientId);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
     }
 
     private List<Integer> findChecklistTaskRecipientIds(Connection c, int taskId) throws SQLException {

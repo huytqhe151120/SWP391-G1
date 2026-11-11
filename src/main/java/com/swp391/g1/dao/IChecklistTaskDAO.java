@@ -22,19 +22,26 @@ public interface IChecklistTaskDAO {
 
     int create(int activityId, String phase, String priority, String code, String name, String description,
                LocalDateTime deadline, String status, List<Integer> staffIds, List<Integer> partnerStaffIds,
-               List<Integer> prerequisiteTaskIds);
+               List<Integer> prerequisiteTaskIds, int assignedByAccountId);
 
-    boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds);
+    boolean addAssignees(int taskId, List<Integer> staffIds, List<Integer> partnerStaffIds,
+                         int assignedByAccountId);
 
     ChecklistTaskDetailResponseDTO findDetailById(int taskId);
 
-    boolean isAssignedToAccount(int taskId, int accountId);
+    boolean isStaffAssignedToAccount(int taskId, int accountId);
+
+    boolean isPartnerStaffAssignedToAccount(int taskId, int accountId);
+
+    int findActiveStaffIdForAccount(int accountId);
+
+    int findActivePartnerStaffIdForAccount(int accountId);
 
     ChecklistAssignmentIdsDTO findAssigneeIds(int taskId);
 
     int update(int taskId, int activityId, String phase, String priority, String code, String name,
                String description, LocalDateTime deadline, String status, List<Integer> staffIds,
-               List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds);
+               List<Integer> partnerStaffIds, List<Integer> prerequisiteTaskIds, int assignedByAccountId);
 
     boolean updateStatus(int taskId, String status);
 
