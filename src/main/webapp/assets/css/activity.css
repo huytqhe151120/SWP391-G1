@@ -2035,7 +2035,8 @@ button.activity-action-link:focus-visible {
     cursor: pointer;
 }
 
-.target-scope-options {
+.target-scope-options,
+.activity-checkbox-group {
     display: flex;
     flex-wrap: wrap;
     align-items: center;

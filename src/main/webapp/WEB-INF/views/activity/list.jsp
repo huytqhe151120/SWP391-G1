@@ -115,9 +115,9 @@
                             <label for="filter-nature">Tính chất</label>
                             <select id="filter-nature" name="nature">
                                 <option value="">Tất cả</option>
-                                <option value="REQUIRE_REGISTRATION" ${selectedNature == 'REQUIRE_REGISTRATION' ? 'selected' : ''}>Cần đăng ký</option>
-                                <option value="VOLUNTARY" ${selectedNature == 'VOLUNTARY' ? 'selected' : ''}>Tự nguyện</option>
-                                <option value="MANDATORY" ${selectedNature == 'MANDATORY' ? 'selected' : ''}>Bắt buộc</option>
+                                <option value="REQUIRE_REGISTRATION" ${selectedNature == 'REQUIRE_REGISTRATION' ? 'selected' : ''}>Cần đăng ký trước</option>
+                                <option value="VOLUNTARY" ${selectedNature == 'VOLUNTARY' ? 'selected' : ''}>Tham gia tự do</option>
+                                <option value="MANDATORY" ${selectedNature == 'MANDATORY' ? 'selected' : ''}>Chỉ định tham gia</option>
                             </select>
                         </div>
                         <div class="activity-filter-field">
@@ -258,9 +258,9 @@
                                         </td>
                                         <td class="col-single-line" title="<c:out value='${activity.activityTypeName}'/>"><c:out value="${activity.activityTypeName}" default="—"/></td>
                                         <td class="col-single-line"><c:choose><c:when
-                                                test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký</c:when><c:when
-                                                test="${activity.nature == 'VOLUNTARY'}">Tự nguyện</c:when><c:when
-                                                test="${activity.nature == 'MANDATORY'}">Bắt buộc</c:when><c:otherwise>—</c:otherwise></c:choose></td>
+                                                test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký trước</c:when><c:when
+                                                test="${activity.nature == 'VOLUNTARY'}">Tham gia tự do</c:when><c:when
+                                                test="${activity.nature == 'MANDATORY'}">Chỉ định tham gia</c:when><c:otherwise>—</c:otherwise></c:choose></td>>
                                         <td class="col-number"><c:out value="${activity.maxParticipants}" default="—"/></td>
                                         <td class="activity-time">
                                             <c:choose>
@@ -306,7 +306,7 @@
                                             <td class="activity-registration-status-column col-status">
                                                 <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
                                                 <c:choose>
-                                                    <c:when test="${activity.nature eq 'MANDATORY'}"><span class="badge status-pill status-green">Hoạt động bắt buộc</span></c:when>
+                                                    <c:when test="${activity.nature eq 'MANDATORY'}"><span class="badge status-pill status-green">Chỉ định tham gia</span></c:when>
                                                     <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
                                                     <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
                                                     <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>

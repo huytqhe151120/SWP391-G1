@@ -342,7 +342,7 @@
                     <dl class="detail-grid activity-detail-grid">
                         <div class="detail-item"><dt>Bắt đầu</dt><dd><c:out value="${dt:format(activity.startTime)}" default="Chưa xác định"/></dd></div>
                         <div class="detail-item"><dt>Kết thúc</dt><dd><c:out value="${dt:format(activity.endTime)}" default="Chưa xác định"/></dd></div>
-                        <div class="detail-item"><dt>Tính chất hoạt động</dt><dd><c:choose><c:when test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký</c:when><c:when test="${activity.nature == 'VOLUNTARY'}">Tự nguyện</c:when><c:when test="${activity.nature == 'MANDATORY'}">Bắt buộc</c:when><c:otherwise>—</c:otherwise></c:choose></dd></div>
+                        <div class="detail-item"><dt>Tính chất hoạt động</dt><dd><c:choose><c:when test="${activity.nature == 'REQUIRE_REGISTRATION'}">Cần đăng ký trước</c:when><c:when test="${activity.nature == 'VOLUNTARY'}">Tham gia tự do</c:when><c:when test="${activity.nature == 'MANDATORY'}">Chỉ định tham gia</c:when><c:otherwise>—</c:otherwise></c:choose></dd></div>
                         <div class="detail-item"><dt>Bắt buộc điền form</dt><dd><c:out value="${activity.registrationFormRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Yêu cầu bài tổng kết</dt><dd><c:out value="${activity.summaryRequired ? 'Có' : 'Không'}"/></dd></div>
                         <div class="detail-item"><dt>Số lượng tối đa</dt><dd><c:out value="${activity.maxParticipants}" default="Không giới hạn"/></dd></div>

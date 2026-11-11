@@ -414,9 +414,9 @@
                                 <c:set var="natureValue" value="${not empty formData ? formData.nature : activity.nature}"/>
                                 <select id="nature" name="nature" data-required>
                                     <option value="">Chọn tính chất</option>
-                                    <option value="REQUIRE_REGISTRATION" ${natureValue == 'REQUIRE_REGISTRATION' ? 'selected' : ''}>Cần đăng ký</option>
-                                    <option value="VOLUNTARY" ${natureValue == 'VOLUNTARY' ? 'selected' : ''}>Tự nguyện</option>
-                                    <option value="MANDATORY" ${natureValue == 'MANDATORY' ? 'selected' : ''}>Bắt buộc</option>
+                                    <option value="REQUIRE_REGISTRATION" ${natureValue == 'REQUIRE_REGISTRATION' ? 'selected' : ''}>Cần đăng ký trước</option>
+                                    <option value="VOLUNTARY" ${natureValue == 'VOLUNTARY' ? 'selected' : ''}>Tham gia tự do</option>
+                                    <option value="MANDATORY" ${natureValue == 'MANDATORY' ? 'selected' : ''}>Chỉ định tham gia</option>
                                 </select>
                                 <small class="text-danger error-msg"></small>
                             </div>
@@ -434,16 +434,16 @@
                                 <small class="field-hint helper-text">Hệ thống sẽ tự động tạo tương ứng Buổi 1, Buổi 2,... theo số lượng đã nhập.</small>
                                 <small class="text-danger error-msg"></small>
                             </div>
-                            <div class="checkbox-group-container activity-checkbox-row">
-                                <div class="checkbox-inline">
-                                    <input id="summaryRequired" name="summaryRequired" type="checkbox" value="true" <c:if test="${summaryValue}">checked</c:if>>
-                                    <label for="summaryRequired">Yêu cầu nộp bài tổng kết</label>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="checkbox-inline">
-                                    <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true" <c:if test="${registrationValue}">checked</c:if>>
-                                    <label for="registrationFormRequired">Yêu cầu sinh viên đăng ký bằng form</label>
+                            <div class="field field-wide form-group-custom">
+                                <div class="activity-checkbox-group target-scope-options">
+                                    <div class="checkbox-inline">
+                                        <input id="summaryRequired" name="summaryRequired" type="checkbox" value="true" <c:if test="${summaryValue}">checked</c:if>>
+                                        <label for="summaryRequired">Yêu cầu nộp bài tổng kết</label>
+                                    </div>
+                                    <div class="checkbox-inline">
+                                        <input id="registrationFormRequired" name="registrationFormRequired" type="checkbox" value="true" <c:if test="${registrationValue}">checked</c:if>>
+                                        <label for="registrationFormRequired">Yêu cầu sinh viên đăng ký bằng form</label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="field field-wide">
