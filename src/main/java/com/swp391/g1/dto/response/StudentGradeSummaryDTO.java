@@ -11,8 +11,16 @@ public class StudentGradeSummaryDTO {
     private String majorName;
     private String academicProgramName;
     private String mainClassCode;
+    private int semesterId;
+    private String semesterCode;
+    private String semesterName;
     private int attendedActivityCount;
     private int registeredActivityCount;
+    private BigDecimal totalAttendanceScore = BigDecimal.ZERO;
+    private BigDecimal totalParticipationEvalScore = BigDecimal.ZERO;
+    private BigDecimal totalParticipationScore = BigDecimal.ZERO;
+    private BigDecimal totalSummaryScore = BigDecimal.ZERO;
+    private BigDecimal totalAverageScore = BigDecimal.ZERO;
     private BigDecimal totalPlusPoints = BigDecimal.ZERO;
     private BigDecimal totalMinusPoints = BigDecimal.ZERO;
     private BigDecimal totalAccumulatedPoints = BigDecimal.ZERO;
@@ -68,12 +76,40 @@ public class StudentGradeSummaryDTO {
         this.academicProgramName = academicProgramName;
     }
 
+    public String getCurriculumCode() {
+        return academicProgramName;
+    }
+
     public String getMainClassCode() {
         return mainClassCode;
     }
 
     public void setMainClassCode(String mainClassCode) {
         this.mainClassCode = mainClassCode;
+    }
+
+    public int getSemesterId() {
+        return semesterId;
+    }
+
+    public void setSemesterId(int semesterId) {
+        this.semesterId = semesterId;
+    }
+
+    public String getSemesterCode() {
+        return semesterCode;
+    }
+
+    public void setSemesterCode(String semesterCode) {
+        this.semesterCode = semesterCode;
+    }
+
+    public String getSemesterName() {
+        return semesterName;
+    }
+
+    public void setSemesterName(String semesterName) {
+        this.semesterName = semesterName;
     }
 
     public int getAttendedActivityCount() {
@@ -90,6 +126,46 @@ public class StudentGradeSummaryDTO {
 
     public void setRegisteredActivityCount(int registeredActivityCount) {
         this.registeredActivityCount = registeredActivityCount;
+    }
+
+    public BigDecimal getTotalAttendanceScore() {
+        return totalAttendanceScore;
+    }
+
+    public void setTotalAttendanceScore(BigDecimal totalAttendanceScore) {
+        this.totalAttendanceScore = totalAttendanceScore == null ? BigDecimal.ZERO : totalAttendanceScore;
+    }
+
+    public BigDecimal getTotalParticipationEvalScore() {
+        return totalParticipationEvalScore;
+    }
+
+    public void setTotalParticipationEvalScore(BigDecimal totalParticipationEvalScore) {
+        this.totalParticipationEvalScore = totalParticipationEvalScore == null ? BigDecimal.ZERO : totalParticipationEvalScore;
+    }
+
+    public BigDecimal getTotalParticipationScore() {
+        return totalParticipationScore;
+    }
+
+    public void setTotalParticipationScore(BigDecimal totalParticipationScore) {
+        this.totalParticipationScore = totalParticipationScore == null ? BigDecimal.ZERO : totalParticipationScore;
+    }
+
+    public BigDecimal getTotalSummaryScore() {
+        return totalSummaryScore;
+    }
+
+    public void setTotalSummaryScore(BigDecimal totalSummaryScore) {
+        this.totalSummaryScore = totalSummaryScore == null ? BigDecimal.ZERO : totalSummaryScore;
+    }
+
+    public BigDecimal getTotalAverageScore() {
+        return totalAverageScore;
+    }
+
+    public void setTotalAverageScore(BigDecimal totalAverageScore) {
+        this.totalAverageScore = totalAverageScore == null ? BigDecimal.ZERO : totalAverageScore;
     }
 
     public BigDecimal getTotalPlusPoints() {
@@ -116,8 +192,52 @@ public class StudentGradeSummaryDTO {
         this.totalAccumulatedPoints = totalAccumulatedPoints == null ? BigDecimal.ZERO : totalAccumulatedPoints;
     }
 
+    public BigDecimal getAccumulatedPoints() {
+        return totalAccumulatedPoints;
+    }
+
     public String getParticipationRatioText() {
         return attendedActivityCount + "/" + registeredActivityCount;
+    }
+
+    public String getFormattedAttendanceScore() {
+        return formatScore(totalAttendanceScore);
+    }
+
+    public String getFormattedTotalAttendanceScore() {
+        return formatScore(totalAttendanceScore);
+    }
+
+    public String getFormattedParticipationEvalScore() {
+        return formatScore(totalParticipationEvalScore);
+    }
+
+    public String getFormattedTotalParticipationEvalScore() {
+        return formatScore(totalParticipationEvalScore);
+    }
+
+    public String getFormattedParticipationScore() {
+        return formatScore(totalParticipationScore);
+    }
+
+    public String getFormattedTotalParticipationScore() {
+        return formatScore(totalParticipationScore);
+    }
+
+    public String getFormattedSummaryScore() {
+        return formatScore(totalSummaryScore);
+    }
+
+    public String getFormattedTotalSummaryScore() {
+        return formatScore(totalSummaryScore);
+    }
+
+    public String getFormattedAverageScore() {
+        return formatScore(totalAverageScore);
+    }
+
+    public String getFormattedTotalAverageScore() {
+        return formatScore(totalAverageScore);
     }
 
     public String getFormattedPlusPoints() {

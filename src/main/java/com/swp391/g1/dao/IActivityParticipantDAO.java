@@ -1,7 +1,9 @@
 package com.swp391.g1.dao;
 
 import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
+import com.swp391.g1.dto.response.AttendanceHistoryDTO;
 import com.swp391.g1.dto.response.ParticipantCandidateDTO;
+import com.swp391.g1.dto.response.ParticipantSessionAttendanceDTO;
 import com.swp391.g1.model.Enum.ParticipantStatus;
 
 import java.math.BigDecimal;
@@ -10,6 +12,10 @@ import java.util.Map;
 
 public interface IActivityParticipantDAO {
     List<ActivityParticipantResponseDTO> findByActivityId(int activityId);
+
+    default List<ActivityParticipantResponseDTO> findByActivityId(int activityId, int sessionNumber) {
+        return findByActivityId(activityId);
+    }
 
     /** Active students that are not yet participants of the activity. */
     List<ParticipantCandidateDTO> findCandidates(int activityId);
@@ -40,6 +46,22 @@ public interface IActivityParticipantDAO {
      * in activity_attendance_history, all in one transaction. Returns the number of changed rows.
      */
     int updateStatuses(int activityId, Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy);
+
+    default int updateStatuses(int activityId, int sessionNumber,
+            Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy) {
+        return updateStatuses(activityId, statusByParticipantId, changedBy);
+    }
+
+    default void syncActivityResults(int activityId) {
+    }
+
+    default List<ParticipantSessionAttendanceDTO> findSessionAttendances(int activityId, int participantId, int totalSessions) {
+        return List.of();
+    }
+
+    default List<AttendanceHistoryDTO> findAttendanceHistory(int activityId, int participantId) {
+        return List.of();
+    }
 
     /**
      * Updates participation evaluation score (0-5) and feedback for one or many participants (batch grading),

@@ -17,6 +17,13 @@ public class ActivityParticipantResponseDTO {
     private String majorName;
     private String mainClassCode;
     private ParticipantStatus attendanceStatus;
+    private int sessionNumber = 1;
+    private int totalSessions = 1;
+    private ParticipantStatus sessionAttendanceStatus = ParticipantStatus.NOT_YET;
+    private BigDecimal sessionAttendanceScore = BigDecimal.ZERO;
+    private int attendedSessionCount;
+    private int absentSessionCount;
+    private int markedSessionCount;
     private String registrationStatus;
     private Long registrationBy;
     private LocalDateTime createdAt;
@@ -108,6 +115,62 @@ public class ActivityParticipantResponseDTO {
 
     public void setAttendanceStatus(ParticipantStatus attendanceStatus) {
         this.attendanceStatus = attendanceStatus;
+    }
+
+    public int getSessionNumber() {
+        return sessionNumber > 0 ? sessionNumber : 1;
+    }
+
+    public void setSessionNumber(int sessionNumber) {
+        this.sessionNumber = sessionNumber > 0 ? sessionNumber : 1;
+    }
+
+    public int getTotalSessions() {
+        return totalSessions > 0 ? totalSessions : 1;
+    }
+
+    public void setTotalSessions(int totalSessions) {
+        this.totalSessions = totalSessions > 0 ? totalSessions : 1;
+    }
+
+    public ParticipantStatus getSessionAttendanceStatus() {
+        return sessionAttendanceStatus != null ? sessionAttendanceStatus : ParticipantStatus.NOT_YET;
+    }
+
+    public void setSessionAttendanceStatus(ParticipantStatus sessionAttendanceStatus) {
+        this.sessionAttendanceStatus = sessionAttendanceStatus != null ? sessionAttendanceStatus : ParticipantStatus.NOT_YET;
+    }
+
+    public BigDecimal getSessionAttendanceScore() {
+        return sessionAttendanceScore != null ? sessionAttendanceScore : BigDecimal.ZERO;
+    }
+
+    public void setSessionAttendanceScore(BigDecimal sessionAttendanceScore) {
+        this.sessionAttendanceScore = sessionAttendanceScore != null ? sessionAttendanceScore : BigDecimal.ZERO;
+    }
+
+    public int getAttendedSessionCount() {
+        return attendedSessionCount;
+    }
+
+    public void setAttendedSessionCount(int attendedSessionCount) {
+        this.attendedSessionCount = Math.max(0, attendedSessionCount);
+    }
+
+    public int getAbsentSessionCount() {
+        return absentSessionCount;
+    }
+
+    public void setAbsentSessionCount(int absentSessionCount) {
+        this.absentSessionCount = Math.max(0, absentSessionCount);
+    }
+
+    public int getMarkedSessionCount() {
+        return markedSessionCount;
+    }
+
+    public void setMarkedSessionCount(int markedSessionCount) {
+        this.markedSessionCount = Math.max(0, markedSessionCount);
     }
 
     public LocalDateTime getCreatedAt() {
@@ -232,13 +295,31 @@ public class ActivityParticipantResponseDTO {
     }
 
     public boolean isPresentStatus() {
-        return attendanceStatus == ParticipantStatus.ATTENDED
+        return attendedSessionCount > 0
+                || attendanceStatus == ParticipantStatus.ATTENDED
                 || attendanceStatus == ParticipantStatus.IN_LATE
                 || attendanceStatus == ParticipantStatus.OUT_EARLY;
     }
 
+    public boolean isGraded() {
+        return participationEvalScore != null;
+    }
+
+    public String getFormattedSessionAttendanceScore() {
+        return formatScore(getSessionAttendanceScore());
+    }
+
+    public String getSessionProgressText() {
+        return attendedSessionCount + "/" + getTotalSessions() + " buổi";
+    }
+
     public String getFormattedAttendanceScore() {
         return formatScore(attendanceScore);
+    }
+
+    public String getFormattedAttendanceScoreOneDecimal() {
+        BigDecimal value = attendanceScore != null ? attendanceScore : BigDecimal.ZERO;
+        return value.setScale(1, RoundingMode.HALF_UP).toPlainString();
     }
 
     public String getFormattedEvalScore() {

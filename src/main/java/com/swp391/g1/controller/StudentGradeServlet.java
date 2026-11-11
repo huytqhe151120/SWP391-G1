@@ -3,10 +3,14 @@ package com.swp391.g1.controller;
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.StudentActivityGradeDTO;
 import com.swp391.g1.dto.response.StudentGradeSummaryDTO;
+import com.swp391.g1.model.Enum.CommonStatus;
+import com.swp391.g1.model.Semester;
 import com.swp391.g1.model.Student;
 import com.swp391.g1.service.AccessPolicy;
+import com.swp391.g1.service.ISemesterService;
 import com.swp391.g1.service.IStudentGradeService;
 import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.impl.SemesterServiceImpl;
 import com.swp391.g1.service.impl.StudentGradeServiceImpl;
 import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
@@ -35,10 +39,12 @@ public class StudentGradeServlet extends HttpServlet {
 
     private final IStudentGradeService gradeService;
     private final IStudentService studentService;
+    private final ISemesterService semesterService;
 
     public StudentGradeServlet() {
         this.gradeService = new StudentGradeServiceImpl();
         this.studentService = new StudentServiceImpl();
+        this.semesterService = new SemesterServiceImpl();
     }
 
     @Override
@@ -101,7 +107,12 @@ public class StudentGradeServlet extends HttpServlet {
 
     private void handleList(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        List<StudentGradeSummaryDTO> allSummaries = gradeService.getAllStudentGradeSummaries();
+        List<Semester> semesters = semesterService.getAllSemesters();
+        int activeSemesterId = findActiveSemesterId(semesters);
+        int selectedSemesterId = resolveSelectedSemesterId(request.getParameter("semesterId"), activeSemesterId);
+        Semester selectedSemester = findSemesterById(semesters, selectedSemesterId);
+
+        List<StudentGradeSummaryDTO> allSummaries = gradeService.getAllStudentGradeSummaries(selectedSemesterId);
 
         Set<String> departments = new TreeSet<>();
         Set<String> majors = new TreeSet<>();
@@ -114,7 +125,7 @@ public class StudentGradeServlet extends HttpServlet {
             addIfPresent(classes, item.getMainClassCode());
         }
 
-        GradeListFilter filter = GradeListFilter.from(request);
+        GradeListFilter filter = GradeListFilter.from(request, selectedSemesterId, activeSemesterId);
         List<StudentGradeSummaryDTO> filteredList = new ArrayList<>();
         for (StudentGradeSummaryDTO item : allSummaries) {
             if (filter.matches(item)) {
@@ -129,6 +140,11 @@ public class StudentGradeServlet extends HttpServlet {
         int fromIndex = Math.min((currentPage - 1) * pageSize, filteredCount);
         int toIndex = Math.min(fromIndex + pageSize, filteredCount);
         List<StudentGradeSummaryDTO> pageItems = new ArrayList<>(filteredList.subList(fromIndex, toIndex));
+
+        request.setAttribute("semesters", semesters);
+        request.setAttribute("activeSemesterId", activeSemesterId);
+        request.setAttribute("selectedSemesterId", selectedSemesterId);
+        request.setAttribute("selectedSemester", selectedSemester);
 
         request.setAttribute("summaries", pageItems);
         request.setAttribute("totalStudentsCount", allSummaries.size());
@@ -169,20 +185,29 @@ public class StudentGradeServlet extends HttpServlet {
             requestedStudentId = myStudentId;
         }
 
+        List<Semester> semesters = semesterService.getAllSemesters();
+        int activeSemesterId = findActiveSemesterId(semesters);
+        int selectedSemesterId = resolveSelectedSemesterId(request.getParameter("semesterId"), activeSemesterId);
+        Semester selectedSemester = findSemesterById(semesters, selectedSemesterId);
+
         List<StudentGradeSummaryDTO> allStudents = isStudent
                 ? List.of()
-                : gradeService.getAllStudentGradeSummaries();
+                : gradeService.getAllStudentGradeSummaries(selectedSemesterId);
         if (!isStudent && requestedStudentId <= 0 && !allStudents.isEmpty()) {
             requestedStudentId = allStudents.get(0).getStudentId();
         }
 
         StudentGradeSummaryDTO selectedStudent = requestedStudentId > 0
-                ? gradeService.getStudentGradeSummaryById(requestedStudentId)
+                ? gradeService.getStudentGradeSummaryById(requestedStudentId, selectedSemesterId)
                 : null;
         List<StudentActivityGradeDTO> activityGrades = selectedStudent != null
-                ? gradeService.getActivityGradesByStudentId(selectedStudent.getStudentId())
+                ? gradeService.getActivityGradesByStudentId(selectedStudent.getStudentId(), selectedSemesterId)
                 : List.of();
 
+        request.setAttribute("semesters", semesters);
+        request.setAttribute("activeSemesterId", activeSemesterId);
+        request.setAttribute("selectedSemesterId", selectedSemesterId);
+        request.setAttribute("selectedSemester", selectedSemester);
         request.setAttribute("allStudents", allStudents);
         request.setAttribute("selectedStudent", selectedStudent);
         request.setAttribute("selectedStudentId", selectedStudent == null ? 0 : selectedStudent.getStudentId());
@@ -240,6 +265,42 @@ public class StudentGradeServlet extends HttpServlet {
         request.getRequestDispatcher("/WEB-INF/views/student-grade/activity-detail.jsp").forward(request, response);
     }
 
+    private int findActiveSemesterId(List<Semester> semesters) {
+        if (semesters == null || semesters.isEmpty()) {
+            return 0;
+        }
+        for (Semester s : semesters) {
+            if (s.getStatus() == CommonStatus.ACTIVE) {
+                return s.getId();
+            }
+        }
+        return semesters.get(0).getId();
+    }
+
+    private int resolveSelectedSemesterId(String rawParam, int activeSemesterId) {
+        if (rawParam == null || rawParam.trim().isEmpty()) {
+            return activeSemesterId;
+        }
+        String trimmed = rawParam.trim();
+        if ("0".equals(trimmed) || "ALL".equalsIgnoreCase(trimmed)) {
+            return 0;
+        }
+        int parsed = parseId(trimmed);
+        return parsed > 0 ? parsed : activeSemesterId;
+    }
+
+    private Semester findSemesterById(List<Semester> semesters, int semesterId) {
+        if (semesters == null || semesterId <= 0) {
+            return null;
+        }
+        for (Semester s : semesters) {
+            if (s.getId() == semesterId) {
+                return s;
+            }
+        }
+        return null;
+    }
+
     private void addIfPresent(Set<String> values, String value) {
         if (value != null && !value.isBlank()) {
             values.add(value.trim());
@@ -263,6 +324,8 @@ public class StudentGradeServlet extends HttpServlet {
     }
 
     private static final class GradeListFilter {
+        private final int semesterId;
+        private final int defaultSemesterId;
         private final String keyword;
         private final String department;
         private final String major;
@@ -270,7 +333,9 @@ public class StudentGradeServlet extends HttpServlet {
         private final String mainClass;
         private final String normalizedKeyword;
 
-        private GradeListFilter(HttpServletRequest request) {
+        private GradeListFilter(HttpServletRequest request, int semesterId, int defaultSemesterId) {
+            this.semesterId = semesterId;
+            this.defaultSemesterId = defaultSemesterId;
             this.keyword = trimToEmpty(request.getParameter("keyword"));
             this.department = trimToEmpty(request.getParameter("department"));
             this.major = trimToEmpty(request.getParameter("major"));
@@ -279,8 +344,8 @@ public class StudentGradeServlet extends HttpServlet {
             this.normalizedKeyword = normalizeText(keyword);
         }
 
-        static GradeListFilter from(HttpServletRequest request) {
-            return new GradeListFilter(request);
+        static GradeListFilter from(HttpServletRequest request, int semesterId, int defaultSemesterId) {
+            return new GradeListFilter(request, semesterId, defaultSemesterId);
         }
 
         boolean matches(StudentGradeSummaryDTO item) {
@@ -296,7 +361,8 @@ public class StudentGradeServlet extends HttpServlet {
         }
 
         int activeCount() {
-            return (normalizedKeyword.isEmpty() ? 0 : 1)
+            return (semesterId != defaultSemesterId ? 1 : 0)
+                    + (normalizedKeyword.isEmpty() ? 0 : 1)
                     + (department.isEmpty() ? 0 : 1)
                     + (major.isEmpty() ? 0 : 1)
                     + (academicProgram.isEmpty() ? 0 : 1)
@@ -305,6 +371,7 @@ public class StudentGradeServlet extends HttpServlet {
 
         String toQuery() {
             StringBuilder query = new StringBuilder();
+            appendParam(query, "semesterId", String.valueOf(semesterId));
             appendParam(query, "keyword", keyword);
             appendParam(query, "department", department);
             appendParam(query, "major", major);

@@ -32,6 +32,8 @@ public class StudentActivityGradeDTO {
     private BigDecimal earlyRegCoefficient;
 
     private ParticipantStatus attendanceStatus;
+    private int attendedSessionCount;
+    private int totalSessions = 1;
     private BigDecimal attendanceScore;
     private String attendanceMarkedBy;
     private LocalDateTime attendanceMarkedAt;
@@ -221,6 +223,22 @@ public class StudentActivityGradeDTO {
         this.attendanceStatus = attendanceStatus;
     }
 
+    public int getAttendedSessionCount() {
+        return attendedSessionCount;
+    }
+
+    public void setAttendedSessionCount(int attendedSessionCount) {
+        this.attendedSessionCount = Math.max(0, attendedSessionCount);
+    }
+
+    public int getTotalSessions() {
+        return totalSessions > 0 ? totalSessions : 1;
+    }
+
+    public void setTotalSessions(int totalSessions) {
+        this.totalSessions = totalSessions > 0 ? totalSessions : 1;
+    }
+
     public BigDecimal getAttendanceScore() {
         return attendanceScore;
     }
@@ -362,7 +380,7 @@ public class StudentActivityGradeDTO {
 
     public String getFormattedSummaryScore() {
         if (!summaryRequired) {
-            return "N/A";
+            return "-";
         }
         return summaryScore == null ? "Chưa chấm" : formatScore(summaryScore);
     }

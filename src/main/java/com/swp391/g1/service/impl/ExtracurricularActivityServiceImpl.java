@@ -267,6 +267,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             targetParticipantService.removeUnattendedAutoEnrolledParticipants(entity.getId());
         }
         activityDAO.refreshPublic(entity.getId());
+        new com.swp391.g1.dao.impl.ActivityParticipantDAOImpl().syncActivityResults(entity.getId());
 
         return true;
     }
@@ -295,6 +296,7 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 || a.getNature() != b.getNature()
                 || a.isSummaryRequired() != b.isSummaryRequired()
                 || !Objects.equals(a.getMaxParticipants(), b.getMaxParticipants())
+                || a.getAttendanceSessionCount() != b.getAttendanceSessionCount()
                 || !sameMinute(a.getStartTime(), b.getStartTime())
                 || !sameMinute(a.getEndTime(), b.getEndTime());
     }
@@ -396,6 +398,18 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             }
         }
 
+        if (isEmpty(dto.getAttendanceSessionCount())) {
+            throw new IllegalArgumentException("Vui lòng nhập số buổi điểm danh.");
+        }
+        try {
+            int sessionCount = Integer.parseInt(dto.getAttendanceSessionCount().trim());
+            if (sessionCount < 1 || sessionCount > 50) {
+                throw new IllegalArgumentException("Số buổi điểm danh phải từ 1 đến 50 buổi.");
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Số buổi điểm danh không hợp lệ.");
+        }
+
         // Validate khoảng thời gian: bắt buộc nhập, StartTime phải trước EndTime
         if (isEmpty(dto.getStartTime())) {
             throw new IllegalArgumentException("Thời gian bắt đầu không được để trống.");
@@ -461,6 +475,8 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         entity.setNature(ActivityNature.valueOf(dto.getNature().trim()));
         entity.setSummaryRequired("true".equalsIgnoreCase(dto.getSummaryRequired()));
         entity.setMaxParticipants(isEmpty(dto.getMaxParticipants()) ? null : Integer.valueOf(dto.getMaxParticipants().trim()));
+        entity.setAttendanceSessionCount(
+                isEmpty(dto.getAttendanceSessionCount()) ? 1 : Integer.parseInt(dto.getAttendanceSessionCount().trim()));
 
         // Convert Thời gian (<input type="datetime-local"> trả về định dạng yyyy-MM-ddTHH:mm)[cite: 1]
         if (!isEmpty(dto.getStartTime())) {
