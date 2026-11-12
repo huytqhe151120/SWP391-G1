@@ -35,6 +35,8 @@ public class PartnerInvitationServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         CurrentUser user = AuthContext.getCurrentUser(request);
+        String userType = user == null ? "" : user.getType();
+        boolean showCompanyColumn = "ADMIN".equals(userType) || "STAFF".equals(userType);
         List<ActivityCollaborationInvitationDTO> source = invitationService.getInvitationsForUser(user);
 
         String keyword = trim(request.getParameter("keyword"));
@@ -54,7 +56,8 @@ public class PartnerInvitationServlet extends HttpServlet {
                 activityTypes.add(inv.getActivityTypeName());
             }
             if (!normalizedKeyword.isEmpty() && !normalize(inv.getActivityCode()).contains(normalizedKeyword)
-                    && !normalize(inv.getActivityName()).contains(normalizedKeyword)) {
+                    && !normalize(inv.getActivityName()).contains(normalizedKeyword)
+                    && !(showCompanyColumn && normalize(inv.getPartnerCompanyName()).contains(normalizedKeyword))) {
                 continue;
             }
             if (!activityType.isEmpty() && !activityType.equals(inv.getActivityTypeName())) {
@@ -89,6 +92,7 @@ public class PartnerInvitationServlet extends HttpServlet {
         appendParam(query, "activityApprovalStatus", activityApproval);
         appendParam(query, "invitationStatus", invitationStatus);
 
+        request.setAttribute("showCompanyColumn", showCompanyColumn);
         request.setAttribute("keyword", keyword);
         request.setAttribute("selectedActivityType", activityType);
         request.setAttribute("selectedActivityStatus", activityStatus);

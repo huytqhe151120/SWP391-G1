@@ -19,6 +19,13 @@ public interface IActivityCollaborationInvitationService {
      */
     java.util.Set<Integer> getVisibleActivityIds(CurrentUser user);
 
+    /**
+     * Ids of the activities the user may access for student attendance, or null when not restricted by
+     * partner collaboration. Partner staff only get actively collaborating activities of their company
+     * where they are assigned (main or additional) or hold a leader/secretary role.
+     */
+    java.util.Set<Integer> getAttendanceActivityIds(CurrentUser user);
+
     /** Accepted invitations, i.e. the partners that take part in the activity. */
     List<ActivityPartnerCompanyDTO> getApprovedPartners(int activityId);
 

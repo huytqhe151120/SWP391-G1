@@ -23,6 +23,33 @@ public final class AccessPolicy {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
     }
 
+    /**
+     * ADMIN, STAFF, and authorized PARTNER_STAFF can use student attendance;
+     * STAFF and PARTNER_STAFF operations are scope-checked per activity.
+     */
+    public static boolean canTakeAttendance(CurrentUser user) {
+        return canManageActivities(user) || canUsePartnerAttendanceScope(user);
+    }
+
+    /** Only ADMIN and STAFF can add or remove students in an activity's participant list. */
+    public static boolean canManageParticipants(CurrentUser user) {
+        return canManageActivities(user);
+    }
+
+    /**
+     * PARTNER_STAFF attendance access is limited to activities linked to their partner company
+     * where the staff member is assigned (main or additional) or holds a leader/secretary role.
+     */
+    public static boolean canUsePartnerAttendanceScope(CurrentUser user) {
+        if (!hasType(user, "PARTNER_STAFF") || user.getRole() == null) {
+            return false;
+        }
+        return switch (user.getRole()) {
+            case "PARTNER_STAFF", "PARTNER_LEADER", "PARTNER_SECRETARY" -> true;
+            default -> false;
+        };
+    }
+
     /** STAFF activity access is limited to a responsible staff member or unit role. */
     public static boolean canUseStaffActivityScope(CurrentUser user) {
         if (!hasType(user, "STAFF") || user.getRole() == null) {
@@ -76,6 +103,15 @@ public final class AccessPolicy {
     /** Only students can submit questions and use the student Q&A page. */
     public static boolean canUseStudentQuestions(CurrentUser user) {
         return hasType(user, "STUDENT");
+    }
+
+    /** Only students submit feedback; ADMIN and scoped STAFF can review reports. */
+    public static boolean canSubmitActivityFeedback(CurrentUser user) {
+        return hasType(user, "STUDENT");
+    }
+
+    public static boolean canManageActivityFeedback(CurrentUser user) {
+        return canManageActivities(user) && (hasType(user, ADMIN_TYPE) || canUseStaffActivityScope(user));
     }
 
     /** Any authenticated account can open notifications; the DAO only returns rows addressed to that account. */

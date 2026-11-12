@@ -2,9 +2,7 @@ package com.swp391.g1.util;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import javax.swing.text.DateFormatter;
 import java.math.BigDecimal;
-import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -42,6 +40,19 @@ public class ParamUtil {
             return defaultValue;
         }
         return value.trim();
+    }
+
+    // parse int with default value
+    public static int getInt(HttpServletRequest request, String paramName, int defaultValue) {
+        String value = request.getParameter(paramName);
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     // format Date

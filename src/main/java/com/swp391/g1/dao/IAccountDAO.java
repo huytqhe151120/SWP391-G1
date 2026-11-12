@@ -7,7 +7,7 @@ import com.swp391.g1.model.AccountProfile;
 import com.swp391.g1.model.AccountTypeRole;
 
 public interface IAccountDAO {
-    List<Account> findByCriteria(String search, String type, String role, String status);
+    List<Account> findByCriteria(String id, String search, String type, String role, String status);
 
     Account findById(int id);
 

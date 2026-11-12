@@ -6,6 +6,7 @@ public class NotificationDTO {
     private int id;
     private String title;
     private String content;
+    private String eventType;
     private String link;
     private LocalDateTime createdAt;
     private boolean read;
@@ -16,6 +17,8 @@ public class NotificationDTO {
     public void setTitle(String title) { this.title = title; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+    public String getEventType() { return eventType; }
+    public void setEventType(String eventType) { this.eventType = eventType; }
     public String getLink() { return link; }
     public void setLink(String link) { this.link = link; }
     public LocalDateTime getCreatedAt() { return createdAt; }

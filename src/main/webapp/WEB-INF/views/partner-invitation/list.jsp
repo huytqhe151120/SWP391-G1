@@ -1,7 +1,15 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.swp391.g1.dto.CurrentUser" %>
+<%@ page import="com.swp391.g1.util.AuthContext" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="st" uri="http://swp391.g1/status" %>
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
+<%
+    CurrentUser invNavUser = AuthContext.getCurrentUser(request);
+    String invNavType = invNavUser == null ? "" : invNavUser.getType();
+    boolean showCompanyColumn = "ADMIN".equals(invNavType) || "STAFF".equals(invNavType);
+    pageContext.setAttribute("showCompanyColumn", showCompanyColumn);
+%>
 <c:set var="activeNav" value="partner-invitations" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -9,9 +17,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lời mời hợp tác | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=25">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=3">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-invitation.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -57,7 +65,7 @@
             <div class="activity-filter-field activity-filter-search">
                 <label for="filter-keyword">Tìm kiếm</label>
                 <input id="filter-keyword" type="search" name="keyword" value="<c:out value='${keyword}'/>"
-                       placeholder="Mã hoặc tên hoạt động">
+                       placeholder="${showCompanyColumn ? 'Tên công ty, mã hoặc tên hoạt động' : 'Mã hoặc tên hoạt động'}">
             </div>
             <div class="activity-filter-field">
                 <label for="filter-type">Loại hoạt động</label>
@@ -107,14 +115,17 @@
             <table class="partner-invitation-table">
                 <thead>
                 <tr>
-                    <th scope="col">Mã hoạt động</th>
-                    <th scope="col">Tên hoạt động</th>
-                    <th scope="col">Loại hoạt động</th>
-                    <th scope="col" class="col-wrap">Trạng thái duyệt HĐ</th>
-                    <th scope="col">Thời gian</th>
-                    <th scope="col" class="activity-run-status"><span>Trạng thái</span><span>hoạt động</span></th>
+                    <c:if test="${showCompanyColumn}">
+                        <th scope="col" class="col-object-name">Tên công ty</th>
+                    </c:if>
+                    <th scope="col" class="col-code">Mã hoạt động</th>
+                    <th scope="col" class="col-activity-name">Tên hoạt động</th>
+                    <th scope="col" class="col-single-line">Loại hoạt động</th>
+                    <th scope="col" class="col-wrap col-status">Trạng thái duyệt HĐ</th>
+                    <th scope="col" class="col-datetime">Thời gian</th>
+                    <th scope="col" class="activity-run-status col-status"><span>Trạng thái</span><span>hoạt động</span></th>
                     <th scope="col" class="freeze freeze-message">Lời nhắn</th>
-                    <th scope="col" class="freeze freeze-status invitation-status-column"><span>Trạng thái</span><span>lời mời</span></th>
+                    <th scope="col" class="freeze freeze-status invitation-status-column col-status"><span>Trạng thái</span><span>lời mời</span></th>
                     <th scope="col" class="freeze freeze-actions">Thao tác</th>
                 </tr>
                 </thead>
@@ -122,7 +133,7 @@
                 <c:choose>
                     <c:when test="${empty invitations}">
                         <tr>
-                            <td class="empty-state activity-empty-state" colspan="9">
+                            <td class="empty-state activity-empty-state" colspan="${showCompanyColumn ? 10 : 9}">
                                 <c:choose>
                                     <c:when test="${filtered}"><strong>Không tìm thấy lời mời phù hợp</strong></c:when>
                                     <c:otherwise><strong>Chưa có lời mời hợp tác nào</strong></c:otherwise>
@@ -133,10 +144,17 @@
                     <c:otherwise>
                         <c:forEach var="inv" items="${invitations}">
                             <tr>
-                                <td><span class="activity-code"><c:out value="${inv.activityCode}"/></span></td>
-                                <td><strong class="activity-name"><c:out value="${inv.activityName}"/></strong></td>
-                                <td><c:out value="${inv.activityTypeName}" default="—"/></td>
-                                <td class="col-wrap"><span class="badge status-pill ${st:css(inv.activityApprovalStatus)}">${st:label(inv.activityApprovalStatus)}</span></td>
+                                <c:if test="${showCompanyColumn}">
+                                    <td class="col-object-name" title="<c:out value='${inv.partnerCompanyName}'/>">
+                                        <strong class="activity-name" title="<c:out value='${inv.partnerCompanyName}'/>"><c:out value="${inv.partnerCompanyName}" default="—"/></strong>
+                                    </td>
+                                </c:if>
+                                <td class="col-code"><span class="activity-code"><c:out value="${inv.activityCode}"/></span></td>
+                                <td class="col-activity-name" title="<c:out value='${inv.activityName}'/>">
+                                    <strong class="activity-name" title="<c:out value='${inv.activityName}'/>"><c:out value="${inv.activityName}"/></strong>
+                                </td>
+                                <td class="col-single-line" title="<c:out value='${inv.activityTypeName}'/>"><c:out value="${inv.activityTypeName}" default="—"/></td>
+                                <td class="col-wrap col-status"><span class="badge status-pill ${st:css(inv.activityApprovalStatus)}">${st:label(inv.activityApprovalStatus)}</span></td>
                                 <td class="activity-time">
                                     <c:choose>
                                         <c:when test="${not empty inv.activityStartTime}">
@@ -146,20 +164,19 @@
                                         <c:otherwise>Chưa xác định</c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td class="activity-run-status"><span class="badge status-pill ${st:css(inv.activityStatus)}">${st:label(inv.activityStatus)}</span></td>
+                                <td class="activity-run-status col-status"><span class="badge status-pill ${st:css(inv.activityStatus)}">${st:label(inv.activityStatus)}</span></td>
                                 <td class="freeze freeze-message">
                                     <c:choose>
                                         <c:when test="${empty inv.message}">—</c:when>
-                                            <c:when test="${empty inv.message}">—</c:when>
-                                            <c:otherwise>
-                                                <button type="button" class="button button-sm action-btn action-btn--view invitation-message-view"
-                                                        data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
-                                                        data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
-                                                </button>
-                                            </c:otherwise>
+                                        <c:otherwise>
+                                            <button type="button" class="button button-sm action-btn action-btn--view invitation-message-view"
+                                                    data-title="${inv.termination ? 'Lời nhắn mời ngừng hợp tác' : 'Lời nhắn mời hợp tác'}"
+                                                    data-message="<c:out value='${inv.message}'/>"><span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span> Xem
+                                            </button>
+                                        </c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td class="freeze freeze-status invitation-status-column">
+                                <td class="freeze freeze-status invitation-status-column col-status">
                                     <span class="badge status-pill ${st:css(inv.approvalStatus)}">
                                         <c:choose>
                                             <c:when test="${inv.approvalStatus == 'PENDING'}">Chờ phản hồi</c:when>
@@ -184,8 +201,14 @@
                                                             <input type="hidden" name="returnTo" value="partner-invitations">
                                                             <input type="hidden" name="activityId" value="${inv.activityId}">
                                                             <input type="hidden" name="invitationId" value="${inv.id}">
-                                                            <button type="submit" name="decision" value="accept" class="action-menu-item action-menu-item--approve">Chấp nhận lời mời</button>
-                                                            <button type="submit" name="decision" value="reject" class="action-menu-item action-menu-item--reject">Từ chối lời mời</button>
+                                                            <button type="submit" name="decision" value="accept" class="action-menu-item action-menu-item--approve">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></span>
+                                                                Chấp nhận lời mời
+                                                            </button>
+                                                            <button type="submit" name="decision" value="reject" class="action-menu-item action-menu-item--reject">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m18 6-12 12"/><path d="m6 6 12 12"/></svg></span>
+                                                                Từ chối lời mời
+                                                            </button>
                                                         </form>
                                                     </c:if>
                                                     <c:if test="${inv.canRevoke}">
@@ -195,7 +218,10 @@
                                                             <input type="hidden" name="returnTo" value="partner-invitations">
                                                             <input type="hidden" name="activityId" value="${inv.activityId}">
                                                             <input type="hidden" name="invitationId" value="${inv.id}">
-                                                            <button type="submit" class="action-menu-item action-menu-item--undo">${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}</button>
+                                                            <button type="submit" class="action-menu-item action-menu-item--undo">
+                                                                <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M5.5 13a8 8 0 1 0 2-7L3 11"/></svg></span>
+                                                                ${inv.approvalStatus == 'APPROVED' ? 'Hủy duyệt' : 'Hủy từ chối'}
+                                                            </button>
                                                         </form>
                                                     </c:if>
                                                 </div>

@@ -1,12 +1,15 @@
 package com.swp391.g1.service;
 
 import com.swp391.g1.dto.response.NotificationDTO;
+import java.time.Instant;
 import java.util.List;
 
 public interface INotificationService {
 
     /** Gửi thông báo yêu cầu duyệt hoạt động tới toàn bộ ADMIN. Không ném lỗi ra ngoài. */
     void notifyApprovalRequest(int activityId, String activityName);
+
+    void notifyLoginSuccessful(int accountId, Instant loginAt);
 
     /** Gửi thông báo hoạt động đã được duyệt tới nhân sự phụ trách. Không ném lỗi ra ngoài. */
     void notifyActivityApproved(int activityId, String activityName);

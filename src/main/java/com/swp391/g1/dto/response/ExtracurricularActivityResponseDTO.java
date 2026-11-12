@@ -1,8 +1,16 @@
 package com.swp391.g1.dto.response;
 
+import com.swp391.g1.model.ActivityTargetParticipant;
 import com.swp391.g1.model.Enum;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExtracurricularActivityResponseDTO {
     private int id;
@@ -10,6 +18,7 @@ public class ExtracurricularActivityResponseDTO {
     private String name;
     private int semesterId;
     private int activityTypeId;
+    private int organizationLevelId;
     private int responsibleDepartmentId;
     private int responsibleStaffId;
     private Integer partnerCompanyId;          // Nullable
@@ -20,6 +29,9 @@ public class ExtracurricularActivityResponseDTO {
     private String semesterName;                  // Join from Semester
     private String activityTypeCode;              // Join from ActivityType
     private String activityTypeName;              // Join from ActivityType
+    private String organizationLevelCode;         // Join from ActivityOrganizationLevel
+    private String organizationLevelName;         // Join from ActivityOrganizationLevel
+    private BigDecimal organizationLevelCoefficient; // Join from ActivityOrganizationLevel
     private String responsibleDepartmentCode;     // Join from Department
     private String responsibleDepartmentName;     // Join from Department
     private String responsibleStaffCode;          // Join from Staff
@@ -31,6 +43,7 @@ public class ExtracurricularActivityResponseDTO {
     private Enum.ActivityNature nature;
     private boolean summaryRequired;
     private Integer maxParticipants;
+    private int attendanceSessionCount = 1;
     private String address;
     private String description;
     private Enum.ActivityStatus activityStatus;        // UPCOMING, ONGOING, COMPLETED, CANCELLED[cite: 1]
@@ -39,6 +52,91 @@ public class ExtracurricularActivityResponseDTO {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
+    private boolean isPublic = true;
+    private List<ActivityTargetParticipant> targetParticipants = new ArrayList<>();
+
+    public List<ActivityTargetParticipant> getTargetParticipants() {
+        return targetParticipants;
+    }
+
+    public void setTargetParticipants(List<ActivityTargetParticipant> targetParticipants) {
+        this.targetParticipants = targetParticipants == null ? new ArrayList<>() : targetParticipants;
+    }
+
+    public boolean isAllSchoolTarget() {
+        return targetParticipants == null
+                || targetParticipants.isEmpty()
+                || targetParticipants.stream().allMatch(ActivityTargetParticipant::isAllSchool);
+    }
+
+    public String getTargetScope() {
+        return isAllSchoolTarget() ? "ALL" : "GROUP";
+    }
+
+    public String getTargetParticipantsSummary() {
+        if (isAllSchoolTarget()) {
+            return "Toàn trường";
+        }
+        return targetParticipants.stream()
+                .map(ActivityTargetParticipant::getDisplayLabel)
+                .collect(Collectors.joining("; "));
+    }
+
+    public Set<String> getTargetDepartmentIdStrings() {
+        Set<String> set = new LinkedHashSet<>();
+        if (targetParticipants != null) {
+            for (ActivityTargetParticipant t : targetParticipants) {
+                if (t.getDepartmentId() != null) set.add(String.valueOf(t.getDepartmentId()));
+            }
+        }
+        return set;
+    }
+
+    public Set<String> getTargetCohortIdStrings() {
+        Set<String> set = new LinkedHashSet<>();
+        if (targetParticipants != null) {
+            for (ActivityTargetParticipant t : targetParticipants) {
+                if (t.getCohortId() != null) set.add(String.valueOf(t.getCohortId()));
+            }
+        }
+        return set;
+    }
+
+    public Set<String> getTargetMajorIdStrings() {
+        Set<String> set = new LinkedHashSet<>();
+        if (targetParticipants != null) {
+            for (ActivityTargetParticipant t : targetParticipants) {
+                if (t.getMajorId() != null) set.add(String.valueOf(t.getMajorId()));
+            }
+        }
+        return set;
+    }
+
+    public Set<String> getTargetProgramIdStrings() {
+        Set<String> set = new LinkedHashSet<>();
+        if (targetParticipants != null) {
+            for (ActivityTargetParticipant t : targetParticipants) {
+                if (t.getAcademicProgramId() != null) set.add(String.valueOf(t.getAcademicProgramId()));
+            }
+        }
+        return set;
+    }
+
+    public Set<String> getTargetClassIdStrings() {
+        Set<String> set = new LinkedHashSet<>();
+        if (targetParticipants != null) {
+            for (ActivityTargetParticipant t : targetParticipants) {
+                if (t.getMainClassId() != null) set.add(String.valueOf(t.getMainClassId()));
+            }
+        }
+        return set;
+    }
+
+    public boolean isPublic() { return isPublic; }
+
+    public boolean getPublic() { return isPublic; }
+
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
 
     public boolean isRegistrationFormRequired() {
         return registrationFormRequired;
@@ -91,6 +189,47 @@ public class ExtracurricularActivityResponseDTO {
 
     public void setActivityTypeId(int activityTypeId) {
         this.activityTypeId = activityTypeId;
+    }
+
+    public int getOrganizationLevelId() {
+        return organizationLevelId;
+    }
+
+    public void setOrganizationLevelId(int organizationLevelId) {
+        this.organizationLevelId = organizationLevelId;
+    }
+
+    public String getOrganizationLevelCode() {
+        return organizationLevelCode;
+    }
+
+    public void setOrganizationLevelCode(String organizationLevelCode) {
+        this.organizationLevelCode = organizationLevelCode;
+    }
+
+    public String getOrganizationLevelName() {
+        return organizationLevelName;
+    }
+
+    public void setOrganizationLevelName(String organizationLevelName) {
+        this.organizationLevelName = organizationLevelName;
+    }
+
+    public BigDecimal getOrganizationLevelCoefficient() {
+        return organizationLevelCoefficient;
+    }
+
+    public void setOrganizationLevelCoefficient(BigDecimal organizationLevelCoefficient) {
+        this.organizationLevelCoefficient = organizationLevelCoefficient == null
+                ? null
+                : organizationLevelCoefficient.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public String getFormattedOrganizationLevelCoefficient() {
+        if (organizationLevelCoefficient == null) {
+            return "";
+        }
+        return organizationLevelCoefficient.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     public int getResponsibleDepartmentId() {
@@ -187,6 +326,14 @@ public class ExtracurricularActivityResponseDTO {
 
     public void setMaxParticipants(Integer maxParticipants) {
         this.maxParticipants = maxParticipants;
+    }
+
+    public int getAttendanceSessionCount() {
+        return attendanceSessionCount > 0 ? attendanceSessionCount : 1;
+    }
+
+    public void setAttendanceSessionCount(int attendanceSessionCount) {
+        this.attendanceSessionCount = attendanceSessionCount > 0 ? attendanceSessionCount : 1;
     }
 
     public String getAddress() {

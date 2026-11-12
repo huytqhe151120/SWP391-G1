@@ -21,8 +21,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><c:choose><c:when test="${isEdit}">Cập nhật nhân viên</c:when><c:otherwise>Thêm nhân viên đối tác</c:otherwise></c:choose> | SWP391-G1</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-staff.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-staff.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -37,7 +37,7 @@
             <h1><c:choose><c:when test="${isEdit}">Cập nhật nhân viên</c:when><c:otherwise>Thêm nhân viên đối tác</c:otherwise></c:choose></h1>
             <p>Nhập thông tin nhân viên và công ty đối tác liên quan.</p>
         </div>
-        <a class="button activity-create-button" href="${pageContext.request.contextPath}/partner-staffs">
+        <a class="button button-back" href="${pageContext.request.contextPath}/partner-staffs">
             <svg class="ui-icon" aria-hidden="true"><use href="${pageContext.request.contextPath}/assets/icons/ui-icons.svg#arrow-left"/></svg>
             Danh sách nhân viên
         </a>
@@ -68,12 +68,12 @@
                 <div class="form-grid activity-form-grid">
                     <div class="field">
                         <label for="code">Mã nhân viên <span class="required-mark">*</span></label>
-                        <input id="code" name="code" type="text" maxlength="50" required
+                        <input id="code" name="code" type="text" minlength="3" maxlength="15" required
                                value="<c:out value='${not empty formData ? formData.code : partnerStaff.code}'/>">
                     </div>
                     <div class="field">
                         <label for="name">Họ và tên <span class="required-mark">*</span></label>
-                        <input id="name" name="name" type="text" maxlength="255" required
+                        <input id="name" name="name" type="text" minlength="2" maxlength="50" required
                                value="<c:out value='${not empty formData ? formData.name : partnerStaff.name}'/>">
                     </div>
                     <div class="field">
@@ -92,7 +92,7 @@
                     </div>
                     <div class="field">
                         <label for="position">Chức vụ</label>
-                        <input id="position" name="position" type="text" maxlength="255"
+                        <input id="position" name="position" type="text" minlength="3" maxlength="100"
                                value="<c:out value='${not empty formData ? formData.position : partnerStaff.position}'/>">
                     </div>
                     <div class="field">

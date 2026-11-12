@@ -20,6 +20,7 @@ public class ExtracurricularActivity {
     private Enum.ApprovalStatus approvalStatus; //[cite: 1]
     private LocalDateTime createdAt; //[cite: 1]
     private int activityTypeId; //[cite: 1]
+    private int organizationLevelId;
     private LocalDateTime startTime; //[cite: 1]
     private LocalDateTime endTime;
     private boolean registrationFormRequired;
@@ -28,6 +29,20 @@ public class ExtracurricularActivity {
     private Integer occurrenceNo; // 1-based occurrence number within series, NULL for standalone
     private LocalDate occurrenceStartDate; // occurrence date mốc, NULL for standalone
     private boolean approvedViaSeries; // true if approved via series inherit, false otherwise
+    private boolean isPublic = true;
+    private int attendanceSessionCount = 1;
+
+    public int getAttendanceSessionCount() {
+        return attendanceSessionCount > 0 ? attendanceSessionCount : 1;
+    }
+
+    public void setAttendanceSessionCount(int attendanceSessionCount) {
+        this.attendanceSessionCount = attendanceSessionCount > 0 ? attendanceSessionCount : 1;
+    }
+
+    public boolean isPublic() { return isPublic; }
+
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
 
     public boolean isRegistrationFormRequired() {
         return registrationFormRequired;
@@ -176,6 +191,14 @@ public class ExtracurricularActivity {
 
     public void setActivityTypeId(int activityTypeId) {
         this.activityTypeId = activityTypeId;
+    }
+
+    public int getOrganizationLevelId() {
+        return organizationLevelId;
+    }
+
+    public void setOrganizationLevelId(int organizationLevelId) {
+        this.organizationLevelId = organizationLevelId;
     }
 
     public LocalDateTime getStartTime() {

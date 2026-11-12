@@ -68,6 +68,11 @@
             allowInput: true,
             disableMobile: true
         });
+        picker.altInput.id = id + "Display";
+        var fieldLabel = form.querySelector("label[for='" + id + "']");
+        if (fieldLabel) {
+            fieldLabel.setAttribute("for", picker.altInput.id);
+        }
         picker.altInput.placeholder = input.placeholder;
         picker.altInput.maxLength = 16;
         picker.altInput.inputMode = "numeric";
@@ -109,6 +114,47 @@
     nature.addEventListener("change", syncNature);
     syncNature();
 
+    // Target participant scope toggle (ALL vs GROUP)
+    // When ALL is selected, disable the 5 target comboboxes; when GROUP is selected, enable them.
+    var targetScopeRadios = Array.prototype.slice.call(form.querySelectorAll("input[name='targetScope']"));
+    var targetGroupFields = byId("targetGroupFields");
+    var targetComboboxes = targetGroupFields
+        ? Array.prototype.slice.call(targetGroupFields.querySelectorAll("[data-multi-select]"))
+        : [];
+    function getSelectedTargetScope() {
+        var checked = form.querySelector("input[name='targetScope']:checked");
+        return checked ? checked.value : "ALL";
+    }
+    function syncTargetScope() {
+        if (!targetGroupFields) {
+            return;
+        }
+        var isGroup = getSelectedTargetScope() === "GROUP";
+        targetComboboxes.forEach(function (box) {
+            if (!isGroup) {
+                box.querySelectorAll(".multi-select-option input:checked").forEach(function (inp) {
+                    inp.checked = false;
+                });
+            }
+            if (box.comboboxApi) {
+                box.comboboxApi.setDisabled(!isGroup);
+            } else {
+                box.toggleAttribute("data-disabled", !isGroup);
+                var trigger = box.querySelector(".multi-select-trigger");
+                if (trigger) {
+                    trigger.disabled = !isGroup;
+                }
+                box.querySelectorAll(".multi-select-option input").forEach(function (inp) {
+                    inp.disabled = !isGroup;
+                });
+            }
+        });
+    }
+    targetScopeRadios.forEach(function (radio) {
+        radio.addEventListener("change", syncTargetScope);
+    });
+    syncTargetScope();
+
     // Inline validation
     function fieldOf(el) { return el.closest(".field"); }
     function validate(el) {
@@ -123,6 +169,12 @@
         }
         if (!empty && el.id === "endTime" && byId("startTime").value && el.value <= byId("startTime").value) {
             text = "Thời gian kết thúc phải sau thời gian bắt đầu.";
+        }
+        if (!empty && el.id === "attendanceSessionCount") {
+            var countVal = Number(el.value);
+            if (!Number.isInteger(countVal) || countVal < 1 || countVal > 50) {
+                text = "Số buổi điểm danh phải là số nguyên từ 1 đến 50.";
+            }
         }
         msg.textContent = text;
         fieldOf(el).classList.toggle("has-error", !!text);
@@ -161,7 +213,9 @@
             e.stopImmediatePropagation();
             var first = badBoxes.length ? badBoxes[0].querySelector(".multi-select-trigger")
                 : (badFields[0]._flatpickr ? badFields[0]._flatpickr.altInput : badFields[0]);
-            first.scrollIntoView({ behavior: "smooth", block: "center" });
+            if (first) {
+                first.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
         }
     });
 })();

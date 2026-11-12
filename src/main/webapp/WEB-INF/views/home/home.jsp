@@ -8,8 +8,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Trang chủ | EAMS</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/home.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/home.css?v=20261107-2">
 </head>
 <body>
 <div class="activity-app-shell">

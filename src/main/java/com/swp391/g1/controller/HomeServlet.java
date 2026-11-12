@@ -44,6 +44,7 @@ public class HomeServlet extends HttpServlet {
 
         // UI hints — server-side enforcement is still in each servlet
         request.setAttribute("canManageAccounts", AccessPolicy.canManageAccounts(currentUser));
+        request.setAttribute("canManageActivities", AccessPolicy.canManageActivities(currentUser));
         request.setAttribute("canManageQuestions", AccessPolicy.canManageQuestions(currentUser));
         request.setAttribute("canUseStudentQuestions", AccessPolicy.canUseStudentQuestions(currentUser));
         request.setAttribute("canUseSupportInbox", AccessPolicy.canUseSupportInbox(currentUser));
@@ -60,6 +61,7 @@ public class HomeServlet extends HttpServlet {
             List<ExtracurricularActivityResponseDTO> approvedActivities =
                     activityService.getAllActivities().stream()
                             .filter(activity -> activity.getApprovalStatus() == ApprovalStatus.APPROVED)
+                            .filter(ExtracurricularActivityResponseDTO::isPublic)
                             .collect(Collectors.toList());
 
             Comparator<ExtracurricularActivityResponseDTO> byStartTime =

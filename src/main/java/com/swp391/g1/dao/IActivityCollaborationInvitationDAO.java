@@ -24,6 +24,14 @@ public interface IActivityCollaborationInvitationDAO {
     /** Activities a partner company may view: pending/approved collaboration invitations or an ACTIVE collaboration. */
     java.util.Set<Integer> findVisibleActivityIds(int partnerCompanyId);
 
+    /**
+     * Activities with an ACTIVE collaboration for the partner company where the partner staff member
+     * is authorized to take attendance (all company-linked activities when {@code companyWide} is true,
+     * otherwise only activities where the staff member is the main partner staff or assigned in
+     * {@code activity_partner_staff}).
+     */
+    java.util.Set<Integer> findAttendanceActivityIds(int partnerCompanyId, int partnerStaffId, boolean companyWide);
+
     ActivityCollaborationInvitationDTO findById(int id);
 
     /** True when the company has a pending invitation (any type) in the activity. */

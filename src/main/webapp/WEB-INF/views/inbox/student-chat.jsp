@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat với ${staff.name} - SWP391 G1</title>
@@ -119,7 +119,7 @@
 
         .char-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
     </style>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
 </head>
 <body class="support-page student-chat-page">
 <div class="activity-app-shell">

@@ -4,6 +4,8 @@ public class Student {
     private int id;
     private int mainClassId;
     private String mainClassCode;
+    private String departmentName;
+    private String majorName;
     private String code;
     private String name;
     private String dob;
@@ -23,6 +25,12 @@ public class Student {
 
     public String getMainClassCode() { return mainClassCode; }
     public void setMainClassCode(String mainClassCode) { this.mainClassCode = mainClassCode; }
+
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+
+    public String getMajorName() { return majorName; }
+    public void setMajorName(String majorName) { this.majorName = majorName; }
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }

@@ -14,6 +14,7 @@
         tabPanes.forEach(function (pane) {
             pane.classList.toggle("active", pane.id === targetId);
         });
+        window.dispatchEvent(new Event("resize"));
     }
 
     tabButtons.forEach(function (button) {
@@ -27,7 +28,7 @@
     });
 
     var currentHash = window.location.hash.slice(1);
-    if (["tab-staff", "tab-info", "tab-partner"].indexOf(currentHash) !== -1) {
+    if (["tab-staff", "tab-info", "tab-partner", "tab-registration", "tab-attendance", "tab-form-info", "tab-form-applications"].indexOf(currentHash) !== -1) {
         switchTab(currentHash);
     }
 })();
@@ -158,7 +159,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         combobox.classList.remove("is-invalid");
         if (selectedCount === 0) {
             label.textContent = initialLabel;
-            count.textContent = "Chưa chọn " + itemLabel;
+            count.textContent = combobox.dataset.emptyCount || ("Chưa chọn " + itemLabel);
         } else if (isSingle) {
             label.textContent = selectedOptions[0].querySelector("span").textContent.trim();
             count.textContent = "Đã chọn " + itemLabel;
@@ -198,6 +199,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         if (disabled) {
             closeDropdown();
         }
+        updateSelection();
     }
 
     function setOptions(items) {
@@ -247,6 +249,9 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     }
 
     trigger.addEventListener("click", function () {
+        if (trigger.disabled || combobox.hasAttribute("data-disabled")) {
+            return;
+        }
         var isExpanded = trigger.getAttribute("aria-expanded") === "true";
         trigger.setAttribute("aria-expanded", String(!isExpanded));
         dropdown.hidden = isExpanded;
@@ -295,6 +300,7 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
         updateSelection();
     }
 
+    updateSelection();
     combobox.comboboxApi = {setDisabled: setDisabled, setOptions: setOptions, setPlaceholder: setPlaceholder};
 });
 (function () {
@@ -306,21 +312,51 @@ document.querySelectorAll("[data-multi-select]").forEach(function (combobox) {
     function syncStickyColumnWidths() {
         var actionsCells = table.querySelectorAll("tr td.activity-action-column, tr th.activity-action-column");
         var approvalCells = table.querySelectorAll("tr td.activity-status-column, tr th.activity-status-column");
+        var orderStatusCells = table.querySelectorAll("tr td.activity-order-status-column, tr th.activity-order-status-column");
+        var registrationStatusCells = table.querySelectorAll("tr td.activity-registration-status-column, tr th.activity-registration-status-column");
+        var deadlineCells = table.querySelectorAll("tr td.activity-registration-deadline, tr th.activity-registration-deadline");
         var actionsWidth = 0;
         var approvalWidth = 0;
+        var orderStatusWidth = 0;
+        var registrationStatusWidth = 0;
+        var deadlineWidth = 0;
 
         actionsCells.forEach(function (cell) {
-            actionsWidth = Math.max(actionsWidth, cell.getBoundingClientRect().width);
+            actionsWidth = Math.max(actionsWidth, Math.ceil(cell.getBoundingClientRect().width));
         });
         approvalCells.forEach(function (cell) {
-            approvalWidth = Math.max(approvalWidth, cell.getBoundingClientRect().width);
+            approvalWidth = Math.max(approvalWidth, Math.ceil(cell.getBoundingClientRect().width));
         });
-        if (actionsWidth > 0 && approvalWidth > 0) {
+        orderStatusCells.forEach(function (cell) {
+            orderStatusWidth = Math.max(orderStatusWidth, Math.ceil(cell.getBoundingClientRect().width));
+        });
+        registrationStatusCells.forEach(function (cell) {
+            registrationStatusWidth = Math.max(registrationStatusWidth, Math.ceil(cell.getBoundingClientRect().width));
+        });
+        deadlineCells.forEach(function (cell) {
+            deadlineWidth = Math.max(deadlineWidth, Math.ceil(cell.getBoundingClientRect().width));
+        });
+        if (actionsWidth > 0) {
             table.style.setProperty("--activity-actions-col-width", actionsWidth + "px");
+        }
+        if (approvalWidth > 0) {
             table.style.setProperty("--activity-approval-col-width", approvalWidth + "px");
+        }
+        if (deadlineWidth > 0) {
+            table.style.setProperty("--activity-deadline-col-width", deadlineWidth + "px");
+        }
+        if (orderStatusWidth > 0) {
+            table.style.setProperty("--activity-order-status-col-width", orderStatusWidth + "px");
+        }
+        if (registrationStatusWidth > 0) {
+            table.style.setProperty("--activity-registration-status-col-width", registrationStatusWidth + "px");
         }
     }
 
+    syncStickyColumnWidths();
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", syncStickyColumnWidths);
+    }
     window.addEventListener("load", syncStickyColumnWidths);
     window.addEventListener("resize", syncStickyColumnWidths);
 })();

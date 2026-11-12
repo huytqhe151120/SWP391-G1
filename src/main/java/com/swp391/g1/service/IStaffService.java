@@ -7,6 +7,9 @@ import java.util.List;
 public interface IStaffService {
     List<Staff> getAllStaffs();
 
+    List<Staff> searchStaff(String keyword, String id, String code, String name, String dob,
+                            String gender, String accountId, String status);
+
     List<Staff> getActiveStaffs();
 
     Staff getStaffById(int id);

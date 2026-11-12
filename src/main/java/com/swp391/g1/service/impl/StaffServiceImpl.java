@@ -22,6 +22,12 @@ public class StaffServiceImpl implements IStaffService {
     }
 
     @Override
+    public List<Staff> searchStaff(String keyword, String id, String code, String name, String dob,
+                                   String gender, String accountId, String status) {
+        return staffDAO.searchStaff(keyword, id, code, name, dob, gender, accountId, status);
+    }
+
+    @Override
     public List<Staff> getActiveStaffs() {
         return staffDAO.findAll().stream()
                 .filter(staff -> "ACTIVE".equals(staff.getStatus()))
@@ -82,6 +88,15 @@ public class StaffServiceImpl implements IStaffService {
         }
         if (isEmpty(staff.getName())) {
             throw new IllegalArgumentException("Tên nhân viên không được để trống.");
+        }
+        if (staff.getCode().trim().length() > 50) {
+            throw new IllegalArgumentException("Mã nhân viên không được vượt quá 50 ký tự.");
+        }
+        if (staff.getName().trim().length() > 255) {
+            throw new IllegalArgumentException("Tên nhân viên không được vượt quá 255 ký tự.");
+        }
+        if (staff.getAccountId() < 0) {
+            throw new IllegalArgumentException("Account ID phải lớn hơn hoặc bằng 1, hoặc để trống.");
         }
         if (!isEmpty(staff.getDob())) {
             try {

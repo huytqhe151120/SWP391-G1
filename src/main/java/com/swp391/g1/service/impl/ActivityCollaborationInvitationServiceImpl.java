@@ -86,6 +86,22 @@ public class ActivityCollaborationInvitationServiceImpl implements IActivityColl
     }
 
     @Override
+    public java.util.Set<Integer> getAttendanceActivityIds(CurrentUser user) {
+        if (!isPartnerStaffUser(user)) {
+            return null;
+        }
+        if (!AccessPolicy.canUsePartnerAttendanceScope(user)) {
+            return Set.of();
+        }
+        PartnerStaff me = partnerStaffDAO.findByAccountId(user.getId());
+        if (me == null || me.getStatus() != CommonStatus.ACTIVE) {
+            return Set.of();
+        }
+        boolean companyWide = AccessPolicy.canAssignPartnerStaffToActivity(user);
+        return invitationDAO.findAttendanceActivityIds(me.getCompanyId(), me.getId(), companyWide);
+    }
+
+    @Override
     public List<ActivityPartnerCompanyDTO> getApprovedPartners(int activityId) {
         return activityId <= 0 ? List.of() : partnerCompanyLinkDAO.findByActivityId(activityId);
     }
