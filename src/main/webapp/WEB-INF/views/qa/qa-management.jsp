@@ -228,6 +228,7 @@
         }
     </style>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-pagination.css?v=20261113">
 </head>
 <body class="support-page qa-management-page">
 <div class="activity-app-shell">
@@ -305,7 +306,7 @@
     </div>
 
     <%-- Question list --%>
-    <div class="question-list">
+    <div class="question-list" data-support-pages="10" data-support-item=".question-card" data-support-label="câu hỏi">
         <c:choose>
             <c:when test="${empty questions}">
                 <div class="empty-state">
@@ -353,5 +354,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/support-pagination.js?v=20261113"></script>
 </body>
 </html>

@@ -18,6 +18,7 @@
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
         else if (reqUri.contains("/registration-forms")) navActive = "registration-forms";
+        else if (reqUri.contains("/organizer-recruitment")) navActive = "recruitment";
         else if (reqUri.contains("/notification")) navActive = "notifications";
     }
 
@@ -37,8 +38,19 @@
         else if ("edit".equals(actionParam)) breadcrumbCurrent = "Chỉnh sửa đợt đăng ký";
         else if ("view".equals(actionParam)) breadcrumbCurrent = "Chi tiết đợt đăng ký";
         else if ("application".equals(actionParam) || "myApplication".equals(actionParam)) breadcrumbCurrent = "Chi tiết đơn đăng ký";
-        else if ("myApplications".equals(actionParam) || "STUDENT".equals(navType)) breadcrumbCurrent = "Đơn đăng ký";
         else breadcrumbCurrent = "Đăng ký tham gia";
+    } else if ("recruitment".equals(navActive)) {
+        breadcrumbGroup = "Quản lý Hoạt động";
+        if ("STUDENT".equals(navType)) {
+            if ("myApplications".equals(actionParam)) breadcrumbCurrent = "Đơn đăng ký";
+            else if ("apply".equals(actionParam)) breadcrumbCurrent = "Ứng tuyển ban tổ chức";
+            else breadcrumbCurrent = "Tuyển ban tổ chức";
+        } else {
+            if ("create".equals(actionParam)) breadcrumbCurrent = "Tạo đợt tuyển";
+            else if ("edit".equals(actionParam)) breadcrumbCurrent = "Chỉnh sửa đợt tuyển";
+            else if ("applications".equals(actionParam)) breadcrumbCurrent = "Hồ sơ ứng tuyển";
+            else breadcrumbCurrent = "Tuyển ban tổ chức";
+        }
     } else if ("attendance".equals(navActive)) {
         breadcrumbGroup = "Quản lý Hoạt động";
         breadcrumbCurrent = "Điểm danh sinh viên";

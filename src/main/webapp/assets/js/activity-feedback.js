@@ -4,16 +4,21 @@
     var statusTabs = document.querySelectorAll("[data-feedback-filter]");
     var activityRows = document.querySelectorAll(".feedback-activity-row");
     var statusEmptyStates = document.querySelectorAll("[data-feedback-empty]");
+    var studentFeedbackContainer = document.getElementById("studentFeedbackPagination");
+    var activeFeedbackFilter = "pending";
+    var studentFeedbackPager = studentFeedbackContainer && window.ListPagination.create({
+        container: studentFeedbackContainer,
+        items: activityRows,
+        matches: function (row) { return row.dataset.feedbackState === activeFeedbackFilter; },
+        onRender: function (count) {
+            statusEmptyStates.forEach(function (emptyState) {
+                emptyState.hidden = emptyState.dataset.feedbackEmpty !== activeFeedbackFilter || count > 0;
+            });
+        }
+    });
     function updateStudentFeedbackList(filter) {
-        var visibleCount = 0;
-        activityRows.forEach(function (row) {
-            var visible = row.dataset.feedbackState === filter;
-            row.hidden = !visible;
-            if (visible) visibleCount++;
-        });
-        statusEmptyStates.forEach(function (emptyState) {
-            emptyState.hidden = emptyState.dataset.feedbackEmpty !== filter || visibleCount > 0;
-        });
+        activeFeedbackFilter = filter;
+        if (studentFeedbackPager) studentFeedbackPager.refresh(true);
     }
     statusTabs.forEach(function (tab) {
         tab.addEventListener("click", function () {
@@ -250,15 +255,18 @@
     if (pendingSearch) {
         var pendingStudents = Array.from(document.querySelectorAll("[data-pending-student]"));
         var noSearchResults = document.getElementById("feedbackNoSearchResults");
+        var pendingPager = window.ListPagination.create({
+            container: document.getElementById("pendingFeedbackPagination"),
+            items: pendingStudents,
+            matches: function (student) {
+                return student.dataset.search.toLocaleLowerCase().includes(pendingSearch.value.trim().toLocaleLowerCase());
+            },
+            onRender: function (count) {
+                if (noSearchResults) noSearchResults.hidden = count > 0;
+            }
+        });
         pendingSearch.addEventListener("input", function () {
-            var query = this.value.trim().toLocaleLowerCase();
-            var visibleCount = 0;
-            pendingStudents.forEach(function (student) {
-                var visible = student.dataset.search.toLocaleLowerCase().includes(query);
-                student.hidden = !visible;
-                if (visible) visibleCount++;
-            });
-            if (noSearchResults) noSearchResults.hidden = visibleCount > 0;
+            pendingPager.refresh(true);
         });
     }
 

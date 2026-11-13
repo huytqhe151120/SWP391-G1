@@ -80,8 +80,14 @@ public class ActivityFeedbackServiceImpl implements IActivityFeedbackService {
 
     @Override
     public ActivityFeedbackReportDTO getActivityReport(int activityId, Integer staffAccountId, String staffRole) {
+        return getActivityReport(activityId, staffAccountId, staffRole, null);
+    }
+
+    @Override
+    public ActivityFeedbackReportDTO getActivityReport(int activityId, Integer staffAccountId, String staffRole,
+                                                       String participationRole) {
         requirePositiveId(activityId, "Hoạt động");
-        return feedbackDAO.findActivityReport(activityId, staffAccountId, staffRole);
+        return feedbackDAO.findActivityReport(activityId, staffAccountId, staffRole, participationRole);
     }
 
     @Override

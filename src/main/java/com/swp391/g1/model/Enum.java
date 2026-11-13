@@ -48,16 +48,16 @@ public class Enum {
     }
     // Status for registration form
     public enum RegistrationFormStatus {
-        DRAFT, // Chưa mở
+        DRAFT, // Chưa mở đăng ký
         OPENING, // Đang mở đăng ký
         CLOSED // Đã đóng đăng ký
     }
 
     // Status for student application review
     public enum RegistrationApplicationStatus {
-        SUBMITTED, // Chờ duyệt
-        APPROVED, // Đã đăng ký
-        REJECTED, // Đã từ chối
+        SUBMITTED, // Chờ xử lý
+        APPROVED, // Đã duyệt
+        REJECTED, // Bị từ chối
         CANCELLED, // Sinh viên đã hủy (không đăng ký lại được)
         WITHDRAWN // Sinh viên đã rút đơn (đăng ký lại được)
     }

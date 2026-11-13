@@ -44,25 +44,6 @@ public class RegistrationFormServlet extends HttpServlet {
         CurrentUser user = AuthContext.getCurrentUser(req);
         String action = param(req, "action", "list");
         try {
-            if ("myApplications".equals(action)) {
-                if (!AccessPolicy.hasType(user, "STUDENT")) {
-                    resp.sendError(403);
-                    return;
-                }
-                Student student = studentService.getStudentByAccountId(user.getId());
-                if (student == null) {
-                    resp.sendError(403, "Không tìm thấy hồ sơ sinh viên.");
-                    return;
-                }
-                req.setAttribute("applications", service.getApplicationsForStudent(student.getId()));
-                String applicationsUrl = req.getContextPath() + "/registration-forms?action=myApplications";
-                req.setAttribute("applicationsReturnUrl", applicationsUrl);
-                req.setAttribute("applicationsReturnUrlParameter",
-                        URLEncoder.encode(applicationsUrl, StandardCharsets.UTF_8));
-                req.getRequestDispatcher("/WEB-INF/views/registration/my-applications.jsp").forward(req, resp);
-                return;
-            }
-
             if ("register".equals(action)) {
                 if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);

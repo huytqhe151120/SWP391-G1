@@ -111,6 +111,25 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
+    public void notifyStudent(int studentId, String eventType, String title, String content, String targetUrl) {
+        try {
+            notificationDAO.createStudentNotification(studentId, eventType, title, content, targetUrl);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send student notification.", e);
+        }
+    }
+
+    @Override
+    public void notifyActivityStaff(int activityId, String eventType, String title, String content,
+                                    String targetUrl) {
+        try {
+            notificationDAO.createActivityStatusNotification(activityId, eventType, title, content, targetUrl);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send activity staff notification.", e);
+        }
+    }
+
+    @Override
     public List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size) {
         int safeSize = Math.max(1, Math.min(size, 50));
         int offset = (Math.max(page, 1) - 1) * safeSize;

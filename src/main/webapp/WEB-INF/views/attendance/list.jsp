@@ -515,6 +515,7 @@
                                 <td class="col-code"><span class="activity-code"><c:out value="${p.studentCode}" default="—"/></span></td>
                                 <td class="col-object-name" title="<c:out value='${p.studentName}'/>">
                                     <strong class="activity-name" title="<c:out value='${p.studentName}'/>"><c:out value="${p.studentName}" default="—"/></strong>
+                                    <c:if test="${p.organizer}"><span class="status-badge status-pending">Ban tổ chức</span></c:if>
                                 </td>
                                 <td class="col-academic" title="<c:out value='${p.departmentName} - ${p.majorName}'/>">
                                     <c:out value="${p.departmentName}" default="—"/>

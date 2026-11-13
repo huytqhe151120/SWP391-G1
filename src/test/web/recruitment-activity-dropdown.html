@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../main/webapp/assets/css/activity.css">
+    <link rel="stylesheet" href="../../main/webapp/assets/css/attendance.css">
+    <link rel="stylesheet" href="../../main/webapp/assets/css/registration.css">
+</head>
+<body>
+<main class="activity-list-page" style="width: 900px">
+    <section class="activity-table-card registration-detail-card">
+        <form class="activity-filter attendance-filter attendance-filter--single">
+            <div class="activity-filter-field attendance-filter-activity">
+                <div class="multi-select-combobox" data-multi-select data-single data-item-label="hoạt động">
+                    <button class="multi-select-trigger" type="button" aria-expanded="false">
+                        <span data-selection-label>-- Chọn hoạt động --</span><span>▾</span>
+                    </button>
+                    <div class="multi-select-dropdown" hidden>
+                        <input class="multi-select-search" type="search">
+                        <fieldset class="multi-select-options">
+                            <label class="multi-select-option"><input type="radio" name="activityId" value="1"><span>ACT-1 – Hoạt động một</span></label>
+                            <label class="multi-select-option"><input type="radio" name="activityId" value="2"><span>ACT-2 – Hoạt động hai</span></label>
+                        </fieldset>
+                        <div class="multi-select-empty" hidden>Không tìm thấy</div>
+                    </div>
+                    <span class="multi-select-count"></span>
+                </div>
+            </div>
+        </form>
+    </section>
+</main>
+<pre id="result">NOT RUN</pre>
+<script src="../../main/webapp/assets/js/activity.js"></script>
+<script>
+    var failures = [];
+    function check(condition, message) { if (!condition) failures.push(message); }
+    var field = document.querySelector(".attendance-filter-activity");
+    var trigger = document.querySelector(".multi-select-trigger");
+    var dropdown = document.querySelector(".multi-select-dropdown");
+    trigger.click();
+    var buttonRect = trigger.getBoundingClientRect();
+    var dropdownRect = dropdown.getBoundingClientRect();
+    check(Math.abs(buttonRect.width - field.getBoundingClientRect().width) < 1, "full width");
+    check(Math.abs(dropdownRect.width - buttonRect.width) < 1, "dropdown width");
+    check(Math.abs(dropdownRect.bottom - buttonRect.top - 5) < 2 ||
+        Math.abs(dropdownRect.top - buttonRect.bottom - 5) < 2, "dropdown anchored");
+    check(getComputedStyle(document.querySelector(".multi-select-count")).display === "none", "count hidden");
+    var search = document.querySelector(".multi-select-search");
+    search.value = "ACT-2";
+    search.dispatchEvent(new Event("input", {bubbles: true}));
+    check(document.querySelectorAll(".multi-select-option")[0].hidden, "search");
+    document.querySelectorAll(".multi-select-option input")[1].click();
+    check(dropdown.hidden && trigger.textContent.includes("ACT-2"), "selection");
+    document.getElementById("result").textContent = failures.length ? "FAIL: " + failures.join(", ") : "PASS";
+</script>
+</body>
+</html>

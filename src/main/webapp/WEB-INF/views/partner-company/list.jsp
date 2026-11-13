@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/partner-company.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/list-pagination.css?v=1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -35,7 +36,7 @@
         <c:remove var="errorMessage" scope="session"/>
     </c:if>
 
-    <section class="card activity-table-card" aria-labelledby="company-table-title">
+    <section class="card activity-table-card" aria-labelledby="company-table-title" data-paginated-list>
         <div class="activity-table-heading">
             <div>
                 <h2 id="company-table-title">Danh sách công ty</h2>
@@ -80,7 +81,7 @@
                     </c:when>
                     <c:otherwise>
                         <c:forEach var="company" items="${partnerCompanies}">
-                            <tr>
+                            <tr data-page-item>
                                 <td class="col-code"><span class="activity-code"><c:out value="${company.code}"/></span></td>
                                 <td class="col-object-name" title="<c:out value='${company.name}'/>">
                                     <strong class="activity-name" title="<c:out value='${company.name}'/>"><c:out value="${company.name}"/></strong>
@@ -133,5 +134,6 @@
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
 <script src="${pageContext.request.contextPath}/assets/js/partner-company.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
 </body>
 </html>

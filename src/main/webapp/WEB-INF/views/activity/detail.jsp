@@ -208,12 +208,15 @@
                     <c:choose>
                         <c:when test="${activity.nature == 'MANDATORY'}">
                             <span class="badge status-pill status-green">
-                                Hoạt động bắt buộc tham gia - Bạn đã được tự động ghi danh
+                                Bắt buộc - Bạn đã được tự động ghi danh
                             </span>
                         </c:when>
                         <c:when test="${activity.nature == 'REQUIRE_REGISTRATION'}">
                             <c:choose>
-                                <c:when test="${canStudentRegister and (empty myRegistration or myRegistration.status eq 'WITHDRAWN')}">
+                                <c:when test="${isAcceptedOrganizer}">
+                                    <span class="badge status-pill status-green">Ban tổ chức</span>
+                                </c:when>
+                                <c:when test="${canStudentRegister and (empty myRegistration or myRegistration.status eq 'WITHDRAWN' or (myRegistration.status eq 'CANCELLED' and myRegistration.cancelledForOrganizer))}">
                                     <c:choose>
                                         <c:when test="${activity.registrationFormRequired and not empty registrationForm}">
                                             <a class="button button-primary"
@@ -232,10 +235,10 @@
                                     </c:choose>
                                 </c:when>
                                 <c:when test="${not empty myRegistration and myRegistration.status eq 'APPROVED'}">
-                                    <span class="badge status-pill status-green">Đã đăng ký tham gia</span>
+                                    <span class="badge status-pill status-green">Đã duyệt tham gia</span>
                                 </c:when>
                                 <c:when test="${not empty myRegistration and myRegistration.status eq 'SUBMITTED'}">
-                                    <span class="badge status-pill status-yellow">Đang chờ duyệt đăng ký</span>
+                                    <span class="badge status-pill status-yellow">Đang chờ xử lý đăng ký</span>
                                 </c:when>
                             </c:choose>
                         </c:when>
@@ -244,6 +247,12 @@
                 <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                     <a class="button button-primary"
                        href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
+                </c:if>
+                <c:if test="${canManageActivities}">
+                    <a class="button button-primary-outline button-sm"
+                       href="${pageContext.request.contextPath}/organizer-recruitment?activityId=${activity.id}">
+                        Tuyển ban tổ chức
+                    </a>
                 </c:if>
 
                 <%-- Assessment navigation --%>
@@ -1289,6 +1298,7 @@
                                             <td class="col-code"><span class="activity-code"><c:out value="${pItem.studentCode}" default="—"/></span></td>
                                             <td class="col-object-name" title="<c:out value='${pItem.studentName}'/>">
                                                 <strong class="activity-name" title="<c:out value='${pItem.studentName}'/>"><c:out value="${pItem.studentName}" default="—"/></strong>
+                                                <c:if test="${pItem.organizer}"><span class="status-badge status-pending">Ban tổ chức</span></c:if>
                                             </td>
                                             <td class="col-academic" title="<c:out value='${pItem.departmentName}'/>"><c:out value="${pItem.departmentName}" default="—"/></td>
                                             <td class="col-academic" title="<c:out value='${pItem.majorName}'/>"><c:out value="${pItem.majorName}" default="—"/></td>

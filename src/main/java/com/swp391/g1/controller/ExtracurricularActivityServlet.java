@@ -63,6 +63,8 @@ public class ExtracurricularActivityServlet extends HttpServlet {
     private final IActivityParticipantService participantService = new ActivityParticipantServiceImpl();
     private final IStudentService studentService = new StudentServiceImpl();
     private final IAssessmentService assessmentService = new AssessmentServiceImpl();
+    private final com.swp391.g1.service.IRecruitmentService recruitmentService =
+            new com.swp391.g1.service.impl.RecruitmentServiceImpl();
 
     public ExtracurricularActivityServlet() {
         this.activityPartnerStaffService = new ActivityPartnerStaffServiceImpl();
@@ -296,6 +298,7 @@ public class ExtracurricularActivityServlet extends HttpServlet {
         }
 
         Map<Integer, com.swp391.g1.model.RegistrationApplication> registrationsByActivity = new HashMap<>();
+        Set<Integer> organizerActivityIds = new LinkedHashSet<>();
         if (studentView) {
             com.swp391.g1.model.Student myStudent = studentService.getStudentByAccountId(currentUser.getId());
             if (myStudent != null) {
@@ -303,8 +306,14 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                         : registrationFormService.getApplicationsForStudent(myStudent.getId())) {
                     registrationsByActivity.putIfAbsent(myApp.getActivityId(), myApp);
                 }
+                for (com.swp391.g1.model.RecruitmentApplication app
+                        : recruitmentService.getStudentApplications(myStudent.getId())) {
+                    if ("ACCEPTED".equals(app.getStatus())) organizerActivityIds.add(app.getActivityId());
+                }
             }
         }
+        activitiesAvailableForRegistration.removeAll(organizerActivityIds);
+        request.setAttribute("organizerActivityIds", organizerActivityIds);
         request.setAttribute("registrationsByActivity", registrationsByActivity);
         request.setAttribute("isStudent", studentView);
         request.setAttribute("activityFormsByActivity", activityFormsByActivity);
@@ -552,8 +561,10 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                         URLEncoder.encode(detailReturnUrl, StandardCharsets.UTF_8));
                 com.swp391.g1.model.RegistrationForm studentRegForm = registrationFormService.getByActivityId(id);
                 request.setAttribute("registrationForm", studentRegForm);
+                boolean acceptedOrganizer = recruitmentService.hasAcceptedApplication(id, myStudent.getId());
                 request.setAttribute("canStudentRegister",
-                        isRegistrationAvailable(activity, studentRegForm, DateTimeUtil.now()));
+                        isRegistrationAvailable(activity, studentRegForm, DateTimeUtil.now()) && !acceptedOrganizer);
+                request.setAttribute("isAcceptedOrganizer", acceptedOrganizer);
                 for (com.swp391.g1.model.RegistrationApplication myApp
                         : registrationFormService.getApplicationsForStudent(myStudent.getId())) {
                     if (myApp.getActivityId() == id) {
