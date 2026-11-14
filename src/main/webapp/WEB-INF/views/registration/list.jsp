@@ -50,12 +50,12 @@
                     </div>
                     <div class="activity-heading-actions">
                         <span class="activity-count"><c:out value="${fn:length(forms)}"/> form</span>
-                        <a class="btn-create-activity" href="${pageContext.request.contextPath}/registration-forms?action=create">
+                        <a class="btn-create-activity" href="${pageContext.request.contextPath}/registration-forms?action=view">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
                                  stroke-width="2" stroke-linecap="round" aria-hidden="true">
                                 <path d="M8 3v10M3 8h10"/>
                             </svg>
-                            Tạo form
+                            Chọn hoạt động
                         </a>
                     </div>
                 </div>
@@ -160,7 +160,7 @@
                                 <span class="empty-state-mark" aria-hidden="true">+</span>
                                 <strong>Chưa có đợt đăng ký nào</strong>
                                 <span>Tạo đợt đăng ký cho hoạt động đã được duyệt; danh sách sinh viên sẽ nằm trong chi tiết đợt.</span>
-                                <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=create">Tạo đợt đăng ký đầu tiên</a>
+                                <a class="button button-primary" href="${pageContext.request.contextPath}/registration-forms?action=view">Chọn hoạt động</a>
                             </td></tr>
                         </c:if>
                         </tbody>
