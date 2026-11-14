@@ -1,6 +1,7 @@
 package com.swp391.g1.service;
 
 import com.swp391.g1.dto.response.NotificationDTO;
+import com.swp391.g1.model.Enum.ActivityNature;
 import java.time.Instant;
 import java.util.List;
 
@@ -13,6 +14,21 @@ public interface INotificationService {
 
     /** Gửi thông báo hoạt động đã được duyệt tới nhân sự phụ trách. Không ném lỗi ra ngoài. */
     void notifyActivityApproved(int activityId, String activityName);
+
+    /** Gửi thông báo tới sinh viên thuộc đối tượng khi hoạt động được duyệt. Không ném lỗi ra ngoài. */
+    void notifyStudentsActivityApproved(int activityId, String activityName, ActivityNature nature, boolean isPublic);
+
+    /** Gửi thông báo tới sinh viên khi đợt đăng ký chuyển sang OPENING hoặc CLOSED. Không ném lỗi ra ngoài. */
+    void notifyRegistrationFormStatusChanged(int activityId, int formId, String newStatus);
+
+    /** Gửi thông báo tới sinh viên khi đợt đăng ký chuyển sang OPENING hoặc CLOSED (kèm thông tin hoạt động đã tải sẵn). */
+    void notifyRegistrationFormStatusChanged(
+            int activityId, int formId, String activityName, String newStatus, boolean canOpenDetail);
+
+    /** Gửi thông báo tới sinh viên khi trạng thái điểm danh bị thay đổi. Không ném lỗi ra ngoài. */
+    void notifyAttendanceStatusChanged(
+            int activityId, String activityName, int sessionNumber, int totalSessions,
+            String oldStatus, String newStatus, List<Integer> studentAccountIds);
 
     /** Gửi thông báo hoạt động bị từ chối tới nhân sự phụ trách. Không ném lỗi ra ngoài. */
     void notifyActivityRejected(int activityId, String activityName);

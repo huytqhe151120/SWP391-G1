@@ -633,6 +633,15 @@ public class ExtracurricularActivityServlet extends HttpServlet {
 
                 List<com.swp391.g1.dto.response.ActivityParticipantResponseDTO> allParticipants =
                         participantService.getParticipants(id);
+                if (studentView && myStudent != null) {
+                    int mySid = myStudent.getId();
+                    for (com.swp391.g1.dto.response.ActivityParticipantResponseDTO p : allParticipants) {
+                        if (p.getStudentId() == mySid) {
+                            request.setAttribute("myParticipant", p);
+                            break;
+                        }
+                    }
+                }
                 long attendedCount = 0;
                 long absentCount = 0;
                 long lateOrEarlyCount = 0;

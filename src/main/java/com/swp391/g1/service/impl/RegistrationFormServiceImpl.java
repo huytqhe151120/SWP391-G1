@@ -6,6 +6,7 @@ import com.swp391.g1.model.Enum.RegistrationFormStatus;
 import com.swp391.g1.model.RegistrationApplication;
 import com.swp391.g1.model.RegistrationForm;
 import com.swp391.g1.model.RegistrationFormField;
+import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.service.IRegistrationFormService;
 import com.swp391.g1.util.DateTimeUtil;
 
@@ -22,6 +23,7 @@ import java.util.Objects;
 
 public class RegistrationFormServiceImpl implements IRegistrationFormService {
     private final IRegistrationFormDAO dao = new RegistrationFormDAOImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     public List<RegistrationForm> getAll() {
         return dao.findAll();
@@ -220,6 +222,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             return "Thời gian đóng đăng ký phải trước thời gian bắt đầu hoạt động ít nhất 24 giờ.";
         LocalDateTime now = DateTimeUtil.now();
         RegistrationForm existingForm = f.getId() > 0 ? getById(f.getId()) : null;
+        String previousStatus = existingForm != null ? existingForm.getStatus() : null;
         boolean openingTimeUnchanged = existingForm != null
                 && Objects.equals(f.getOpenAt(), existingForm.getOpenAt());
         if (f.getOpenAt().isBefore(now) && !openingTimeUnchanged)
@@ -239,6 +242,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         boolean saved = f.getId() > 0 ? dao.update(f) : dao.insert(f);
         if (saved) {
             new com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl().refreshPublic(f.getActivityId());
+            if (!Objects.equals(previousStatus, f.getStatus())
+                    && ("OPENING".equals(f.getStatus()) || "CLOSED".equals(f.getStatus()))) {
+                notificationService.notifyRegistrationFormStatusChanged(
+                        f.getActivityId(), f.getId(), f.getStatus());
+            }
             return null;
         }
         if (!dao.isActivityApproved(f.getActivityId())) {
@@ -286,9 +294,15 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         } else {
             status = RegistrationFormStatus.OPENING.name();
         }
+        String previousStatus = existing.getStatus();
         String description = f.getDescription() == null ? "" : f.getDescription().trim();
         if (!dao.updateQuickForm(existing.getId(), description, f.getOpenAt(), f.getCloseAt(), status)) {
             return "Không thể lưu form đăng ký nhanh. Vui lòng tải lại trang và thử lại.";
+        }
+        if (!Objects.equals(previousStatus, status)
+                && ("OPENING".equals(status) || "CLOSED".equals(status))) {
+            notificationService.notifyRegistrationFormStatusChanged(
+                    existing.getActivityId(), existing.getId(), status);
         }
         return null;
     }
@@ -310,8 +324,18 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         LocalDateTime start = dao.findActivityStartTime(form.getActivityId());
         if (start == null || closeAt.isAfter(start.minusHours(24)))
             return "Thời gian đóng đăng ký phải trước thời gian bắt đầu hoạt động ít nhất 24 giờ.";
-        return dao.extendCloseTime(formId, closeAt) ? null
-                : "Không thể gia hạn: kiểm tra hoạt động còn ở trạng thái Chưa diễn ra.";
+        String previousStatus = form.getStatus();
+        if (!dao.extendCloseTime(formId, closeAt)) {
+            return "Không thể gia hạn: kiểm tra hoạt động còn ở trạng thái Chưa diễn ra.";
+        }
+        RegistrationForm updated = getById(formId);
+        String currentStatus = updated != null ? updated.getStatus() : null;
+        if (currentStatus != null && !Objects.equals(previousStatus, currentStatus)
+                && ("OPENING".equals(currentStatus) || "CLOSED".equals(currentStatus))) {
+            notificationService.notifyRegistrationFormStatusChanged(
+                    form.getActivityId(), formId, currentStatus);
+        }
+        return null;
     }
 
     public String delete(int id) {
@@ -330,7 +354,15 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
 
     @Override
     public void synchronizeFormStatuses() {
-        dao.synchronizeFormStatuses();
+        List<IRegistrationFormDAO.FormStatusTransition> transitions = dao.synchronizeFormStatusesWithTransitions();
+        for (IRegistrationFormDAO.FormStatusTransition transition : transitions) {
+            notificationService.notifyRegistrationFormStatusChanged(
+                    transition.activityId(),
+                    transition.formId(),
+                    transition.activityName(),
+                    transition.newStatus(),
+                    transition.canOpenDetail());
+        }
     }
 
     @Override

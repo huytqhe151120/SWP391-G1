@@ -882,14 +882,12 @@
     border-spacing: 0;
     --activity-actions-col-width: 160px;
     --activity-approval-col-width: 140px;
-    --activity-order-status-col-width: 140px;
-    --activity-registration-status-col-width: 140px;
-    --activity-deadline-col-width: 150px;
+    --activity-registration-status-col-width: 170px;
     --activity-run-status-col-width: 140px;
 }
 
 .activity-list-page.student-list-page .activity-table-wrap table {
-    min-width: 1450px;
+    min-width: 1360px;
 }
 
 .activity-list-page .activity-table-wrap th.activity-action-column,
@@ -900,9 +898,9 @@
     z-index: 2;
     background: #fff;
     white-space: nowrap;
-    width: var(--activity-actions-col-width, 160px);
-    min-width: var(--activity-actions-col-width, 160px);
-    max-width: var(--activity-actions-col-width, 160px);
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
 }
 
 .activity-list-page .activity-table-wrap th.activity-status-column,
@@ -911,20 +909,9 @@
     right: var(--activity-actions-col-width, 160px);
     z-index: 2;
     background: #fff;
-    width: var(--activity-approval-col-width, 140px);
-    min-width: var(--activity-approval-col-width, 140px);
-    max-width: var(--activity-approval-col-width, 140px);
-}
-
-.activity-list-page .activity-table-wrap th.activity-order-status-column,
-.activity-list-page .activity-table-wrap td.activity-order-status-column {
-    position: sticky;
-    right: calc(var(--activity-actions-col-width, 160px) + var(--activity-registration-status-col-width, 140px));
-    z-index: 2;
-    background: #fff;
-    width: var(--activity-order-status-col-width, 140px);
-    min-width: var(--activity-order-status-col-width, 140px);
-    max-width: var(--activity-order-status-col-width, 140px);
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
 }
 
 .activity-list-page .activity-table-wrap th.activity-registration-status-column,
@@ -933,9 +920,9 @@
     right: var(--activity-actions-col-width, 160px);
     z-index: 2;
     background: #fff;
-    width: var(--activity-registration-status-col-width, 140px);
-    min-width: var(--activity-registration-status-col-width, 140px);
-    max-width: var(--activity-registration-status-col-width, 140px);
+    width: 170px;
+    min-width: 170px;
+    max-width: 170px;
 }
 
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
@@ -945,41 +932,26 @@
     z-index: 2;
     background: #fff;
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
-    width: var(--activity-run-status-col-width, 140px);
-    min-width: var(--activity-run-status-col-width, 140px);
-    max-width: var(--activity-run-status-col-width, 140px);
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
 }
 
-.activity-list-page .activity-table-wrap th.activity-registration-deadline,
-.activity-list-page .activity-table-wrap td.activity-registration-deadline {
-    position: sticky;
-    right: calc(var(--activity-actions-col-width, 160px) + var(--activity-registration-status-col-width, 140px) + var(--activity-order-status-col-width, 140px));
-    z-index: 2;
-    background: #fff;
-    width: var(--activity-deadline-col-width, 150px);
-    min-width: var(--activity-deadline-col-width, 150px);
-    max-width: var(--activity-deadline-col-width, 150px);
-}
-
-.activity-list-page .activity-table-wrap th.activity-student-run-status,
-.activity-list-page .activity-table-wrap td.activity-student-run-status {
-    right: calc(var(--activity-deadline-col-width, 150px) + var(--activity-registration-status-col-width, 140px) + var(--activity-order-status-col-width, 140px) + var(--activity-actions-col-width, 160px));
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-student-run-status,
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) td.activity-student-run-status {
+    right: calc(var(--activity-registration-status-col-width, 170px) + var(--activity-actions-col-width, 160px));
     box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
 }
 
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-run-status,
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-status-column,
-.activity-list-page .activity-table-wrap th.activity-order-status-column,
 .activity-list-page .activity-table-wrap th.activity-registration-status-column,
-.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column,
-.activity-list-page .activity-table-wrap th.activity-registration-deadline {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) th.activity-action-column {
     background: #f7f9fc;
     z-index: 3;
 }
 
 .activity-list-page .activity-table-wrap .activity-status-column,
-.activity-list-page .activity-table-wrap .activity-order-status-column,
-.activity-list-page .activity-table-wrap .activity-registration-status-column,
 .activity-list-page .activity-table-wrap .activity-run-status {
     width: 140px;
     min-width: 140px;
@@ -987,24 +959,91 @@
     white-space: normal;
 }
 
-.activity-list-page .activity-table-wrap .activity-registration-deadline {
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
-    white-space: nowrap;
+.activity-list-page .activity-table-wrap .activity-registration-status-column {
+    width: 170px;
+    min-width: 170px;
+    max-width: 170px;
+    white-space: normal;
 }
 
 .activity-list-page .activity-table-wrap .activity-status-column .badge,
-.activity-list-page .activity-table-wrap .activity-order-status-column .badge,
 .activity-list-page .activity-table-wrap .activity-registration-status-column .badge,
 .activity-list-page .activity-table-wrap .activity-run-status .badge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     white-space: nowrap;
     text-align: center;
 }
 
+.reg-status-cell {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.badge.status-pill.reg-badge {
+    border-color: transparent;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.badge.status-pill.reg-badge--registered {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.badge.status-pill.reg-badge--mandatory {
+    background: #e8f0fe;
+    color: #1967d2;
+}
+
+.badge.status-pill.reg-badge--withdrawn {
+    background: #fef7e0;
+    color: #b06000;
+}
+
+.badge.status-pill.reg-badge--unregistered {
+    background: #f1f3f4;
+    color: #5f6368;
+}
+
+.reg-status-na {
+    color: #80868b;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.reg-sub-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.25;
+    white-space: nowrap;
+}
+
+.reg-sub-status--open {
+    color: #188038;
+}
+
+.reg-sub-status__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #188038;
+    flex-shrink: 0;
+}
+
+.reg-sub-status--closed {
+    color: #80868b;
+}
+
 .activity-list-page .activity-table-wrap th.activity-status-column span,
-.activity-list-page .activity-table-wrap th.activity-order-status-column span,
 .activity-list-page .activity-table-wrap th.activity-registration-status-column span,
 .activity-list-page .activity-table-wrap th.activity-run-status span,
 .activity-list-page .activity-table-wrap th.invitation-status-column span {
@@ -1014,10 +1053,8 @@
 
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-run-status,
 .activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-status-column,
-.activity-list-page .activity-table-wrap tbody tr:hover td.activity-order-status-column,
 .activity-list-page .activity-table-wrap tbody tr:hover td.activity-registration-status-column,
-.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-action-column,
-.activity-list-page .activity-table-wrap tbody tr:hover td.activity-registration-deadline {
+.activity-list-page .activity-table-wrap table:not(.partner-invitation-table) tbody tr:hover td.activity-action-column {
     background: #f8faff;
 }
 
@@ -1031,9 +1068,9 @@
 
 .activity-list-page .activity-table-wrap th.activity-action-column,
 .activity-list-page .activity-table-wrap td.activity-action-column {
-    width: var(--activity-actions-col-width, 160px);
-    min-width: var(--activity-actions-col-width, 160px);
-    max-width: var(--activity-actions-col-width, 160px);
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
 }
 
 .activity-select-column {
@@ -1872,12 +1909,16 @@ button.activity-action-link:focus-visible {
     }
 
     .activity-list-page .activity-table-wrap .activity-status-column,
-    .activity-list-page .activity-table-wrap .activity-order-status-column,
-    .activity-list-page .activity-table-wrap .activity-registration-status-column,
     .activity-list-page .activity-table-wrap .activity-run-status {
         width: 140px;
         min-width: 140px;
         max-width: 140px;
+    }
+
+    .activity-list-page .activity-table-wrap .activity-registration-status-column {
+        width: 170px;
+        min-width: 170px;
+        max-width: 170px;
     }
 
     .activity-detail-card > .activity-table-heading {
@@ -2338,8 +2379,6 @@ span.flatpickr-weekday {
 .activity-table-wrap td.col-status,
 .activity-table-wrap th.activity-status-column,
 .activity-table-wrap td.activity-status-column,
-.activity-table-wrap th.activity-order-status-column,
-.activity-table-wrap td.activity-order-status-column,
 .activity-table-wrap th.activity-registration-status-column,
 .activity-table-wrap td.activity-registration-status-column,
 .activity-table-wrap th.activity-run-status,

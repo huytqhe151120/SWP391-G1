@@ -7,7 +7,9 @@ import com.swp391.g1.util.DateTimeUtil;
 import java.sql.*;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NotificationDAOImpl implements INotificationDAO {
 
@@ -225,6 +227,135 @@ public class NotificationDAOImpl implements INotificationDAO {
         }
     }
 
+    private static final String ELIGIBLE_ACTIVE_STUDENTS_SQL = """
+            SELECT DISTINCT s.account_id
+            FROM dbo.student s
+            LEFT JOIN dbo.main_class mc ON mc.id = s.main_class_id
+            LEFT JOIN dbo.academic_program p ON p.id = mc.responsible_academic_program_id
+            LEFT JOIN dbo.major m ON m.id = p.responsible_major_id
+            WHERE s.status = 'ACTIVE'
+              AND s.account_id IS NOT NULL
+              AND (
+                  NOT EXISTS (
+                      SELECT 1 FROM dbo.activity_target_participant t0 WHERE t0.activity_id = ?
+                  )
+                  OR EXISTS (
+                      SELECT 1
+                      FROM dbo.activity_target_participant t
+                      WHERE t.activity_id = ?
+                        AND (t.department_id IS NULL OR t.department_id = m.responsible_department_id)
+                        AND (t.cohort_id IS NULL OR t.cohort_id = mc.applicable_cohort_id)
+                        AND (t.major_id IS NULL OR t.major_id = p.responsible_major_id)
+                        AND (t.academic_program_id IS NULL OR t.academic_program_id = mc.responsible_academic_program_id)
+                        AND (t.main_class_id IS NULL OR t.main_class_id = s.main_class_id)
+                  )
+              )
+            """;
+
+    @Override
+    public int createEligibleStudentsActivityNotification(
+            int activityId, boolean includeParticipants, String eventType, String title, String content, String targetUrl) {
+        if (activityId <= 0) {
+            return 0;
+        }
+        if (!includeParticipants) {
+            return createNotificationForRecipients(
+                    eventType, title, content, targetUrl, ELIGIBLE_ACTIVE_STUDENTS_SQL, activityId, activityId);
+        }
+        String recipientsSql = ELIGIBLE_ACTIVE_STUDENTS_SQL
+                + """
+                UNION
+                SELECT s.account_id
+                FROM dbo.activity_participant ap
+                JOIN dbo.student s ON s.id = ap.student_id
+                WHERE ap.activity_id = ? AND s.account_id IS NOT NULL
+                """;
+        return createNotificationForRecipients(
+                eventType, title, content, targetUrl, recipientsSql, activityId, activityId, activityId);
+    }
+
+    @Override
+    public int createRegistrationFormStatusNotification(
+            int activityId, int formId, boolean includeApplicants, String eventType, String title, String content, String targetUrl) {
+        if (activityId <= 0) {
+            return 0;
+        }
+        if (!includeApplicants || formId <= 0) {
+            return createNotificationForRecipients(
+                    eventType, title, content, targetUrl, ELIGIBLE_ACTIVE_STUDENTS_SQL, activityId, activityId);
+        }
+        String recipientsSql = ELIGIBLE_ACTIVE_STUDENTS_SQL
+                + """
+                UNION
+                SELECT s.account_id
+                FROM dbo.activity_registration r
+                JOIN dbo.student s ON s.id = r.student_id
+                WHERE r.form_id = ? AND r.status <> 'WITHDRAWN' AND s.account_id IS NOT NULL
+                """;
+        return createNotificationForRecipients(
+                eventType, title, content, targetUrl, recipientsSql, activityId, activityId, formId);
+    }
+
+    @Override
+    public int createStudentAccountsNotification(
+            List<Integer> accountIds, String eventType, String title, String content, String targetUrl) {
+        if (accountIds == null || accountIds.isEmpty()) {
+            return 0;
+        }
+        Set<Integer> distinctIds = new LinkedHashSet<>();
+        for (Integer accountId : accountIds) {
+            if (accountId != null && accountId > 0) {
+                distinctIds.add(accountId);
+            }
+        }
+        if (distinctIds.isEmpty()) {
+            return 0;
+        }
+        try (Connection c = DBContext.getConnection()) {
+            c.setAutoCommit(false);
+            try {
+                int id;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO notifications (title, content, type, event_type, target_url) "
+                                + "VALUES (?, ?, 'IN_APP', ?, ?)",
+                        Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, title);
+                    ps.setString(2, content);
+                    ps.setString(3, eventType);
+                    ps.setString(4, targetUrl);
+                    ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (!rs.next()) {
+                            throw new SQLException("Notification ID was not generated.");
+                        }
+                        id = (int) rs.getLong(1);
+                    }
+                }
+                int insertedRecipients = 0;
+                try (PreparedStatement ps = c.prepareStatement(
+                        "INSERT INTO user_notifications (notification_id, user_id) "
+                                + "SELECT ?, acc.id FROM dbo.account acc WHERE acc.id = ?")) {
+                    for (int accountId : distinctIds) {
+                        ps.setInt(1, id);
+                        ps.setInt(2, accountId);
+                        insertedRecipients += ps.executeUpdate();
+                    }
+                }
+                if (insertedRecipients == 0) {
+                    c.rollback();
+                    return 0;
+                }
+                c.commit();
+                return id;
+            } catch (SQLException e) {
+                c.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to create student notification.", e);
+        }
+    }
+
     private int createNotificationForRecipients(
             String eventType, String title, String content, String targetUrl,
             String recipientsSql, int... recipientParams) {
@@ -248,14 +379,20 @@ public class NotificationDAOImpl implements INotificationDAO {
                         id = (int) rs.getLong(1);
                     }
                 }
+                int insertedRecipients;
                 try (PreparedStatement ps = c.prepareStatement(
                         "INSERT INTO user_notifications (notification_id, user_id) "
-                                + "SELECT ?, recipients.account_id FROM (" + recipientsSql + ") recipients")) {
+                                + "SELECT DISTINCT ?, recipients.account_id FROM (" + recipientsSql + ") recipients "
+                                + "JOIN dbo.account acc ON acc.id = recipients.account_id")) {
                     ps.setInt(1, id);
                     for (int i = 0; i < recipientParams.length; i++) {
                         ps.setInt(i + 2, recipientParams[i]);
                     }
-                    ps.executeUpdate();
+                    insertedRecipients = ps.executeUpdate();
+                }
+                if (insertedRecipients == 0) {
+                    c.rollback();
+                    return 0;
                 }
                 c.commit();
                 return id;

@@ -3,6 +3,7 @@ package com.swp391.g1.service.impl;
 import com.swp391.g1.dao.IActivityOrganizationLevelDAO;
 import com.swp391.g1.dao.IActivityStaffDAO;
 import com.swp391.g1.dao.IExtracurricularActivityDAO;
+import com.swp391.g1.dao.IRegistrationFormDAO;
 import com.swp391.g1.dao.ISemesterDAO;
 import com.swp391.g1.dao.IStudentDAO;
 import com.swp391.g1.dao.impl.ActivityOrganizationLevelDAOImpl;
@@ -517,7 +518,27 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                 "Only activities pending approval can be approved.",
                 ApprovalStatus.PENDING);
         if (approved != null) {
-            notificationService.notifyActivityApproved(id, approved.getName());
+            IRegistrationFormDAO.FormStatusTransition quickTransition =
+                    new com.swp391.g1.dao.impl.RegistrationFormDAOImpl().ensureQuickFormAndGetTransition(id);
+            activityDAO.refreshPublic(id);
+            if (approved.getNature() == ActivityNature.MANDATORY) {
+                targetParticipantService.enqueueMandatoryAutoEnrollment(id);
+            }
+
+            ExtracurricularActivity latest = activityDAO.findById(id);
+            ExtracurricularActivity current = latest != null ? latest : approved;
+            notificationService.notifyActivityApproved(id, current.getName());
+            notificationService.notifyStudentsActivityApproved(
+                    id, current.getName(), current.getNature(), current.isPublic());
+            if (quickTransition != null) {
+                boolean canOpenDetail = current.getApprovalStatus() == ApprovalStatus.APPROVED && current.isPublic();
+                notificationService.notifyRegistrationFormStatusChanged(
+                        id,
+                        quickTransition.formId(),
+                        current.getName(),
+                        quickTransition.newStatus(),
+                        canOpenDetail);
+            }
         }
         return approved != null;
     }
@@ -623,15 +644,6 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
                     "Không thể thay đổi trạng thái duyệt: hoạt động đã bắt đầu "
                             + "hoặc trạng thái đã thay đổi. Vui lòng tải lại trang."
             );
-        }
-
-        if (target == ApprovalStatus.APPROVED) {
-            // Hoạt động đăng ký nhanh: tạo sẵn form mặc định để staff chỉnh thời gian
-            new com.swp391.g1.dao.impl.RegistrationFormDAOImpl().ensureQuickForm(id);
-            // Hoạt động bắt buộc (MANDATORY): tự động ghi danh sinh viên thuộc đối tượng qua Background Queue Job
-            if (activity.getNature() == ActivityNature.MANDATORY) {
-                targetParticipantService.enqueueMandatoryAutoEnrollment(id);
-            }
         }
 
         return activity;

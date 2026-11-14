@@ -25,6 +25,18 @@ public interface INotificationDAO {
 
     int createActivityFeedbackReminder(int activityId);
 
+    /** Gửi thông báo hoạt động tới sinh viên đang hoạt động thuộc đối tượng tham gia (kèm sinh viên đã ghi danh nếu includeParticipants = true). */
+    int createEligibleStudentsActivityNotification(
+            int activityId, boolean includeParticipants, String eventType, String title, String content, String targetUrl);
+
+    /** Gửi thông báo chuyển trạng thái đợt đăng ký tới sinh viên thuộc đối tượng tham gia (kèm sinh viên đã nộp đơn nếu includeApplicants = true). */
+    int createRegistrationFormStatusNotification(
+            int activityId, int formId, boolean includeApplicants, String eventType, String title, String content, String targetUrl);
+
+    /** Gửi thông báo tới danh sách tài khoản sinh viên cụ thể (ví dụ sau khi cập nhật điểm danh). */
+    int createStudentAccountsNotification(
+            List<Integer> accountIds, String eventType, String title, String content, String targetUrl);
+
     /** filter: "all" | "unread" | "read". */
     List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);
 

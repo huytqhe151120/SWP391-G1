@@ -8,6 +8,15 @@ import java.util.List;
 import java.util.Map;
 
 public interface IRegistrationFormDAO {
+
+    record FormStatusTransition(
+            int formId,
+            int activityId,
+            String activityName,
+            String newStatus,
+            boolean canOpenDetail) {
+    }
+
     List<RegistrationForm> findAll();
 
     RegistrationForm findById(int id);
@@ -44,6 +53,11 @@ public interface IRegistrationFormDAO {
 
     void synchronizeFormStatuses();
 
+    default List<FormStatusTransition> synchronizeFormStatusesWithTransitions() {
+        synchronizeFormStatuses();
+        return List.of();
+    }
+
     boolean insert(RegistrationForm form);
 
     boolean update(RegistrationForm form);
@@ -71,6 +85,11 @@ public interface IRegistrationFormDAO {
     Map<String, String> findSavedProfile(int studentId);
 
     void ensureQuickForm(int activityId);
+
+    default FormStatusTransition ensureQuickFormAndGetTransition(int activityId) {
+        ensureQuickForm(activityId);
+        return null;
+    }
 
     boolean updateQuickForm(int formId, String description, java.time.LocalDateTime openAt,
                             java.time.LocalDateTime closeAt, String status);

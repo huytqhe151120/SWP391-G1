@@ -17,7 +17,7 @@ public class StudentDAOImpl implements IStudentDAO {
 
     private static final String SELECT_BASE = """
             SELECT s.id, s.main_class_id, s.account_id, mc.code AS mainClassCode,
-                   d.name AS departmentName, m.name AS majorName,
+                   p.name AS academicProgramName, d.name AS departmentName, m.name AS majorName,
                    s.code, s.name, s.dob, s.gender, s.email,
                    s.phone_number, s.status
             FROM student s
@@ -34,6 +34,7 @@ public class StudentDAOImpl implements IStudentDAO {
         student.setMainClassId(rs.wasNull() ? 0 : mainClassId);
         student.setAccountId(rs.getInt("account_id"));
         student.setMainClassCode(rs.getString("mainClassCode"));
+        student.setAcademicProgramName(rs.getString("academicProgramName"));
         student.setDepartmentName(rs.getString("departmentName"));
         student.setMajorName(rs.getString("majorName"));
         student.setCode(rs.getString("code"));

@@ -31,6 +31,11 @@ public final class AccessPolicy {
         return canManageActivities(user) || canUsePartnerAttendanceScope(user);
     }
 
+    /** Students can view their own attendance details in activities they participate in. */
+    public static boolean canViewOwnAttendance(CurrentUser user) {
+        return hasType(user, "STUDENT");
+    }
+
     /** Only ADMIN and STAFF can add or remove students in an activity's participant list. */
     public static boolean canManageParticipants(CurrentUser user) {
         return canManageActivities(user);

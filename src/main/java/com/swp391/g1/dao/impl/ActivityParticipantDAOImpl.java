@@ -18,8 +18,10 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
 
@@ -630,16 +632,25 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
     @Override
     public int updateStatuses(int activityId, int sessionNumber, Map<Integer, ParticipantStatus> statusByParticipantId,
             String changedBy) {
+        return updateStatusesAndReturnChanges(activityId, sessionNumber, statusByParticipantId, changedBy).size();
+    }
+
+    @Override
+    public List<AttendanceStatusChange> updateStatusesAndReturnChanges(
+            int activityId, int sessionNumber, Map<Integer, ParticipantStatus> statusByParticipantId,
+            String changedBy) {
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
         int safeSessionNumber = Math.max(1, sessionNumber);
         String selectOldSql = """
                 SELECT ap.id,
+                       st.account_id,
                        COALESCE(s.attendance_status,
                                 CASE WHEN ? = 1 AND NOT EXISTS (
                                     SELECT 1 FROM dbo.activity_participant_session_attendance s0
                                     WHERE s0.activity_participant_id = ap.id
                                 ) THEN ap.attendance_status ELSE 'NOT_YET' END) AS current_status
                 FROM dbo.activity_participant ap
+                JOIN dbo.student st ON st.id = ap.student_id
                 LEFT JOIN dbo.activity_participant_session_attendance s
                        ON s.activity_participant_id = ap.id AND s.session_number = ?
                 WHERE ap.id = ? AND ap.activity_id = ?
@@ -661,12 +672,12 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                 VALUES (?, ?, ?, ?, ?)
                 """;
 
+        List<AttendanceStatusChange> changes = new ArrayList<>();
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement selectOld = conn.prepareStatement(selectOldSql);
                  PreparedStatement upsertSession = conn.prepareStatement(upsertSessionSql);
                  PreparedStatement history = conn.prepareStatement(historySql)) {
-                int changed = 0;
                 for (Map.Entry<Integer, ParticipantStatus> entry : statusByParticipantId.entrySet()) {
                     int participantId = entry.getKey();
                     String newStatus = entry.getValue().name();
@@ -677,11 +688,13 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     selectOld.setInt(4, activityId);
 
                     String oldStatus;
+                    Integer studentAccountId;
                     try (ResultSet rs = selectOld.executeQuery()) {
                         if (!rs.next()) {
                             continue;
                         }
                         oldStatus = rs.getString("current_status");
+                        studentAccountId = (Integer) rs.getObject("account_id");
                     }
                     if (oldStatus == null) {
                         oldStatus = ParticipantStatus.NOT_YET.name();
@@ -706,11 +719,12 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     history.setString(4, newStatus);
                     history.setInt(5, actorId);
                     history.executeUpdate();
-                    changed++;
+
+                    changes.add(new AttendanceStatusChange(participantId, studentAccountId, oldStatus, newStatus));
                 }
                 syncActivityResults(conn, activityId);
                 conn.commit();
-                return changed;
+                return changes;
             } catch (SQLException e) {
                 try {
                     conn.rollback();
@@ -1138,6 +1152,27 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
             throw new IllegalStateException("Failed to load attendance history for participant " + participantId, e);
         }
         return list;
+    }
+
+    @Override
+    public Set<Integer> findActivityIdsByStudentId(int studentId) {
+        if (studentId <= 0) {
+            return Set.of();
+        }
+        Set<Integer> ids = new LinkedHashSet<>();
+        String sql = "SELECT activity_id FROM dbo.activity_participant WHERE student_id = ?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getInt("activity_id"));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to find participated activity ids for student " + studentId, e);
+        }
+        return ids;
     }
 
     @Override

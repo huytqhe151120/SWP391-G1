@@ -1,10 +1,15 @@
 package com.swp391.g1.service.impl;
 
 import com.swp391.g1.dao.INotificationDAO;
+import com.swp391.g1.dao.impl.ExtracurricularActivityDAOImpl;
 import com.swp391.g1.dao.impl.NotificationDAOImpl;
 import com.swp391.g1.dto.response.NotificationDTO;
+import com.swp391.g1.model.Enum.ActivityNature;
+import com.swp391.g1.model.Enum.ApprovalStatus;
+import com.swp391.g1.model.ExtracurricularActivity;
 import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.util.DateTimeUtil;
+import com.swp391.g1.util.StatusUtil;
 import java.time.Instant;
 import java.util.List;
 import java.util.logging.Level;
@@ -42,6 +47,111 @@ public class NotificationServiceImpl implements INotificationService {
     public void notifyActivityApproved(int activityId, String activityName) {
         notifyActivityStatus(activityId, "ACTIVITY_APPROVED", activityName,
                 "Hoạt động đã được duyệt", "đã được duyệt.");
+    }
+
+    @Override
+    public void notifyStudentsActivityApproved(
+            int activityId, String activityName, ActivityNature nature, boolean isPublic) {
+        if (activityId <= 0 || nature == null) {
+            return;
+        }
+        try {
+            String targetUrl = isPublic ? ("/activities?action=detail&id=" + activityId) : "/activities";
+            if (nature == ActivityNature.REQUIRE_REGISTRATION || nature == ActivityNature.VOLUNTARY) {
+                notificationDAO.createEligibleStudentsActivityNotification(
+                        activityId,
+                        false,
+                        "ACTIVITY_NEW",
+                        "Hoạt động ngoại khóa mới",
+                        "Có hoạt động mới \"" + activityName + "\".",
+                        targetUrl);
+            } else if (nature == ActivityNature.MANDATORY) {
+                notificationDAO.createEligibleStudentsActivityNotification(
+                        activityId,
+                        true,
+                        "ACTIVITY_MANDATORY_ASSIGNED",
+                        "Chỉ định tham gia hoạt động mới",
+                        "Bạn được chỉ định tham gia hoạt động mới \"" + activityName + "\".",
+                        targetUrl);
+            }
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send student activity approval notification.", e);
+        }
+    }
+
+    @Override
+    public void notifyRegistrationFormStatusChanged(int activityId, int formId, String newStatus) {
+        if (activityId <= 0 || (!"OPENING".equals(newStatus) && !"CLOSED".equals(newStatus))) {
+            return;
+        }
+        try {
+            ExtracurricularActivity activity = new ExtracurricularActivityDAOImpl().findById(activityId);
+            if (activity == null) {
+                return;
+            }
+            boolean canOpenDetail = activity.getApprovalStatus() == ApprovalStatus.APPROVED && activity.isPublic();
+            notifyRegistrationFormStatusChanged(
+                    activityId, formId, activity.getName(), newStatus, canOpenDetail);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not resolve activity for registration form status notification.", e);
+        }
+    }
+
+    @Override
+    public void notifyRegistrationFormStatusChanged(
+            int activityId, int formId, String activityName, String newStatus, boolean canOpenDetail) {
+        if (activityId <= 0 || (!"OPENING".equals(newStatus) && !"CLOSED".equals(newStatus))) {
+            return;
+        }
+        try {
+            String targetUrl = canOpenDetail ? ("/activities?action=detail&id=" + activityId) : "/activities";
+            if ("OPENING".equals(newStatus)) {
+                notificationDAO.createRegistrationFormStatusNotification(
+                        activityId,
+                        formId,
+                        false,
+                        "REGISTRATION_FORM_OPENING",
+                        "Đợt đăng ký hoạt động đã mở",
+                        "Đợt đăng ký cho hoạt động \"" + activityName + "\" đã mở.",
+                        targetUrl);
+            } else {
+                notificationDAO.createRegistrationFormStatusNotification(
+                        activityId,
+                        formId,
+                        true,
+                        "REGISTRATION_FORM_CLOSED",
+                        "Đợt đăng ký hoạt động đã đóng",
+                        "Đợt đăng ký cho hoạt động \"" + activityName + "\" đã đóng.",
+                        targetUrl);
+            }
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send registration form status notification.", e);
+        }
+    }
+
+    @Override
+    public void notifyAttendanceStatusChanged(
+            int activityId, String activityName, int sessionNumber, int totalSessions,
+            String oldStatus, String newStatus, List<Integer> studentAccountIds) {
+        if (activityId <= 0 || studentAccountIds == null || studentAccountIds.isEmpty()) {
+            return;
+        }
+        try {
+            int safeSession = Math.max(1, sessionNumber);
+            String sessionLabel = totalSessions > 1 ? (" buổi " + safeSession) : "";
+            String content = "Trạng thái điểm danh" + sessionLabel + " của bạn trong hoạt động \""
+                    + activityName + "\" đã thay đổi từ \"" + StatusUtil.label(oldStatus)
+                    + "\" sang \"" + StatusUtil.label(newStatus) + "\".";
+            String targetUrl = "/attendance?action=detail&activityId=" + activityId + "&sessionNumber=" + safeSession;
+            notificationDAO.createStudentAccountsNotification(
+                    studentAccountIds,
+                    "ATTENDANCE_STATUS_CHANGED",
+                    "Cập nhật trạng thái điểm danh",
+                    content,
+                    targetUrl);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send attendance status change notification.", e);
+        }
     }
 
     @Override

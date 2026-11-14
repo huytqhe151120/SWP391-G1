@@ -9,12 +9,25 @@ import com.swp391.g1.model.Enum.ParticipantStatus;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface IActivityParticipantDAO {
+
+    record AttendanceStatusChange(
+            int participantId,
+            Integer studentAccountId,
+            String oldStatus,
+            String newStatus) {
+    }
+
     List<ActivityParticipantResponseDTO> findByActivityId(int activityId);
 
     default List<ActivityParticipantResponseDTO> findByActivityId(int activityId, int sessionNumber) {
         return findByActivityId(activityId);
+    }
+
+    default Set<Integer> findActivityIdsByStudentId(int studentId) {
+        return Set.of();
     }
 
     /** Active students that are not yet participants of the activity. */
@@ -50,6 +63,13 @@ public interface IActivityParticipantDAO {
     default int updateStatuses(int activityId, int sessionNumber,
             Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy) {
         return updateStatuses(activityId, statusByParticipantId, changedBy);
+    }
+
+    default List<AttendanceStatusChange> updateStatusesAndReturnChanges(
+            int activityId, int sessionNumber,
+            Map<Integer, ParticipantStatus> statusByParticipantId, String changedBy) {
+        updateStatuses(activityId, sessionNumber, statusByParticipantId, changedBy);
+        return List.of();
     }
 
     default void syncActivityResults(int activityId) {

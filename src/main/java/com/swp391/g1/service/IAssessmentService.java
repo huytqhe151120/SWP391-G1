@@ -31,6 +31,12 @@ public interface IAssessmentService {
 
     Assessment getAssessmentByActivityId(int activityId, CurrentUser user);
 
+    /** Staff/admin management list: all assessments with activity name + attempt counters. */
+    List<com.swp391.g1.dto.AssessmentListItem> listAssessmentsForStaff(CurrentUser user);
+
+    /** Student list: published assessments of activities the student participates in. */
+    List<com.swp391.g1.dto.AssessmentListItem> listAssessmentsForStudent(int studentId);
+
     /** Load assessment by activity ID without activity-scope restrictions. Used for student take eligibility. Read-only. */
     Assessment getAssessmentByActivityIdForStudent(int activityId);
 

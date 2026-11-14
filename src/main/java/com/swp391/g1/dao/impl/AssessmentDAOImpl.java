@@ -2,6 +2,7 @@ package com.swp391.g1.dao.impl;
 
 import com.swp391.g1.common.DBContext;
 import com.swp391.g1.dao.IAssessmentDAO;
+import com.swp391.g1.dto.AssessmentListItem;
 import com.swp391.g1.model.Assessment;
 
 import java.sql.Connection;
@@ -80,6 +81,79 @@ public class AssessmentDAOImpl implements IAssessmentDAO {
             throw new IllegalStateException("Failed to find assessment by activity ID.", e);
         }
     }
+    @Override
+    public List<AssessmentListItem> listForStaff() {
+        List<AssessmentListItem> list = new ArrayList<>();
+        String sql = "SELECT a.id, a.activity_id, ea.code AS activity_code, ea.name AS activity_name, a.title, "
+                + "a.is_published, a.open_time, a.close_time, "
+                + "(SELECT COUNT(*) FROM assessment_attempt att WHERE att.assessment_id = a.id) AS total_attempts, "
+                + "(SELECT COUNT(*) FROM assessment_attempt att WHERE att.assessment_id = a.id AND att.status = 'SUBMITTED') AS pending_grading "
+                + "FROM assessment a "
+                + "JOIN extracurricular_activity ea ON ea.id = a.activity_id "
+                + "ORDER BY a.created_at DESC";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                AssessmentListItem item = mapListItem(rs);
+                item.setTotalAttempts(rs.getInt("total_attempts"));
+                item.setPendingGrading(rs.getInt("pending_grading"));
+                list.add(item);
+            }
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to list assessments for staff.", e);
+        }
+        return list;
+    }
+
+    @Override
+    public List<AssessmentListItem> listForStudent(int studentId) {
+        List<AssessmentListItem> list = new ArrayList<>();
+        if (studentId <= 0) {
+            return list;
+        }
+        String sql = "SELECT a.id, a.activity_id, ea.code AS activity_code, ea.name AS activity_name, a.title, "
+                + "a.is_published, a.open_time, a.close_time, "
+                + "att.status AS attempt_status, att.final_score "
+                + "FROM assessment a "
+                + "JOIN extracurricular_activity ea ON ea.id = a.activity_id "
+                + "JOIN activity_participant ap ON ap.activity_id = a.activity_id AND ap.student_id = ? "
+                + "LEFT JOIN assessment_attempt att ON att.assessment_id = a.id AND att.student_id = ? "
+                + "WHERE a.is_published = 1 "
+                + "ORDER BY a.created_at DESC";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, studentId);
+            ps.setInt(2, studentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AssessmentListItem item = mapListItem(rs);
+                    item.setAttemptStatus(rs.getString("attempt_status"));
+                    item.setFinalScore(rs.getBigDecimal("final_score"));
+                    list.add(item);
+                }
+            }
+        } catch (java.sql.SQLException e) {
+            throw new IllegalStateException("Failed to list assessments for student.", e);
+        }
+        return list;
+    }
+
+    private AssessmentListItem mapListItem(ResultSet rs) throws java.sql.SQLException {
+        AssessmentListItem item = new AssessmentListItem();
+        item.setAssessmentId(rs.getInt("id"));
+        item.setActivityId(rs.getInt("activity_id"));
+        item.setActivityCode(rs.getString("activity_code"));
+        item.setActivityName(rs.getString("activity_name"));
+        item.setTitle(rs.getString("title"));
+        item.setPublished(rs.getBoolean("is_published"));
+        Timestamp ot = rs.getTimestamp("open_time");
+        item.setOpenTime(ot == null ? null : ot.toLocalDateTime());
+        Timestamp ct = rs.getTimestamp("close_time");
+        item.setCloseTime(ct == null ? null : ct.toLocalDateTime());
+        return item;
+    }
+
     @Override
     public Integer insert(Assessment assessment) {
         String sql = "INSERT INTO assessment (activity_id, title, description, open_time, close_time, is_published, created_at, updated_at) "

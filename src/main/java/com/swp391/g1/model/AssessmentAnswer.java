@@ -24,6 +24,8 @@ public class AssessmentAnswer {
     private GradingStatus gradingStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private AssessmentQuestion question;
+    private AssessmentOption selectedOption;
 
     public AssessmentAnswer() {
     }
@@ -106,5 +108,21 @@ public class AssessmentAnswer {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public AssessmentQuestion getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(AssessmentQuestion question) {
+        this.question = question;
+    }
+
+    public AssessmentOption getSelectedOption() {
+        return selectedOption;
+    }
+
+    public void setSelectedOption(AssessmentOption selectedOption) {
+        this.selectedOption = selectedOption;
     }
 }

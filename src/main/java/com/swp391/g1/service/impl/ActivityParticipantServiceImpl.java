@@ -13,6 +13,7 @@ import com.swp391.g1.model.Enum.ParticipantStatus;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityParticipantService;
 import com.swp391.g1.service.IExtracurricularActivityService;
+import com.swp391.g1.service.INotificationService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -29,10 +30,15 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     private final IActivityParticipantDAO participantDAO;
     private final IExtracurricularActivityService activityService;
+    private final INotificationService notificationService;
+
+    private record StatusTransitionKey(String oldStatus, String newStatus) {
+    }
 
     public ActivityParticipantServiceImpl() {
         this.participantDAO = new ActivityParticipantDAOImpl();
         this.activityService = new ExtracurricularActivityServiceImpl();
+        this.notificationService = new NotificationServiceImpl();
     }
 
     @Override
@@ -46,6 +52,14 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             return List.of();
         }
         return participantDAO.findByActivityId(activityId, Math.max(1, sessionNumber));
+    }
+
+    @Override
+    public Set<Integer> getActivityIdsByStudentId(int studentId) {
+        if (studentId <= 0) {
+            return Set.of();
+        }
+        return participantDAO.findActivityIdsByStudentId(studentId);
     }
 
     @Override
@@ -89,7 +103,32 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             return 0;
         }
         String actorId = String.valueOf(user.getId());
-        return participantDAO.updateStatuses(activityId, sessionNumber, statuses, actorId);
+        List<IActivityParticipantDAO.AttendanceStatusChange> changes =
+                participantDAO.updateStatusesAndReturnChanges(activityId, sessionNumber, statuses, actorId);
+        if (!changes.isEmpty()
+                && (AccessPolicy.hasType(user, "ADMIN")
+                        || AccessPolicy.hasType(user, "STAFF")
+                        || AccessPolicy.hasType(user, "PARTNER_STAFF"))) {
+            Map<StatusTransitionKey, List<Integer>> accountIdsByTransition = new LinkedHashMap<>();
+            for (IActivityParticipantDAO.AttendanceStatusChange change : changes) {
+                if (change.studentAccountId() != null && change.studentAccountId() > 0) {
+                    StatusTransitionKey key = new StatusTransitionKey(change.oldStatus(), change.newStatus());
+                    accountIdsByTransition.computeIfAbsent(key, k -> new ArrayList<>())
+                            .add(change.studentAccountId());
+                }
+            }
+            for (Map.Entry<StatusTransitionKey, List<Integer>> entry : accountIdsByTransition.entrySet()) {
+                notificationService.notifyAttendanceStatusChanged(
+                        activityId,
+                        activity.getName(),
+                        sessionNumber,
+                        totalSessions,
+                        entry.getKey().oldStatus(),
+                        entry.getKey().newStatus(),
+                        entry.getValue());
+            }
+        }
+        return changes.size();
     }
 
     @Override

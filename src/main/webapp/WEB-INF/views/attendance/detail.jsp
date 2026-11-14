@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EAMS | Chi tiết điểm danh sinh viên</title>
+    <title>EAMS | ${isStudent ? 'Chi tiết điểm danh của tôi' : 'Chi tiết điểm danh sinh viên'}</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261109-4">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
@@ -23,23 +23,68 @@
         <main class="activity-app-main page activity-list-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
-                    <span class="eyebrow">EAMS <span aria-hidden="true">/</span> ĐIỂM DANH SINH VIÊN <span aria-hidden="true">/</span> CHI TIẾT</span>
-                    <h1>Chi tiết điểm danh của sinh viên</h1>
-                    <p>Theo dõi kết quả điểm danh của sinh viên trong tất cả các buổi của hoạt động và lịch sử cập nhật trạng thái điểm danh.</p>
+                    <span class="eyebrow">
+                        <c:choose>
+                            <c:when test="${isStudent}">SINH VIÊN <span aria-hidden="true">/</span> ĐIỂM DANH CỦA TÔI <span aria-hidden="true">/</span> CHI TIẾT</c:when>
+                            <c:otherwise>EAMS <span aria-hidden="true">/</span> ĐIỂM DANH SINH VIÊN <span aria-hidden="true">/</span> CHI TIẾT</c:otherwise>
+                        </c:choose>
+                    </span>
+                    <h1>${isStudent ? 'Chi tiết điểm danh của tôi' : 'Chi tiết điểm danh của sinh viên'}</h1>
+                    <p>${isStudent
+                            ? 'Theo dõi kết quả điểm danh của bạn trong tất cả các buổi của hoạt động và lịch sử cập nhật trạng thái điểm danh.'
+                            : 'Theo dõi kết quả điểm danh của sinh viên trong tất cả các buổi của hoạt động và lịch sử cập nhật trạng thái điểm danh.'}</p>
                 </div>
             </header>
 
             <div class="activity-page-back" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <a class="button button-back"
-                   href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&amp;sessionNumber=${selectedSessionNumber}">
-                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                    Quay lại danh sách điểm danh
-                </a>
-                <a class="button button-outline"
-                   href="${pageContext.request.contextPath}/student-grades?action=activityDetail&amp;studentId=${participant.studentId}&amp;activityId=${selectedActivity.id}">
-                    Bảng điểm sinh viên
-                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                </a>
+                <c:choose>
+                    <c:when test="${isStudent}">
+                        <c:choose>
+                            <c:when test="${canOpenActivityDetail and not empty selectedActivity}">
+                                <a class="button button-back"
+                                   href="${pageContext.request.contextPath}/activities?action=detail&amp;id=${selectedActivity.id}">
+                                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                                    Chi tiết hoạt động
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <a class="button button-back"
+                                   href="${pageContext.request.contextPath}/activities">
+                                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                                    Danh sách hoạt động
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test="${not empty selectedActivity and not empty participant}">
+                                <a class="button button-outline"
+                                   href="${pageContext.request.contextPath}/student-grades?action=activityDetail&amp;studentId=${participant.studentId}&amp;activityId=${selectedActivity.id}">
+                                    Chi tiết điểm hoạt động
+                                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <a class="button button-outline"
+                                   href="${pageContext.request.contextPath}/student-grades">
+                                    Điểm hoạt động của tôi
+                                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:when>
+                    <c:otherwise>
+                        <a class="button button-back"
+                           href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&amp;sessionNumber=${selectedSessionNumber}">
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                            Quay lại danh sách điểm danh
+                        </a>
+                        <a class="button button-outline"
+                           href="${pageContext.request.contextPath}/student-grades?action=activityDetail&amp;studentId=${participant.studentId}&amp;activityId=${selectedActivity.id}">
+                            Bảng điểm sinh viên
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </div>
 
             <c:if test="${not empty sessionScope.successMessage}">
@@ -52,6 +97,31 @@
             </c:if>
 
             <section class="card activity-table-card" aria-labelledby="student-attendance-detail-title">
+                <c:choose>
+                    <c:when test="${empty selectedActivity or empty participant}">
+                        <div class="activity-table-heading">
+                            <div>
+                                <h2 id="student-attendance-detail-title">
+                                    <c:choose>
+                                        <c:when test="${not empty studentProfile}">
+                                            <c:out value="${studentProfile.code}"/> – <c:out value="${studentProfile.name}"/>
+                                        </c:when>
+                                        <c:otherwise>Chi tiết điểm danh của tôi</c:otherwise>
+                                    </c:choose>
+                                </h2>
+                                <p>Theo dõi chi tiết điểm danh qua từng buổi của các hoạt động bạn tham gia.</p>
+                            </div>
+                        </div>
+                        <div class="empty-state activity-empty-state" style="padding: 40px 24px;">
+                            <span class="empty-state-mark" aria-hidden="true">✓</span>
+                            <strong>Bạn chưa có dữ liệu điểm danh hoạt động nào</strong>
+                            <span>Khi bạn đăng ký và được ghi nhận trong danh sách tham gia hoạt động ngoại khóa, kết quả điểm danh từng buổi sẽ hiển thị tại đây.</span>
+                            <div style="margin-top: 14px;">
+                                <a class="button button-primary" href="${pageContext.request.contextPath}/activities">Khám phá hoạt động</a>
+                            </div>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
                 <div class="activity-table-heading">
                     <div>
                         <h2 id="student-attendance-detail-title">
@@ -70,8 +140,11 @@
 
                 <%-- Bộ chọn nhanh Hoạt động & Sinh viên --%>
                 <details class="activity-filter-panel" open>
-                    <summary class="activity-filter-toggle"><span>Chuyển nhanh Hoạt động / Sinh viên</span></summary>
-                    <form class="activity-filter attendance-filter" action="${pageContext.request.contextPath}/attendance" method="get">
+                    <summary class="activity-filter-toggle">
+                        <span>${isStudent ? 'Chọn hoạt động tham gia' : 'Chuyển nhanh Hoạt động / Sinh viên'}</span>
+                    </summary>
+                    <form class="activity-filter attendance-filter ${isStudent ? 'attendance-filter--single' : ''}"
+                          action="${pageContext.request.contextPath}/attendance" method="get">
                         <input type="hidden" name="action" value="detail">
                         <input type="hidden" name="sessionNumber" value="${selectedSessionNumber}">
                         <div class="activity-filter-field attendance-filter-activity">
@@ -100,32 +173,34 @@
                                 <span class="multi-select-count" aria-live="polite">Chưa chọn hoạt động</span>
                             </div>
                         </div>
-                        <div class="activity-filter-field attendance-filter-activity">
-                            <label id="detail-participant-label">Sinh viên trong hoạt động</label>
-                            <div class="multi-select-combobox" data-multi-select data-single data-auto-submit
-                                 data-item-label="sinh viên" data-input-name="participantId">
-                                <button type="button" class="multi-select-trigger" aria-expanded="false"
-                                        aria-controls="detail-participant-options" aria-labelledby="detail-participant-label">
-                                    <span data-selection-label>-- Chọn sinh viên --</span>
-                                    <span aria-hidden="true">▾</span>
-                                </button>
-                                <div class="multi-select-dropdown" id="detail-participant-options" hidden>
-                                    <input class="multi-select-search" type="search"
-                                           placeholder="Tìm mã SV hoặc họ tên..." aria-label="Tìm sinh viên">
-                                    <fieldset class="multi-select-options">
-                                        <legend class="visually-hidden">Chọn sinh viên</legend>
-                                        <c:forEach var="item" items="${allParticipants}">
-                                            <label class="multi-select-option">
-                                                <input type="radio" name="participantId" value="${item.participantId}" ${participant.participantId == item.participantId ? 'checked' : ''}>
-                                                <span><c:out value="${item.studentCode}"/> – <c:out value="${item.studentName}"/><c:if test="${not empty item.mainClassCode}"> (<c:out value="${item.mainClassCode}"/>)</c:if></span>
-                                            </label>
-                                        </c:forEach>
-                                    </fieldset>
-                                    <div class="multi-select-empty" hidden>Không tìm thấy sinh viên phù hợp.</div>
+                        <c:if test="${not isStudent}">
+                            <div class="activity-filter-field attendance-filter-activity">
+                                <label id="detail-participant-label">Sinh viên trong hoạt động</label>
+                                <div class="multi-select-combobox" data-multi-select data-single data-auto-submit
+                                     data-item-label="sinh viên" data-input-name="participantId">
+                                    <button type="button" class="multi-select-trigger" aria-expanded="false"
+                                            aria-controls="detail-participant-options" aria-labelledby="detail-participant-label">
+                                        <span data-selection-label>-- Chọn sinh viên --</span>
+                                        <span aria-hidden="true">▾</span>
+                                    </button>
+                                    <div class="multi-select-dropdown" id="detail-participant-options" hidden>
+                                        <input class="multi-select-search" type="search"
+                                               placeholder="Tìm mã SV hoặc họ tên..." aria-label="Tìm sinh viên">
+                                        <fieldset class="multi-select-options">
+                                            <legend class="visually-hidden">Chọn sinh viên</legend>
+                                            <c:forEach var="item" items="${allParticipants}">
+                                                <label class="multi-select-option">
+                                                    <input type="radio" name="participantId" value="${item.participantId}" ${participant.participantId == item.participantId ? 'checked' : ''}>
+                                                    <span><c:out value="${item.studentCode}"/> – <c:out value="${item.studentName}"/><c:if test="${not empty item.mainClassCode}"> (<c:out value="${item.mainClassCode}"/>)</c:if></span>
+                                                </label>
+                                            </c:forEach>
+                                        </fieldset>
+                                        <div class="multi-select-empty" hidden>Không tìm thấy sinh viên phù hợp.</div>
+                                    </div>
+                                    <span class="multi-select-count" aria-live="polite">Chưa chọn sinh viên</span>
                                 </div>
-                                <span class="multi-select-count" aria-live="polite">Chưa chọn sinh viên</span>
                             </div>
-                        </div>
+                        </c:if>
                     </form>
                 </details>
 
@@ -180,7 +255,9 @@
                 <div class="attendance-detail-section-head">
                     <div>
                         <h3 id="all-sessions-heading">Dữ liệu điểm danh trong tất cả các buổi (<c:out value="${totalSessions}"/> buổi)</h3>
-                        <p>Chi tiết trạng thái điểm danh và số điểm chuyên cần của sinh viên ở từng buổi học/hoạt động.</p>
+                        <p>${isStudent
+                                ? 'Chi tiết trạng thái điểm danh và số điểm chuyên cần của bạn ở từng buổi học/hoạt động.'
+                                : 'Chi tiết trạng thái điểm danh và số điểm chuyên cần của sinh viên ở từng buổi học/hoạt động.'}</p>
                     </div>
                 </div>
                 <div class="table-wrap activity-table-wrap">
@@ -194,7 +271,9 @@
                             <th scope="col">Người thực hiện</th>
                             <th scope="col">Đơn vị</th>
                             <th scope="col" style="width: 170px;">Thời gian cập nhật</th>
-                            <th scope="col" class="activity-action-column" style="width: 140px;">Thao tác</th>
+                            <c:if test="${not isStudent}">
+                                <th scope="col" class="activity-action-column" style="width: 140px;">Thao tác</th>
+                            </c:if>
                         </tr>
                         </thead>
                         <tbody>
@@ -207,7 +286,7 @@
                                 </td>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${canTakeAttendance}">
+                                        <c:when test="${canTakeAttendance and not isStudent}">
                                             <form action="${pageContext.request.contextPath}/attendance" method="post"
                                                   style="display:inline-flex; align-items:center; gap:6px; margin:0;">
                                                 <input type="hidden" name="action" value="saveStudentSession">
@@ -272,13 +351,15 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td class="activity-action-column">
-                                    <a class="button button-sm button-outline action-btn"
-                                       href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&amp;sessionNumber=${sess.sessionNumber}">
-                                        <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
-                                        Mở Buổi ${sess.sessionNumber}
-                                    </a>
-                                </td>
+                                <c:if test="${not isStudent}">
+                                    <td class="activity-action-column">
+                                        <a class="button button-sm button-outline action-btn"
+                                           href="${pageContext.request.contextPath}/attendance?activityId=${selectedActivity.id}&amp;sessionNumber=${sess.sessionNumber}">
+                                            <span class="action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+                                            Mở Buổi ${sess.sessionNumber}
+                                        </a>
+                                    </td>
+                                </c:if>
                             </tr>
                         </c:forEach>
                         </tbody>
@@ -288,8 +369,10 @@
                 <%-- BẢNG 2: LỊCH SỬ ĐIỂM DANH CỦA SINH VIÊN --%>
                 <div class="attendance-detail-section-head">
                     <div>
-                        <h3 id="history-heading">Lịch sử điểm danh của sinh viên</h3>
-                        <p>Ghi nhận toàn bộ các lần thay đổi trạng thái điểm danh của sinh viên qua các buổi.</p>
+                        <h3 id="history-heading">${isStudent ? 'Lịch sử điểm danh của tôi' : 'Lịch sử điểm danh của sinh viên'}</h3>
+                        <p>${isStudent
+                                ? 'Ghi nhận toàn bộ các lần thay đổi trạng thái điểm danh của bạn qua các buổi.'
+                                : 'Ghi nhận toàn bộ các lần thay đổi trạng thái điểm danh của sinh viên qua các buổi.'}</p>
                     </div>
                     <span class="activity-count"><c:out value="${attendanceHistory.size()}"/> lần cập nhật</span>
                 </div>
@@ -314,7 +397,9 @@
                                     <td class="empty-state activity-empty-state" colspan="8">
                                         <span class="empty-state-mark" aria-hidden="true">✓</span>
                                         <strong>Chưa có lịch sử thay đổi điểm danh</strong>
-                                        <span>Các lần cập nhật trạng thái điểm danh của sinh viên này sẽ được lưu lại tại đây.</span>
+                                        <span>${isStudent
+                                                ? 'Các lần cập nhật trạng thái điểm danh của bạn sẽ được lưu lại tại đây.'
+                                                : 'Các lần cập nhật trạng thái điểm danh của sinh viên này sẽ được lưu lại tại đây.'}</span>
                                     </td>
                                 </tr>
                             </c:when>
@@ -367,6 +452,8 @@
                         </tbody>
                     </table>
                 </div>
+                    </c:otherwise>
+                </c:choose>
             </section>
         </main>
     </div>

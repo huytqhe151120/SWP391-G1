@@ -20,10 +20,12 @@
         else if (reqUri.contains("/activity-feedback")) navActive = "activity-feedback";
         else if (reqUri.contains("/participation-grading")) navActive = "participation-grading";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
+        else if (reqUri.contains("/assessment")) navActive = "assessments";
         else if (reqUri.contains("/student-grades")) navActive = "student-grades";
     }
     boolean isActivityGroupActive = "activities".equals(navActive)
             || "registration-forms".equals(navActive)
+            || "assessments".equals(navActive)
             || ("activity-feedback".equals(navActive) && AccessPolicy.canManageActivityFeedback(navUser))
             || "attendance".equals(navActive)
             || "participation-grading".equals(navActive)
@@ -131,6 +133,32 @@
                     </span>
                     <span class="activity-nav-label">Đơn đăng ký</span>
                 </a>
+                <a class="activity-nav-item <%= "attendance".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/attendance?action=detail"
+                   title="Điểm danh của tôi"
+                   <%= "attendance".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <path d="m9 14 2 2 4-4"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Điểm danh của tôi</span>
+                </a>
+                <a class="activity-nav-item <%= "assessments".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/assessment?action=list"
+                   title="Bài đánh giá của tôi"
+                   <%= "assessments".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <path d="M9 12h6"/><path d="M9 16h6"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Bài đánh giá của tôi</span>
+                </a>
                 <% } %>
                 <% if (navCanTakeAttendance) { %>
                 <a class="activity-nav-item <%= "attendance".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/attendance"
@@ -155,6 +183,20 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label">Chấm điểm tham gia</span>
+                </a>
+                <% } %>
+                <% if (navAdmin || navStaff) { %>
+                <a class="activity-nav-item <%= "assessments".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/assessment?action=list"
+                   title="Bài đánh giá"
+                   <%= "assessments".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/>
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                            <path d="M9 12h6"/><path d="M9 16h6"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Bài đánh giá</span>
                 </a>
                 <% } %>
                 <% if (AccessPolicy.canManageActivityFeedback(navUser)) { %>
@@ -182,6 +224,7 @@
                     <span class="activity-nav-label"><%= navStudent ? "Điểm hoạt động của tôi" : "Điểm hoạt động" %></span>
                 </a>
                 <% } %>
+                <% if (!navStudent) { %>
                 <a class="activity-nav-item <%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"
                    title="Lời mời hợp tác"
                    <%= "partner-invitations".equals(navActive) ? "aria-current=\"page\"" : "" %>>
@@ -193,9 +236,11 @@
                     </span>
                     <span class="activity-nav-label">Lời mời hợp tác</span>
                 </a>
+                <% } %>
             </div>
         </div>
 
+        <% if (!navStudent) { %>
         <!-- 2. Quản lý Nhân sự -->
         <div class="activity-nav-accordion is-open <%= isHrGroupActive ? "has-active" : "" %>" data-group="hr">
             <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Quản lý Nhân sự">
@@ -297,6 +342,7 @@
                 </a>
             </div>
         </div>
+        <% } %>
 
         <!-- Nhóm: HỖ TRỢ (Admin / Staff) -->
         <% if (navAdmin || navStaff) { %>

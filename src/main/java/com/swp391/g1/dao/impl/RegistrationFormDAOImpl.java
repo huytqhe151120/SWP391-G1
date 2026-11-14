@@ -274,7 +274,15 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
     @Override
     public void synchronizeFormStatuses() {
-        String closeExpiredSql = "UPDATE dbo.activity_registration_form SET status='CLOSED',updated_at=SYSDATETIME() "
+        synchronizeFormStatusesWithTransitions();
+    }
+
+    @Override
+    public List<FormStatusTransition> synchronizeFormStatusesWithTransitions() {
+        String sql = "SET NOCOUNT ON; "
+                + "DECLARE @Transitioned TABLE (form_id INT, activity_id INT, new_status VARCHAR(20)); "
+                + "UPDATE dbo.activity_registration_form SET status='CLOSED',updated_at=SYSDATETIME() "
+                + "OUTPUT INSERTED.id, INSERTED.activity_id, 'CLOSED' INTO @Transitioned (form_id, activity_id, new_status) "
                 + "WHERE (status='OPENING' AND ((close_at IS NOT NULL AND close_at<=SYSDATETIME()) "
                 + "OR NOT EXISTS(SELECT 1 FROM dbo.extracurricular_activity a "
                 + "WHERE a.id=activity_registration_form.activity_id AND a.approval_status='APPROVED' "
@@ -283,24 +291,49 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "AND activity_registration_form.open_at IS NOT NULL "
                 + "AND activity_registration_form.close_at IS NOT NULL "
                 + "AND activity_registration_form.close_at<=" + ACTIVITY_CLOSE_CUTOFF + "))) "
-                + "OR (status='DRAFT' AND close_at IS NOT NULL AND close_at<=SYSDATETIME())";
-        String openScheduledSql = "UPDATE f SET status='OPENING',updated_at=SYSDATETIME() "
+                + "OR (status='DRAFT' AND close_at IS NOT NULL AND close_at<=SYSDATETIME()); "
+                + "UPDATE f SET status='OPENING',updated_at=SYSDATETIME() "
+                + "OUTPUT INSERTED.id, INSERTED.activity_id, 'OPENING' INTO @Transitioned (form_id, activity_id, new_status) "
                 + "FROM dbo.activity_registration_form f "
                 + "JOIN dbo.extracurricular_activity a ON a.id=f.activity_id "
                 + "WHERE f.status='DRAFT' AND a.approval_status='APPROVED' AND a.activity_status='UPCOMING' "
                 + "AND a.start_time IS NOT NULL AND a.start_time>SYSUTCDATETIME() "
                 + "AND f.open_at IS NOT NULL AND f.open_at<=SYSDATETIME() "
                 + "AND f.close_at IS NOT NULL AND f.close_at>SYSDATETIME() "
-                + "AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF;
+                + "AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF + "; "
+                + "SELECT t.form_id, t.activity_id, t.new_status, a.name AS activity_name, "
+                + "a.approval_status, a.is_public "
+                + "FROM @Transitioned t "
+                + "JOIN dbo.extracurricular_activity a ON a.id = t.activity_id;";
+        List<FormStatusTransition> transitions = new ArrayList<>();
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
                 lockActivitiesForFormStatusReconciliation(c);
-                try (Statement s = c.createStatement()) {
-                    s.executeUpdate(closeExpiredSql);
-                    s.executeUpdate(openScheduledSql);
+                try (PreparedStatement ps = c.prepareStatement(sql)) {
+                    boolean hasResultSet = ps.execute();
+                    while (true) {
+                        if (hasResultSet) {
+                            try (ResultSet rs = ps.getResultSet()) {
+                                while (rs.next()) {
+                                    boolean canOpenDetail = "APPROVED".equals(rs.getString("approval_status"))
+                                            && rs.getBoolean("is_public");
+                                    transitions.add(new FormStatusTransition(
+                                            rs.getInt("form_id"),
+                                            rs.getInt("activity_id"),
+                                            rs.getString("activity_name"),
+                                            rs.getString("new_status"),
+                                            canOpenDetail));
+                                }
+                            }
+                        } else if (ps.getUpdateCount() == -1) {
+                            break;
+                        }
+                        hasResultSet = ps.getMoreResults();
+                    }
                 }
                 c.commit();
+                return transitions;
             } catch (SQLException | RuntimeException e) {
                 c.rollback();
                 throw e;
@@ -1102,11 +1135,32 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
     @Override
     public void ensureQuickForm(int activityId) {
+        ensureQuickFormAndGetTransition(activityId);
+    }
+
+    @Override
+    public FormStatusTransition ensureQuickFormAndGetTransition(int activityId) {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
             try {
-                int formId = findOrCreateQuickForm(c, activityId);
-                if (formId > 0) {
+                Integer existingFormId = null;
+                try (PreparedStatement p = c.prepareStatement(
+                        "SELECT f.id FROM dbo.activity_registration_form f WITH (UPDLOCK, HOLDLOCK) WHERE f.activity_id=?")) {
+                    p.setInt(1, activityId);
+                    try (ResultSet r = p.executeQuery()) {
+                        if (r.next()) {
+                            existingFormId = r.getInt(1);
+                        }
+                    }
+                }
+
+                boolean statusTransitioned = false;
+                int formId;
+                if (existingFormId == null) {
+                    formId = findOrCreateQuickForm(c, activityId);
+                    statusTransitioned = formId > 0;
+                } else {
+                    formId = existingFormId;
                     // Duyệt lại sau khi bị thu hồi: mở lại form nếu thời gian còn hợp lệ
                     String reopenSql = "UPDATE f SET status='OPENING',updated_at=SYSDATETIME() "
                             + "FROM dbo.activity_registration_form f "
@@ -1117,10 +1171,37 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                             + "AND a.start_time IS NOT NULL AND f.close_at<=" + ACTIVITY_CLOSE_CUTOFF;
                     try (PreparedStatement p = c.prepareStatement(reopenSql)) {
                         p.setInt(1, formId);
-                        p.executeUpdate();
+                        statusTransitioned = p.executeUpdate() > 0;
+                    }
+                }
+
+                FormStatusTransition transition = null;
+                if (statusTransitioned && formId > 0) {
+                    String infoSql = "SELECT f.status, a.name, a.approval_status, a.is_public "
+                            + "FROM dbo.activity_registration_form f "
+                            + "JOIN dbo.extracurricular_activity a ON a.id = f.activity_id "
+                            + "WHERE f.id = ?";
+                    try (PreparedStatement p = c.prepareStatement(infoSql)) {
+                        p.setInt(1, formId);
+                        try (ResultSet rs = p.executeQuery()) {
+                            if (rs.next()) {
+                                String newStatus = rs.getString("status");
+                                if ("OPENING".equals(newStatus) || "CLOSED".equals(newStatus)) {
+                                    boolean canOpenDetail = "APPROVED".equals(rs.getString("approval_status"))
+                                            && rs.getBoolean("is_public");
+                                    transition = new FormStatusTransition(
+                                            formId,
+                                            activityId,
+                                            rs.getString("name"),
+                                            newStatus,
+                                            canOpenDetail);
+                                }
+                            }
+                        }
                     }
                 }
                 c.commit();
+                return transition;
             } catch (SQLException | RuntimeException e) {
                 c.rollback();
                 throw e;

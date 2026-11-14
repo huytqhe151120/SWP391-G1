@@ -4,14 +4,20 @@ import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.dto.response.ActivityParticipantResponseDTO;
 import com.swp391.g1.dto.response.ExtracurricularActivityResponseDTO;
 import com.swp391.g1.dto.response.ParticipantCandidateDTO;
+import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.Enum.ParticipantStatus;
+import com.swp391.g1.model.Student;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityCollaborationInvitationService;
 import com.swp391.g1.service.IActivityParticipantService;
+import com.swp391.g1.service.IActivityTargetParticipantService;
 import com.swp391.g1.service.IExtracurricularActivityService;
+import com.swp391.g1.service.IStudentService;
 import com.swp391.g1.service.impl.ActivityCollaborationInvitationServiceImpl;
 import com.swp391.g1.service.impl.ActivityParticipantServiceImpl;
+import com.swp391.g1.service.impl.ActivityTargetParticipantServiceImpl;
 import com.swp391.g1.service.impl.ExtracurricularActivityServiceImpl;
+import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.ServletException;
@@ -53,17 +59,30 @@ public class AttendanceServlet extends HttpServlet {
     private final IExtracurricularActivityService activityService;
     private final IActivityCollaborationInvitationService invitationService;
     private final IActivityParticipantService participantService;
+    private final IStudentService studentService;
+    private final IActivityTargetParticipantService targetParticipantService;
 
     public AttendanceServlet() {
         this.activityService = new ExtracurricularActivityServiceImpl();
         this.invitationService = new ActivityCollaborationInvitationServiceImpl();
         this.participantService = new ActivityParticipantServiceImpl();
+        this.studentService = new StudentServiceImpl();
+        this.targetParticipantService = new ActivityTargetParticipantServiceImpl();
     }
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        if (!AccessPolicy.canTakeAttendance(AuthContext.getCurrentUser(request))) {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        boolean canTakeAttendance = AccessPolicy.canTakeAttendance(currentUser);
+        boolean isGetOrHead = "GET".equalsIgnoreCase(request.getMethod())
+                || "HEAD".equalsIgnoreCase(request.getMethod());
+        boolean canStudentViewOwn = isGetOrHead && AccessPolicy.canViewOwnAttendance(currentUser);
+        if (!canTakeAttendance && !canStudentViewOwn) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
                     "Chỉ tài khoản ADMIN, STAFF hoặc PARTNER_STAFF mới được điểm danh sinh viên.");
             return;
@@ -76,6 +95,15 @@ public class AttendanceServlet extends HttpServlet {
             throws ServletException, IOException {
         try {
             CurrentUser currentUser = AuthContext.getCurrentUser(request);
+            boolean canTakeAttendanceRole = AccessPolicy.canTakeAttendance(currentUser);
+            boolean isStudent = !canTakeAttendanceRole && AccessPolicy.canViewOwnAttendance(currentUser);
+            request.setAttribute("isStudent", isStudent);
+
+            if (isStudent) {
+                handleStudentOwnDetailGet(request, response, currentUser);
+                return;
+            }
+
             List<ExtracurricularActivityResponseDTO> activities = getVisibleActivities(currentUser);
             request.setAttribute("activities", activities);
 
@@ -185,6 +213,122 @@ public class AttendanceServlet extends HttpServlet {
         }
     }
 
+    private void handleStudentOwnDetailGet(HttpServletRequest request, HttpServletResponse response,
+            CurrentUser currentUser) throws ServletException, IOException {
+        String action = request.getParameter("action");
+        if (action != null && !action.isBlank() && !"detail".equals(action)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Sinh viên chỉ được phép xem giao diện chi tiết điểm danh của chính mình.");
+            return;
+        }
+
+        Student me = studentService.getStudentByAccountId(currentUser.getId());
+        if (me == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Không tìm thấy hồ sơ sinh viên tương ứng với tài khoản đang đăng nhập.");
+            return;
+        }
+        int myStudentId = me.getId();
+        int requestedStudentId = parseId(request.getParameter("studentId"));
+        if (requestedStudentId > 0 && requestedStudentId != myStudentId) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Sinh viên chỉ được phép xem chi tiết điểm danh của chính mình.");
+            return;
+        }
+
+        List<ExtracurricularActivityResponseDTO> activities = getStudentParticipatedActivities(myStudentId);
+        request.setAttribute("activities", activities);
+        request.setAttribute("studentProfile", me);
+        request.setAttribute("allParticipants", List.of());
+        request.setAttribute("canTakeAttendance", false);
+        request.setAttribute("participantStatuses", ParticipantStatus.values());
+
+        int activityId = parseId(request.getParameter("activityId"));
+        int requestedParticipantId = parseId(request.getParameter("participantId"));
+
+        if (activities.isEmpty()) {
+            if (activityId > 0 || requestedParticipantId > 0) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Bạn không có quyền xem chi tiết điểm danh của hoạt động này.");
+                return;
+            }
+            request.setAttribute("sessionAttendances", List.of());
+            request.setAttribute("attendanceHistory", List.of());
+            request.getRequestDispatcher("/WEB-INF/views/attendance/detail.jsp").forward(request, response);
+            return;
+        }
+
+        if (activityId <= 0) {
+            if (requestedParticipantId > 0) {
+                for (ExtracurricularActivityResponseDTO act : activities) {
+                    for (ActivityParticipantResponseDTO p : participantService.getParticipants(act.getId(), 1)) {
+                        if (p.getStudentId() == myStudentId && p.getParticipantId() == requestedParticipantId) {
+                            activityId = act.getId();
+                            break;
+                        }
+                    }
+                    if (activityId > 0) {
+                        break;
+                    }
+                }
+                if (activityId <= 0) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                            "Sinh viên chỉ được phép xem chi tiết điểm danh của chính mình.");
+                    return;
+                }
+            } else {
+                activityId = activities.get(0).getId();
+            }
+        }
+
+        ExtracurricularActivityResponseDTO selectedActivity = findById(activities, activityId);
+        if (selectedActivity == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không có quyền xem chi tiết điểm danh của hoạt động này.");
+            return;
+        }
+
+        int totalSessions = Math.max(1, selectedActivity.getAttendanceSessionCount());
+        int requestedSession = parseId(request.getParameter("sessionNumber"));
+        int selectedSessionNumber = requestedSession <= 0
+                ? 1
+                : Math.min(requestedSession, totalSessions);
+
+        ActivityParticipantResponseDTO myParticipant = null;
+        for (ActivityParticipantResponseDTO p : participantService.getParticipants(activityId, selectedSessionNumber)) {
+            if (p.getStudentId() == myStudentId) {
+                myParticipant = p;
+                break;
+            }
+        }
+        if (myParticipant == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Bạn không nằm trong danh sách điểm danh của hoạt động này.");
+            return;
+        }
+        if (requestedParticipantId > 0 && myParticipant.getParticipantId() != requestedParticipantId) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                    "Sinh viên chỉ được phép xem chi tiết điểm danh của chính mình.");
+            return;
+        }
+
+        boolean canOpenActivityDetail = selectedActivity.isPublic()
+                && selectedActivity.getApprovalStatus() == ApprovalStatus.APPROVED
+                && targetParticipantService.isStudentEligible(activityId, myStudentId);
+
+        request.setAttribute("selectedActivity", selectedActivity);
+        request.setAttribute("selectedActivityId", activityId);
+        request.setAttribute("selectedSessionNumber", selectedSessionNumber);
+        request.setAttribute("totalSessions", totalSessions);
+        request.setAttribute("participant", myParticipant);
+        request.setAttribute("canOpenActivityDetail", canOpenActivityDetail);
+        request.setAttribute("sessionAttendances",
+                participantService.getSessionAttendances(activityId, myParticipant.getParticipantId(), totalSessions));
+        request.setAttribute("attendanceHistory",
+                participantService.getAttendanceHistory(activityId, myParticipant.getParticipantId()));
+        request.getRequestDispatcher("/WEB-INF/views/attendance/detail.jsp").forward(request, response);
+    }
+
     private void handleParticipantDetailGet(HttpServletRequest request, HttpServletResponse response,
             List<ExtracurricularActivityResponseDTO> activities, int activityId)
             throws ServletException, IOException {
@@ -263,6 +407,16 @@ public class AttendanceServlet extends HttpServlet {
         }
 
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (!AccessPolicy.canTakeAttendance(currentUser)) {
+            if (isAjax) {
+                json(response, HttpServletResponse.SC_FORBIDDEN,
+                        "{\"ok\":false,\"error\":\"Chỉ tài khoản ADMIN, STAFF hoặc PARTNER_STAFF mới được điểm danh sinh viên.\"}");
+            } else {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,
+                        "Chỉ tài khoản ADMIN, STAFF hoặc PARTNER_STAFF mới được điểm danh sinh viên.");
+            }
+            return;
+        }
         if ((ADD_ACTIONS.contains(action) || "remove".equals(action))
                 && !AccessPolicy.canManageParticipants(currentUser)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN,
@@ -558,6 +712,23 @@ public class AttendanceServlet extends HttpServlet {
         if (value != null && !value.isBlank()) {
             values.add(value.trim());
         }
+    }
+
+    private List<ExtracurricularActivityResponseDTO> getStudentParticipatedActivities(int studentId) {
+        if (studentId <= 0) {
+            return List.of();
+        }
+        Set<Integer> participatedActivityIds = participantService.getActivityIdsByStudentId(studentId);
+        if (participatedActivityIds.isEmpty()) {
+            return List.of();
+        }
+        List<ExtracurricularActivityResponseDTO> activities = new ArrayList<>();
+        for (ExtracurricularActivityResponseDTO activity : activityService.getAllActivities()) {
+            if (participatedActivityIds.contains(activity.getId())) {
+                activities.add(activity);
+            }
+        }
+        return activities;
     }
 
     private List<ExtracurricularActivityResponseDTO> getVisibleActivities(CurrentUser user) {

@@ -28,12 +28,19 @@
                 </div>
             </header>
 
-            <div class="activity-page-back">
+            <div class="activity-page-back" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <a class="button button-back"
                    href="${pageContext.request.contextPath}/student-grades?action=studentDetail<c:if test='${not empty selectedStudent}'>&amp;studentId=${selectedStudent.studentId}</c:if>">
                     <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
                     Quay lại lịch sử điểm của sinh viên
                 </a>
+                <c:if test="${isStudent and not empty gradeDetail and not empty selectedStudent}">
+                    <a class="button button-outline"
+                       href="${pageContext.request.contextPath}/attendance?action=detail&amp;activityId=${gradeDetail.activityId}&amp;studentId=${selectedStudent.studentId}">
+                        Chi tiết điểm danh của tôi
+                        <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </a>
+                </c:if>
             </div>
 
             <section class="card activity-table-card" aria-labelledby="activity-grade-detail-title">

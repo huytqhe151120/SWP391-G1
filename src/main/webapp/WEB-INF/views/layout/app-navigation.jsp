@@ -17,6 +17,9 @@
         else if (reqUri.contains("/student-qa")) navActive = "student-qa";
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
         else if (reqUri.contains("/attendance")) navActive = "attendance";
+        else if (reqUri.contains("/participation-grading")) navActive = "participation-grading";
+        else if (reqUri.contains("/assessment")) navActive = "assessments";
+        else if (reqUri.contains("/student-grades")) navActive = "student-grades";
         else if (reqUri.contains("/registration-forms")) navActive = "registration-forms";
         else if (reqUri.contains("/notification")) navActive = "notifications";
     }
@@ -41,7 +44,23 @@
         else breadcrumbCurrent = "Đăng ký tham gia";
     } else if ("attendance".equals(navActive)) {
         breadcrumbGroup = "Quản lý Hoạt động";
-        breadcrumbCurrent = "Điểm danh sinh viên";
+        breadcrumbCurrent = "STUDENT".equals(navType) ? "Điểm danh của tôi" : "Điểm danh sinh viên";
+    } else if ("participation-grading".equals(navActive)) {
+        breadcrumbGroup = "Quản lý Hoạt động";
+        breadcrumbCurrent = "Chấm điểm tham gia";
+    } else if ("assessments".equals(navActive)) {
+        breadcrumbGroup = "Quản lý Hoạt động";
+        String modeParam = request.getParameter("mode") == null ? "" : request.getParameter("mode");
+        if ("manage".equals(actionParam)) {
+            breadcrumbCurrent = "create".equals(modeParam) ? "Tạo bài đánh giá" : "Chi tiết bài đánh giá";
+        } else if ("submissions".equals(actionParam)) breadcrumbCurrent = "Danh sách bài nộp";
+        else if ("grade".equals(actionParam)) breadcrumbCurrent = "Chấm bài đánh giá";
+        else if ("take".equals(actionParam)) breadcrumbCurrent = "Làm bài đánh giá";
+        else if ("result".equals(actionParam)) breadcrumbCurrent = "Kết quả đánh giá";
+        else breadcrumbCurrent = "STUDENT".equals(navType) ? "Bài đánh giá của tôi" : "Bài đánh giá";
+    } else if ("student-grades".equals(navActive)) {
+        breadcrumbGroup = "Quản lý Hoạt động";
+        breadcrumbCurrent = "STUDENT".equals(navType) ? "Điểm hoạt động của tôi" : "Điểm hoạt động";
     } else if ("activity-feedback".equals(navActive)) {
         breadcrumbGroup = "Hoạt động ngoại khóa";
         breadcrumbCurrent = "STUDENT".equals(navType) ? "Feedback của tôi" : "Feedback hoạt động";

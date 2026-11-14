@@ -240,24 +240,40 @@
                             </c:choose>
                         </c:when>
                     </c:choose>
+                    <c:if test="${not empty myParticipant}">
+                        <a class="button button-outline button-sm"
+                           href="${pageContext.request.contextPath}/attendance?action=detail&amp;activityId=${activity.id}">
+                            Điểm danh của tôi
+                        </a>
+                    </c:if>
                 </c:if>
                 <c:if test="${canManageActivities && activity.activityStatus == 'UPCOMING'}">
                     <a class="button button-primary"
                        href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
                 </c:if>
 
-                <%-- Assessment navigation --%>
+<%--                &lt;%&ndash; Assessment navigation &ndash;%&gt;--%>
+<%--                <c:if test="${canManageActivities}">--%>
+<%--                    <c:choose>--%>
+<%--                        <c:when test="${not empty assessment}">--%>
+<%--                            <a class="button button-primary-outline button-sm"--%>
+<%--                               href="${pageContext.request.contextPath}/assessment?action=manage&amp;activityId=${activity.id}">--%>
+<%--                                Quản lý đánh giá--%>
+<%--                            </a>--%>
+<%--                            <a class="button button-primary-outline button-sm"--%>
+<%--                               href="${pageContext.request.contextPath}/assessment?action=submissions&amp;activityId=${activity.id}">--%>
+<%--                                Xem bài nộp--%>
+<%--                            </a>--%>
+<%--                        </c:when>--%>
+<%--                        <c:otherwise>--%>
+<%--                            <a class="button button-primary-outline button-sm"--%>
+<%--                               href="${pageContext.request.contextPath}/assessment?action=create&amp;activityId=${activity.id}">--%>
+<%--                                Thêm bài đánh giá--%>
+<%--                            </a>--%>
+<%--                        </c:otherwise>--%>
+<%--                    </c:choose>--%>
+<%--                </c:if>--%>
                 <c:if test="${not empty assessment}">
-                    <c:if test="${canManageActivities}">
-                        <a class="button button-primary-outline button-sm"
-                           href="${pageContext.request.contextPath}/assessment?action=manage&amp;activityId=${activity.id}">
-                            Quản lý đánh giá
-                        </a>
-                        <a class="button button-primary-outline button-sm"
-                           href="${pageContext.request.contextPath}/assessment?action=submissions&amp;activityId=${activity.id}">
-                            Xem bài nộp
-                        </a>
-                    </c:if>
                     <c:if test="${isStudent && canStudentTake}">
                         <a class="button button-primary button-sm"
                            href="${pageContext.request.contextPath}/assessment?action=take&amp;assessmentId=${assessment.id}">

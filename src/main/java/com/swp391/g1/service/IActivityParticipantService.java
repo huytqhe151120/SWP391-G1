@@ -10,12 +10,17 @@ import com.swp391.g1.dto.response.ParticipantSessionAttendanceDTO;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface IActivityParticipantService {
     List<ActivityParticipantResponseDTO> getParticipants(int activityId);
 
     default List<ActivityParticipantResponseDTO> getParticipants(int activityId, int sessionNumber) {
         return getParticipants(activityId);
+    }
+
+    default Set<Integer> getActivityIdsByStudentId(int studentId) {
+        return Set.of();
     }
 
     /** Attendance can only be taken while the activity is ongoing or after it has completed. */
