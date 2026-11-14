@@ -632,6 +632,53 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 request.setAttribute("activityBeforeStart",
                         isUpcomingBeforeStart(activity, DateTimeUtil.now()));
                 setActivityManagementPermission(request);
+                boolean canManageRecruitment = AccessPolicy.canManageActivities(currentUser);
+                request.setAttribute("canManageRecruitment", canManageRecruitment);
+                request.setAttribute("recruitmentRound", null);
+                request.setAttribute("recruitmentApplications", List.of());
+                request.setAttribute("recruitmentCounts", Map.of());
+                request.setAttribute("recruitmentAppLabels", Map.of(
+                        "PENDING", "Chờ xét",
+                        "INTERVIEW_INVITED", "Mời phỏng vấn",
+                        "INTERVIEWED", "Đã phỏng vấn",
+                        "ACCEPTED", "Trúng tuyển",
+                        "REJECTED", "Không đạt",
+                        "WITHDRAWN", "Đã rút"));
+                request.setAttribute("recruitmentAppBadges", Map.of(
+                        "PENDING", "status-yellow",
+                        "INTERVIEW_INVITED", "status-yellow",
+                        "INTERVIEWED", "status-blue",
+                        "ACCEPTED", "status-green",
+                        "REJECTED", "status-red",
+                        "WITHDRAWN", "status-gray"));
+                if (canManageRecruitment) {
+                    com.swp391.g1.model.RecruitmentRound recruitmentRound =
+                            recruitmentService.getRoundByActivity(id);
+                    request.setAttribute("recruitmentRound", recruitmentRound);
+                    if (recruitmentRound != null) {
+                        List<com.swp391.g1.model.RecruitmentApplication> applications =
+                                new ArrayList<>(recruitmentService.getApplications(recruitmentRound.getId(), null, null));
+                        Map<String, Integer> recruitmentCounts = new HashMap<>();
+                        for (com.swp391.g1.model.RecruitmentApplication application : applications) {
+                            recruitmentCounts.merge(application.getStatus(), 1, Integer::sum);
+                        }
+                        applications.sort((a, b) -> {
+                            if (a.getSubmittedAt() == null && b.getSubmittedAt() == null) {
+                                return Integer.compare(b.getId(), a.getId());
+                            }
+                            if (a.getSubmittedAt() == null) return 1;
+                            if (b.getSubmittedAt() == null) return -1;
+                            int comparison = b.getSubmittedAt().compareTo(a.getSubmittedAt());
+                            return comparison != 0 ? comparison : Integer.compare(b.getId(), a.getId());
+                        });
+                        request.setAttribute("recruitmentApplications",
+                                applications.subList(0, Math.min(5, applications.size())));
+                        request.setAttribute("recruitmentCounts", recruitmentCounts);
+                        request.setAttribute("recruitmentTotalApplications", applications.size());
+                    } else {
+                        request.setAttribute("recruitmentTotalApplications", 0);
+                    }
+                }
                 Set<Integer> attendanceActivityIds =
                         invitationService.getAttendanceActivityIds(currentUser);
                 boolean canAccessAttendance = AccessPolicy.canTakeAttendance(currentUser)

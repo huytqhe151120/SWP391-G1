@@ -146,6 +146,10 @@ public final class RecruitmentSchema {
                 ALTER TABLE dbo.student_activity_result
                     ADD participation_role VARCHAR(15) NOT NULL
                         CONSTRAINT DF_student_activity_result_role DEFAULT ('PARTICIPANT');
+            IF COL_LENGTH(N'dbo.student_activity_result', N'organizer_coefficient') IS NULL
+                ALTER TABLE dbo.student_activity_result
+                    ADD organizer_coefficient DECIMAL(4,2) NOT NULL
+                        CONSTRAINT DF_student_activity_result_organizer_coefficient DEFAULT (1.00);
             IF COL_LENGTH(N'dbo.activity_registration', N'cancelled_for_organizer') IS NULL
                 ALTER TABLE dbo.activity_registration
                     ADD cancelled_for_organizer BIT NOT NULL
@@ -172,6 +176,22 @@ public final class RecruitmentSchema {
                             + "JOIN dbo.activity_participant ap ON ap.activity_id=sar.activity_id "
                             + "AND ap.student_id=sar.student_id "
                             + "WHERE sar.participation_role<>ap.participation_role");
+                    s.executeUpdate("UPDATE dbo.activity_participant SET registration_status='STAFF_ENROLLED' "
+                            + "WHERE participation_role='ORGANIZER' AND registration_status='REGISTERED'");
+                    s.executeUpdate("UPDATE sar SET early_reg_coefficient=CASE WHEN ap.registration_status='REGISTERED' "
+                            + "THEN CAST(1.10 AS DECIMAL(4,2)) ELSE CAST(1.00 AS DECIMAL(4,2)) END, "
+                            + "organizer_coefficient=CASE WHEN ap.participation_role='ORGANIZER' "
+                            + "THEN CAST(1.50 AS DECIMAL(4,2)) ELSE CAST(1.00 AS DECIMAL(4,2)) END, "
+                            + "final_point=CASE "
+                            + "WHEN ap.attendance_status IN ('ATTENDED','IN_LATE','OUT_EARLY') THEN ROUND("
+                            + "COALESCE(sar.average_score,0)*COALESCE(sar.org_level_coefficient,1)"
+                            + "*CASE WHEN ap.registration_status='REGISTERED' THEN 1.10 ELSE 1.00 END"
+                            + "*CASE WHEN ap.participation_role='ORGANIZER' THEN 1.50 ELSE 1.00 END,2) "
+                            + "WHEN ap.attendance_status='ABSENT' THEN COALESCE(sar.attendance_score,0) "
+                            + "ELSE 0 END "
+                            + "FROM dbo.student_activity_result sar "
+                            + "JOIN dbo.activity_participant ap ON ap.activity_id=sar.activity_id "
+                            + "AND ap.student_id=sar.student_id");
                     c.commit();
                     ensured = true;
                 } catch (SQLException e) {

@@ -28,6 +28,8 @@ public class StudentActivityGradeDTO {
     private String organizationLevelName;
     private BigDecimal orgLevelCoefficient;
 
+    private String participationRole = "PARTICIPANT";
+    private BigDecimal organizerCoefficient;
     private String registrationStatus;
     private BigDecimal earlyRegCoefficient;
 
@@ -197,6 +199,27 @@ public class StudentActivityGradeDTO {
 
     public void setOrgLevelCoefficient(BigDecimal orgLevelCoefficient) {
         this.orgLevelCoefficient = orgLevelCoefficient;
+    }
+
+    public String getParticipationRole() {
+        return participationRole;
+    }
+
+    public void setParticipationRole(String participationRole) {
+        this.participationRole = participationRole;
+    }
+
+    public boolean isOrganizer() {
+        return "ORGANIZER".equals(participationRole);
+    }
+
+    public BigDecimal getOrganizerCoefficient() {
+        return organizerCoefficient == null ? (isOrganizer() ? new BigDecimal("1.50") : BigDecimal.ONE)
+                : organizerCoefficient;
+    }
+
+    public void setOrganizerCoefficient(BigDecimal organizerCoefficient) {
+        this.organizerCoefficient = organizerCoefficient;
     }
 
     public String getRegistrationStatus() {
@@ -399,6 +422,10 @@ public class StudentActivityGradeDTO {
 
     public String getFormattedEarlyRegCoefficient() {
         return formatScore(earlyRegCoefficient == null ? BigDecimal.ONE : earlyRegCoefficient);
+    }
+
+    public String getFormattedOrganizerCoefficient() {
+        return formatScore(getOrganizerCoefficient());
     }
 
     private static String formatScore(BigDecimal value) {

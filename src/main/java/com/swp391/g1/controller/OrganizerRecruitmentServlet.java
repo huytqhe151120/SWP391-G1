@@ -440,21 +440,35 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
             prepareForm(request, round);
             return "staff-form.jsp";
         }
-        if ("applications".equals(action)) {
-            return applicationsView(request, response);
-        }
         var activities = activityService.getAllActivities();
-        int activityId = request.getParameter("activityIdFallback") == null
-                ? intParam(request, "activityId") : intParam(request, "activityIdFallback");
+        RecruitmentRound round = null;
+        int activityId;
+        if ("applications".equals(action)) {
+            round = service.getRound(intParam(request, "id"));
+            if (round == null) {
+                flash(request, "errorMessage", "Không tìm thấy đợt tuyển.");
+                response.sendRedirect(request.getContextPath() + PAGE);
+                return null;
+            }
+            activityId = round.getActivityId();
+        } else {
+            activityId = request.getParameter("activityIdFallback") == null
+                    ? intParam(request, "activityId") : intParam(request, "activityIdFallback");
+        }
         var activity = activityId > 0 ? activityService.getActivityById(activityId) : null;
         if (activityId > 0 && activity == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy hoạt động.");
             return null;
         }
-        RecruitmentRound round = activity == null ? null : service.getRoundByActivity(activityId);
+        if (round == null && activity != null) {
+            round = service.getRoundByActivity(activityId);
+        }
         request.setAttribute("activities", activities);
         request.setAttribute("activity", activity);
         request.setAttribute("round", round);
+        if (round != null) {
+            prepareApplications(request, round);
+        }
         return "staff-list.jsp";
     }
 
@@ -463,13 +477,13 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
         if (activity.getApprovalStatus() != ApprovalStatus.APPROVED) {
             reasons.add("hoạt động chưa được duyệt");
         }
-        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+        boolean notUpcoming = activity.getActivityStatus() != ActivityStatus.UPCOMING;
+        boolean started = activity.getStartTime() != null && !activity.getStartTime().isAfter(now);
+        if (notUpcoming || started) {
             reasons.add("hoạt động không ở trạng thái Chưa diễn ra");
         }
         if (activity.getStartTime() == null) {
             reasons.add("hoạt động chưa có thời gian bắt đầu");
-        } else if (!activity.getStartTime().isAfter(now)) {
-            reasons.add("thời gian bắt đầu hoạt động đã đến hoặc đã qua");
         }
         if (reasons.isEmpty()) {
             return "Không thể tạo đợt tuyển vì hoạt động không còn đủ điều kiện. Vui lòng tải lại trang và kiểm tra.";
@@ -478,13 +492,7 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
     }
 
 
-    private String applicationsView(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        RecruitmentRound round = service.getRound(intParam(request, "id"));
-        if (round == null) {
-            flash(request, "errorMessage", "Không tìm thấy đợt tuyển.");
-            response.sendRedirect(request.getContextPath() + PAGE);
-            return null;
-        }
+    private void prepareApplications(HttpServletRequest request, RecruitmentRound round) {
         String status = request.getParameter("status");
         Integer positionId = integerParam(request, "positionId");
         List<RecruitmentApplication> all = service.getApplications(round.getId(), null, null);
@@ -520,7 +528,6 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
             inputs.put("scheduledAt", iv.getScheduledAt() == null ? "" : INPUT_FORMAT.format(iv.getScheduledAt()));
             inputs.put("confirmDeadline", iv.getConfirmDeadline() == null ? "" : INPUT_FORMAT.format(iv.getConfirmDeadline()));
         }
-        request.setAttribute("round", round);
         request.setAttribute("apps", shown);
         request.setAttribute("allCount", all.size());
         request.setAttribute("counts", counts);
@@ -534,7 +541,6 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
                 && !selected.getInterview().getScheduledAt().isAfter(LocalDateTime.now()));
         request.setAttribute("activityStarted", selected != null && selected.getActivityStart() != null
                 && !selected.getActivityStart().isAfter(LocalDateTime.now()));
-        return "staff-applications.jsp";
     }
 
     private RecruitmentInterview parseInterview(HttpServletRequest request) {

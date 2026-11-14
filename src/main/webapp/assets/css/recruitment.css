@@ -66,6 +66,7 @@
 .rc-interview { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: #f3f6fb; border-radius: 10px; font-size: .85rem; }
 .rc-interview > div { display: grid; grid-template-columns: repeat(2, minmax(200px, auto)); gap: 8px 40px; }
 .rc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 18px; }
+.rc-applications-title { margin: 22px 0 14px; color: #0f2547; font-size: 1.15rem; }
 .rc-stat { padding: 16px 18px; }
 .rc-stat span { font-size: .8rem; color: #64718a; }
 .rc-stat strong { display: block; font-size: 1.5rem; margin: 2px 0 8px; }

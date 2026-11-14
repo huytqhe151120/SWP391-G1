@@ -41,6 +41,7 @@ public class RecruitmentApplicationDAOImpl implements IRecruitmentApplicationDAO
 
     public RecruitmentApplicationDAOImpl() {
         RecruitmentSchema.ensure();
+        ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
     }
 
     @Override
@@ -434,14 +435,24 @@ public class RecruitmentApplicationDAOImpl implements IRecruitmentApplicationDAO
             p.setInt(5, studentId);
             p.executeUpdate();
         }
-        try (PreparedStatement p = c.prepareStatement("UPDATE dbo.activity_participant SET participation_role='ORGANIZER' "
+        try (PreparedStatement p = c.prepareStatement("UPDATE dbo.activity_participant "
+                + "SET participation_role='ORGANIZER', registration_status='STAFF_ENROLLED' "
                 + "WHERE activity_id=? AND student_id=?")) {
             p.setInt(1, activityId);
             p.setInt(2, studentId);
             p.executeUpdate();
         }
-        try (PreparedStatement p = c.prepareStatement("UPDATE dbo.student_activity_result SET participation_role='ORGANIZER' "
-                + "WHERE activity_id=? AND student_id=?")) {
+        String updateResult = "UPDATE sar SET participation_role='ORGANIZER', early_reg_coefficient=1.00, organizer_coefficient=1.50, "
+                + "final_point=CASE "
+                + "WHEN ap.attendance_status IN ('ATTENDED','IN_LATE','OUT_EARLY') THEN ROUND("
+                + "COALESCE(sar.average_score,0)*COALESCE(sar.org_level_coefficient,1)"
+                + "*1.50,2) "
+                + "WHEN ap.attendance_status='ABSENT' THEN COALESCE(sar.attendance_score,0) "
+                + "ELSE 0 END "
+                + "FROM dbo.student_activity_result sar "
+                + "JOIN dbo.activity_participant ap ON ap.activity_id=sar.activity_id "
+                + "AND ap.student_id=sar.student_id WHERE sar.activity_id=? AND sar.student_id=?";
+        try (PreparedStatement p = c.prepareStatement(updateResult)) {
             p.setInt(1, activityId);
             p.setInt(2, studentId);
             p.executeUpdate();

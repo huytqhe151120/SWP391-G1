@@ -305,6 +305,12 @@
                         <span class="activity-tab-badge"><c:out value="${safeTotalApps}"/></span>
                     </button>
                 </c:if>
+                <c:if test="${canManageRecruitment}">
+                    <button type="button" class="activity-tab-btn" id="btn-tab-recruitment" data-tab="tab-recruitment" role="tab" aria-selected="false" aria-controls="tab-recruitment">
+                        Tuyển ban tổ chức
+                        <span class="activity-tab-badge"><c:out value="${not empty recruitmentTotalApplications ? recruitmentTotalApplications : 0}"/></span>
+                    </button>
+                </c:if>
                 <button type="button" class="activity-tab-btn" id="btn-tab-attendance" data-tab="tab-attendance" role="tab" aria-selected="false" aria-controls="tab-attendance">
                     Điểm danh sinh viên
                     <span class="activity-tab-badge"><c:out value="${safeTotalParticipants}"/></span>
@@ -1176,6 +1182,137 @@
                 </div>
                 </c:if>
 
+                <c:if test="${canManageRecruitment}">
+                    <div id="tab-recruitment" class="activity-tab-pane hub-edge-pane" role="tabpanel" aria-labelledby="btn-tab-recruitment">
+                        <c:if test="${not empty recruitmentRound}">
+                            <div class="attendance-summary-actions">
+                                    <a class="button button-primary-outline button-sm"
+                                       href="${pageContext.request.contextPath}/organizer-recruitment?action=edit&amp;id=${recruitmentRound.id}">
+                                        Quản lý & Cấu hình đợt tuyển BTC
+                                    </a>
+                            </div>
+                        </c:if>
+
+                        <c:choose>
+                            <c:when test="${not empty recruitmentRound}">
+                                <div class="attendance-summary">
+                                    <div class="attendance-summary-item">
+                                        <span class="attendance-summary-label">Tên đợt tuyển</span>
+                                        <strong class="activity-name"><c:out value="${recruitmentRound.title}"/></strong>
+                                    </div>
+                                    <div class="attendance-summary-item">
+                                        <span class="attendance-summary-label">Trạng thái</span>
+                                        <span class="badge status-pill ${recruitmentRound.status eq 'OPEN' ? 'status-green' : (recruitmentRound.status eq 'DRAFT' ? 'status-gray' : 'status-red')}">
+                                            ${recruitmentRound.status eq 'OPEN' ? 'Đang nhận hồ sơ' : (recruitmentRound.status eq 'DRAFT' ? 'Bản nháp' : 'Đã đóng')}
+                                        </span>
+                                    </div>
+                                    <div class="attendance-summary-item">
+                                        <span class="attendance-summary-label">Thời gian nhận hồ sơ</span>
+                                        <span class="activity-time">
+                                            <c:out value="${not empty recruitmentRound.openAt ? dt:format(recruitmentRound.openAt) : 'Chưa thiết lập'}"/>
+                                            – <c:out value="${not empty recruitmentRound.closeAt ? dt:format(recruitmentRound.closeAt) : 'Chưa thiết lập'}"/>
+                                        </span>
+                                    </div>
+                                    <div class="attendance-summary-item">
+                                        <span class="attendance-summary-label">Hồ sơ ứng tuyển</span>
+                                        <span class="activity-code"><c:out value="${recruitmentTotalApplications}"/> hồ sơ</span>
+                                    </div>
+                                    <div class="attendance-summary-item">
+                                        <span class="attendance-summary-label">Vòng phỏng vấn</span>
+                                        <span class="activity-code">${recruitmentRound.interviewRequired ? 'Có' : 'Không'}</span>
+                                    </div>
+                                    <div class="attendance-summary-progress">
+                                        <span class="attendance-summary-label">Chỉ tiêu theo ban</span>
+                                        <div class="attendance-counts">
+                                            <c:forEach items="${recruitmentRound.positions}" var="recruitmentPosition">
+                                                <span class="badge status-pill status-gray">
+                                                    <c:out value="${recruitmentPosition.name}"/>:
+                                                    <c:out value="${recruitmentPosition.acceptedCount}"/>/<c:out value="${recruitmentPosition.quota}"/>
+                                                    (còn <c:out value="${recruitmentPosition.remaining}"/>)
+                                                </span>
+                                            </c:forEach>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <ul class="attendance-counts" aria-label="Thống kê hồ sơ ứng tuyển">
+                                    <li class="badge status-pill status-yellow">Chờ xét: <strong><c:out value="${recruitmentCounts['PENDING'] != null ? recruitmentCounts['PENDING'] : 0}"/></strong></li>
+                                    <li class="badge status-pill status-yellow">Mời phỏng vấn: <strong><c:out value="${recruitmentCounts['INTERVIEW_INVITED'] != null ? recruitmentCounts['INTERVIEW_INVITED'] : 0}"/></strong></li>
+                                    <li class="badge status-pill status-blue">Đã phỏng vấn: <strong><c:out value="${recruitmentCounts['INTERVIEWED'] != null ? recruitmentCounts['INTERVIEWED'] : 0}"/></strong></li>
+                                    <li class="badge status-pill status-green">Trúng tuyển: <strong><c:out value="${recruitmentCounts['ACCEPTED'] != null ? recruitmentCounts['ACCEPTED'] : 0}"/></strong></li>
+                                    <li class="badge status-pill status-red">Không đạt: <strong><c:out value="${recruitmentCounts['REJECTED'] != null ? recruitmentCounts['REJECTED'] : 0}"/></strong></li>
+                                    <li class="badge status-pill status-gray">Đã rút: <strong><c:out value="${recruitmentCounts['WITHDRAWN'] != null ? recruitmentCounts['WITHDRAWN'] : 0}"/></strong></li>
+                                </ul>
+
+                                <div class="activity-bulk-toolbar">
+                                    <span class="activity-bulk-selection">
+                                        Hồ sơ mới nhất (hiển thị tối đa 5 trong tổng số <c:out value="${recruitmentTotalApplications}"/> hồ sơ).
+                                    </span>
+                                    <div class="activity-bulk-actions">
+                                        <a class="button button-primary button-sm"
+                                           href="${pageContext.request.contextPath}/organizer-recruitment?action=applications&amp;id=${recruitmentRound.id}">
+                                            Xem toàn bộ hồ sơ
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="table-wrap activity-table-wrap">
+                                    <table class="hub-recent-table hub-recent-table--registration">
+                                        <thead>
+                                        <tr>
+                                            <th scope="col" class="col-code">Mã SV</th>
+                                            <th scope="col" class="col-object-name">Họ tên</th>
+                                            <th scope="col">Nguyện vọng</th>
+                                            <th scope="col" class="col-datetime">Thời gian gửi</th>
+                                            <th scope="col" class="col-status activity-status-column">Trạng thái</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <c:choose>
+                                            <c:when test="${empty recruitmentApplications}">
+                                                <tr>
+                                                    <td class="empty-state activity-empty-state" colspan="5">
+                                                        <strong>Chưa có hồ sơ ứng tuyển</strong>
+                                                        <span>Hồ sơ sẽ xuất hiện tại đây khi sinh viên nộp đơn.</span>
+                                                    </td>
+                                                </tr>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <c:forEach items="${recruitmentApplications}" var="recruitmentApplication">
+                                                    <tr>
+                                                        <td class="col-code"><span class="activity-code"><c:out value="${recruitmentApplication.studentCode}" default="—"/></span></td>
+                                                        <td class="col-object-name"><strong class="activity-name"><c:out value="${recruitmentApplication.studentName}" default="—"/></strong></td>
+                                                        <td><c:out value="${recruitmentApplication.choice1Name}" default="—"/><c:if test="${not empty recruitmentApplication.choice2Name}"><br/>2. <c:out value="${recruitmentApplication.choice2Name}"/></c:if></td>
+                                                        <td class="col-datetime"><span class="activity-time"><c:out value="${not empty recruitmentApplication.submittedAt ? dt:format(recruitmentApplication.submittedAt) : '—'}"/></span></td>
+                                                        <td class="col-status activity-status-column">
+                                                            <span class="badge status-pill ${recruitmentAppBadges[recruitmentApplication.status]}">
+                                                                <c:out value="${recruitmentAppLabels[recruitmentApplication.status]}" default="Không xác định"/>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </c:forEach>
+                                            </c:otherwise>
+                                        </c:choose>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="empty-state activity-empty-state">
+                                    <span class="empty-state-mark" aria-hidden="true">+</span>
+                                    <strong>Hoạt động chưa có đợt tuyển ban tổ chức</strong>
+                                    <span>Tạo đợt tuyển để khai báo vị trí, chỉ tiêu và thời gian nhận hồ sơ. Hệ thống sẽ báo lý do nếu hoạt động chưa đủ điều kiện.</span>
+                                    <a class="button button-primary"
+                                       href="${pageContext.request.contextPath}/organizer-recruitment?action=create&amp;activityId=${activity.id}">
+                                        Tạo đợt tuyển
+                                    </a>
+                                </div>
+                                <p class="activity-bulk-selection">Nên đóng hồ sơ tuyển ban tổ chức trước khi đợt đăng ký tham gia mở.</p>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </c:if>
+
                 <!-- TAB 5: ĐIỂM DANH SINH VIÊN -->
                 <div id="tab-attendance" class="activity-tab-pane hub-edge-pane" role="tabpanel" aria-labelledby="btn-tab-attendance">
                     <div class="attendance-summary">
@@ -1376,7 +1513,8 @@
     <p id="activity-message-modal-body" style="white-space: pre-wrap; word-break: break-word;"></p>
     <div style="text-align: right;"><button type="button" class="button" id="activity-message-modal-close">Đóng</button></div>
 </dialog>
-<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261107-6"></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity.js?v=20261114-2"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

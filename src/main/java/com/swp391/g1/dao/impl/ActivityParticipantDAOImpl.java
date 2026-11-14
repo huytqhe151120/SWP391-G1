@@ -103,6 +103,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     s_base.calc_summary_score,
                     s_base.calc_org_coeff,
                     s_base.calc_reg_coeff,
+                    s_base.calc_organizer_coeff,
                     s_base.is_summary_required,
                     s_base.attendance_status
                 FROM (
@@ -138,6 +139,10 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                             THEN CAST(1.10 AS DECIMAL(4,2))
                             ELSE CAST(1.00 AS DECIMAL(4,2))
                         END AS calc_reg_coeff,
+                        CASE WHEN ap.participation_role = 'ORGANIZER'
+                            THEN CAST(1.50 AS DECIMAL(4,2))
+                            ELSE CAST(1.00 AS DECIMAL(4,2))
+                        END AS calc_organizer_coeff,
                         ea.is_summary_required,
                         ap.attendance_status
                     FROM dbo.activity_participant ap
@@ -166,13 +171,15 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     END,
                     org_level_coefficient = src.calc_org_coeff,
                     early_reg_coefficient = src.calc_reg_coeff,
+                    organizer_coefficient = src.calc_organizer_coeff,
                     final_point = CASE
                         WHEN src.attendance_status IN ('ATTENDED', 'IN_LATE', 'OUT_EARLY') THEN
                             ROUND(
                                 (CASE WHEN src.is_summary_required = 1 AND src.calc_summary_score IS NOT NULL
                                     THEN (src.calc_participation_score + src.calc_summary_score) / 2.0
                                     ELSE src.calc_participation_score
-                                END) * src.calc_org_coeff * src.calc_reg_coeff,
+                                END
+                                ) * src.calc_org_coeff * src.calc_reg_coeff * src.calc_organizer_coeff,
                                 2
                             )
                         WHEN src.attendance_status = 'ABSENT' THEN CAST(src.calc_attendance_score AS DECIMAL(6,2))
@@ -183,7 +190,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                 INSERT (
                     student_id, activity_id, semester_id, participation_role, attendance_score, participation_eval_score,
                     participation_score, summary_score, average_score,
-                    org_level_coefficient, early_reg_coefficient, final_point, updated_at
+                    org_level_coefficient, early_reg_coefficient, organizer_coefficient, final_point, updated_at
                 )
                 VALUES (
                     src.student_id,
@@ -205,13 +212,15 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     END,
                     src.calc_org_coeff,
                     src.calc_reg_coeff,
+                    src.calc_organizer_coeff,
                     CASE
                         WHEN src.attendance_status IN ('ATTENDED', 'IN_LATE', 'OUT_EARLY') THEN
                             ROUND(
                                 (CASE WHEN src.is_summary_required = 1 AND src.calc_summary_score IS NOT NULL
                                     THEN (src.calc_participation_score + src.calc_summary_score) / 2.0
                                     ELSE src.calc_participation_score
-                                END) * src.calc_org_coeff * src.calc_reg_coeff,
+                                END
+                                ) * src.calc_org_coeff * src.calc_reg_coeff * src.calc_organizer_coeff,
                                 2
                             )
                         WHEN src.attendance_status = 'ABSENT' THEN CAST(src.calc_attendance_score AS DECIMAL(6,2))
@@ -248,7 +257,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                        COALESCE(sess_stats.marked_sessions, 0) AS marked_session_count,
                        sess_stats.calc_avg_attendance_score,
                        sar.attendance_score, sar.participation_score, sar.average_score,
-                       sar.org_level_coefficient, sar.early_reg_coefficient, sar.final_point,
+                       sar.org_level_coefficient, sar.early_reg_coefficient, sar.organizer_coefficient, sar.final_point,
                        COALESCE(ol.coefficient, CAST(1.00 AS DECIMAL(4,2))) AS default_org_coeff,
                        s.code AS student_code, s.name AS student_name, mc.code AS class_code,
                        p.name AS program_name, m.name AS major_name, d.name AS department_name,
@@ -385,6 +394,11 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     }
                     dto.setEarlyRegCoefficient(regCoeff);
 
+                    BigDecimal organizerCoeff = rs.getBigDecimal("organizer_coefficient");
+                    if (organizerCoeff == null) {
+                        organizerCoeff = dto.isOrganizer() ? new BigDecimal("1.50") : BigDecimal.ONE;
+                    }
+
                     BigDecimal avgScore = rs.getBigDecimal("average_score");
                     dto.setAverageScore(avgScore == null ? partScore : avgScore);
 
@@ -393,6 +407,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                         finalPt = dto.getAverageScore()
                                 .multiply(dto.getOrgLevelCoefficient())
                                 .multiply(dto.getEarlyRegCoefficient())
+                                .multiply(organizerCoeff)
                                 .setScale(2, RoundingMode.HALF_UP);
                     } else if (pst == ParticipantStatus.ABSENT) {
                         finalPt = attScore;

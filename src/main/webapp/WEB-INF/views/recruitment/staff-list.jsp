@@ -23,7 +23,7 @@
             </c:if>
             <c:if test="${not empty round}">
                 <span class="activity-count"><c:out value="${round.applicationCount}"/> hồ sơ hiệu lực</span>
-                <a class="button button-sm button-primary" href="${ctx}/organizer-recruitment?action=applications&amp;id=${round.id}">Xem hồ sơ</a>
+                <span class="badge status-pill ${roundBadges[round.status]}">${roundLabels[round.status]}</span>
                 <a class="button button-sm" href="${ctx}/organizer-recruitment?action=edit&amp;id=${round.id}">Chỉnh sửa</a>
                 <details class="action-menu">
                     <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
@@ -95,50 +95,24 @@
     <c:choose>
         <c:when test="${empty activity}">
             <div class="empty-state activity-empty-state">
+                <span class="empty-state-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M16 11h6"/></svg></span>
                 <strong>Chọn hoạt động để xem đợt tuyển</strong>
                 <span>Thông tin đợt tuyển và hồ sơ ứng tuyển sẽ hiển thị tại đây.</span>
             </div>
         </c:when>
         <c:when test="${empty round}">
             <div class="empty-state activity-empty-state">
+                <span class="empty-state-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
                 <strong>Hoạt động chưa có đợt tuyển ban tổ chức</strong>
                 <span>Chỉ hoạt động đã duyệt và chưa diễn ra mới được tạo đợt tuyển.</span>
                 <a class="button button-primary" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo đợt tuyển</a>
             </div>
         </c:when>
-        <c:otherwise>
-            <div class="rc-card">
-                <div class="rc-head">
-                    <div><h2><c:out value="${round.title}"/></h2>
-                        <p class="rc-sub"><c:out value="${round.description}" default="Không có mô tả."/></p></div>
-                    <span class="badge status-pill ${roundBadges[round.status]}">${roundLabels[round.status]}</span>
-                </div>
-                <p><b>Mở nhận hồ sơ:</b> <c:choose><c:when test="${not empty round.openAt}"><c:out value="${dt:format(round.openAt)}"/></c:when><c:otherwise>Chưa thiết lập</c:otherwise></c:choose>
-                    · <b>Đóng nhận hồ sơ:</b> <c:choose><c:when test="${not empty round.closeAt}"><c:out value="${dt:format(round.closeAt)}"/></c:when><c:otherwise>Chưa thiết lập</c:otherwise></c:choose></p>
-                <p><b>Phỏng vấn:</b> ${round.interviewRequired ? 'Có' : 'Không'}</p>
-                <h3>Vị trí và chỉ tiêu</h3>
-                <div class="table-wrap">
-                    <table class="rc-table">
-                        <thead><tr><th>Vị trí</th><th>Chỉ tiêu</th><th>Đã trúng tuyển</th><th>Còn lại</th></tr></thead>
-                        <tbody><c:forEach var="position" items="${round.positions}">
-                            <tr><td><c:out value="${position.name}"/></td><td>${position.quota}</td><td>${position.acceptedCount}</td><td>${position.remaining}</td></tr>
-                        </c:forEach></tbody>
-                    </table>
-                </div>
-                <h3>Câu hỏi bổ sung</h3>
-                <c:choose>
-                    <c:when test="${empty round.questions}"><p class="rc-sub">Không có câu hỏi bổ sung.</p></c:when>
-                    <c:otherwise><ol><c:forEach var="question" items="${round.questions}">
-                        <li><c:out value="${question.questionText}"/> (${question.required ? 'Bắt buộc' : 'Không bắt buộc'} ·
-                            ${question.questionType eq 'TEXT' ? 'Tự luận' : (question.questionType eq 'DROPDOWN' ? 'Dropdown' : 'Nhiều lựa chọn')})
-                            <c:if test="${not empty question.optionList}"><ul><c:forEach var="option" items="${question.optionList}"><li><c:out value="${option}"/></li></c:forEach></ul></c:if>
-                        </li>
-                    </c:forEach></ol></c:otherwise>
-                </c:choose>
-            </div>
-        </c:otherwise>
     </c:choose>
 </section>
+<c:if test="${not empty round}">
+    <%@ include file="_applications.jspf" %>
+</c:if>
 <script src="${ctx}/assets/js/activity.js?v=20261107-5"></script>
 <script>
     document.querySelectorAll('.multi-select-combobox[data-auto-submit]').forEach(function (combobox) {
