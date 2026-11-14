@@ -23,6 +23,10 @@ import java.util.Map;
 
 public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
 
+    public ActivityParticipantDAOImpl() {
+        RecruitmentSchema.ensure();
+    }
+
     private static final String SYNC_ACTIVITY_RESULTS_SQL = """
             INSERT INTO dbo.activity_participant_session_attendance (activity_participant_id, session_number, attendance_status)
             SELECT ap.id, 1, ap.attendance_status
@@ -87,6 +91,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     s_base.student_id,
                     s_base.activity_id,
                     s_base.semester_id,
+                    s_base.participation_role,
                     s_base.calc_attendance_score,
                     s_base.calc_eval_score,
                     CASE
@@ -98,6 +103,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     s_base.calc_summary_score,
                     s_base.calc_org_coeff,
                     s_base.calc_reg_coeff,
+                    s_base.calc_organizer_coeff,
                     s_base.is_summary_required,
                     s_base.attendance_status
                 FROM (
@@ -105,6 +111,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                         ap.student_id,
                         ap.activity_id,
                         ea.semester_id,
+                        ap.participation_role,
                         CAST(ROUND(
                             COALESCE((
                                 SELECT SUM(CASE s.attendance_status
@@ -132,6 +139,10 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                             THEN CAST(1.10 AS DECIMAL(4,2))
                             ELSE CAST(1.00 AS DECIMAL(4,2))
                         END AS calc_reg_coeff,
+                        CASE WHEN ap.participation_role = 'ORGANIZER'
+                            THEN CAST(1.50 AS DECIMAL(4,2))
+                            ELSE CAST(1.00 AS DECIMAL(4,2))
+                        END AS calc_organizer_coeff,
                         ea.is_summary_required,
                         ap.attendance_status
                     FROM dbo.activity_participant ap
@@ -144,6 +155,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
             WHEN MATCHED THEN
                 UPDATE SET
                     semester_id = src.semester_id,
+                    participation_role = src.participation_role,
                     attendance_score = src.calc_attendance_score,
                     participation_eval_score = src.calc_eval_score,
                     participation_score = src.calc_participation_score,
@@ -159,13 +171,15 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     END,
                     org_level_coefficient = src.calc_org_coeff,
                     early_reg_coefficient = src.calc_reg_coeff,
+                    organizer_coefficient = src.calc_organizer_coeff,
                     final_point = CASE
                         WHEN src.attendance_status IN ('ATTENDED', 'IN_LATE', 'OUT_EARLY') THEN
                             ROUND(
                                 (CASE WHEN src.is_summary_required = 1 AND src.calc_summary_score IS NOT NULL
                                     THEN (src.calc_participation_score + src.calc_summary_score) / 2.0
                                     ELSE src.calc_participation_score
-                                END) * src.calc_org_coeff * src.calc_reg_coeff,
+                                END
+                                ) * src.calc_org_coeff * src.calc_reg_coeff * src.calc_organizer_coeff,
                                 2
                             )
                         WHEN src.attendance_status = 'ABSENT' THEN CAST(src.calc_attendance_score AS DECIMAL(6,2))
@@ -174,14 +188,15 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     updated_at = SYSUTCDATETIME()
             WHEN NOT MATCHED THEN
                 INSERT (
-                    student_id, activity_id, semester_id, attendance_score, participation_eval_score,
+                    student_id, activity_id, semester_id, participation_role, attendance_score, participation_eval_score,
                     participation_score, summary_score, average_score,
-                    org_level_coefficient, early_reg_coefficient, final_point, updated_at
+                    org_level_coefficient, early_reg_coefficient, organizer_coefficient, final_point, updated_at
                 )
                 VALUES (
                     src.student_id,
                     src.activity_id,
                     src.semester_id,
+                    src.participation_role,
                     src.calc_attendance_score,
                     src.calc_eval_score,
                     src.calc_participation_score,
@@ -197,13 +212,15 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     END,
                     src.calc_org_coeff,
                     src.calc_reg_coeff,
+                    src.calc_organizer_coeff,
                     CASE
                         WHEN src.attendance_status IN ('ATTENDED', 'IN_LATE', 'OUT_EARLY') THEN
                             ROUND(
                                 (CASE WHEN src.is_summary_required = 1 AND src.calc_summary_score IS NOT NULL
                                     THEN (src.calc_participation_score + src.calc_summary_score) / 2.0
                                     ELSE src.calc_participation_score
-                                END) * src.calc_org_coeff * src.calc_reg_coeff,
+                                END
+                                ) * src.calc_org_coeff * src.calc_reg_coeff * src.calc_organizer_coeff,
                                 2
                             )
                         WHEN src.attendance_status = 'ABSENT' THEN CAST(src.calc_attendance_score AS DECIMAL(6,2))
@@ -221,10 +238,12 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
     @Override
     public List<ActivityParticipantResponseDTO> findByActivityId(int activityId, int sessionNumber) {
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
+        RecruitmentSchema.ensure();
         int safeSessionNumber = Math.max(1, sessionNumber);
         List<ActivityParticipantResponseDTO> list = new ArrayList<>();
         String sql = """
                 SELECT ap.id, ap.student_id, ap.attendance_status, ap.registration_status, ap.registration_by, ap.created_at,
+                       ap.participation_role,
                        ap.participation_eval_score, ap.participation_feedback, ap.participation_graded_by, ap.participation_graded_at,
                        ap.summary_score,
                        COALESCE(NULLIF(ea.attendance_session_count, 0), 1) AS total_sessions,
@@ -238,11 +257,11 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                        COALESCE(sess_stats.marked_sessions, 0) AS marked_session_count,
                        sess_stats.calc_avg_attendance_score,
                        sar.attendance_score, sar.participation_score, sar.average_score,
-                       sar.org_level_coefficient, sar.early_reg_coefficient, sar.final_point,
+                       sar.org_level_coefficient, sar.early_reg_coefficient, sar.organizer_coefficient, sar.final_point,
                        COALESCE(ol.coefficient, CAST(1.00 AS DECIMAL(4,2))) AS default_org_coeff,
                        s.code AS student_code, s.name AS student_name, mc.code AS class_code,
                        p.name AS program_name, m.name AS major_name, d.name AS department_name,
-                       CASE WHEN ap.attendance_status = 'NOT_YET'
+                       CASE WHEN ap.participation_role <> 'ORGANIZER' AND ap.attendance_status = 'NOT_YET'
                              AND COALESCE(sess_stats.marked_sessions, 0) = 0
                              AND NOT EXISTS (
                                  SELECT 1 FROM activity_attendance_history h
@@ -329,6 +348,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     dto.setMarkedSessionCount(markedSessions);
 
                     dto.setRegistrationStatus(rs.getString("registration_status"));
+                    dto.setParticipationRole(rs.getString("participation_role"));
                     long regBy = rs.getLong("registration_by");
                     dto.setRegistrationBy(rs.wasNull() ? null : regBy);
                     Timestamp ts = rs.getTimestamp("created_at");
@@ -374,6 +394,11 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                     }
                     dto.setEarlyRegCoefficient(regCoeff);
 
+                    BigDecimal organizerCoeff = rs.getBigDecimal("organizer_coefficient");
+                    if (organizerCoeff == null) {
+                        organizerCoeff = dto.isOrganizer() ? new BigDecimal("1.50") : BigDecimal.ONE;
+                    }
+
                     BigDecimal avgScore = rs.getBigDecimal("average_score");
                     dto.setAverageScore(avgScore == null ? partScore : avgScore);
 
@@ -382,6 +407,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                         finalPt = dto.getAverageScore()
                                 .multiply(dto.getOrgLevelCoefficient())
                                 .multiply(dto.getEarlyRegCoefficient())
+                                .multiply(organizerCoeff)
                                 .setScale(2, RoundingMode.HALF_UP);
                     } else if (pst == ParticipantStatus.ABSENT) {
                         finalPt = attScore;
@@ -466,12 +492,13 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
 
     @Override
     public int countOccupiedByActivityId(int activityId) {
+        RecruitmentSchema.ensure();
         String sql = """
                 SELECT COUNT(*)
                 FROM (
                     SELECT ap.student_id
                     FROM dbo.activity_participant ap
-                    WHERE ap.activity_id = ?
+                    WHERE ap.activity_id = ? AND ap.participation_role = 'PARTICIPANT'
                     UNION
                     SELECT r.student_id
                     FROM dbo.activity_registration_form f
@@ -550,7 +577,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
         String deleteSql = """
                 DELETE FROM activity_participant
-                WHERE id = ? AND activity_id = ? AND attendance_status = 'NOT_YET'
+                WHERE id = ? AND activity_id = ? AND participation_role <> 'ORGANIZER' AND attendance_status = 'NOT_YET'
                   AND NOT EXISTS (SELECT 1 FROM dbo.activity_participant_session_attendance s
                                   WHERE s.activity_participant_id = activity_participant.id
                                     AND s.attendance_status <> 'NOT_YET')
@@ -603,7 +630,7 @@ public class ActivityParticipantDAOImpl implements IActivityParticipantDAO {
                 FROM (
                     SELECT ap.student_id
                     FROM dbo.activity_participant ap
-                    WHERE ap.activity_id = ?
+                    WHERE ap.activity_id = ? AND ap.participation_role = 'PARTICIPANT'
                     UNION
                     SELECT r.student_id
                     FROM dbo.activity_registration_form f

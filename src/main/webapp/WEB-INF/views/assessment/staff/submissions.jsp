@@ -9,6 +9,7 @@
     <title>Danh sach bai nop | EAMS</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261022-4">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=1">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/list-pagination.css?v=1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -33,7 +34,7 @@
         <c:remove var="errorMessage" scope="session"/>
     </c:if>
 
-    <section class="card activity-form-card">
+    <section class="card activity-form-card" data-paginated-list>
         <div class="activity-table-heading">
             <div>
                 <h2>Danh sach bai nho</h2>
@@ -60,7 +61,7 @@
             </thead>
             <tbody>
                 <c:forEach var="s" items="${submissions}">
-                    <tr>
+                    <tr data-page-item>
                         <td><c:out value="${s.studentId}"/></td>
                         <td>
                             <span class="status-badge ${s.status == 'COMPLETED' ? 'active' : (s.status == 'SUBMITTED' ? 'warning' : 'inactive')}">${s.status}</span>
@@ -79,5 +80,6 @@
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
 </body>
 </html>

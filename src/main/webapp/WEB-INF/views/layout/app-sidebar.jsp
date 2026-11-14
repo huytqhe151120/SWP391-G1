@@ -12,6 +12,7 @@
     Object navActiveAttr = request.getAttribute("activeNav");
     String navActive = navActiveAttr == null ? "" : navActiveAttr.toString();
     String reqUri = request.getRequestURI() == null ? "" : request.getRequestURI();
+    String actionParam = request.getParameter("action") == null ? "" : request.getParameter("action");
     if (navActive.isEmpty()) {
         if (reqUri.contains("/qa-management") || reqUri.contains("/answer-question")) navActive = "qa-management";
         else if (reqUri.contains("/organizer-inbox") || reqUri.contains("/organizer-chat")) navActive = "organizer-inbox";
@@ -23,7 +24,7 @@
         else if (reqUri.contains("/student-grades")) navActive = "student-grades";
     }
     boolean isActivityGroupActive = "activities".equals(navActive)
-            || "registration-forms".equals(navActive)
+            || "recruitment".equals(navActive)
             || ("activity-feedback".equals(navActive) && AccessPolicy.canManageActivityFeedback(navUser))
             || "attendance".equals(navActive)
             || "participation-grading".equals(navActive)
@@ -117,10 +118,10 @@
                     <span class="activity-nav-label">Đăng ký tham gia</span>
                 </a>
                 <% } else if (navStudent) { %>
-                <a class="activity-nav-item <%= "registration-forms".equals(navActive) ? "active" : "" %>"
-                   href="<%= ctx %>/registration-forms?action=myApplications"
+                <a class="activity-nav-item <%= "recruitment".equals(navActive) && "myApplications".equals(actionParam) ? "active" : "" %>"
+                   href="<%= ctx %>/organizer-recruitment?action=myApplications"
                    title="Đơn đăng ký"
-                   <%= "registration-forms".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                   <%= "recruitment".equals(navActive) && "myApplications".equals(actionParam) ? "aria-current=\"page\"" : "" %>>
                     <span class="activity-nav-icon" aria-hidden="true">
                         <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -130,6 +131,35 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label">Đơn đăng ký</span>
+                </a>
+                <% } %>
+                <% if (navAdmin || navStaff) { %>
+                <a class="activity-nav-item <%= "recruitment".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/organizer-recruitment"
+                   title="Tuyển ban tổ chức"
+                   <%= "recruitment".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M19 8v6"/><path d="M22 11h-6"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Tuyển ban tổ chức</span>
+                </a>
+                <% } else if (navStudent) { %>
+                <a class="activity-nav-item <%= "recruitment".equals(navActive) && !"myApplications".equals(actionParam) ? "active" : "" %>"
+                   href="<%= ctx %>/organizer-recruitment"
+                   title="Ứng tuyển BTC"
+                   <%= "recruitment".equals(navActive) && !"myApplications".equals(actionParam) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M19 8v6"/><path d="M22 11h-6"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Ứng tuyển BTC</span>
                 </a>
                 <% } %>
                 <% if (navCanTakeAttendance) { %>
@@ -179,7 +209,7 @@
                             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                         </svg>
                     </span>
-                    <span class="activity-nav-label"><%= navStudent ? "Điểm hoạt động của tôi" : "Điểm hoạt động" %></span>
+                    <span class="activity-nav-label"><%= navStudent ? "Điểm hoạt động" : "Điểm hoạt động" %></span>
                 </a>
                 <% } %>
                 <a class="activity-nav-item <%= "partner-invitations".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-invitations"

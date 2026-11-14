@@ -122,6 +122,15 @@
                                 <strong><c:out value="${gradeDetail.organizationLevelName}" default="Mặc định"/> (x<c:out value="${gradeDetail.formattedOrgLevelCoefficient}"/>)</strong>
                             </div>
                             <div class="grade-detail-overview-item">
+                                <span>Vai trò hoạt động</span>
+                                <strong>
+                                    <c:choose>
+                                        <c:when test="${gradeDetail.organizer}">Ban tổ chức (hệ số x<c:out value="${gradeDetail.formattedOrganizerCoefficient}"/>)</c:when>
+                                        <c:otherwise>Người tham gia</c:otherwise>
+                                    </c:choose>
+                                </strong>
+                            </div>
+                            <div class="grade-detail-overview-item">
                                 <span>Hệ số đăng ký</span>
                                 <strong><c:out value="${gradeDetail.registrationTypeLabel}"/></strong>
                             </div>

@@ -1,6 +1,8 @@
 package com.swp391.g1.service.impl;
 
+import com.swp391.g1.dao.IRecruitmentApplicationDAO;
 import com.swp391.g1.dao.IRegistrationFormDAO;
+import com.swp391.g1.dao.impl.RecruitmentApplicationDAOImpl;
 import com.swp391.g1.dao.impl.RegistrationFormDAOImpl;
 import com.swp391.g1.model.Enum.RegistrationFormStatus;
 import com.swp391.g1.model.RegistrationApplication;
@@ -22,6 +24,10 @@ import java.util.Objects;
 
 public class RegistrationFormServiceImpl implements IRegistrationFormService {
     private final IRegistrationFormDAO dao = new RegistrationFormDAOImpl();
+    private final IRecruitmentApplicationDAO recruitmentDao = new RecruitmentApplicationDAOImpl();
+
+    private static final String ORGANIZER_ROLE_ERROR =
+            "Bạn đã trúng tuyển ban tổ chức của hoạt động này nên không thể đăng ký tham gia.";
 
     public List<RegistrationForm> getAll() {
         return dao.findAll();
@@ -337,6 +343,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     public String registerQuick(int activityId, int studentId, String note) {
         if (activityId <= 0 || studentId <= 0) return "Thông tin đăng ký không hợp lệ.";
         if (note != null && note.length() > 2000) return "Ghi chú không được vượt quá 2.000 ký tự.";
+        if (recruitmentDao.hasAcceptedApplication(activityId, studentId)) return ORGANIZER_ROLE_ERROR;
         String result = dao.registerStudentQuick(activityId, studentId, note == null ? "" : note.trim());
         return switch (result) {
             case "OK" -> null;
@@ -345,6 +352,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
             case "NOT_OPEN" -> "Không thể đăng ký: đợt đăng ký chưa đến thời gian mở hoặc đã đóng.";
             case "UNAVAILABLE" -> "Không thể đăng ký: hoạt động chưa được duyệt, đã bắt đầu hoặc không cho phép đăng ký nhanh.";
             case "CANCELLED_BEFORE" -> "Bạn đã hủy đăng ký hoạt động này sau khi được duyệt nên không thể đăng ký lại. Vui lòng liên hệ ban tổ chức nếu cần.";
+            case "ORGANIZER" -> ORGANIZER_ROLE_ERROR;
             default -> "Không thể đăng ký: lỗi không xác định.";
         };
     }
@@ -358,6 +366,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
 
         RegistrationForm form = getById(formId);
         if (form == null) return "Không tìm thấy form đăng ký.";
+        if (recruitmentDao.hasAcceptedApplication(form.getActivityId(), studentId)) return ORGANIZER_ROLE_ERROR;
         Map<String, RegistrationFormField> submitted = new HashMap<>();
         List<RegistrationFormField> answerList = answers == null ? new ArrayList<>() : new ArrayList<>(answers);
         for (RegistrationFormField answer : answerList) {

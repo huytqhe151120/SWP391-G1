@@ -1,0 +1,29 @@
+[data-support-pages] [hidden], [data-support-chat] [hidden] {
+    display: none !important;
+}
+
+.support-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 14px;
+    color: #53677f;
+    font-size: .84rem;
+}
+
+.support-pagination span { margin-right: auto; }
+
+.support-page-button {
+    padding: 7px 12px;
+    border: 1px solid #dce4ef;
+    border-radius: 7px;
+    background: #fff;
+    color: #245b96;
+    font: inherit;
+    cursor: pointer;
+}
+
+.support-page-button:disabled { opacity: .5; cursor: default; }
+.support-load-older { display: block; margin: 0 auto 12px; }

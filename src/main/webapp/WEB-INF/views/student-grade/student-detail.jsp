@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-grade.css?v=20261111-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/list-pagination.css?v=1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -183,6 +184,7 @@
                 </c:if>
 
                 <%-- 3. Bảng Danh sách điểm theo từng hoạt động của sinh viên --%>
+                <div data-paginated-list>
                 <div class="table-wrap activity-table-wrap">
                     <table>
                         <thead>
@@ -214,7 +216,7 @@
                             </c:when>
                             <c:otherwise>
                                 <c:forEach var="ag" items="${activityGrades}" varStatus="loop">
-                                    <tr>
+                                    <tr data-page-item>
                                         <td style="text-align: center; font-weight: 600;"><c:out value="${loop.index + 1}"/></td>
                                         <td class="col-code"><span class="activity-code"><c:out value="${ag.activityCode}"/></span></td>
                                         <td class="col-object-name" title="<c:out value='${ag.activityName}'/>">
@@ -317,11 +319,13 @@
                         </c:if>
                     </table>
                 </div>
+                </div>
             </section>
         </main>
     </div>
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
 <script>
     (function () {
         var form = document.getElementById('student-grade-filter-form');

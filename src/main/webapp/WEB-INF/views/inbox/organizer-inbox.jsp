@@ -125,6 +125,7 @@
         .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
     </style>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-pagination.css?v=20261113">
 </head>
 <body class="support-page organizer-inbox-page">
 <div class="activity-app-shell">
@@ -163,7 +164,7 @@
         </div>
     </c:if>
 
-    <div class="conv-list">
+    <div class="conv-list" data-support-pages="10" data-support-item=".conv-card" data-support-label="cuộc trò chuyện">
         <c:choose>
             <c:when test="${empty conversations}">
                 <div class="empty-state">
@@ -205,5 +206,6 @@
         </div>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/support-pagination.js?v=20261113"></script>
 </body>
 </html>

@@ -149,6 +149,13 @@ public class NotificationDAOImpl implements INotificationDAO {
     }
 
     @Override
+    public int createStudentNotification(int studentId, String eventType, String title, String content,
+                                         String targetUrl) {
+        String recipientsSql = "SELECT account_id FROM dbo.student WHERE id = ? AND account_id IS NOT NULL";
+        return createNotificationForRecipients(eventType, title, content, targetUrl, recipientsSql, studentId);
+    }
+
+    @Override
     public int createActivityFeedbackReminder(int activityId) {
         String pendingRecipientsSql = """
                 SELECT s.account_id

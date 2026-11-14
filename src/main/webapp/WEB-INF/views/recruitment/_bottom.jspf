@@ -1,0 +1,7 @@
+        </main>
+    </div>
+</div>
+<script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+</body>
+</html>

@@ -28,6 +28,7 @@ public class RegistrationApplication {
     private int activityId;
     private boolean canCancel;
     private boolean quick;
+    private boolean cancelledForOrganizer;
 
 
     public int getId() { return id; }
@@ -129,5 +130,13 @@ public class RegistrationApplication {
 
     public void setQuick(boolean quick) {
         this.quick = quick;
+    }
+
+    public boolean isCancelledForOrganizer() {
+        return cancelledForOrganizer;
+    }
+
+    public void setCancelledForOrganizer(boolean cancelledForOrganizer) {
+        this.cancelledForOrganizer = cancelledForOrganizer;
     }
 }

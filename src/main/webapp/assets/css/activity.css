@@ -944,7 +944,7 @@
     right: calc(var(--activity-approval-col-width, 140px) + var(--activity-actions-col-width, 160px));
     z-index: 2;
     background: #fff;
-    box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+    box-shadow: none;
     width: var(--activity-run-status-col-width, 140px);
     min-width: var(--activity-run-status-col-width, 140px);
     max-width: var(--activity-run-status-col-width, 140px);

@@ -120,6 +120,7 @@
         .char-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; }
     </style>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-pagination.css?v=20261113">
 </head>
 <body class="support-page student-chat-page">
 <div class="activity-app-shell">
@@ -140,7 +141,7 @@
 </header>
 
 <div class="chat-wrapper">
-    <div class="messages-area" id="messagesArea">
+    <div class="messages-area" id="messagesArea" data-support-chat="20" data-support-message=".msg-row">
         <c:choose>
             <c:when test="${empty messages}">
                 <div class="empty-chat">
@@ -180,10 +181,6 @@
 </div>
 
 <script>
-    // Auto scroll to bottom
-    const area = document.getElementById('messagesArea');
-    area.scrollTop = area.scrollHeight;
-
     function handleKey(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -196,6 +193,7 @@
         el.style.height = Math.min(el.scrollHeight, 140) + 'px';
     }
 </script>
+<script src="${pageContext.request.contextPath}/assets/js/support-pagination.js?v=20261113"></script>
 
         </div>
     </div>
