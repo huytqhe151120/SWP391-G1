@@ -14,5 +14,8 @@ public interface IActivityFeedbackService {
     void submit(int studentId, int activityId, ActivityFeedbackAnswerDTO answer);
     List<ActivityFeedbackSummaryDTO> getActivitySummaries(Integer staffAccountId, String staffRole);
     ActivityFeedbackReportDTO getActivityReport(int activityId, Integer staffAccountId, String staffRole);
+
+    ActivityFeedbackReportDTO getActivityReport(int activityId, Integer staffAccountId, String staffRole,
+                                                String participationRole);
     int remindPendingStudents(int activityId, Integer staffAccountId, String staffRole);
 }

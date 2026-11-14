@@ -152,6 +152,10 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                    ea.is_summary_required,
                    ol.name AS org_level_name,
                    COALESCE(sar.org_level_coefficient, ol.coefficient, CAST(1.00 AS DECIMAL(4,2))) AS org_coeff,
+                   ap.participation_role,
+                   COALESCE(sar.organizer_coefficient,
+                            CASE WHEN ap.participation_role = 'ORGANIZER' THEN CAST(1.50 AS DECIMAL(4,2))
+                                 ELSE CAST(1.00 AS DECIMAL(4,2)) END) AS organizer_coeff,
                    ap.registration_status,
                    COALESCE(sar.early_reg_coefficient,
                             CASE WHEN ap.registration_status = 'REGISTERED' THEN CAST(1.10 AS DECIMAL(4,2)) ELSE CAST(1.00 AS DECIMAL(4,2)) END) AS reg_coeff,
@@ -314,6 +318,7 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
             return list;
         }
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
+        RecruitmentSchema.ensure();
         String sql = ACTIVITY_GRADES_SQL
                 + " WHERE ap.student_id = ? "
                 + (semesterId > 0 ? " AND ea.semester_id = ? " : "")
@@ -341,6 +346,7 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
             return null;
         }
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
+        RecruitmentSchema.ensure();
         String sql = ACTIVITY_GRADES_SQL
                 + " WHERE ap.student_id = ? AND ap.activity_id = ?";
         try (Connection conn = DBContext.getConnection();
@@ -416,6 +422,8 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setOrganizationLevelName(rs.getString("org_level_name"));
         dto.setOrgLevelCoefficient(rs.getBigDecimal("org_coeff"));
 
+        dto.setParticipationRole(rs.getString("participation_role"));
+        dto.setOrganizerCoefficient(rs.getBigDecimal("organizer_coeff"));
         dto.setRegistrationStatus(rs.getString("registration_status"));
         dto.setEarlyRegCoefficient(rs.getBigDecimal("reg_coeff"));
 
@@ -485,6 +493,7 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                 finalPt = avgScore
                         .multiply(dto.getOrgLevelCoefficient() == null ? BigDecimal.ONE : dto.getOrgLevelCoefficient())
                         .multiply(dto.getEarlyRegCoefficient() == null ? BigDecimal.ONE : dto.getEarlyRegCoefficient())
+                        .multiply(dto.getOrganizerCoefficient())
                         .setScale(2, RoundingMode.HALF_UP);
             } else {
                 finalPt = attScore;

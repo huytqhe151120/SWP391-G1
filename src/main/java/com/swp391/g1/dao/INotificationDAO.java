@@ -25,6 +25,9 @@ public interface INotificationDAO {
 
     int createActivityFeedbackReminder(int activityId);
 
+    /** Gửi thông báo tới tài khoản của một sinh viên. */
+    int createStudentNotification(int studentId, String eventType, String title, String content, String targetUrl);
+
     /** filter: "all" | "unread" | "read". */
     List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);
 

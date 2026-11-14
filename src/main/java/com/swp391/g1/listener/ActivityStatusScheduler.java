@@ -1,8 +1,10 @@
 package com.swp391.g1.listener;
 
 import com.swp391.g1.service.IExtracurricularActivityService;
+import com.swp391.g1.service.IRecruitmentService;
 import com.swp391.g1.service.IRegistrationFormService;
 import com.swp391.g1.service.impl.ExtracurricularActivityServiceImpl;
+import com.swp391.g1.service.impl.RecruitmentServiceImpl;
 import com.swp391.g1.service.impl.RegistrationFormServiceImpl;
 
 import jakarta.servlet.ServletContextEvent;
@@ -32,6 +34,7 @@ public class ActivityStatusScheduler
                 new ExtracurricularActivityServiceImpl();
         IRegistrationFormService registrationFormService =
                 new RegistrationFormServiceImpl();
+        IRecruitmentService recruitmentService = new RecruitmentServiceImpl();
 
         // Tạo một luồng riêng để chạy scheduler.
         scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -59,6 +62,16 @@ public class ActivityStatusScheduler
                         Level.SEVERE,
                         "Could not synchronize registration form statuses.",
                         e);
+            }
+            try {
+                recruitmentService.synchronizeRoundStatuses();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Could not synchronize recruitment rounds.", e);
+            }
+            try {
+                recruitmentService.sendInterviewReminders();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Could not send recruitment interview reminders.", e);
             }
         };
 

@@ -34,6 +34,12 @@ public interface INotificationService {
 
     List<NotificationDTO> getNotifications(int accountId, String filter, int page, int size);
 
+    /** Thông báo tuyển ban tổ chức tới sinh viên. Không ném lỗi ra ngoài. */
+    void notifyStudent(int studentId, String eventType, String title, String content, String targetUrl);
+
+    /** Thông báo tuyển ban tổ chức tới nhân sự phụ trách hoạt động. Không ném lỗi ra ngoài. */
+    void notifyActivityStaff(int activityId, String eventType, String title, String content, String targetUrl);
+
     int countNotifications(int accountId, String filter);
 
     int countUnread(int accountId);

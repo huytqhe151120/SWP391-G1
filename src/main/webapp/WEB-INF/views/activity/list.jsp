@@ -306,9 +306,11 @@
                                             <td class="activity-registration-status-column col-status">
                                                 <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
                                                 <c:choose>
-                                                    <c:when test="${activity.nature eq 'MANDATORY'}"><span class="badge status-pill status-green">Hoạt động bắt buộc</span></c:when>
-                                                    <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã đăng ký</span></c:when>
-                                                    <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
+                                                    <c:when test="${activity.nature eq 'MANDATORY'}"><span class="badge status-pill status-green">Bắt buộc</span></c:when>
+                                                    <c:when test="${activity.nature eq 'VOLUNTARY'}"><span class="badge status-pill status-blue">Tự nguyện</span></c:when>
+                                                    <c:when test="${organizerActivityIds.contains(activity.id)}"><span class="badge status-pill status-green">Ban tổ chức</span></c:when>
+                                                    <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill status-green">Đã duyệt</span></c:when>
+                                                    <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ xử lý</span></c:when>
                                                     <c:when test="${myReg.status eq 'CANCELLED'}"><span class="badge status-pill status-gray">Đã hủy</span></c:when>
                                                     <c:when test="${myReg.status eq 'REJECTED'}"><span class="badge status-pill status-red">Đã từ chối</span></c:when>
                                                     <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill status-blue">Đã rút đơn</span></c:when>
@@ -341,11 +343,11 @@
                                                                             Đăng ký (chưa mở)
                                                                         </span>
                                                                     </c:when>
-                                                                    <c:when test="${myReg.status eq 'WITHDRAWN'}">
+                                                                    <c:when test="${myReg.status eq 'WITHDRAWN' or (myReg.status eq 'CANCELLED' and myReg.cancelledForOrganizer)}">
                                                                         <a class="action-menu-item action-menu-item--view"
                                                                            href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${myReg.id}&amp;returnTo=${activityReturnUrlParameter}">
                                                                             <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/><path d="M10 14h6"/><path d="M10 18h6"/></svg></span>
-                                                                            Xem đơn đã rút
+                                                                            Xem đơn
                                                                         </a>
                                                                         <c:if test="${activitiesAvailableForRegistration.contains(activity.id)}">
                                                                             <c:choose>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../main/webapp/assets/css/list-pagination.css">
+</head>
+<body>
+<section id="plain" data-paginated-list><table><tbody id="rows"></tbody></table></section>
+<section id="studentFeedbackPagination">
+    <button class="is-active" data-feedback-filter="pending"></button>
+    <button data-feedback-filter="submitted"></button>
+    <div data-feedback-empty="pending" hidden></div>
+    <div data-feedback-empty="submitted" hidden></div>
+    <div id="feedbackRows"></div>
+</section>
+<aside id="pendingFeedbackPagination">
+    <input id="feedbackPendingSearch">
+    <ul id="pendingRows"><li id="feedbackNoSearchResults" hidden></li></ul>
+</aside>
+<pre id="result">NOT RUN</pre>
+<script>
+    for (var i = 0; i < 23; i++) {
+        var row = document.createElement("tr");
+        row.dataset.pageItem = "";
+        document.getElementById("rows").appendChild(row);
+        var feedback = document.createElement("article");
+        feedback.className = "feedback-activity-row";
+        feedback.dataset.pageItem = "";
+        feedback.dataset.feedbackState = i < 12 ? "pending" : "submitted";
+        document.getElementById("feedbackRows").appendChild(feedback);
+        var student = document.createElement("li");
+        student.dataset.pendingStudent = "";
+        student.dataset.pageItem = "";
+        student.dataset.search = "student " + i;
+        document.getElementById("pendingRows").appendChild(student);
+    }
+</script>
+<script src="../../main/webapp/assets/js/list-pagination.js"></script>
+<script src="../../main/webapp/assets/js/activity-feedback.js"></script>
+<script>
+    (function () {
+        var failures = [];
+        function check(condition, message) { if (!condition) failures.push(message); }
+        function visible(selector) {
+            return Array.from(document.querySelectorAll(selector)).filter(function (item) { return !item.hidden; });
+        }
+        var plain = document.getElementById("plain");
+        check(visible("#rows tr").length === 10, "initial page");
+        plain.querySelector(".activity-pagination-nav button:last-child").click();
+        check(visible("#rows tr").length === 10 && !document.querySelectorAll("#rows tr")[10].hidden, "next page");
+        var size = plain.querySelector("select");
+        size.value = "20";
+        size.dispatchEvent(new Event("change"));
+        check(visible("#rows tr").length === 20 && !document.querySelectorAll("#rows tr")[0].hidden, "page size resets page");
+        var feedback = document.getElementById("studentFeedbackPagination");
+        check(visible(".feedback-activity-row").length === 10, "pending feedback page");
+        feedback.querySelector('[data-feedback-filter="submitted"]').click();
+        check(visible(".feedback-activity-row").length === 10 &&
+            visible(".feedback-activity-row").every(function (row) { return row.dataset.feedbackState === "submitted"; }), "feedback tab filter");
+        var pending = document.getElementById("pendingFeedbackPagination");
+        var search = document.getElementById("feedbackPendingSearch");
+        pending.querySelector(".activity-pagination-nav button:last-child").click();
+        search.value = "student 22";
+        search.dispatchEvent(new Event("input"));
+        check(visible("[data-pending-student]").length === 1 && !document.querySelectorAll("[data-pending-student]")[22].hidden, "search resets page");
+        search.value = "no match";
+        search.dispatchEvent(new Event("input"));
+        check(visible("[data-pending-student]").length === 0 && !document.getElementById("feedbackNoSearchResults").hidden, "empty search");
+        check(getComputedStyle(document.querySelector("#rows tr[hidden]")).display === "none", "hidden CSS");
+        document.getElementById("result").textContent = failures.length ? "FAIL: " + failures.join(", ") : "PASS";
+    })();
+</script>
+</body>
+</html>

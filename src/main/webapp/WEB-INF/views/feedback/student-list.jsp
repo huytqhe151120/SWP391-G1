@@ -10,6 +10,7 @@
     <title>Feedback của tôi | EAMS</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261111-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity-feedback.css?v=20261111-7">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/list-pagination.css?v=1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -32,7 +33,7 @@
                 <div class="alert alert-error" role="alert"><c:out value="${errorMessage}"/></div>
             </c:if>
 
-            <section class="feedback-card" aria-labelledby="student-feedback-title">
+            <section class="feedback-card" aria-labelledby="student-feedback-title" id="studentFeedbackPagination">
                 <div class="feedback-card-heading">
                     <div>
                         <h2 id="student-feedback-title">Hoạt động của bạn</h2>
@@ -48,7 +49,7 @@
                 </div>
                 <div class="feedback-activity-list">
                     <c:forEach var="activity" items="${feedbackActivities}">
-                        <article class="feedback-activity-row" data-feedback-state="${activity.submitted ? 'submitted' : 'pending'}">
+                        <article class="feedback-activity-row" data-page-item data-feedback-state="${activity.submitted ? 'submitted' : 'pending'}">
                             <div class="feedback-activity-copy">
                                 <span class="feedback-activity-code"><c:out value="${activity.activityCode}"/></span>
                                 <h3><c:out value="${activity.activityName}"/></h3>
@@ -81,6 +82,7 @@
         </main>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/activity-feedback.js?v=20261111-11" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity-feedback.js?v=20261113-1" defer></script>
 </body>
 </html>

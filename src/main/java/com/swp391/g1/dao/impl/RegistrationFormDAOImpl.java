@@ -11,6 +11,10 @@ import java.sql.*;
 import java.util.*;
 
 public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
+    public RegistrationFormDAOImpl() {
+        RecruitmentSchema.ensure();
+    }
+
     // Activity start times are stored in UTC; form deadlines use Vietnam local time (UTC+7).
     private static final String ACTIVITY_CLOSE_CUTOFF =
             "DATEADD(HOUR,-24,DATEADD(HOUR,7,a.start_time))";
@@ -132,7 +136,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 + "AND a.start_time>SYSUTCDATETIME() "
                 + "AND (a.max_participants IS NULL OR (SELECT COUNT(*) FROM dbo.activity_registration occupied "
                 + "WHERE occupied.form_id=f.id AND occupied.status IN ('SUBMITTED','APPROVED')) < a.max_participants) "
-                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=f.id AND r.student_id=? AND r.status<>'WITHDRAWN')";
+                + "AND NOT EXISTS(SELECT 1 FROM dbo.activity_registration r WHERE r.form_id=f.id AND r.student_id=? "
+                + "AND r.status<>'WITHDRAWN' AND NOT (r.status='CANCELLED' AND r.cancelled_for_organizer=1))";
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             p.setInt(1, id);
             p.setInt(2, studentId);
@@ -459,6 +464,33 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
             p.setInt(1, formId);
             try (ResultSet r = p.executeQuery()) {
                 return r.next();
+            }
+        }
+    }
+
+    private boolean hasAcceptedOrganizerForForm(Connection c, int formId, int studentId) throws SQLException {
+        String sql = "SELECT 1 FROM dbo.activity_registration_form f "
+                + "JOIN dbo.organizer_recruitment_round r ON r.activity_id=f.activity_id "
+                + "JOIN dbo.organizer_application oa ON oa.round_id=r.id "
+                + "WHERE f.id=? AND oa.student_id=? AND oa.status='ACCEPTED'";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, formId);
+            p.setInt(2, studentId);
+            try (ResultSet rs = p.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private boolean hasAcceptedOrganizer(Connection c, int activityId, int studentId) throws SQLException {
+        String sql = "SELECT 1 FROM dbo.organizer_recruitment_round r "
+                + "JOIN dbo.organizer_application oa ON oa.round_id=r.id "
+                + "WHERE r.activity_id=? AND oa.student_id=? AND oa.status='ACCEPTED'";
+        try (PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, activityId);
+            p.setInt(2, studentId);
+            try (ResultSet rs = p.executeQuery()) {
+                return rs.next();
             }
         }
     }
@@ -873,6 +905,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     c.rollback();
                     return false;
                 }
+                if (hasAcceptedOrganizerForForm(c, formId, studentId)) {
+                    c.rollback();
+                    return false;
+                }
                 if (!answersMatchCurrentFormFields(c, formId, answers)) {
                     c.rollback();
                     return false;
@@ -884,7 +920,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 
                 // Check for CANCELLED registration to delete before inserting new one
                 String findCancelledSql = "SELECT r.id FROM dbo.activity_registration r "
-                        + "WHERE r.form_id=? AND r.student_id=? AND r.status='WITHDRAWN'";
+                        + "WHERE r.form_id=? AND r.student_id=? "
+                        + "AND (r.status='WITHDRAWN' OR (r.status='CANCELLED' AND r.cancelled_for_organizer=1))";
                 Integer cancelledRegId = null;
                 try (PreparedStatement p = c.prepareStatement(findCancelledSql)) {
                     p.setInt(1, formId);
@@ -1029,7 +1066,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
     public List<RegistrationApplication> findApplicationsForStudent(int studentId) {
         String sql = "SELECT r.id,r.form_id,r.student_id,s.code AS student_code,s.name AS student_name,mc.code AS class_code,"
                 + "p.name AS program_name,m.name AS major_name,d.name AS department_name,"
-                + "s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since,r.rejection_reason, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
+                + "s.email,s.phone_number AS phone_number,r.note,r.status,r.submitted_at,r.pending_since,r.rejection_reason, "
+                + "r.cancelled_for_organizer, f.title AS form_title, a.name AS activity_name, a.id AS activity_id, a.activity_status, "
                 + "CASE WHEN a.activity_status='UPCOMING' AND (a.start_time IS NULL OR a.start_time>DATEADD(HOUR,24,SYSUTCDATETIME())) THEN 1 ELSE 0 END AS can_cancel, "
                 + "CASE WHEN a.nature='REQUIRE_REGISTRATION' AND a.registration_form_required=0 THEN 1 ELSE 0 END AS quick_registration "
                 + "FROM dbo.activity_registration r LEFT JOIN dbo.activity_registration_form f ON f.id=r.form_id "
@@ -1049,6 +1087,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 app.setActivityId(r.getInt("activity_id"));
                 app.setCanCancel(r.getBoolean("can_cancel"));
                 app.setQuick(r.getBoolean("quick_registration"));
+                app.setCancelledForOrganizer(r.getBoolean("cancelled_for_organizer"));
                 result.add(app);
             }}
             return result;
@@ -1212,6 +1251,10 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     c.rollback();
                     return "UNAVAILABLE";
                 }
+                if (hasAcceptedOrganizer(c, activityId, studentId)) {
+                    c.rollback();
+                    return "ORGANIZER";
+                }
 
                 // Tìm form đăng ký nhanh của hoạt động (tạo mặc định nếu chưa có)
                 int formId = findOrCreateQuickForm(c, activityId);
@@ -1237,7 +1280,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                 }
 
                 // Check if already registered (excluding WITHDRAWN)
-                String checkRegSql = "SELECT r.status FROM dbo.activity_registration r "
+                String checkRegSql = "SELECT r.status, r.cancelled_for_organizer FROM dbo.activity_registration r "
                         + "WHERE r.form_id=? AND r.student_id=?";
                 try (PreparedStatement p = c.prepareStatement(checkRegSql)) {
                     p.setInt(1, formId);
@@ -1245,11 +1288,11 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     try (ResultSet r = p.executeQuery()) {
                         if (r.next()) {
                             String existing = r.getString(1);
-                            if ("CANCELLED".equals(existing)) {
+                            if ("CANCELLED".equals(existing) && !r.getBoolean(2)) {
                                 c.rollback();
                                 return "CANCELLED_BEFORE";
                             }
-                            if (!"WITHDRAWN".equals(existing)) {
+                            if (!"WITHDRAWN".equals(existing) && !"CANCELLED".equals(existing)) {
                                 c.rollback();
                                 return "ALREADY";
                             }
@@ -1274,7 +1317,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
 
                 // Check for WITHDRAWN registration to reactivate
                 String findCancelledSql = "SELECT r.id FROM dbo.activity_registration r "
-                        + "WHERE r.form_id=? AND r.student_id=? AND r.status='WITHDRAWN'";
+                        + "WHERE r.form_id=? AND r.student_id=? "
+                        + "AND (r.status='WITHDRAWN' OR (r.status='CANCELLED' AND r.cancelled_for_organizer=1))";
                 try (PreparedStatement p = c.prepareStatement(findCancelledSql)) {
                     p.setInt(1, formId);
                     p.setInt(2, studentId);
@@ -1283,8 +1327,9 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                             // Reactivate WITHDRAWN registration
                             int regId = r.getInt(1);
                             String reactivateSql = "UPDATE dbo.activity_registration "
-                                    + "SET status='APPROVED',note=?,submitted_at=SYSDATETIME(),rejection_reason=NULL "
-                                    + "WHERE id=? AND status='WITHDRAWN'";
+                                    + "SET status='APPROVED',note=?,submitted_at=SYSDATETIME(),rejection_reason=NULL, "
+                                    + "cancelled_for_organizer=0 "
+                                    + "WHERE id=? AND (status='WITHDRAWN' OR (status='CANCELLED' AND cancelled_for_organizer=1))";
                             try (PreparedStatement p2 = c.prepareStatement(reactivateSql)) {
                                 p2.setString(1, note);
                                 p2.setInt(2, regId);
