@@ -273,6 +273,7 @@
 
         <% if (!navStudent) { %>
         <!-- 2. Quản lý Nhân sự -->
+        <% if (!navStudent) { %>
         <div class="activity-nav-accordion is-open <%= isHrGroupActive ? "has-active" : "" %>" data-group="hr">
             <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Quản lý Nhân sự">
                 <span class="activity-nav-icon" aria-hidden="true">
@@ -327,8 +328,10 @@
                 <% } %>
             </div>
         </div>
+        <% } %>
 
         <!-- 3. Đối tác -->
+        <% if (!navStudent) { %>
         <div class="activity-nav-accordion is-open <%= isPartnerGroupActive ? "has-active" : "" %>" data-group="partner">
             <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Đối tác">
                 <span class="activity-nav-icon" aria-hidden="true">

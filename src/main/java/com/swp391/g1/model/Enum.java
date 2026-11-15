@@ -62,4 +62,28 @@ public class Enum {
         WITHDRAWN // Sinh viên đã rút đơn (đăng ký lại được)
     }
 
+    // Lifecycle of an organizer recruitment round
+    public enum OrganizerRecruitmentRoundStatus {
+        DRAFT, // Chưa đến thời gian nhận hồ sơ
+        OPEN, // Đang nhận hồ sơ
+        CLOSED // Đã hết hạn hoặc hoạt động đã bắt đầu
+    }
+
+    // Review status of an organizer recruitment application
+    public enum OrganizerApplicationStatus {
+        PENDING, // Chờ xét
+        INTERVIEW_INVITED, // Đã mời phỏng vấn
+        INTERVIEWED, // Đã phỏng vấn
+        ACCEPTED, // Trúng tuyển
+        REJECTED, // Không đạt
+        WITHDRAWN // Đã rút
+    }
+
+    // Lifecycle of an organizer interview
+    public enum OrganizerInterviewStatus {
+        SCHEDULED, // Đang chờ xác nhận/phỏng vấn
+        CONFIRMED, // Sinh viên đã xác nhận
+        CANCELLED, // Lịch đã hủy
+        DONE // Đã phỏng vấn
+    }
 }

@@ -1,8 +1,11 @@
 package com.swp391.g1.controller;
 
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Student;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IStudentService;
 import com.swp391.g1.service.impl.StudentServiceImpl;
+import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.util.ParamUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -21,6 +24,21 @@ import java.util.TreeSet;
 public class StudentServlet extends HttpServlet {
 
     private final IStudentService studentService = new StudentServiceImpl();
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        if (!AccessPolicy.canManageHR(currentUser)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang này.");
+            return;
+        }
+        super.service(request, response);
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

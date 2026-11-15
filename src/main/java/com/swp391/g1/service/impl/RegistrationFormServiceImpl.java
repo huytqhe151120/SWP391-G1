@@ -28,6 +28,26 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
     private final INotificationService notificationService = new NotificationServiceImpl();
     private final IRecruitmentApplicationDAO recruitmentDao = new RecruitmentApplicationDAOImpl();
 
+    private void notifyApplicationResult(RegistrationApplication application, String eventType,
+                                         String title, String result) {
+        if (application == null || application.getStudentId() <= 0) return;
+        String activityName = application.getActivityName() == null ? "" : application.getActivityName();
+        String targetUrl = application.getId() > 0
+                ? "/registration-forms?action=myApplication&id=" + application.getId()
+                : "/organizer-recruitment?action=myApplications";
+        notificationService.notifyStudent(application.getStudentId(), eventType, title,
+                "Đơn đăng ký hoạt động \"" + activityName + "\" " + result,
+                targetUrl);
+    }
+
+    private List<RegistrationApplication> findApplications(List<Integer> registrationIds) {
+        List<RegistrationApplication> applications = new ArrayList<>();
+        for (Integer id : registrationIds) {
+            RegistrationApplication application = dao.findApplicationById(id);
+            if (application != null) applications.add(application);
+        }
+        return applications;
+    }
     private static final String ORGANIZER_ROLE_ERROR =
             "Bạn đã trúng tuyển ban tổ chức của hoạt động này nên không thể đăng ký tham gia.";
 
@@ -96,7 +116,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
             return "Không thể duyệt đơn đăng ký nhanh (không cần duyệt).";
         }
-        if (dao.reviewApplication(registrationId, "SUBMITTED", "APPROVED", null)) return null;
+        if (dao.reviewApplication(registrationId, "SUBMITTED", "APPROVED", null)) {
+            notifyApplicationResult(application, "REGISTRATION_APPROVED",
+                    "Đơn đăng ký được duyệt", "đã được duyệt.");
+            return null;
+        }
         if (application != null && "SUBMITTED".equals(application.getStatus())
                 && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
             return "Không thể duyệt đơn vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";
@@ -114,7 +138,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
             return "Không thể từ chối đơn đăng ký nhanh (không cần duyệt).";
         }
-        if (dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED", normalizedReason)) return null;
+        if (dao.reviewApplication(registrationId, "SUBMITTED", "REJECTED", normalizedReason)) {
+            notifyApplicationResult(application, "REGISTRATION_REJECTED",
+                    "Đơn đăng ký bị từ chối", "đã bị từ chối. Lý do: " + normalizedReason);
+            return null;
+        }
         return "Chỉ có thể từ chối đơn đang chờ xử lý.";
     }
 
@@ -134,9 +162,13 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (dao.isQuickRegistrationForm(formId)) {
             return "Không thể từ chối đơn đăng ký nhanh (không cần duyệt).";
         }
-        return dao.rejectApplications(formId, registrationIds, normalizedReason)
-                ? null
-                : "Không thể từ chối các đơn đã chọn. Vui lòng kiểm tra trạng thái đơn và thử lại.";
+        List<RegistrationApplication> affected = findApplications(registrationIds);
+        if (!dao.rejectApplications(formId, registrationIds, normalizedReason)) {
+            return "Không thể từ chối các đơn đã chọn. Vui lòng kiểm tra trạng thái đơn và thử lại.";
+        }
+        affected.forEach(a -> notifyApplicationResult(a, "REGISTRATION_REJECTED",
+                "Đơn đăng ký bị từ chối", "đã bị từ chối. Lý do: " + normalizedReason));
+        return null;
     }
 
     @Override
@@ -146,9 +178,13 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (dao.isQuickRegistrationForm(formId)) {
             return "Không thể duyệt đơn đăng ký nhanh (không cần duyệt).";
         }
-        return dao.approveApplications(formId, registrationIds)
-                ? null
-                : "Không thể duyệt các đơn đã chọn. Vui lòng kiểm tra trạng thái đơn và thử lại.";
+        List<RegistrationApplication> affected = findApplications(registrationIds);
+        if (!dao.approveApplications(formId, registrationIds)) {
+            return "Không thể duyệt các đơn đã chọn. Vui lòng kiểm tra trạng thái đơn và thử lại.";
+        }
+        affected.forEach(a -> notifyApplicationResult(a, "REGISTRATION_APPROVED",
+                "Đơn đăng ký được duyệt", "đã được duyệt."));
+        return null;
     }
 
     private static String validateBulkApplicationSelection(int formId, List<Integer> registrationIds) {
@@ -170,7 +206,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
             return "Không thể thao tác trên đơn đăng ký nhanh.";
         }
-        if (dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED", null)) return null;
+        if (dao.reviewApplication(registrationId, "REJECTED", "SUBMITTED", null)) {
+            notifyApplicationResult(application, "REGISTRATION_REJECTION_REVOKED",
+                    "Đơn đăng ký được xem xét lại", "đã được hủy quyết định từ chối và chuyển về trạng thái chờ xử lý.");
+            return null;
+        }
         if (application != null && "REJECTED".equals(application.getStatus())
                 && dao.isAtCapacity(application.getFormId())) {
             return "Không thể khôi phục đơn vì hoạt động đã đủ số lượng tối đa.";
@@ -189,7 +229,11 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (application != null && dao.isQuickRegistrationForm(application.getFormId())) {
             return "Không thể thao tác trên đơn đăng ký nhanh.";
         }
-        if (dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED", null)) return null;
+        if (dao.reviewApplication(registrationId, "APPROVED", "SUBMITTED", null)) {
+            notifyApplicationResult(application, "REGISTRATION_APPROVAL_REVOKED",
+                    "Quyết định duyệt đơn bị hủy", "đã bị hủy quyết định duyệt và chuyển về trạng thái chờ xử lý.");
+            return null;
+        }
         if (application != null && "APPROVED".equals(application.getStatus())
                 && !dao.isActivityEligibleForApplicationReview(application.getFormId())) {
             return "Không thể hủy duyệt vì hoạt động đã bắt đầu, bị hủy hoặc không còn đủ điều kiện.";

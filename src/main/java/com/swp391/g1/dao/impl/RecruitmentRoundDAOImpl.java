@@ -219,18 +219,6 @@ public class RecruitmentRoundDAOImpl implements IRecruitmentRoundDAO {
     }
 
     @Override
-    public boolean updateStatus(int id, String status) {
-        String sql = "UPDATE dbo.organizer_recruitment_round SET status=?,updated_at=SYSDATETIME() WHERE id=?";
-        try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
-            p.setString(1, status);
-            p.setInt(2, id);
-            return p.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw wrap("Không thể đổi trạng thái đợt tuyển.", e);
-        }
-    }
-
-    @Override
     public boolean delete(int id) {
         try (Connection c = DBContext.getConnection()) {
             c.setAutoCommit(false);
@@ -276,10 +264,19 @@ public class RecruitmentRoundDAOImpl implements IRecruitmentRoundDAO {
 
     @Override
     public int synchronizeStatuses() {
-        String sql = "UPDATE r SET status='CLOSED',updated_at=SYSDATETIME() FROM dbo.organizer_recruitment_round r "
+        String sql = "UPDATE r SET status=CASE "
+                + "WHEN a.approval_status<>'APPROVED' OR a.activity_status<>'UPCOMING' "
+                + "OR a.start_time IS NULL OR a.start_time<=SYSUTCDATETIME() "
+                + "OR (r.close_at IS NOT NULL AND r.close_at<=SYSDATETIME()) THEN 'CLOSED' "
+                + "WHEN r.open_at IS NULL OR r.open_at<=SYSDATETIME() THEN 'OPEN' "
+                + "ELSE 'DRAFT' END,updated_at=SYSDATETIME() FROM dbo.organizer_recruitment_round r "
                 + "JOIN dbo.extracurricular_activity a ON a.id=r.activity_id "
-                + "WHERE r.status='OPEN' AND ((r.close_at IS NOT NULL AND r.close_at<=SYSDATETIME()) "
-                + "OR a.activity_status<>'UPCOMING' OR a.start_time IS NULL OR a.start_time<=SYSUTCDATETIME())";
+                + "WHERE r.status<>CASE "
+                + "WHEN a.approval_status<>'APPROVED' OR a.activity_status<>'UPCOMING' "
+                + "OR a.start_time IS NULL OR a.start_time<=SYSUTCDATETIME() "
+                + "OR (r.close_at IS NOT NULL AND r.close_at<=SYSDATETIME()) THEN 'CLOSED' "
+                + "WHEN r.open_at IS NULL OR r.open_at<=SYSDATETIME() THEN 'OPEN' "
+                + "ELSE 'DRAFT' END";
         try (Connection c = DBContext.getConnection(); PreparedStatement p = c.prepareStatement(sql)) {
             return p.executeUpdate();
         } catch (SQLException e) {

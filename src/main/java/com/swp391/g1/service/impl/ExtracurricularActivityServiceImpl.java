@@ -270,6 +270,16 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
         activityDAO.refreshPublic(entity.getId());
         new com.swp391.g1.dao.impl.ActivityParticipantDAOImpl().syncActivityResults(entity.getId());
 
+        if (!sameMinute(existing.getStartTime(), entity.getStartTime())
+                || !sameMinute(existing.getEndTime(), entity.getEndTime())
+                || !sameText(existing.getAddress(), entity.getAddress())) {
+            notificationService.notifyActivityParticipants(entity.getId(), "ACTIVITY_SCHEDULE_CHANGED",
+                    "Hoạt động thay đổi thời gian/địa điểm",
+                    "Hoạt động \"" + entity.getName() + "\" vừa được cập nhật thời gian hoặc địa điểm. "
+                            + "Vui lòng xem lại chi tiết.",
+                    "/activities?action=detail&id=" + entity.getId());
+        }
+
         return true;
     }
 
@@ -318,6 +328,15 @@ public class ExtracurricularActivityServiceImpl implements IExtracurricularActiv
             return false;
         }
 
+        ExtracurricularActivity existing = activityDAO.findById(id);
+        boolean mayDelete = existing != null
+                && existing.getActivityStatus() != ActivityStatus.ONGOING
+                && existing.getActivityStatus() != ActivityStatus.COMPLETED;
+        if (mayDelete) {
+            notificationService.notifyActivityParticipants(id, "ACTIVITY_DELETED",
+                    "Hoạt động đã bị hủy",
+                    "Hoạt động \"" + existing.getName() + "\" đã bị xóa.", "/activities");
+        }
         boolean deleted = activityDAO.deleteIfNotOngoingOrCompleted(id);
 
         if (!deleted) {

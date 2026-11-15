@@ -12,13 +12,13 @@
 <section class="card rc-card rc-summary">
     <div>
         <span class="badge status-pill status-green">Đang mở tuyển</span>
-        <span class="badge status-pill status-blue">Ban tổ chức</span>
     </div>
     <dl>
         <div><dt>Hoạt động</dt><dd><c:out value="${round.activityName}"/></dd></div>
         <div><dt>Hạn nộp hồ sơ</dt><dd><c:choose><c:when test="${not empty round.closeAt}"><c:out value="${dt:format(round.closeAt)}"/></c:when><c:otherwise>Không giới hạn</c:otherwise></c:choose></dd></div>
         <div><dt>Chỉ tiêu còn lại</dt><dd>${round.totalRemaining} / ${round.totalQuota}</dd></div>
     </dl>
+    <p class="rc-sub">Bạn vẫn có thể nộp hồ sơ khi chỉ tiêu đã đủ. Chỉ tiêu chỉ được tính khi staff duyệt và chọn ứng viên trúng tuyển.</p>
     <c:if test="${not empty round.description}"><p class="rc-sub"><c:out value="${round.description}"/></p></c:if>
 </section>
 
@@ -46,20 +46,20 @@
             <select id="wish1" name="wish1" required>
                 <option value="">Chọn một vị trí</option>
                 <c:forEach items="${round.positions}" var="p">
-                    <option value="${p.id}" ${p.remaining == 0 ? 'disabled' : ''} ${param.wish1 eq p.id ? 'selected' : ''}><c:out value="${p.name}"/> (còn ${p.remaining})</option>
+                    <option value="${p.id}" ${param.wish1 eq p.id ? 'selected' : ''}><c:out value="${p.name}"/> (${p.remaining > 0 ? 'còn ' : 'đã đủ chỉ tiêu · còn '}${p.remaining})</option>
                 </c:forEach>
             </select></div>
         <div class="rc-field"><label for="wish2">Nguyện vọng 2 <span>(không bắt buộc)</span></label>
             <select id="wish2" name="wish2">
                 <option value="">Không chọn</option>
                 <c:forEach items="${round.positions}" var="p">
-                    <option value="${p.id}" ${p.remaining == 0 ? 'disabled' : ''} ${param.wish2 eq p.id ? 'selected' : ''}><c:out value="${p.name}"/> (còn ${p.remaining})</option>
+                    <option value="${p.id}" ${param.wish2 eq p.id ? 'selected' : ''}><c:out value="${p.name}"/> (${p.remaining > 0 ? 'còn ' : 'đã đủ chỉ tiêu · còn '}${p.remaining})</option>
                 </c:forEach>
             </select></div>
     </div>
     <div class="rc-slot-list">
         <c:forEach items="${round.positions}" var="p">
-            <div><c:out value="${p.name}"/><span>Còn ${p.remaining} / ${p.quota}</span></div>
+            <div><c:out value="${p.name}"/><span>${p.remaining > 0 ? 'Còn ' : 'Đã đủ chỉ tiêu · còn '}${p.remaining} / ${p.quota}</span></div>
         </c:forEach>
     </div>
 

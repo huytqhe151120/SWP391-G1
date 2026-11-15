@@ -664,8 +664,7 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
         String ctx = request.getContextPath();
         if ("save".equals(action)) {
             RecruitmentRound round = parseRound(request);
-            String error = round == null ? "Thời gian nhập không hợp lệ." : service.saveRound(round, user.getId(),
-                    "open".equals(request.getParameter("intent")));
+            String error = round == null ? "Thời gian nhập không hợp lệ." : service.saveRound(round, user.getId());
             if (error == null) {
                 flash(request, "successMessage", "Đã lưu đợt tuyển.");
                 response.sendRedirect(ctx + PAGE + "?activityId=" + round.getActivityId());
@@ -690,14 +689,6 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
         String error;
         String success;
         switch (action == null ? "" : action) {
-            case "open" -> {
-                error = service.openRound(id);
-                success = "Đã mở nhận hồ sơ.";
-            }
-            case "close" -> {
-                error = service.closeRound(id);
-                success = "Đã đóng đợt tuyển.";
-            }
             case "delete" -> {
                 error = service.deleteRound(id);
                 success = "Đã xóa đợt tuyển.";

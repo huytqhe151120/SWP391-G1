@@ -2491,6 +2491,10 @@ span.flatpickr-weekday {
     table-layout: auto;
 }
 
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table {
+    min-width: 1700px;
+}
+
 .hub-edge-pane .activity-table-wrap table.hub-recent-table th,
 .hub-edge-pane .activity-table-wrap table.hub-recent-table td {
     padding: 13px 16px;
@@ -2531,6 +2535,58 @@ span.flatpickr-weekday {
 .hub-edge-pane .activity-table-wrap table.hub-recent-table td.col-datetime {
     width: 12%;
     min-width: 150px;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table th.recruitment-submitted-column,
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table td.recruitment-submitted-column {
+    position: sticky;
+    right: 150px;
+    z-index: 2;
+    width: 175px;
+    min-width: 175px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table th.recruitment-preference-column,
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table td.recruitment-preference-column {
+    position: sticky;
+    right: 325px;
+    z-index: 2;
+    width: 190px;
+    min-width: 190px;
+    background: #fff;
+    box-shadow: none;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table th.activity-status-column,
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table td.activity-status-column {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table th.recruitment-submitted-column {
+    z-index: 3;
+    background: #f7f9fc;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table th.recruitment-preference-column {
+    z-index: 3;
+    background: #f7f9fc;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table th.activity-status-column,
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table td.activity-status-column {
+    box-shadow: none;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table tbody tr:hover td.recruitment-submitted-column {
+    background: #f8faff;
+}
+
+.hub-edge-pane .activity-table-wrap table.recruitment-recent-table tbody tr:hover td.recruitment-preference-column {
+    background: #f8faff;
 }
 
 .hub-edge-pane .activity-table-wrap table.hub-recent-table th.col-status,

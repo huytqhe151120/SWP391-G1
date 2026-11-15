@@ -1,0 +1,58 @@
+/* Shared flatpickr theme (matches the activity form) */
+.flatpickr-calendar {
+    z-index: 9999 !important;
+    border: 1px solid #dce4ef;
+    border-radius: 10px;
+    box-shadow: 0 10px 28px rgba(28, 48, 76, 0.16);
+    font-family: inherit;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    border-color: #3b82f6;
+    background: #3b82f6;
+}
+
+.flatpickr-day.today:not(.selected) {
+    border-color: #3b82f6;
+}
+
+.flatpickr-day:hover {
+    background: #eff6ff;
+}
+
+.flatpickr-months .flatpickr-month,
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+span.flatpickr-weekday {
+    color: #233752;
+    fill: #233752;
+}
+
+.flatpickr-calendar .flatpickr-current-month {
+    left: 12.5%;
+    display: flex;
+    width: 75%;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0;
+}
+
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+    flex: 0 1 auto;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 2px 4px;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.flatpickr-calendar .flatpickr-current-month .numInputWrapper {
+    flex: 0 0 auto;
+    width: 6ch;
+}
+
+.flatpickr-calendar .flatpickr-current-month input.cur-year {
+    font-size: 1rem;
+}

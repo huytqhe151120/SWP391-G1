@@ -45,17 +45,38 @@
                 <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                     <input type="hidden" name="action" value="save">
                     <input type="hidden" name="id" value="${form.id}">
+                    <input type="hidden" name="activityId" value="${form.activityId}">
                     <input type="hidden" name="returnTo" value="<c:out value='${returnTo}'/>">
 
                     <div class="activity-form-content">
-                        <div class="activity-form-section">
-                            <h3>Thông tin cơ bản</h3>
-                            <p>Chọn hoạt động và cung cấp nội dung hướng dẫn đăng ký.</p>
-                        </div>
                         <div class="form-grid activity-form-grid">
+                            <c:if test="${form.quick}">
+                                <div class="field field-wide">
+                                    <label>Hoạt động</label>
+                                    <p><strong><c:out value="${form.activityName}"/></strong></p>
+                                    <small class="field-hint">Đăng ký nhanh: sinh viên bấm Đăng ký và được duyệt tự động, không điền form. Bạn chỉ chỉnh mô tả và thời gian đăng ký.</small>
+                                </div>
+                            </c:if>
+                            <c:if test="${not form.quick}">
                             <div class="field field-wide">
-                                <label>Hoạt động</label>
-                                <p><strong><c:out value="${form.activityName}"/></strong></p>
+                                <label for="activityId">Hoạt động <span class="required-mark">*</span></label>
+                                <select id="activityId" name="activityId" required
+                                        <c:if test="${form.registrationCount > 0}">disabled</c:if>>
+                                    <option value="">-- Chọn hoạt động --</option>
+                                    <c:forEach items="${activities}" var="a">
+                                        <option value="${a.id}" <c:if test="${form.activityId == a.id}">selected</c:if>>
+                                            <c:out value="${a.code}"/> - <c:out value="${a.name}"/>
+                                        </option>
+                                    </c:forEach>
+                                </select>
+                                <c:if test="${empty activities}">
+                                    <small class="field-hint">
+                                        <c:choose>
+                                            <c:when test="${hasEligibleApprovedActivities}">Tất cả hoạt động đã duyệt và chưa diễn ra đều đã có đợt đăng ký.</c:when>
+                                            <c:otherwise>Chưa có hoạt động nào vừa được duyệt vừa ở trạng thái chưa diễn ra để tạo form.</c:otherwise>
+                                        </c:choose>
+                                    </small>
+                                </c:if>
                             </div>
                             <div class="field field-wide">
                                 <label for="title">Tiêu đề form <span class="required-mark">*</span></label>
@@ -64,6 +85,7 @@
                                        value="<c:out value='${form.title}'/>"
                                        placeholder="Ví dụ: Đăng ký tham gia workshop">
                             </div>
+                            </c:if>
                             <div class="field field-wide">
                                 <label for="description">Mô tả / hướng dẫn</label>
                                 <textarea id="description" name="description" rows="5" maxlength="4000"

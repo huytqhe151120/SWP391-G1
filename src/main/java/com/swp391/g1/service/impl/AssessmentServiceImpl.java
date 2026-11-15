@@ -28,6 +28,7 @@ import com.swp391.g1.model.Student;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.AssessmentServiceException;
 import com.swp391.g1.service.IAssessmentService;
+import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.util.DateTimeUtil;
 
 import java.math.BigDecimal;
@@ -49,6 +50,7 @@ public class AssessmentServiceImpl implements IAssessmentService {
     private final IExtracurricularActivityDAO activityDAO = new ExtracurricularActivityDAOImpl();
     private final IStudentDAO studentDAO = new StudentDAOImpl();
     private final IActivityStaffDAO activityStaffDAO = new ActivityStaffDAOImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     private void requireManageActivity(int activityId, CurrentUser user) {
         if (user == null) {
@@ -163,7 +165,14 @@ public class AssessmentServiceImpl implements IAssessmentService {
                 }
             }
         }
-        return assessmentDAO.publish(id, publish);
+        boolean updated = assessmentDAO.publish(id, publish);
+        if (updated && publish) {
+            notificationService.notifyActivityParticipants(assessment.getActivityId(), "ASSESSMENT_PUBLISHED",
+                    "Bài đánh giá mới",
+                    "Bài đánh giá \"" + assessment.getTitle() + "\" đã được công bố.",
+                    "/assessment?action=take&assessmentId=" + id);
+        }
+        return updated;
     }
 
     @Override
@@ -787,6 +796,7 @@ public class AssessmentServiceImpl implements IAssessmentService {
         }
 
         Connection conn = null;
+        boolean attemptCompleted = false;
         try {
             conn = com.swp391.g1.common.DBContext.getConnection();
             conn.setAutoCommit(false);
@@ -848,6 +858,7 @@ public class AssessmentServiceImpl implements IAssessmentService {
                 }
                 attempt.setStatus(AssessmentAttempt.Status.COMPLETED);
                 attempt.setFinalScore(totalScore);
+                attemptCompleted = true;
             }
 
             conn.commit();
@@ -889,6 +900,12 @@ public class AssessmentServiceImpl implements IAssessmentService {
             }
         }
 
+        if (attemptCompleted) {
+            notificationService.notifyStudent(attempt.getStudentId(), "ASSESSMENT_GRADED",
+                    "Bài đánh giá đã được chấm",
+                    "Bài đánh giá \"" + assessment.getTitle() + "\" của bạn đã được chấm xong.",
+                    "/assessment?action=result&assessmentId=" + assessment.getId());
+        }
         return true;
     }
 

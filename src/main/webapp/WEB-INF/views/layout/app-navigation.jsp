@@ -120,6 +120,8 @@
     pageContext.setAttribute("hdrCurrentKeyword", currentKeyword);
 %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/datetime-picker.css?v=20261115-1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/header.css?v=20261111-3">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity-feedback.css?v=20261111-9">
 <header class="activity-app-header" id="appHeader">
@@ -174,7 +176,7 @@
             </button>
 
             <% if (!navType.isEmpty()) { %>
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261111-6">
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261115-1">
             <div class="notif-wrap">
                 <button type="button" id="notifBell" class="notif-bell" aria-label="Thông báo" aria-haspopup="true" aria-expanded="false" title="Thông báo">
                     <svg class="ui-icon notif-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -194,16 +196,20 @@
                         </strong>
                         <button type="button" id="notifReadAll" class="notif-link">Đánh dấu tất cả đã đọc</button>
                     </div>
+                    <p class="notif-summary" data-notif-summary hidden></p>
                     <div id="notifDropdownList" class="notif-dropdown-list"></div>
                     <div class="notif-foot"><a class="notif-link" href="${pageContext.request.contextPath}/notifications">Xem tất cả thông báo</a></div>
                 </div>
             </div>
             <script>window.APP_CTX = '${pageContext.request.contextPath}';</script>
-            <script src="${pageContext.request.contextPath}/assets/js/notification.js?v=20261111-6" defer></script>
+            <script src="${pageContext.request.contextPath}/assets/js/notification.js?v=20261115-2" defer></script>
             <% } %>
         </div>
     </div>
 </header>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/vn.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/datetime-picker.js?v=20261115-1" defer></script>
 <script>
     (function () {
         var header = document.getElementById('appHeader');

@@ -23,7 +23,8 @@ import java.util.List;
 public class RecruitmentApplicationDAOImpl implements IRecruitmentApplicationDAO {
 
     private static final String SELECT_APP = "SELECT oa.*, s.code AS student_code, s.name AS student_name, "
-            + "mc.code AS class_code, r.title AS round_title, r.activity_id, a.name AS activity_name, "
+            + "mc.code AS class_code, d.name AS department_name, m.name AS major_name, "
+            + "ap.name AS academic_program_name, r.title AS round_title, r.activity_id, a.name AS activity_name, "
             + "DATEADD(HOUR,7,a.start_time) AS activity_start, "
             + "p1.name AS choice1_name, p2.name AS choice2_name, pa.name AS accepted_name "
             + "FROM dbo.organizer_application oa "
@@ -31,6 +32,9 @@ public class RecruitmentApplicationDAOImpl implements IRecruitmentApplicationDAO
             + "JOIN dbo.extracurricular_activity a ON a.id=r.activity_id "
             + "JOIN dbo.student s ON s.id=oa.student_id "
             + "LEFT JOIN dbo.main_class mc ON mc.id=s.main_class_id "
+            + "LEFT JOIN dbo.academic_program ap ON ap.id=mc.responsible_academic_program_id "
+            + "LEFT JOIN dbo.major m ON m.id=ap.responsible_major_id "
+            + "LEFT JOIN dbo.department d ON d.id=m.responsible_department_id "
             + "JOIN dbo.organizer_recruitment_position p1 ON p1.id=oa.choice1_position_id "
             + "LEFT JOIN dbo.organizer_recruitment_position p2 ON p2.id=oa.choice2_position_id "
             + "LEFT JOIN dbo.organizer_recruitment_position pa ON pa.id=oa.accepted_position_id ";
@@ -833,6 +837,9 @@ public class RecruitmentApplicationDAOImpl implements IRecruitmentApplicationDAO
         a.setStudentCode(rs.getString("student_code"));
         a.setStudentName(rs.getString("student_name"));
         a.setClassName(rs.getString("class_code"));
+        a.setDepartmentName(rs.getString("department_name"));
+        a.setMajorName(rs.getString("major_name"));
+        a.setAcademicProgramName(rs.getString("academic_program_name"));
         a.setRoundTitle(rs.getString("round_title"));
         a.setActivityId(rs.getInt("activity_id"));
         a.setActivityName(rs.getString("activity_name"));

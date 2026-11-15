@@ -50,6 +50,21 @@
         b.textContent = n > 99 ? '99+' : n;
         b.hidden = n <= 0;
     }
+    // Hàm duy nhất tính badge: chưa đọc + cần feedback (feedbackCount null = không tải được)
+    function updateBadge(unread, feedbackCount) {
+        var feedback = feedbackCount > 0 ? feedbackCount : 0;
+        var total = unread + feedback;
+        setBadge(total);
+        var parts = [unread + ' chưa đọc'];
+        if (feedback > 0) parts.push(feedback + ' cần feedback');
+        var summary = parts.join(' · ');
+        var b = document.getElementById('notifBadge');
+        if (b) b.title = summary;
+        document.querySelectorAll('[data-notif-summary]').forEach(function (el) {
+            el.textContent = summary;
+            el.hidden = total <= 0;
+        });
+    }
     var pendingFeedbackCount = 0;
     var feedbackNavBadge = document.getElementById('feedbackNavBadge');
 
@@ -107,7 +122,7 @@
                     console.error(error);
                     return null;
                 }).then(function (feedbackCount) {
-                    setBadge(d.unread + (feedbackCount === null ? 0 : feedbackCount));
+                    updateBadge(d.unread, feedbackCount);
                 });
             }).catch(function (error) { console.error(error); });
         }
@@ -122,7 +137,7 @@
             ]).then(function (results) {
                 var notifications = results[0];
                 var feedbackCount = results[1];
-                setBadge(notifications.unread + (feedbackCount === null ? 0 : feedbackCount));
+                updateBadge(notifications.unread, feedbackCount);
                 var feedbackItem = feedbackReminderHtml(feedbackCount);
                 var notificationItems = notifications.items.length
                     ? notifications.items.map(itemHtml).join('')
@@ -155,11 +170,20 @@
     if (page) {
         var state = {filter: 'all', page: 1}, pager = document.getElementById('notifPager');
         function load() {
-            get({action: 'list', filter: state.filter, page: state.page, size: 10}).then(function (d) {
+            Promise.all([
+                get({action: 'list', filter: state.filter, page: state.page, size: 10}),
+                loadPendingFeedbackCount().catch(function (error) {
+                    console.error(error);
+                    return null;
+                })
+            ]).then(function (results) {
+                var d = results[0];
                 state.page = d.page;
-                setBadge(d.unread);
-                page.innerHTML = d.items.length ? d.items.map(itemHtml).join('')
-                    : '<p class="notif-empty">Không có thông báo.</p>';
+                updateBadge(d.unread, results[1]);
+                var feedbackItem = state.page === 1 && state.filter !== 'read' ? feedbackReminderHtml(results[1]) : '';
+                var itemsHtml = d.items.map(itemHtml).join('');
+                page.innerHTML = feedbackItem + itemsHtml
+                    || '<p class="notif-empty">Không có thông báo.</p>';
                 pager.innerHTML = '<button ' + (d.page <= 1 ? 'disabled' : '') + ' data-p="' + (d.page - 1) + '">‹ Trước</button>' +
                     '<span>Trang ' + d.page + '/' + d.pages + ' (' + d.total + ')</span>' +
                     '<button ' + (d.page >= d.pages ? 'disabled' : '') + ' data-p="' + (d.page + 1) + '">Sau ›</button>';
