@@ -28,6 +28,12 @@ public interface INotificationDAO {
     /** Gửi thông báo tới tài khoản của một sinh viên. */
     int createStudentNotification(int studentId, String eventType, String title, String content, String targetUrl);
 
+    int createAccountNotification(int accountId, String eventType, String title, String content, String targetUrl);
+
+    /** Gửi thông báo tới tất cả sinh viên đang tham gia hoạt động. */
+    int createActivityParticipantsNotification(
+            int activityId, String eventType, String title, String content, String targetUrl);
+
     /** filter: "all" | "unread" | "read". */
     List<NotificationDTO> findByAccount(int accountId, String filter, int offset, int limit);
 

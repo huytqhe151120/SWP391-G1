@@ -10,6 +10,8 @@ import com.swp391.g1.model.Question;
 import com.swp391.g1.model.Staff;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IStaffService;
+import com.swp391.g1.service.INotificationService;
+import com.swp391.g1.service.impl.NotificationServiceImpl;
 import com.swp391.g1.service.impl.StaffServiceImpl;
 import com.swp391.g1.util.AuthContext;
 
@@ -41,6 +43,7 @@ public class AnswerQuestionServlet extends HttpServlet {
     private final IQuestionDAO questionDAO = new QuestionDAOImpl();
     private final IAnswerDAO answerDAO = new AnswerDAOImpl();
     private final IStaffService staffService = new StaffServiceImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     /** Resolve the staff identity used by Answer's staff_id foreign key. */
     private int resolveStaffId(HttpServletRequest request, HttpServletResponse response)
@@ -169,12 +172,14 @@ public class AnswerQuestionServlet extends HttpServlet {
                 Answer latest = answers.get(answers.size() - 1);
                 answerDAO.publish(latest.getId());
                 questionDAO.updateStatus(questionId, "ANSWERED");
+                notifyAnswered(questionId);
             }
         } else if (saved) {
             // Check if there are now published answers -> update question status
             List<Answer> published = answerDAO.getPublishedByQuestionId(questionId);
             if (!published.isEmpty()) {
                 questionDAO.updateStatus(questionId, "ANSWERED");
+                notifyAnswered(questionId);
             }
         }
 
@@ -195,6 +200,7 @@ public class AnswerQuestionServlet extends HttpServlet {
         boolean ok = answerDAO.publish(answerId);
         if (ok) {
             questionDAO.updateStatus(questionId, "ANSWERED");
+            notifyAnswered(questionId);
         }
 
         response.sendRedirect(request.getContextPath() + "/qa-management?action=view&id=" + questionId
@@ -221,6 +227,15 @@ public class AnswerQuestionServlet extends HttpServlet {
 
         response.sendRedirect(request.getContextPath() + "/qa-management?action=view&id=" + questionId
                 + "&msg=deleted");
+    }
+
+    private void notifyAnswered(int questionId) {
+        Question question = questionDAO.getById(questionId);
+        if (question == null || question.getStudentId() <= 0) return;
+        String title = question.getTitle() == null ? "" : question.getTitle();
+        notificationService.notifyStudent(question.getStudentId(), "QA_ANSWERED",
+                "Câu hỏi của bạn đã được trả lời",
+                "Câu hỏi \"" + title + "\" đã có câu trả lời mới.", "/student-qa");
     }
 
     private void forward(HttpServletRequest req, HttpServletResponse res, String path)

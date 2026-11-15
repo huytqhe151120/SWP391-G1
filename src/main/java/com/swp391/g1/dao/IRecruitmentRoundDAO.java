@@ -24,8 +24,6 @@ public interface IRecruitmentRoundDAO {
     /** Cập nhật thông tin chung; chỉ thay vị trí và câu hỏi khi replaceStructure = true. */
     boolean update(RecruitmentRound round, boolean replaceStructure);
 
-    boolean updateStatus(int id, String status);
-
     /** Xóa đợt; chỉ thành công khi không còn hồ sơ nào ngoài hồ sơ đã rút. */
     boolean delete(int id);
 
@@ -44,6 +42,6 @@ public interface IRecruitmentRoundDAO {
     /** Giờ mở của đợt đăng ký tham gia cùng hoạt động; null nếu không có. */
     LocalDateTime findParticipationOpenAt(int activityId);
 
-    /** Tự đóng đợt hết hạn hoặc khi hoạt động đã bắt đầu; trả về số đợt được đóng. */
+    /** Tự đồng bộ trạng thái theo thời gian mở/đóng và thời điểm bắt đầu hoạt động. */
     int synchronizeStatuses();
 }

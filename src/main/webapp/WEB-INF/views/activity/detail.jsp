@@ -248,13 +248,6 @@
                     <a class="button button-primary"
                        href="${pageContext.request.contextPath}/activities?action=edit&amp;id=${activity.id}">Chỉnh sửa</a>
                 </c:if>
-                <c:if test="${canManageActivities}">
-                    <a class="button button-primary-outline button-sm"
-                       href="${pageContext.request.contextPath}/organizer-recruitment?activityId=${activity.id}">
-                        Tuyển ban tổ chức
-                    </a>
-                </c:if>
-
                 <%-- Assessment navigation --%>
                 <c:if test="${not empty assessment}">
                     <c:if test="${canManageActivities}">
@@ -1257,13 +1250,17 @@
                                 </div>
 
                                 <div class="table-wrap activity-table-wrap">
-                                    <table class="hub-recent-table hub-recent-table--registration">
+                                    <table class="hub-recent-table hub-recent-table--registration recruitment-recent-table">
                                         <thead>
                                         <tr>
                                             <th scope="col" class="col-code">Mã SV</th>
                                             <th scope="col" class="col-object-name">Họ tên</th>
-                                            <th scope="col">Nguyện vọng</th>
-                                            <th scope="col" class="col-datetime">Thời gian gửi</th>
+                                            <th scope="col" class="col-academic col-class">Lớp</th>
+                                            <th scope="col" class="col-academic">Khoa</th>
+                                            <th scope="col" class="col-academic">Ngành</th>
+                                            <th scope="col" class="col-academic col-program">Chương trình đào tạo</th>
+                                            <th scope="col" class="recruitment-preference-column">Nguyện vọng</th>
+                                            <th scope="col" class="col-datetime recruitment-submitted-column">Thời gian gửi</th>
                                             <th scope="col" class="col-status activity-status-column">Trạng thái</th>
                                         </tr>
                                         </thead>
@@ -1271,7 +1268,7 @@
                                         <c:choose>
                                             <c:when test="${empty recruitmentApplications}">
                                                 <tr>
-                                                    <td class="empty-state activity-empty-state" colspan="5">
+                                                    <td class="empty-state activity-empty-state" colspan="9">
                                                         <strong>Chưa có hồ sơ ứng tuyển</strong>
                                                         <span>Hồ sơ sẽ xuất hiện tại đây khi sinh viên nộp đơn.</span>
                                                     </td>
@@ -1282,8 +1279,12 @@
                                                     <tr>
                                                         <td class="col-code"><span class="activity-code"><c:out value="${recruitmentApplication.studentCode}" default="—"/></span></td>
                                                         <td class="col-object-name"><strong class="activity-name"><c:out value="${recruitmentApplication.studentName}" default="—"/></strong></td>
-                                                        <td><c:out value="${recruitmentApplication.choice1Name}" default="—"/><c:if test="${not empty recruitmentApplication.choice2Name}"><br/>2. <c:out value="${recruitmentApplication.choice2Name}"/></c:if></td>
-                                                        <td class="col-datetime"><span class="activity-time"><c:out value="${not empty recruitmentApplication.submittedAt ? dt:format(recruitmentApplication.submittedAt) : '—'}"/></span></td>
+                                                        <td class="col-academic col-class"><c:out value="${recruitmentApplication.className}" default="—"/></td>
+                                                        <td class="col-academic"><c:out value="${recruitmentApplication.departmentName}" default="—"/></td>
+                                                        <td class="col-academic"><c:out value="${recruitmentApplication.majorName}" default="—"/></td>
+                                                        <td class="col-academic col-program"><c:out value="${recruitmentApplication.academicProgramName}" default="—"/></td>
+                                                        <td class="recruitment-preference-column"><c:out value="${recruitmentApplication.choice1Name}" default="—"/><c:if test="${not empty recruitmentApplication.choice2Name}"><br/>2. <c:out value="${recruitmentApplication.choice2Name}"/></c:if></td>
+                                                        <td class="col-datetime recruitment-submitted-column"><span class="activity-time"><c:out value="${not empty recruitmentApplication.submittedAt ? dt:format(recruitmentApplication.submittedAt) : '—'}"/></span></td>
                                                         <td class="col-status activity-status-column">
                                                             <span class="badge status-pill ${recruitmentAppBadges[recruitmentApplication.status]}">
                                                                 <c:out value="${recruitmentAppLabels[recruitmentApplication.status]}" default="Không xác định"/>

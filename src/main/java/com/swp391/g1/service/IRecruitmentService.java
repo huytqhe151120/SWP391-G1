@@ -21,14 +21,10 @@ public interface IRecruitmentService {
 
     LocalDateTime getParticipationOpenAt(int activityId);
 
-    /** Tạo (id = 0) hoặc sửa đợt; openAfterSave = true thì mở nhận hồ sơ ngay sau khi lưu. */
-    String saveRound(RecruitmentRound round, int accountId, boolean openAfterSave);
-
-    String openRound(int id);
+    /** Tạo hoặc sửa đợt; trạng thái nhận hồ sơ tự chuyển theo thời gian đã cấu hình. */
+    String saveRound(RecruitmentRound round, int accountId);
 
     boolean isStructureLocked(int roundId);
-
-    String closeRound(int id);
 
     String deleteRound(int id);
 

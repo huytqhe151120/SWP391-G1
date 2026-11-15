@@ -4,54 +4,17 @@
 <c:set var="rcTitle" value="Tuyển ban tổ chức" scope="request"/>
 <c:set var="rcHero" value="Tuyển ban tổ chức" scope="request"/>
 <c:set var="rcEyebrow" value="EAMS / QUẢN LÝ TUYỂN BAN TỔ CHỨC" scope="request"/>
-<c:set var="rcSubtitle" value="Chọn hoạt động để quản lý đợt tuyển và hồ sơ ban tổ chức." scope="request"/>
+<c:set var="rcSubtitle" value="Chọn hoạt động để xem thông tin đợt tuyển và quản lý hồ sơ ứng tuyển." scope="request"/>
 <c:set var="rcAttendanceStyles" value="true" scope="request"/>
 <%@ include file="_top.jspf" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
-<section class="card activity-table-card activity-form-card activity-detail-card registration-detail-card">
-    <div class="activity-table-heading">
-        <div>
-            <h2>Hồ sơ ứng tuyển &amp; Thông tin đợt tuyển</h2>
-            <p><c:choose>
-                <c:when test="${not empty activity}"><c:out value="${activity.code}"/> – <c:out value="${activity.name}"/></c:when>
-                <c:otherwise>Chọn hoạt động để xem thông tin đợt tuyển và hồ sơ ứng tuyển.</c:otherwise>
-            </c:choose></p>
-        </div>
-        <div class="activity-heading-actions">
-            <c:if test="${not empty activity}">
-                <a class="button button-sm" href="${ctx}/activities?action=detail&amp;id=${activity.id}">Xem hoạt động</a>
-            </c:if>
-            <c:if test="${not empty round}">
-                <span class="activity-count"><c:out value="${round.applicationCount}"/> hồ sơ hiệu lực</span>
-                <span class="badge status-pill ${roundBadges[round.status]}">${roundLabels[round.status]}</span>
-                <a class="button button-sm" href="${ctx}/organizer-recruitment?action=edit&amp;id=${round.id}">Chỉnh sửa</a>
-                <details class="action-menu">
-                    <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
-                    <div class="action-menu__items">
-                        <c:if test="${round.status ne 'OPEN'}">
-                            <form method="post" action="${ctx}/organizer-recruitment">
-                                <input type="hidden" name="action" value="open"><input type="hidden" name="id" value="${round.id}">
-                                <button class="action-menu-item action-menu-item--submit" type="submit">Mở nhận hồ sơ</button>
-                            </form>
-                        </c:if>
-                        <c:if test="${round.status eq 'OPEN'}">
-                            <form method="post" action="${ctx}/organizer-recruitment" onsubmit="return confirm('Đóng đợt tuyển này?');">
-                                <input type="hidden" name="action" value="close"><input type="hidden" name="id" value="${round.id}">
-                                <button class="action-menu-item action-menu-item--undo" type="submit">Đóng đợt</button>
-                            </form>
-                        </c:if>
-                        <form method="post" action="${ctx}/organizer-recruitment" onsubmit="return confirm('Xóa đợt tuyển này?');">
-                            <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="${round.id}">
-                            <button class="action-menu-item action-menu-item--delete" type="submit">Xóa đợt tuyển</button>
-                        </form>
-                    </div>
-                </details>
-            </c:if>
-            <c:if test="${not empty activity and empty round}">
-                <a class="button button-sm button-primary" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo đợt tuyển</a>
-            </c:if>
-        </div>
+<div class="activity-table-heading rc-page-heading">
+    <div>
+        <h2>Danh sách hồ sơ ứng tuyển &amp; Thông tin đợt tuyển</h2>
+        <p>Chọn hoạt động để xem thông tin đợt tuyển và danh sách hồ sơ ứng tuyển.</p>
     </div>
+</div>
+<section class="rc-activity-picker card">
     <details class="activity-filter-panel" open>
         <summary class="activity-filter-toggle"><span>Chọn hoạt động</span></summary>
         <form class="activity-filter attendance-filter attendance-filter--single" action="${ctx}/organizer-recruitment" method="get">
@@ -94,18 +57,22 @@
     </details>
     <c:choose>
         <c:when test="${empty activity}">
-            <div class="empty-state activity-empty-state">
-                <span class="empty-state-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M16 11h6"/></svg></span>
+            <div class="rc-picker-empty">
+                <span class="rc-picker-empty-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="13" cy="10" r="5"/>
+                        <path d="M3.5 27v-2a9.5 9.5 0 0 1 19 0v2"/>
+                        <path d="M25 10v10M20 15h10"/>
+                    </svg>
+                </span>
                 <strong>Chọn hoạt động để xem đợt tuyển</strong>
                 <span>Thông tin đợt tuyển và hồ sơ ứng tuyển sẽ hiển thị tại đây.</span>
             </div>
         </c:when>
         <c:when test="${empty round}">
-            <div class="empty-state activity-empty-state">
-                <span class="empty-state-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
-                <strong>Hoạt động chưa có đợt tuyển ban tổ chức</strong>
-                <span>Chỉ hoạt động đã duyệt và chưa diễn ra mới được tạo đợt tuyển.</span>
-                <a class="button button-primary" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo đợt tuyển</a>
+            <div class="rc-no-round">
+                <span><strong><c:out value="${activity.name}"/></strong> chưa có đợt tuyển ban tổ chức.</span>
+                <a class="button button-primary button-sm" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo đợt tuyển</a>
             </div>
         </c:when>
     </c:choose>

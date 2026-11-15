@@ -92,7 +92,7 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
     }
 
     @Override
-    public String saveRound(RecruitmentRound round, int accountId, boolean openAfterSave) {
+    public String saveRound(RecruitmentRound round, int accountId) {
         if (round != null && round.getId() > 0) {
             RecruitmentRound existing = roundDao.findById(round.getId());
             if (existing != null && roundDao.hasApplications(round.getId())) {
@@ -130,9 +130,6 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
                 round.setActivityId(current.getActivityId());
                 round.setStatus(current.getStatus());
             }
-            if (openAfterSave && !RecruitmentStatus.ROUND_OPEN.equals(round.getStatus())) {
-                return openRound(round.getId());
-            }
             return null;
         } catch (DataAccessException e) {
             if (e.isDuplicateKey()) {
@@ -160,7 +157,10 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
         if (round.getDescription().length() > 2000) {
             return "Mô tả không được vượt quá 2.000 ký tự.";
         }
-        if (round.getOpenAt() != null && round.getCloseAt() != null && !round.getCloseAt().isAfter(round.getOpenAt())) {
+        if (round.getOpenAt() == null || round.getCloseAt() == null) {
+            return "Vui lòng đặt thời gian mở và đóng hồ sơ.";
+        }
+        if (!round.getCloseAt().isAfter(round.getOpenAt())) {
             return "Thời gian đóng phải sau thời gian mở.";
         }
         List<RecruitmentPosition> positions = round.getPositions();
@@ -218,39 +218,6 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
             question.setSortOrder(order++);
         }
         return null;
-    }
-
-    @Override
-    public String openRound(int id) {
-        RecruitmentRound round = roundDao.findById(id);
-        if (round == null) {
-            return "Không tìm thấy đợt tuyển.";
-        }
-        if (RecruitmentStatus.ROUND_OPEN.equals(round.getStatus())) {
-            return null;
-        }
-        if (!roundDao.isActivityEligible(round.getActivityId())) {
-            return "Hoạt động đã bắt đầu hoặc chưa được duyệt nên không thể mở nhận hồ sơ.";
-        }
-        if (round.getOpenAt() == null || round.getCloseAt() == null) {
-            return "Vui lòng đặt thời gian mở và đóng hồ sơ trước khi mở tuyển.";
-        }
-        if (round.getCloseAt() != null && !round.getCloseAt().isAfter(LocalDateTime.now())) {
-            return "Thời gian đóng đã qua. Vui lòng sửa thời gian đóng trước khi mở lại.";
-        }
-        return roundDao.updateStatus(id, RecruitmentStatus.ROUND_OPEN) ? null : "Không thể mở đợt tuyển.";
-    }
-
-    @Override
-    public String closeRound(int id) {
-        RecruitmentRound round = roundDao.findById(id);
-        if (round == null) {
-            return "Không tìm thấy đợt tuyển.";
-        }
-        if (RecruitmentStatus.ROUND_CLOSED.equals(round.getStatus())) {
-            return null;
-        }
-        return roundDao.updateStatus(id, RecruitmentStatus.ROUND_CLOSED) ? null : "Không thể đóng đợt tuyển.";
     }
 
     @Override
@@ -313,9 +280,6 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
         if (!roundDao.isActivityEligible(round.getActivityId())) {
             return "Hoạt động đã bắt đầu hoặc không còn hợp lệ.";
         }
-        if (round.getPositions().stream().noneMatch(p -> p.getRemaining() > 0)) {
-            return "Đợt tuyển đã hết chỉ tiêu ở tất cả vị trí.";
-        }
         if (choice1 == null) {
             return "Vui lòng chọn nguyện vọng 1.";
         }
@@ -326,9 +290,6 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
             RecruitmentPosition position = findPosition(round, choice);
             if (position == null) {
                 return "Vị trí đã chọn không thuộc đợt tuyển này.";
-            }
-            if (position.getRemaining() <= 0) {
-                return "Vị trí \"" + position.getName() + "\" đã hết chỉ tiêu.";
             }
         }
         String trimmedNote = trim(note);

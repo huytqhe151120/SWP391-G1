@@ -12,6 +12,7 @@ import com.swp391.g1.model.Enum.ActivityStatus;
 import com.swp391.g1.model.Enum.ParticipantStatus;
 import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IActivityParticipantService;
+import com.swp391.g1.service.INotificationService;
 import com.swp391.g1.service.IExtracurricularActivityService;
 
 import java.math.BigDecimal;
@@ -29,7 +30,29 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     private final IActivityParticipantDAO participantDAO;
     private final IExtracurricularActivityService activityService;
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
+    private static String activityUrl(int activityId) {
+        return "/activities?action=detail&id=" + activityId;
+    }
+
+    private static String statusLabel(ParticipantStatus status) {
+        return switch (status) {
+            case ATTENDED -> "Có mặt";
+            case ABSENT -> "Vắng mặt";
+            case IN_LATE -> "Đi muộn";
+            case OUT_EARLY -> "Về sớm";
+            case NOT_YET -> "Chưa điểm danh";
+        };
+    }
+
+    private Map<Integer, Integer> studentIdByParticipantId(int activityId) {
+        Map<Integer, Integer> result = new LinkedHashMap<>();
+        for (ActivityParticipantResponseDTO participant : participantDAO.findByActivityId(activityId)) {
+            result.put(participant.getParticipantId(), participant.getStudentId());
+        }
+        return result;
+    }
     public ActivityParticipantServiceImpl() {
         this.participantDAO = new ActivityParticipantDAOImpl();
         this.activityService = new ExtracurricularActivityServiceImpl();
@@ -89,7 +112,22 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             return 0;
         }
         String actorId = String.valueOf(user.getId());
-        return participantDAO.updateStatuses(activityId, sessionNumber, statuses, actorId);
+        Map<Integer, Integer> studentIds = studentIdByParticipantId(activityId);
+        int updated = participantDAO.updateStatuses(activityId, sessionNumber, statuses, actorId);
+        if (updated > 0) {
+            String sessionText = totalSessions > 1 ? " (buổi " + sessionNumber + ")" : "";
+            statuses.forEach((participantId, status) -> {
+                Integer studentId = studentIds.get(participantId);
+                if (studentId != null && status != ParticipantStatus.NOT_YET) {
+                    notificationService.notifyStudent(studentId, "ACTIVITY_ATTENDANCE_UPDATED",
+                            "Cập nhật điểm danh",
+                            "Điểm danh hoạt động \"" + activity.getName() + "\"" + sessionText
+                                    + ": " + statusLabel(status) + ".",
+                            activityUrl(activityId));
+                }
+            });
+        }
+        return updated;
     }
 
     @Override
@@ -119,8 +157,22 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             throw new IllegalArgumentException("Nhận xét / Feedback không được vượt quá 1000 ký tự.");
         }
         String actorLabel = buildActorLabel(user);
-        return participantDAO.updateParticipationGrades(
+        Map<Integer, Integer> studentIds = studentIdByParticipantId(activityId);
+        int graded = participantDAO.updateParticipationGrades(
                 activityId, ids, evalScore, feedback, actorLabel, user.getId());
+        if (graded > 0) {
+            for (Integer participantId : ids) {
+                Integer studentId = studentIds.get(participantId);
+                if (studentId != null) {
+                    notificationService.notifyStudent(studentId, "ACTIVITY_PARTICIPATION_GRADED",
+                            "Điểm đánh giá tham gia",
+                            "Bạn được đánh giá " + evalScore.stripTrailingZeros().toPlainString()
+                                    + "/5 điểm cho hoạt động \"" + activity.getName() + "\".",
+                            activityUrl(activityId));
+                }
+            }
+        }
+        return graded;
     }
 
     private String buildActorLabel(CurrentUser user) {
@@ -163,11 +215,23 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên.");
         }
         Integer max = activity.getMaxParticipants();
+        Set<Integer> before = new LinkedHashSet<>(studentIdByParticipantId(activityId).values());
         int added = participantDAO.insertParticipants(activityId, ids, max, registrationBy);
         if (added < 0) {
             int remaining = Math.max(0, max - participantDAO.countOccupiedByActivityId(activityId));
             throw new IllegalArgumentException("Hoạt động chỉ còn " + remaining
                     + " chỗ trống, không thể thêm " + ids.size() + " sinh viên.");
+        }
+        if (added > 0) {
+            Set<Integer> after = new LinkedHashSet<>(studentIdByParticipantId(activityId).values());
+            for (Integer studentId : ids) {
+                if (after.contains(studentId) && !before.contains(studentId)) {
+                    notificationService.notifyStudent(studentId, "ACTIVITY_PARTICIPANT_ADDED",
+                            "Bạn được thêm vào hoạt động",
+                            "Bạn đã được thêm vào danh sách tham gia hoạt động \"" + activity.getName() + "\".",
+                            activityUrl(activityId));
+                }
+            }
         }
         return added;
     }
@@ -201,12 +265,26 @@ public class ActivityParticipantServiceImpl implements IActivityParticipantServi
 
     @Override
     public int removeParticipants(int activityId, List<Integer> participantIds) {
-        requireManageableActivity(activityId);
+        ExtracurricularActivityResponseDTO activity = requireManageableActivity(activityId);
         List<Integer> ids = distinctPositive(participantIds);
         if (ids.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sinh viên.");
         }
-        return participantDAO.deleteRemovable(activityId, ids);
+        Map<Integer, Integer> before = studentIdByParticipantId(activityId);
+        int removed = participantDAO.deleteRemovable(activityId, ids);
+        if (removed > 0) {
+            Set<Integer> remaining = studentIdByParticipantId(activityId).keySet();
+            for (Integer participantId : ids) {
+                Integer studentId = before.get(participantId);
+                if (studentId != null && !remaining.contains(participantId)) {
+                    notificationService.notifyStudent(studentId, "ACTIVITY_PARTICIPANT_REMOVED",
+                            "Bạn bị xóa khỏi hoạt động",
+                            "Bạn đã bị xóa khỏi danh sách tham gia hoạt động \"" + activity.getName() + "\".",
+                            "/activities");
+                }
+            }
+        }
+        return removed;
     }
 
     @Override

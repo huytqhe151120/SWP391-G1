@@ -58,14 +58,20 @@ class RecruitmentServiceImplTest {
     }
 
     @Test
-    void cannotApplyForFullPosition() {
+    void canApplyWhenEveryPositionIsFullBecauseQuotaIsCountedOnAcceptance() {
         RecruitmentRound round = openRound();
         round.getPositions().get(0).setAcceptedCount(1);
+        RecruitmentPosition secondPosition = new RecruitmentPosition();
+        secondPosition.setId(5);
+        secondPosition.setQuota(2);
+        secondPosition.setAcceptedCount(2);
+        secondPosition.setName("Truyền thông");
+        round.setPositions(List.of(round.getPositions().get(0), secondPosition));
         when(rounds.findById(1)).thenReturn(round);
         when(rounds.isActivityEligible(2)).thenReturn(true);
 
-        assertNotNull(service.apply(1, 3, 4, null, Map.of(), ""));
-        verify(applications, never()).insert(any(), any());
+        assertNull(service.apply(1, 3, 4, 5, Map.of(), ""));
+        verify(applications).insert(any(), eq(round.getUpdatedAt()));
     }
 
     @Test
@@ -102,13 +108,13 @@ class RecruitmentServiceImplTest {
     }
 
     @Test
-    void openingRoundRequiresBothDates() {
-        RecruitmentRound round = openRound();
-        round.setStatus("DRAFT");
-        when(rounds.findById(1)).thenReturn(round);
-        when(rounds.isActivityEligible(2)).thenReturn(true);
-        assertNotNull(service.openRound(1));
-        verify(rounds, never()).updateStatus(anyInt(), anyString());
+    void savingRoundRequiresBothScheduleTimes() {
+        RecruitmentRound round = new RecruitmentRound();
+        round.setActivityId(2);
+        round.setTitle("Tuyển ban tổ chức");
+        assertEquals("Vui lòng đặt thời gian mở và đóng hồ sơ.",
+                service.saveRound(round, 1));
+        verifyNoInteractions(rounds);
     }
 
     @Test
