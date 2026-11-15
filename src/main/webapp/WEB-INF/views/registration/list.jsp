@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/list-pagination.css?v=1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -42,7 +43,7 @@
                 <c:remove var="successMessage" scope="session"/>
             </c:if>
 
-            <section class="card activity-table-card registration-table-card">
+            <section class="card activity-table-card registration-table-card" data-paginated-list>
                 <div class="activity-table-heading">
                     <div>
                         <h2>Danh sách form</h2>
@@ -74,7 +75,7 @@
                         </thead>
                         <tbody>
                         <c:forEach items="${forms}" var="f">
-                            <tr>
+                            <tr data-page-item>
                                 <td class="registration-title-cell col-object-name" title="<c:out value='${f.quick ? f.activityName : f.title}'/>">
                                     <div class="registration-title-line">
                                         <strong title="<c:out value='${f.quick ? f.activityName : f.title}'/>">
@@ -172,5 +173,6 @@
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
 </body>
 </html>

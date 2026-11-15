@@ -25,6 +25,19 @@ public class ActivityParticipantResponseDTO {
     private int absentSessionCount;
     private int markedSessionCount;
     private String registrationStatus;
+    private String participationRole = "PARTICIPANT";
+
+    public String getParticipationRole() {
+        return participationRole;
+    }
+
+    public void setParticipationRole(String participationRole) {
+        this.participationRole = participationRole;
+    }
+
+    public boolean isOrganizer() {
+        return "ORGANIZER".equals(participationRole);
+    }
     private Long registrationBy;
     private LocalDateTime createdAt;
     private boolean removable;

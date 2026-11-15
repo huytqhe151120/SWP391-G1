@@ -44,25 +44,6 @@ public class RegistrationFormServlet extends HttpServlet {
         CurrentUser user = AuthContext.getCurrentUser(req);
         String action = param(req, "action", "list");
         try {
-            if ("myApplications".equals(action)) {
-                if (!AccessPolicy.hasType(user, "STUDENT")) {
-                    resp.sendError(403);
-                    return;
-                }
-                Student student = studentService.getStudentByAccountId(user.getId());
-                if (student == null) {
-                    resp.sendError(403, "Không tìm thấy hồ sơ sinh viên.");
-                    return;
-                }
-                req.setAttribute("applications", service.getApplicationsForStudent(student.getId()));
-                String applicationsUrl = req.getContextPath() + "/registration-forms?action=myApplications";
-                req.setAttribute("applicationsReturnUrl", applicationsUrl);
-                req.setAttribute("applicationsReturnUrlParameter",
-                        URLEncoder.encode(applicationsUrl, StandardCharsets.UTF_8));
-                req.getRequestDispatcher("/WEB-INF/views/registration/my-applications.jsp").forward(req, resp);
-                return;
-            }
-
             if ("register".equals(action)) {
                 if (!AccessPolicy.hasType(user, "STUDENT")) {
                     resp.sendError(403);
@@ -128,7 +109,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 setApplicationQuestionFields(req, form, application);
                 req.setAttribute("isStudent", true);
                 req.setAttribute("returnTo", safeReturnTo(req,
-                        req.getContextPath() + "/registration-forms?action=myApplications"));
+                        req.getContextPath() + "/organizer-recruitment?action=myApplications"));
                 req.getRequestDispatcher("/WEB-INF/views/registration/application-detail.jsp").forward(req, resp);
                 return;
             }
@@ -409,7 +390,7 @@ public class RegistrationFormServlet extends HttpServlet {
                 }
                 error = service.cancelRegistration(registrationId);
                 String returnTo = safeReturnTo(req,
-                        req.getContextPath() + "/registration-forms?action=myApplications");
+                        req.getContextPath() + "/organizer-recruitment?action=myApplications");
                 if (error == null) {
                     RegistrationApplication after = service.getApplicationById(registrationId);
                     boolean withdrawn = after != null && "WITHDRAWN".equals(after.getStatus());
@@ -661,7 +642,8 @@ public class RegistrationFormServlet extends HttpServlet {
         String path = candidate.substring(0, pathEnd);
         String contextPath = request.getContextPath();
         if (!(path.equals(contextPath + "/activities")
-                || path.equals(contextPath + "/registration-forms"))) {
+                || path.equals(contextPath + "/registration-forms")
+                || path.equals(contextPath + "/organizer-recruitment"))) {
             return fallback;
         }
         return candidate;

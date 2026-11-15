@@ -11,6 +11,7 @@
     <title>Báo cáo feedback | EAMS</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261111-1">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity-feedback.css?v=20261111-8">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/list-pagination.css?v=1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -28,6 +29,17 @@
             <div class="feedback-back-row">
                 <a class="button button-secondary feedback-back-link" href="${pageContext.request.contextPath}/activity-feedback">← Danh sách feedback hoạt động</a>
             </div>
+            <form method="get" action="${pageContext.request.contextPath}/activity-feedback" class="feedback-back-row">
+                <input type="hidden" name="action" value="report">
+                <input type="hidden" name="activityId" value="${feedbackReport.summary.activityId}">
+                <label>Vai trò
+                    <select name="role" onchange="this.form.submit()">
+                        <option value="" ${empty roleFilter ? 'selected' : ''}>Tất cả</option>
+                        <option value="PARTICIPANT" ${roleFilter == 'PARTICIPANT' ? 'selected' : ''}>Tham gia</option>
+                        <option value="ORGANIZER" ${roleFilter == 'ORGANIZER' ? 'selected' : ''}>Ban tổ chức</option>
+                    </select>
+                </label>
+            </form>
             <c:if test="${not empty successMessage}">
                 <div class="alert alert-success" role="status"><c:out value="${successMessage}"/></div>
             </c:if>
@@ -86,7 +98,7 @@
                     <nav class="activity-pagination-nav feedback-answer-pagination" id="feedbackAnswerPagination"
                          aria-label="Phân trang câu trả lời"></nav>
                 </section>
-                <aside class="feedback-card feedback-pending-card">
+                <aside class="feedback-card feedback-pending-card" id="pendingFeedbackPagination">
                     <h2>Chưa gửi feedback (<c:out value="${feedbackReport.summary.pendingCount}"/>)</h2>
                     <p>Sinh viên đã tham dự nhưng chưa gửi phản hồi.</p>
                     <c:if test="${not empty feedbackReport.pendingStudents}">
@@ -97,7 +109,7 @@
                     </c:if>
                     <ul>
                         <c:forEach var="student" items="${feedbackReport.pendingStudents}">
-                            <li data-pending-student data-search="<c:out value='${student.studentCode}'/> <c:out value='${student.studentName}'/>">
+                            <li data-pending-student data-page-item data-search="<c:out value='${student.studentCode}'/> <c:out value='${student.studentName}'/>">
                                 <span><c:out value="${student.studentCode}"/></span><strong><c:out value="${student.studentName}"/></strong>
                             </li>
                         </c:forEach>
@@ -116,6 +128,7 @@
         </main>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/activity-feedback.js?v=20261111-11" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/list-pagination.js?v=1" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/activity-feedback.js?v=20261113-1" defer></script>
 </body>
 </html>

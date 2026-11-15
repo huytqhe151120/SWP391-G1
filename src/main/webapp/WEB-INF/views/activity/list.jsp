@@ -295,6 +295,7 @@
                                                 <div class="reg-status-cell">
                                                     <c:choose>
                                                         <c:when test="${activity.nature eq 'MANDATORY'}"><span class="badge status-pill reg-badge reg-badge--mandatory">Chỉ định tham gia</span></c:when>
+                                                        <c:when test="${organizerActivityIds.contains(activity.id)}"><span class="badge status-pill reg-badge reg-badge--registered">Ban tổ chức</span></c:when>
                                                         <c:when test="${myReg.status eq 'APPROVED'}"><span class="badge status-pill reg-badge reg-badge--registered">Đã đăng ký</span></c:when>
                                                         <c:when test="${myReg.status eq 'SUBMITTED'}"><span class="badge status-pill status-yellow">Chờ duyệt</span></c:when>
                                                         <c:when test="${myReg.status eq 'WITHDRAWN'}"><span class="badge status-pill reg-badge reg-badge--withdrawn">Đã rút đơn</span></c:when>
@@ -347,11 +348,11 @@
                                                                             Đăng ký (chưa mở)
                                                                         </span>
                                                                     </c:when>
-                                                                    <c:when test="${myReg.status eq 'WITHDRAWN'}">
+                                                                    <c:when test="${myReg.status eq 'WITHDRAWN' or (myReg.status eq 'CANCELLED' and myReg.cancelledForOrganizer)}">
                                                                         <a class="action-menu-item action-menu-item--view"
                                                                            href="${pageContext.request.contextPath}/registration-forms?action=myApplication&amp;id=${myReg.id}&amp;returnTo=${activityReturnUrlParameter}">
                                                                             <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h6"/><path d="M10 14h6"/><path d="M10 18h6"/></svg></span>
-                                                                            Xem đơn đã rút
+                                                                            Xem đơn
                                                                         </a>
                                                                         <c:if test="${activitiesAvailableForRegistration.contains(activity.id)}">
                                                                             <c:choose>

@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hộp thư của tôi | SWP391-G1</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-inbox.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-pagination.css?v=20261113">
 </head>
 <body class="support-page student-inbox-page">
 <div class="activity-app-shell">
@@ -52,7 +53,7 @@
                     <span class="panel-mark" aria-hidden="true">01</span>
                     <div><h3 id="recipient-title">Chọn người nhận</h3><p>Nhân viên đang hỗ trợ</p></div>
                 </div>
-                <div class="staff-list">
+                <div class="staff-list" data-support-pages="10" data-support-item=".staff-item" data-support-label="người nhận" data-support-selected=".active">
                     <c:choose>
                         <c:when test="${empty staffList}">
                             <div class="compact-empty"><strong>Chưa có nhân viên</strong><span>Danh sách người nhận hiện đang trống.</span></div>
@@ -83,7 +84,7 @@
                             <a class="close-chat" href="${pageContext.request.contextPath}/student-inbox" aria-label="Đóng cuộc trò chuyện">×</a>
                         </div>
                         <div class="inline-chat">
-                            <div class="chat-messages" id="messagesArea">
+                            <div class="chat-messages" id="messagesArea" data-support-chat="20" data-support-message=".chat-row">
                                 <c:choose>
                                     <c:when test="${empty messages}">
                                         <div class="empty-panel chat-empty">
@@ -133,7 +134,7 @@
                                 </div>
                             </c:when>
                             <c:otherwise>
-                                <div class="recent-list">
+                                <div class="recent-list" data-support-pages="10" data-support-item=".recent-item" data-support-label="tin nhắn">
                                     <c:forEach var="msg" items="${recentMessages}">
                                         <a class="recent-item" href="${pageContext.request.contextPath}/student-inbox?action=chat&amp;staffId=${msg.staffId}">
                                             <span class="msg-avatar" aria-hidden="true">NV</span>
@@ -154,9 +155,6 @@
     </section>
 </main>
 <script>
-    const messagesArea = document.getElementById('messagesArea');
-    if (messagesArea) messagesArea.scrollTop = messagesArea.scrollHeight;
-
     function submitOnEnter(event) {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
@@ -164,6 +162,7 @@
         }
     }
 </script>
+<script src="${pageContext.request.contextPath}/assets/js/support-pagination.js?v=20261113"></script>
         </div>
     </div>
 </div>

@@ -1,0 +1,13 @@
+[data-page-item][hidden],
+.activity-pagination[hidden] {
+    display: none !important;
+}
+
+.activity-pagination {
+    flex-wrap: wrap;
+}
+
+.activity-pagination-nav button:disabled {
+    color: #aab4c2;
+    cursor: not-allowed;
+}

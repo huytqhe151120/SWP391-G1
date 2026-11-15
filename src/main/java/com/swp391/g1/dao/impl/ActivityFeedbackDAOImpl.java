@@ -199,6 +199,15 @@ public class ActivityFeedbackDAOImpl implements IActivityFeedbackDAO {
 
     @Override
     public ActivityFeedbackReportDTO findActivityReport(int activityId, Integer staffAccountId, String staffRole) {
+        return findActivityReport(activityId, staffAccountId, staffRole, null);
+    }
+
+    @Override
+    public ActivityFeedbackReportDTO findActivityReport(int activityId, Integer staffAccountId, String staffRole,
+                                                        String participationRole) {
+        RecruitmentSchema.ensure();
+        String roleFilter = "ORGANIZER".equals(participationRole) || "PARTICIPANT".equals(participationRole)
+                ? " AND ap.participation_role = '" + participationRole + "'" : "";
         String scope = staffScopePredicate(staffRole);
         String scopeFilter = scope == null ? "" : " AND " + scope;
         String summarySql = """
@@ -214,11 +223,11 @@ public class ActivityFeedbackDAOImpl implements IActivityFeedbackDAO {
                 LEFT JOIN dbo.department d ON d.id = ea.responsible_department_id
                 LEFT JOIN dbo.semester sem ON sem.id = ea.semester_id
                 LEFT JOIN dbo.activity_participant ap
-                    ON ap.activity_id = ea.id AND ap.attendance_status IN (%s)
+                    ON ap.activity_id = ea.id AND ap.attendance_status IN (%s)%s
                 LEFT JOIN dbo.activity_feedback f ON f.activity_participant_id = ap.id
                 WHERE ea.id = ? AND ea.activity_status = 'COMPLETED'
                   AND ea.end_time <= SYSUTCDATETIME()
-                """.formatted(PRESENT_STATUSES) + scopeFilter + """
+                """.formatted(PRESENT_STATUSES, roleFilter) + scopeFilter + """
                 GROUP BY ea.id, ea.code, ea.name, ea.end_time, at.name, d.name, sem.name
                 """;
         ActivityFeedbackReportDTO report = new ActivityFeedbackReportDTO();
@@ -248,16 +257,16 @@ public class ActivityFeedbackDAOImpl implements IActivityFeedbackDAO {
                 report.setAverageVenueRating(rs.getDouble("average_venue"));
             }
 
-            loadAnswers(connection, report, activityId);
-            loadPendingStudents(connection, report, activityId);
+            loadAnswers(connection, report, activityId, roleFilter);
+            loadPendingStudents(connection, report, activityId, roleFilter);
         } catch (SQLException e) {
             throw new IllegalStateException("Failed to load activity feedback report.", e);
         }
         return report;
     }
 
-    private void loadAnswers(Connection connection, ActivityFeedbackReportDTO report, int activityId)
-            throws SQLException {
+    private void loadAnswers(Connection connection, ActivityFeedbackReportDTO report, int activityId,
+                             String roleFilter) throws SQLException {
         String sql = """
                 SELECT f.general_rating, f.content_rating, f.organization_rating, f.venue_rating,
                        f.best_part, f.improvement, f.favorite, f.suggestions, f.note, f.created_at
@@ -265,6 +274,8 @@ public class ActivityFeedbackDAOImpl implements IActivityFeedbackDAO {
                 JOIN dbo.activity_participant ap ON ap.id = f.activity_participant_id
                 WHERE ap.activity_id = ?
                   AND ap.attendance_status IN ('ATTENDED', 'IN_LATE', 'OUT_EARLY')
+                """ + roleFilter + """
+
                 ORDER BY f.created_at DESC, f.id DESC
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -282,8 +293,8 @@ public class ActivityFeedbackDAOImpl implements IActivityFeedbackDAO {
         }
     }
 
-    private void loadPendingStudents(Connection connection, ActivityFeedbackReportDTO report, int activityId)
-            throws SQLException {
+    private void loadPendingStudents(Connection connection, ActivityFeedbackReportDTO report, int activityId,
+                                     String roleFilter) throws SQLException {
         String sql = """
                 SELECT s.code, s.name
                 FROM dbo.activity_participant ap
@@ -293,6 +304,8 @@ public class ActivityFeedbackDAOImpl implements IActivityFeedbackDAO {
                   AND NOT EXISTS (
                       SELECT 1 FROM dbo.activity_feedback f
                       WHERE f.activity_participant_id = ap.id)
+                """ + roleFilter + """
+
                 ORDER BY s.name, s.code
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {

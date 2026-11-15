@@ -25,16 +25,11 @@
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> ĐIỂM DANH SINH VIÊN</span>
                     <h1>Danh sách điểm danh sinh viên</h1>
-                    <p>Chọn hoạt động và buổi điểm danh để cập nhật trạng thái chuyên cần theo từng buổi (Có mặt: +5, Đi muộn/Về sớm: +3, Vắng: -5). Điểm chuyên cần của hoạt động là trung bình cộng các buổi.</p>
+                    <p>Chọn hoạt động và buổi điểm danh để cập nhật trạng thái chuyên cần theo từng buổi (Có mặt: +5, Đi muộn/Về sớm: +3, Vắng: -5). Điểm chuyên cần của hoạt động là trung bình cộng các buổi; điểm cuối của ban tổ chức được nhân hệ số vai trò 1,5, riêng điểm vắng không nhân hệ số.</p>
                 </div>
             </header>
 
-            <div class="activity-page-back" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <a class="button button-back"
-                   href="${pageContext.request.contextPath}/activities<c:if test='${not empty selectedActivity}'>?action=detail&amp;id=${selectedActivity.id}#tab-attendance</c:if>">
-                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                    Quay lại hoạt động
-                </a>
+            <div class="activity-page-back" style="display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:10px;">
                 <c:if test="${not empty selectedActivity}">
                     <a class="button button-outline"
                         href="${pageContext.request.contextPath}/participation-grading?activityId=${selectedActivity.id}">
@@ -515,6 +510,7 @@
                                 <td class="col-code"><span class="activity-code"><c:out value="${p.studentCode}" default="—"/></span></td>
                                 <td class="col-object-name" title="<c:out value='${p.studentName}'/>">
                                     <strong class="activity-name" title="<c:out value='${p.studentName}'/>"><c:out value="${p.studentName}" default="—"/></strong>
+                                    <c:if test="${p.organizer}"><span class="status-badge status-pending">Ban tổ chức</span></c:if>
                                 </td>
                                 <td class="col-academic" title="<c:out value='${p.departmentName} - ${p.majorName}'/>">
                                     <c:out value="${p.departmentName}" default="—"/>

@@ -28,7 +28,7 @@
     });
 
     var currentHash = window.location.hash.slice(1);
-    if (["tab-staff", "tab-info", "tab-partner", "tab-registration", "tab-attendance", "tab-form-info", "tab-form-applications"].indexOf(currentHash) !== -1) {
+    if (["tab-staff", "tab-info", "tab-partner", "tab-registration", "tab-recruitment", "tab-attendance", "tab-form-info", "tab-form-applications"].indexOf(currentHash) !== -1) {
         switchTab(currentHash);
     }
 })();

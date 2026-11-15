@@ -57,13 +57,6 @@
                 </div>
             </header>
 
-            <div class="activity-page-back">
-                <a class="button button-back" href="<c:out value='${returnTo}'/>">
-                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-                    Quay lại hoạt động
-                </a>
-            </div>
-
             <c:if test="${not empty requestScope.errorMessage}">
                 <div class="alert alert-error activity-alert"><c:out value="${requestScope.errorMessage}"/></div>
             </c:if>

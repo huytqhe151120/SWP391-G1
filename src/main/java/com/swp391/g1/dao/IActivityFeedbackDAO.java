@@ -14,4 +14,10 @@ public interface IActivityFeedbackDAO {
     boolean submit(int studentId, int activityId, ActivityFeedbackAnswerDTO answer);
     List<ActivityFeedbackSummaryDTO> findActivitySummaries(Integer staffAccountId, String staffRole);
     ActivityFeedbackReportDTO findActivityReport(int activityId, Integer staffAccountId, String staffRole);
+
+    /** participationRole: PARTICIPANT, ORGANIZER hoặc null/rỗng để xem tất cả. */
+    default ActivityFeedbackReportDTO findActivityReport(int activityId, Integer staffAccountId, String staffRole,
+                                                         String participationRole) {
+        return findActivityReport(activityId, staffAccountId, staffRole);
+    }
 }

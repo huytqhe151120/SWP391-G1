@@ -211,12 +211,15 @@ public class ActivityFeedbackServlet extends HttpServlet {
             transferFlashMessage(request, "feedbackError", "errorMessage");
             int activityId = parsePositiveId(request.getParameter("activityId"));
             if ("report".equals(request.getParameter("action")) && activityId > 0) {
+                String roleFilter = request.getParameter("role");
                 ActivityFeedbackReportDTO report =
-                        feedbackService.getActivityReport(activityId, staffAccountId, user.getRole());
+                        feedbackService.getActivityReport(activityId, staffAccountId, user.getRole(), roleFilter);
                 if (report == null) {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Không tìm thấy báo cáo feedback hoạt động.");
                     return;
                 }
+                request.setAttribute("roleFilter", "ORGANIZER".equals(roleFilter) || "PARTICIPANT".equals(roleFilter)
+                        ? roleFilter : "");
                 request.setAttribute("feedbackReport", report);
                 request.getRequestDispatcher("/WEB-INF/views/feedback/management-report.jsp").forward(request, response);
                 return;
