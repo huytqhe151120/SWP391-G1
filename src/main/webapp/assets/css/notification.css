@@ -185,6 +185,13 @@
     font-weight: 600;
 }
 
+.notif-summary {
+    margin: 0;
+    padding: 6px 16px;
+    color: #64758d;
+    font-size: 0.8rem;
+}
+
 .notif-empty {
     margin: 0;
     padding: 24px 16px;

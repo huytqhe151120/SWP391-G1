@@ -37,8 +37,14 @@ public interface INotificationService {
     /** Thông báo tuyển ban tổ chức tới sinh viên. Không ném lỗi ra ngoài. */
     void notifyStudent(int studentId, String eventType, String title, String content, String targetUrl);
 
+    void notifyAccount(int accountId, String eventType, String title, String content, String targetUrl);
+
     /** Thông báo tuyển ban tổ chức tới nhân sự phụ trách hoạt động. Không ném lỗi ra ngoài. */
     void notifyActivityStaff(int activityId, String eventType, String title, String content, String targetUrl);
+
+    /** Thông báo tới tất cả sinh viên đang tham gia hoạt động. Không ném lỗi ra ngoài. */
+    void notifyActivityParticipants(int activityId, String eventType, String title, String content,
+                                    String targetUrl);
 
     int countNotifications(int accountId, String filter);
 

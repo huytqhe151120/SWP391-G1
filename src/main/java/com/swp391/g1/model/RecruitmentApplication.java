@@ -11,6 +11,9 @@ public class RecruitmentApplication {
     private String studentCode;
     private String studentName;
     private String className;
+    private String departmentName;
+    private String majorName;
+    private String academicProgramName;
     private String roundTitle;
     private int activityId;
     private String activityName;
@@ -44,6 +47,12 @@ public class RecruitmentApplication {
     public void setStudentName(String studentName) { this.studentName = studentName; }
     public String getClassName() { return className; }
     public void setClassName(String className) { this.className = className; }
+    public String getDepartmentName() { return departmentName; }
+    public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
+    public String getMajorName() { return majorName; }
+    public void setMajorName(String majorName) { this.majorName = majorName; }
+    public String getAcademicProgramName() { return academicProgramName; }
+    public void setAcademicProgramName(String academicProgramName) { this.academicProgramName = academicProgramName; }
     public String getRoundTitle() { return roundTitle; }
     public void setRoundTitle(String roundTitle) { this.roundTitle = roundTitle; }
     public int getActivityId() { return activityId; }
