@@ -12,7 +12,6 @@
 <section class="card rc-card rc-summary">
     <div>
         <span class="badge status-pill status-green">Đang mở tuyển</span>
-        <span class="badge status-pill status-blue">Ban tổ chức</span>
     </div>
     <dl>
         <div><dt>Hoạt động</dt><dd><c:out value="${round.activityName}"/></dd></div>

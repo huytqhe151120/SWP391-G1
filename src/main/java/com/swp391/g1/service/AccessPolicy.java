@@ -123,4 +123,14 @@ public final class AccessPolicy {
     public static boolean canUseSupportInbox(CurrentUser user) {
         return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
     }
+
+    /** Only ADMIN and STAFF can manage HR (students, staff, accounts). */
+    public static boolean canManageHR(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
+
+    /** Only ADMIN and STAFF can manage partners (companies, partner staff). */
+    public static boolean canManagePartners(CurrentUser user) {
+        return hasType(user, ADMIN_TYPE) || hasType(user, "STAFF");
+    }
 }

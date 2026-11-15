@@ -101,6 +101,8 @@
     pageContext.setAttribute("hdrCurrentKeyword", currentKeyword);
 %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/datetime-picker.css?v=20261115-1">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/header.css?v=20261111-3">
 <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity-feedback.css?v=20261111-9">
 <header class="activity-app-header" id="appHeader">
@@ -186,6 +188,9 @@
         </div>
     </div>
 </header>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/vn.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/datetime-picker.js?v=20261115-1" defer></script>
 <script>
     (function () {
         var header = document.getElementById('appHeader');

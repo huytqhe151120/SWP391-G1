@@ -35,7 +35,6 @@
         <div class="rc-field"><label>Tiêu đề đợt tuyển <em>*</em></label><input name="title" maxlength="200" value="<c:out value='${round.title}'/>" required></div>
         <div class="rc-field"><label>Mở nhận hồ sơ <em>*</em></label><input type="datetime-local" name="openAt" value="${openAtValue}" required></div>
         <div class="rc-field"><label>Đóng nhận hồ sơ <em>*</em></label><input type="datetime-local" name="closeAt" value="${closeAtValue}" required></div>
-        <div class="rc-field full"><small>Trạng thái tự chuyển theo lịch: trước giờ mở là Bản nháp, trong thời gian nhận hồ sơ là Đang nhận hồ sơ, sau giờ đóng hoặc khi hoạt động bắt đầu là Đã đóng.</small></div>
         <div class="rc-field full"><label>Mô tả và hướng dẫn <span>(không bắt buộc)</span></label>
             <textarea name="description" placeholder="Giới thiệu vai trò, yêu cầu và quyền lợi của ban tổ chức..."><c:out value="${round.description}"/></textarea></div>
     </div>

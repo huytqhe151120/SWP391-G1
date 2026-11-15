@@ -1,8 +1,11 @@
 package com.swp391.g1.controller;
 
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Staff;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IStaffService;
 import com.swp391.g1.service.impl.StaffServiceImpl;
+import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.util.ParamUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,6 +22,21 @@ public class StaffServlet extends HttpServlet {
 
     private final IStaffService staffService =
             new StaffServiceImpl();
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        if (!AccessPolicy.canManageHR(currentUser)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang này.");
+            return;
+        }
+        super.service(request, response);
+    }
 
     @Override
     protected void doGet(

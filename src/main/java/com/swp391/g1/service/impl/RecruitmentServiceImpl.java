@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 public class RecruitmentServiceImpl implements IRecruitmentService {
 
     private static final int MAX_QUOTA = 1000;
+    private static final String OPEN_IN_PAST_MESSAGE = "Thời gian mở nhận hồ sơ phải lớn hơn thời gian hiện tại.";
     private static final Logger LOGGER = Logger.getLogger(RecruitmentServiceImpl.class.getName());
 
     private final IRecruitmentRoundDAO roundDao;
@@ -106,6 +107,9 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
         }
         try {
             if (round.getId() <= 0) {
+                if (!round.getOpenAt().isAfter(LocalDateTime.now())) {
+                    return OPEN_IN_PAST_MESSAGE;
+                }
                 if (!roundDao.isActivityEligible(round.getActivityId())) {
                     return "Chỉ tạo đợt tuyển cho hoạt động đã duyệt và chưa diễn ra.";
                 }
@@ -119,6 +123,9 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
                 RecruitmentRound current = roundDao.findById(round.getId());
                 if (current == null) {
                     return "Không tìm thấy đợt tuyển.";
+                }
+                if (!round.getOpenAt().equals(current.getOpenAt()) && !round.getOpenAt().isAfter(LocalDateTime.now())) {
+                    return OPEN_IN_PAST_MESSAGE;
                 }
                 if (!roundDao.isActivityEligible(current.getActivityId())) {
                     return "Hoạt động đã bắt đầu hoặc không còn hợp lệ nên không thể sửa đợt tuyển.";

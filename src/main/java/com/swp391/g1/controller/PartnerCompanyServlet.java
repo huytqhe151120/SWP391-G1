@@ -1,9 +1,12 @@
 package com.swp391.g1.controller;
 
+import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Enum.CommonStatus;
 import com.swp391.g1.model.PartnerCompany;
+import com.swp391.g1.service.AccessPolicy;
 import com.swp391.g1.service.IPartnerCompanyService;
 import com.swp391.g1.service.impl.PartnerCompanyServiceImpl;
+import com.swp391.g1.util.AuthContext;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,6 +25,21 @@ public class PartnerCompanyServlet extends HttpServlet {
 
     public PartnerCompanyServlet() {
         this.partnerCompanyService = new PartnerCompanyServiceImpl();
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        if (currentUser == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        if (!AccessPolicy.canManagePartners(currentUser)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền truy cập trang này.");
+            return;
+        }
+        super.service(request, response);
     }
 
     @Override

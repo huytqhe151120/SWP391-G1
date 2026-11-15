@@ -8,13 +8,23 @@
 <c:set var="rcAttendanceStyles" value="true" scope="request"/>
 <%@ include file="_top.jspf" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
-<div class="activity-table-heading rc-page-heading">
-    <div>
-        <h2>Danh sách hồ sơ ứng tuyển &amp; Thông tin đợt tuyển</h2>
-        <p>Chọn hoạt động để xem thông tin đợt tuyển và danh sách hồ sơ ứng tuyển.</p>
-    </div>
-</div>
 <section class="rc-activity-picker card">
+    <div class="activity-table-heading rc-page-heading">
+        <div>
+            <h2>Danh sách hồ sơ ứng tuyển &amp; Thông tin đợt tuyển</h2>
+            <p>
+                <c:choose>
+                    <c:when test="${not empty activity}"><c:out value="${activity.code}"/> – <c:out value="${activity.name}"/></c:when>
+                    <c:otherwise>Chọn hoạt động để xem thông tin đợt tuyển và danh sách hồ sơ ứng tuyển.</c:otherwise>
+                </c:choose>
+            </p>
+        </div>
+        <c:if test="${not empty activity and empty round}">
+            <div class="activity-heading-actions">
+                <a class="button button-sm button-primary" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo mới đợt tuyển</a>
+            </div>
+        </c:if>
+    </div>
     <details class="activity-filter-panel" open>
         <summary class="activity-filter-toggle"><span>Chọn hoạt động</span></summary>
         <form class="activity-filter attendance-filter attendance-filter--single" action="${ctx}/organizer-recruitment" method="get">
@@ -70,9 +80,11 @@
             </div>
         </c:when>
         <c:when test="${empty round}">
-            <div class="rc-no-round">
-                <span><strong><c:out value="${activity.name}"/></strong> chưa có đợt tuyển ban tổ chức.</span>
-                <a class="button button-primary button-sm" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo đợt tuyển</a>
+            <div class="empty-state activity-empty-state registration-empty-state registration-detail-empty-state">
+                <span class="empty-state-mark" aria-hidden="true">+</span>
+                <strong>Chưa có thông tin đợt tuyển</strong>
+                <span>Hoạt động này chưa tạo đợt tuyển ban tổ chức. Bạn có thể tạo mới đợt tuyển cho hoạt động này.</span>
+                <a class="button button-primary" href="${ctx}/organizer-recruitment?action=create&amp;activityId=${activity.id}">Tạo mới đợt tuyển</a>
             </div>
         </c:when>
     </c:choose>
