@@ -30,6 +30,7 @@ public class AccountServiceImpl implements IAccountService {
     private static final int STATUS_MAX_LENGTH = 20;
 
     private final IAccountDAO accountDAO = new AccountDAOImpl();
+    private final com.swp391.g1.service.INotificationService notificationService = new NotificationServiceImpl();
 
     @Override
     public List<Account> searchAccounts(String id, String search, String type, String role, String status) {
@@ -161,6 +162,10 @@ public class AccountServiceImpl implements IAccountService {
             }
             result.setSuccess(true);
             result.setAccountId(id);
+            notificationService.notifyAccount(id, "ACCOUNT_STATUS_CHANGED",
+                    "Trạng thái tài khoản thay đổi",
+                    "Trạng thái tài khoản của bạn đã được cập nhật thành " + normalizedStatus + ".",
+                    "/notifications");
         } catch (DataAccessException e) {
             throw new AccountServiceException("Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.", e);
         }

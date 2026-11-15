@@ -155,7 +155,7 @@
             </button>
 
             <% if (!navType.isEmpty()) { %>
-            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261111-6">
+            <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/notification.css?v=20261115-1">
             <div class="notif-wrap">
                 <button type="button" id="notifBell" class="notif-bell" aria-label="Thông báo" aria-haspopup="true" aria-expanded="false" title="Thông báo">
                     <svg class="ui-icon notif-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -175,12 +175,13 @@
                         </strong>
                         <button type="button" id="notifReadAll" class="notif-link">Đánh dấu tất cả đã đọc</button>
                     </div>
+                    <p class="notif-summary" data-notif-summary hidden></p>
                     <div id="notifDropdownList" class="notif-dropdown-list"></div>
                     <div class="notif-foot"><a class="notif-link" href="${pageContext.request.contextPath}/notifications">Xem tất cả thông báo</a></div>
                 </div>
             </div>
             <script>window.APP_CTX = '${pageContext.request.contextPath}';</script>
-            <script src="${pageContext.request.contextPath}/assets/js/notification.js?v=20261111-6" defer></script>
+            <script src="${pageContext.request.contextPath}/assets/js/notification.js?v=20261115-2" defer></script>
             <% } %>
         </div>
     </div>

@@ -16,6 +16,7 @@
         <div class="activity-app-main">
             <main class="page">
                 <h1>Thông báo</h1>
+                <p class="notif-summary" data-notif-summary hidden></p>
                 <div class="notif-toolbar">
                     <span id="notifFilter">
                         <button type="button" class="active" data-filter="all">Tất cả</button>

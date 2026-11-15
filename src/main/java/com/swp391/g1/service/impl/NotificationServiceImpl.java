@@ -120,12 +120,32 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
+    public void notifyAccount(int accountId, String eventType, String title, String content, String targetUrl) {
+        try {
+            notificationDAO.createAccountNotification(accountId, eventType, title, content, targetUrl);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send account notification.", e);
+        }
+    }
+
+    @Override
     public void notifyActivityStaff(int activityId, String eventType, String title, String content,
                                     String targetUrl) {
         try {
             notificationDAO.createActivityStatusNotification(activityId, eventType, title, content, targetUrl);
         } catch (RuntimeException e) {
             LOGGER.log(Level.WARNING, "Could not send activity staff notification.", e);
+        }
+    }
+
+    @Override
+    public void notifyActivityParticipants(int activityId, String eventType, String title, String content,
+                                           String targetUrl) {
+        try {
+            notificationDAO.createActivityParticipantsNotification(
+                    activityId, eventType, title, content, targetUrl);
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.WARNING, "Could not send activity participants notification.", e);
         }
     }
 
