@@ -359,6 +359,33 @@
         </a>
         <% } %>
 
+        <!-- Nhóm: CÁ NHÂN (Sinh viên) -->
+        <% if (navStudent) { %>
+        <span class="activity-nav-group">Cá nhân</span>
+        <a class="activity-nav-item <%= "student-profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-profile"
+           title="Hồ sơ cá nhân"
+           <%= "student-profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">
+                <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+            </span>
+            <span class="activity-nav-label">Hồ sơ cá nhân</span>
+        </a>
+        <a class="activity-nav-item <%= "student-profile-edit".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-profile?action=edit"
+           title="Cập nhật hồ sơ"
+           <%= "student-profile-edit".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+            <span class="activity-nav-icon" aria-hidden="true">
+                <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+            </span>
+            <span class="activity-nav-label">Cập nhật hồ sơ</span>
+        </a>
+        <% } %>
+
         <!-- Nhóm: HỖ TRỢ SINH VIÊN -->
         <% if (navStudent) { %>
         <span class="activity-nav-group">Hỗ trợ sinh viên</span>

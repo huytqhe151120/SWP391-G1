@@ -20,6 +20,7 @@
         else if (reqUri.contains("/registration-forms")) navActive = "registration-forms";
         else if (reqUri.contains("/organizer-recruitment")) navActive = "recruitment";
         else if (reqUri.contains("/notification")) navActive = "notifications";
+        else if (reqUri.contains("/student-profile")) navActive = "student-profile";
     }
 
     String breadcrumbGroup = "";
@@ -92,6 +93,10 @@
     } else if ("student-inbox".equals(navActive)) {
         breadcrumbGroup = "Hỗ trợ sinh viên";
         breadcrumbCurrent = "Hộp thư của tôi";
+    } else if ("student-profile".equals(navActive)) {
+        breadcrumbGroup = "Cá nhân";
+        if ("edit".equals(actionParam)) breadcrumbCurrent = "Cập nhật hồ sơ";
+        else breadcrumbCurrent = "Hồ sơ cá nhân";
     } else if ("notifications".equals(navActive)) {
         breadcrumbGroup = "Tiện ích";
         breadcrumbCurrent = "Thông báo";
