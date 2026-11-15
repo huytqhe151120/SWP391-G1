@@ -9,7 +9,8 @@
         var empty = container.querySelector("[data-filter-empty]");
         var tabs = container.querySelectorAll("[data-filter]");
         var applications = container.hasAttribute("data-applications");
-        var size = 10;
+        var searchInput = container.querySelector("[data-application-search]");
+        var size = applications ? 5 : 10;
         var page = 1;
         var filter = "all";
 
@@ -24,8 +25,11 @@
         }
 
         function render() {
+            var searchTerm = searchInput ? searchInput.value.trim().toLocaleLowerCase() : "";
             var matches = items.filter(function (item) {
-                return filter === "all" || item.dataset.role === filter;
+                var matchesTab = filter === "all" || item.dataset.role === filter;
+                var matchesSearch = !searchTerm || item.textContent.toLocaleLowerCase().indexOf(searchTerm) >= 0;
+                return matchesTab && matchesSearch;
             });
             var pages = Math.max(1, Math.ceil(matches.length / size));
             page = Math.max(1, Math.min(page, pages));
@@ -34,7 +38,8 @@
             items.forEach(function (item) { item.hidden = !visible.has(item); });
             if (empty) empty.hidden = matches.length > 0;
             summary.textContent = "Hiển thị " + (matches.length ? start + 1 : 0) + "–"
-                + Math.min(start + size, matches.length) + " trong " + matches.length + " kết quả";
+                + Math.min(start + size, matches.length) + " trong " + matches.length
+                + (applications ? " hồ sơ" : " kết quả");
             nav.replaceChildren();
 
             function button(label, target, disabled, current, ariaLabel) {
@@ -115,14 +120,22 @@
         if (applications) {
             var selectionCount = container.querySelector("[data-selection-count]");
             var checkboxes = container.querySelectorAll("input[name='ids']");
+            var bulkInvite = container.querySelector("[data-bulk-invite]");
             function updateSelectionCount() {
-                if (selectionCount) selectionCount.textContent = "Đã chọn: "
-                    + Array.from(checkboxes).filter(function (box) { return box.checked; }).length + ".";
+                var selectedCount = Array.from(checkboxes).filter(function (box) { return box.checked; }).length;
+                if (selectionCount) selectionCount.textContent = "Đã chọn: " + selectedCount + ".";
+                if (bulkInvite) bulkInvite.disabled = selectedCount === 0 || container.dataset.canInvite !== "true";
             }
             checkboxes.forEach(function (box) {
                 box.addEventListener("change", updateSelectionCount);
             });
             updateSelectionCount();
+        }
+        if (searchInput) {
+            searchInput.addEventListener("input", function () {
+                page = 1;
+                render();
+            });
         }
         render();
     });

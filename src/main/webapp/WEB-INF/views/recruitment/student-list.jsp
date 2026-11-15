@@ -47,14 +47,14 @@
                 </div>
                 <div class="rc-item-actions">
                     <span class="badge status-pill ${applied ? 'status-yellow' : (r.totalRemaining > 0 ? 'status-green' : 'status-gray')}">
-                        ${applied ? 'Đã nộp hồ sơ' : (r.totalRemaining > 0 ? 'Đang mở' : 'Hết chỉ tiêu')}</span>
+                        ${applied ? 'Đã nộp hồ sơ' : (r.totalRemaining > 0 ? 'Đang mở' : 'Chỉ tiêu đã đủ · vẫn nhận hồ sơ')}</span>
                     <c:choose>
                         <c:when test="${applied}">
                             <a class="button" href="${ctx}/organizer-recruitment?action=myApplications">Xem đơn</a>
                         </c:when>
-                        <c:when test="${r.totalRemaining > 0}">
+                        <c:otherwise>
                             <a class="button button-primary" href="${ctx}/organizer-recruitment?action=apply&amp;roundId=${r.id}">Ứng tuyển</a>
-                        </c:when>
+                        </c:otherwise>
                     </c:choose>
                 </div>
             </div>

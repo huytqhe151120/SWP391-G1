@@ -12,7 +12,6 @@
 <form class="card rc-card" id="roundForm" method="post" action="${ctx}/organizer-recruitment">
     <input type="hidden" name="action" value="save">
     <input type="hidden" name="id" value="${round.id}">
-    <input type="hidden" name="intent" id="intent" value="draft">
     <c:if test="${locked}">
         <div class="rc-alert info">Đợt tuyển đã có hồ sơ nên vị trí và câu hỏi bị khóa. Bạn vẫn sửa được thông tin chung và thời gian.</div>
     </c:if>
@@ -34,8 +33,9 @@
                 </c:otherwise>
             </c:choose></div>
         <div class="rc-field"><label>Tiêu đề đợt tuyển <em>*</em></label><input name="title" maxlength="200" value="<c:out value='${round.title}'/>" required></div>
-        <div class="rc-field"><label>Mở nhận hồ sơ</label><input type="datetime-local" name="openAt" value="${openAtValue}"></div>
-        <div class="rc-field"><label>Đóng nhận hồ sơ</label><input type="datetime-local" name="closeAt" value="${closeAtValue}"></div>
+        <div class="rc-field"><label>Mở nhận hồ sơ <em>*</em></label><input type="datetime-local" name="openAt" value="${openAtValue}" required></div>
+        <div class="rc-field"><label>Đóng nhận hồ sơ <em>*</em></label><input type="datetime-local" name="closeAt" value="${closeAtValue}" required></div>
+        <div class="rc-field full"><small>Trạng thái tự chuyển theo lịch: trước giờ mở là Bản nháp, trong thời gian nhận hồ sơ là Đang nhận hồ sơ, sau giờ đóng hoặc khi hoạt động bắt đầu là Đã đóng.</small></div>
         <div class="rc-field full"><label>Mô tả và hướng dẫn <span>(không bắt buộc)</span></label>
             <textarea name="description" placeholder="Giới thiệu vai trò, yêu cầu và quyền lợi của ban tổ chức..."><c:out value="${round.description}"/></textarea></div>
     </div>
@@ -66,8 +66,7 @@
 
     <div class="rc-actions">
         <a class="button" href="<c:out value='${roundBack}'/>">Hủy</a>
-        <button type="submit" class="button" data-intent="draft">Lưu bản nháp</button>
-        <button type="submit" class="button button-primary" data-intent="open">Lưu và mở tuyển</button>
+        <button type="submit" class="button button-primary">Lưu đợt tuyển</button>
     </div>
 </form>
 <script type="application/json" id="initialData">${initialJson}</script>
@@ -143,10 +142,6 @@
         data.positions.forEach(function (p) { addPosition(p.name, p.quota); });
         if (!data.positions.length) { addPosition('', ''); }
         data.questions.forEach(function (q) { addQuestion(q.type, q.text, q.required, q.options); });
-
-        document.querySelectorAll('[data-intent]').forEach(function (b) {
-            b.addEventListener('click', function () { document.getElementById('intent').value = b.dataset.intent; });
-        });
 
         form.addEventListener('submit', function () {
             form.querySelectorAll('.q-gen').forEach(function (n) { n.remove(); });
