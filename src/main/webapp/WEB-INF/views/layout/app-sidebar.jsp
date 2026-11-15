@@ -271,7 +271,6 @@
             </div>
         </div>
 
-        <% if (!navStudent) { %>
         <!-- 2. Quản lý Nhân sự -->
         <% if (!navStudent) { %>
         <div class="activity-nav-accordion is-open <%= isHrGroupActive ? "has-active" : "" %>" data-group="hr">
