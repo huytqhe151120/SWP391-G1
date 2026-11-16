@@ -229,7 +229,7 @@
                                                 <input type="hidden" name="action" value="registerQuick">
                                                 <input type="hidden" name="activityId" value="${activity.id}">
                                                 <input type="hidden" name="returnTo" value="<c:out value='${activityReturnUrl}'/>">
-                                                <button type="submit" class="button button-primary">Đợt đăng ký</button>
+                                                <button type="submit" class="button button-primary">Đăng ký nhanh</button>
                                             </form>
                                         </c:otherwise>
                                     </c:choose>
@@ -239,6 +239,9 @@
                                 </c:when>
                                 <c:when test="${not empty myRegistration and myRegistration.status eq 'SUBMITTED'}">
                                     <span class="badge status-pill status-yellow">Đang chờ xử lý đăng ký</span>
+                                </c:when>
+                                <c:when test="${not activity.registrationFormRequired and activity.activityStatus eq 'UPCOMING' and not empty activity.maxParticipants and not empty registrationForm and registrationForm.reservedSeatCount >= activity.maxParticipants}">
+                                    <span class="badge status-pill status-red">Đã đủ số lượng</span>
                                 </c:when>
                             </c:choose>
                         </c:when>

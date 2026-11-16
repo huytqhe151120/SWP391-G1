@@ -45,7 +45,9 @@
                 <form method="post" action="${pageContext.request.contextPath}/registration-forms">
                     <input type="hidden" name="action" value="save">
                     <input type="hidden" name="id" value="${form.id}">
-                    <input type="hidden" name="activityId" value="${form.activityId}">
+                    <c:if test="${form.quick or form.registrationCount > 0}">
+                        <input type="hidden" name="activityId" value="${form.activityId}">
+                    </c:if>
                     <input type="hidden" name="returnTo" value="<c:out value='${returnTo}'/>">
 
                     <div class="activity-form-content">
@@ -64,7 +66,10 @@
                                         <c:if test="${form.registrationCount > 0}">disabled</c:if>>
                                     <option value="">-- Chọn hoạt động --</option>
                                     <c:forEach items="${activities}" var="a">
-                                        <option value="${a.id}" <c:if test="${form.activityId == a.id}">selected</c:if>>
+                                        <option value="${a.id}"
+                                                data-default-open="${defaultOpenByActivity[a.id]}"
+                                                data-default-close="${defaultCloseByActivity[a.id]}"
+                                                <c:if test="${form.activityId == a.id}">selected</c:if>>
                                             <c:out value="${a.code}"/> - <c:out value="${a.name}"/>
                                         </option>
                                     </c:forEach>
@@ -196,7 +201,7 @@
         </main>
     </div>
 </div>
-<script src="${pageContext.request.contextPath}/assets/js/registration-form-builder.js?v=20261103-1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/registration-form-builder.js?v=20261116-1"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 </body>
 </html>

@@ -136,5 +136,21 @@
         }
     });
 
+    const activitySelect = document.querySelector("#activityId");
+    const openAtInput = document.querySelector("#openAt");
+    const closeAtInput = document.querySelector("#closeAt");
+    if (activitySelect && openAtInput && closeAtInput) {
+        activitySelect.addEventListener("change", () => {
+            const selected = activitySelect.selectedOptions[0];
+            if (!selected) return;
+            if (selected.dataset.defaultOpen) {
+                openAtInput.value = selected.dataset.defaultOpen;
+            }
+            if (selected.dataset.defaultClose) {
+                closeAtInput.value = selected.dataset.defaultClose;
+            }
+        });
+    }
+
     update();
 })();

@@ -272,7 +272,7 @@
                                             <td class="activity-time">
                                                 <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
                                                 <c:choose>
-                                                    <c:when test="${not empty activityForm and not empty activityForm.closeAt}">
+                                                    <c:when test="${activity.registrationFormRequired and not empty activityForm and not empty activityForm.closeAt}">
                                                         <c:out value="${dt:format(activityForm.closeAt)}"/>
                                                     </c:when>
                                                     <c:otherwise>—</c:otherwise>
@@ -306,8 +306,24 @@
                                                     </c:choose>
                                                     <c:if test="${activity.nature eq 'REQUIRE_REGISTRATION'}">
                                                         <c:choose>
-                                                            <c:when test="${(not empty activityForm and activityForm.status eq 'OPENING') or (empty activityForm and activitiesAvailableForRegistration.contains(activity.id))}">
+                                                            <c:when test="${not activity.registrationFormRequired}">
+                                                                <c:choose>
+                                                                    <c:when test="${activitiesAvailableForRegistration.contains(activity.id) or (organizerActivityIds.contains(activity.id) and activity.activityStatus eq 'UPCOMING' and (empty activity.startTime or activitiesBeforeStart.contains(activity.id)) and (empty activity.maxParticipants or empty activityForm or activityForm.reservedSeatCount < activity.maxParticipants))}">
+                                                                        <span class="reg-sub-status reg-sub-status--open"><span class="reg-sub-status__dot" aria-hidden="true"></span>Đang mở đăng ký</span>
+                                                                    </c:when>
+                                                                    <c:when test="${activity.activityStatus eq 'UPCOMING' and not empty activity.maxParticipants and not empty activityForm and activityForm.reservedSeatCount >= activity.maxParticipants}">
+                                                                        <span class="reg-sub-status reg-sub-status--closed">Đã đủ số lượng</span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="reg-sub-status reg-sub-status--closed">Đã đóng đăng ký</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </c:when>
+                                                            <c:when test="${(not empty activityForm and activityForm.status eq 'OPENING') and (empty activityForm.maxParticipants or activityForm.reservedSeatCount < activityForm.maxParticipants)}">
                                                                 <span class="reg-sub-status reg-sub-status--open"><span class="reg-sub-status__dot" aria-hidden="true"></span>Đang mở đăng ký</span>
+                                                            </c:when>
+                                                            <c:when test="${not empty activityForm and activityForm.status eq 'OPENING' and not empty activityForm.maxParticipants and activityForm.reservedSeatCount >= activityForm.maxParticipants}">
+                                                                <span class="reg-sub-status reg-sub-status--closed">Đã đủ số lượng</span>
                                                             </c:when>
                                                             <c:when test="${not empty activityForm and activityForm.status eq 'CLOSED'}">
                                                                 <span class="reg-sub-status reg-sub-status--closed">Đã đóng đăng ký</span>
@@ -337,12 +353,12 @@
                                                     <c:set var="activityForm" value="${activityFormsByActivity[activity.id]}"/>
                                                     <c:set var="myReg" value="${registrationsByActivity[activity.id]}"/>
                                                     <c:set var="canRegister" value="${activitiesAvailableForRegistration.contains(activity.id) and empty myReg}"/>
-                                                    <c:if test="${not empty myReg or canRegister or (not empty activityForm and activityForm.status == 'DRAFT')}">
+                                                    <c:if test="${not empty myReg or canRegister or (activity.registrationFormRequired and not empty activityForm and activityForm.status == 'DRAFT')}">
                                                         <details class="action-menu">
                                                             <summary aria-label="Thao tác khác"><span aria-hidden="true">⋯</span></summary>
                                                             <div class="action-menu__items">
                                                                 <c:choose>
-                                                                    <c:when test="${not empty activityForm and activityForm.status == 'DRAFT' and empty myReg}">
+                                                                    <c:when test="${activity.registrationFormRequired and not empty activityForm and activityForm.status == 'DRAFT' and empty myReg}">
                                                                         <span class="action-menu-item" style="color: #77849a; cursor: default;">
                                                                             <span class="action-menu-item__icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M2 12h20"/></svg></span>
                                                                             Đăng ký (chưa mở)

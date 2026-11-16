@@ -202,6 +202,25 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                                 REFERENCES dbo.semester (id) ON DELETE CASCADE
                         );
                     END;
+                    UPDATE dbo.extracurricular_activity
+                    SET is_public = CASE
+                        WHEN nature <> 'REQUIRE_REGISTRATION' THEN 1
+                        WHEN registration_form_required = 0 THEN 1
+                        WHEN EXISTS (
+                            SELECT 1 FROM dbo.activity_registration_form f
+                            WHERE f.activity_id = dbo.extracurricular_activity.id
+                        ) THEN 1
+                        ELSE 0
+                    END
+                    WHERE is_public <> CASE
+                        WHEN nature <> 'REQUIRE_REGISTRATION' THEN 1
+                        WHEN registration_form_required = 0 THEN 1
+                        WHEN EXISTS (
+                            SELECT 1 FROM dbo.activity_registration_form f
+                            WHERE f.activity_id = dbo.extracurricular_activity.id
+                        ) THEN 1
+                        ELSE 0
+                    END;
                     """;
             try (Connection conn = DBContext.getConnection();
                  Statement st = conn.createStatement()) {
@@ -256,8 +275,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         Timestamp endTime = rs.getTimestamp("end_time");
         activity.setEndTime(endTime == null
                 ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
-        activity.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
-        activity.setPublic(rs.getBoolean("is_public"));
+        boolean requiresForm = rs.getBoolean("registration_form_required");
+        activity.setRegistrationFormRequired(requiresForm);
+        activity.setPublic(rs.getBoolean("is_public")
+                || !requiresForm
+                || activity.getNature() != Enum.ActivityNature.REQUIRE_REGISTRATION);
         return activity;
     }
 
@@ -451,8 +473,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     Timestamp endTime = rs.getTimestamp("end_time");
                     dto.setEndTime(endTime == null
                             ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
-                    dto.setRegistrationFormRequired(rs.getBoolean("registration_form_required"));
-                    dto.setPublic(rs.getBoolean("is_public"));
+                    boolean requiresForm = rs.getBoolean("registration_form_required");
+                    dto.setRegistrationFormRequired(requiresForm);
+                    dto.setPublic(rs.getBoolean("is_public")
+                            || !requiresForm
+                            || dto.getNature() != Enum.ActivityNature.REQUIRE_REGISTRATION);
 
                     // Thông tin chi tiết JOIN từ các bảng liên quan
                     dto.setSemesterCode(rs.getString("semester_code"));

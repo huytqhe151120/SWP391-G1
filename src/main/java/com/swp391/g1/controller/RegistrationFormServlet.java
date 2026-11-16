@@ -2,6 +2,7 @@ package com.swp391.g1.controller;
 
 import com.swp391.g1.dto.CurrentUser;
 import com.swp391.g1.model.Enum.ActivityStatus;
+import com.swp391.g1.model.Enum.ApprovalStatus;
 import com.swp391.g1.model.RegistrationApplication;
 import com.swp391.g1.model.RegistrationForm;
 import com.swp391.g1.model.RegistrationFormField;
@@ -104,7 +105,11 @@ public class RegistrationFormServlet extends HttpServlet {
                 RegistrationForm form = service.getById(application.getFormId());
                 req.setAttribute("application", application);
                 req.setAttribute("form", form);
-                req.setAttribute("applicationDob", applicationDateOfBirth(application));
+                String appDob = applicationDateOfBirth(application);
+                if ((appDob == null || appDob.isBlank()) && student.getDob() != null) {
+                    appDob = formatDateOfBirth(student.getDob());
+                }
+                req.setAttribute("applicationDob", appDob);
                 setApplicationQuestionFields(req, form, application);
                 req.setAttribute("isStudent", true);
                 req.setAttribute("returnTo", safeReturnTo(req,
@@ -144,41 +149,45 @@ public class RegistrationFormServlet extends HttpServlet {
                 }
                 if ("create".equals(action)) {
                     int activityId = parseInt(req.getParameter("activityId"));
-                    if (activityId <= 0) {
-                        resp.sendRedirect(req.getContextPath() + "/registration-forms?action=view");
-                        return;
-                    }
-                    var activity = activityService.getActivityById(activityId);
-                    if (activity == null) {
-                        resp.sendError(404, "Không tìm thấy hoạt động.");
-                        return;
-                    }
-                    if (!activity.isRegistrationFormRequired()) {
-                        req.getSession().setAttribute("errorMessage",
-                                "Hoạt động này không bắt buộc điền form nên không cần tạo đợt đăng ký.");
-                        resp.sendRedirect(returnTo);
-                        return;
-                    }
-                    if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
-                        req.getSession().setAttribute("errorMessage",
-                                "Không thể tạo đợt đăng ký vì hoạt động không ở trạng thái Chưa diễn ra.");
-                        resp.sendRedirect(returnTo);
-                        return;
-                    }
-                    RegistrationForm existing = service.getByActivityId(activityId);
-                    if (existing != null) {
-                        resp.sendRedirect(req.getContextPath()
-                                + "/registration-forms?action=view&id=" + existing.getId());
-                        return;
-                    }
-                    f.setActivityId(activityId);
-                    // Auto-set openAt and closeAt based on activity time
-                    if (activity.getStartTime() != null) {
-                        LocalDateTime defaultOpenAt = activity.getStartTime().minusDays(7);
-                        LocalDateTime earliestOpenAt = DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES)
-                                .plusMinutes(1);
-                        f.setOpenAt(defaultOpenAt.isBefore(earliestOpenAt) ? earliestOpenAt : defaultOpenAt);
-                        f.setCloseAt(activity.getStartTime().minusHours(24));
+                    if (activityId > 0) {
+                        var activity = activityService.getActivityById(activityId);
+                        if (activity == null) {
+                            resp.sendError(404, "Không tìm thấy hoạt động.");
+                            return;
+                        }
+                        if (!activity.isRegistrationFormRequired()) {
+                            req.getSession().setAttribute("errorMessage",
+                                    "Hoạt động này không bắt buộc điền form nên không cần tạo đợt đăng ký.");
+                            resp.sendRedirect(returnTo);
+                            return;
+                        }
+                        if (activity.getApprovalStatus() != ApprovalStatus.APPROVED) {
+                            req.getSession().setAttribute("errorMessage",
+                                    "Không thể tạo đợt đăng ký vì hoạt động chưa được duyệt.");
+                            resp.sendRedirect(returnTo);
+                            return;
+                        }
+                        if (activity.getActivityStatus() != ActivityStatus.UPCOMING) {
+                            req.getSession().setAttribute("errorMessage",
+                                    "Không thể tạo đợt đăng ký vì hoạt động không ở trạng thái Chưa diễn ra.");
+                            resp.sendRedirect(returnTo);
+                            return;
+                        }
+                        RegistrationForm existing = service.getByActivityId(activityId);
+                        if (existing != null) {
+                            resp.sendRedirect(req.getContextPath()
+                                    + "/registration-forms?action=view&id=" + existing.getId());
+                            return;
+                        }
+                        f.setActivityId(activityId);
+                        // Auto-set openAt and closeAt based on activity time
+                        if (activity.getStartTime() != null) {
+                            LocalDateTime defaultOpenAt = activity.getStartTime().minusDays(7);
+                            LocalDateTime earliestOpenAt = DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES)
+                                    .plusMinutes(1);
+                            f.setOpenAt(defaultOpenAt.isBefore(earliestOpenAt) ? earliestOpenAt : defaultOpenAt);
+                            f.setCloseAt(activity.getStartTime().minusHours(24));
+                        }
                     }
                 }
                 req.setAttribute("form", f);
@@ -583,12 +592,17 @@ public class RegistrationFormServlet extends HttpServlet {
                     return;
                 }
                 f.setRegistrationCount(existing.getRegistrationCount());
-                f.setActivityId(existing.getActivityId());
+                if (f.getActivityId() <= 0) {
+                    f.setActivityId(existing.getActivityId());
+                }
             }
             if (f.getActivityId() <= 0) {
-                req.getSession().setAttribute("errorMessage",
-                        "Vui lòng chọn hoạt động trước khi tạo form đăng ký.");
-                resp.sendRedirect(req.getContextPath() + "/registration-forms?action=view");
+                error = "Vui lòng chọn hoạt động.";
+                req.setAttribute("error", error);
+                req.setAttribute("form", f);
+                req.setAttribute("returnTo", safeReturnTo(req, req.getContextPath() + "/registration-forms"));
+                setFormPageAttributes(req, f);
+                req.getRequestDispatcher("/WEB-INF/views/registration/form.jsp").forward(req, resp);
                 return;
             }
             String openAt = req.getParameter("openAt");
@@ -720,8 +734,36 @@ public class RegistrationFormServlet extends HttpServlet {
 
     private void setFormPageAttributes(HttpServletRequest request, RegistrationForm form) {
         request.setAttribute("form", form);
-        request.setAttribute("minimumRegistrationTime",
-                DateTimeUtil.formatInput(DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES).plusMinutes(1)));
+        LocalDateTime earliestOpenAt = DateTimeUtil.now().truncatedTo(ChronoUnit.MINUTES).plusMinutes(1);
+        List<Integer> usedActivityIds = service.getAll().stream()
+                .filter(existing -> existing.getId() != form.getId())
+                .map(RegistrationForm::getActivityId)
+                .toList();
+        var approvedActivities = activityService.getAllActivities().stream()
+                .filter(activity -> activity.getApprovalStatus() == ApprovalStatus.APPROVED)
+                .filter(activity -> activity.getActivityStatus() == ActivityStatus.UPCOMING)
+                .filter(activity -> activity.isRegistrationFormRequired()
+                        || (form.getId() > 0 && activity.getId() == form.getActivityId()))
+                .toList();
+        var selectableActivities = approvedActivities.stream()
+                .filter(activity -> !usedActivityIds.contains(activity.getId()))
+                .toList();
+        Map<Integer, String> defaultOpenByActivity = new HashMap<>();
+        Map<Integer, String> defaultCloseByActivity = new HashMap<>();
+        for (var act : selectableActivities) {
+            if (act.getStartTime() != null) {
+                LocalDateTime defaultOpen = act.getStartTime().minusDays(7);
+                defaultOpenByActivity.put(act.getId(),
+                        DateTimeUtil.formatInput(defaultOpen.isBefore(earliestOpenAt) ? earliestOpenAt : defaultOpen));
+                defaultCloseByActivity.put(act.getId(),
+                        DateTimeUtil.formatInput(act.getStartTime().minusHours(24)));
+            }
+        }
+        request.setAttribute("hasEligibleApprovedActivities", !approvedActivities.isEmpty());
+        request.setAttribute("activities", selectableActivities);
+        request.setAttribute("defaultOpenByActivity", defaultOpenByActivity);
+        request.setAttribute("defaultCloseByActivity", defaultCloseByActivity);
+        request.setAttribute("minimumRegistrationTime", DateTimeUtil.formatInput(earliestOpenAt));
         request.setAttribute("openAtInput", DateTimeUtil.formatInput(form.getOpenAt()));
         request.setAttribute("closeAtInput", DateTimeUtil.formatInput(form.getCloseAt()));
     }

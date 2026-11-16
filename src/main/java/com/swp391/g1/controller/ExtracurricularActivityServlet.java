@@ -820,9 +820,13 @@ public class ExtracurricularActivityServlet extends HttpServlet {
                 || (activity.getStartTime() != null && !now.isBefore(activity.getStartTime()))) {
             return false;
         }
+        if (!activity.isRegistrationFormRequired()) {
+            Integer max = activity.getMaxParticipants();
+            int reserved = form != null ? form.getReservedSeatCount() : 0;
+            return max == null || reserved < max;
+        }
         if (form == null) {
-            return !activity.isRegistrationFormRequired()
-                    && (activity.getStartTime() == null || now.isBefore(activity.getStartTime().minusHours(24)));
+            return false;
         }
         return "OPENING".equals(form.getStatus())
                 && (form.getOpenAt() == null || !now.isBefore(form.getOpenAt()))
