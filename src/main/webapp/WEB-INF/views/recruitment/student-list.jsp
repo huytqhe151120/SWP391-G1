@@ -5,7 +5,45 @@
 <c:set var="rcHero" value="Tuyển ban tổ chức" scope="request"/>
 <c:set var="rcEyebrow" value="EAMS / TUYỂN BAN TỔ CHỨC" scope="request"/>
 <c:set var="rcSubtitle" value="Ứng tuyển vào ban tổ chức của các hoạt động ngoại khóa." scope="request"/>
-<%@ include file="_top.jspf" %>
+<c:set var="activeNav" value="recruitment" scope="request"/>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><c:out value="${rcTitle}"/> | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/registration.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/recruitment.css?v=20261115-6">
+</head>
+<body>
+<div class="activity-app-shell hero-scroll">
+    <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
+    <div class="activity-app-main-wrapper">
+        <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
+        <main class="activity-app-main page activity-list-page">
+            <c:if test="${not empty rcHero}">
+                <header class="activity-hero">
+                    <div class="activity-hero-copy">
+                        <span class="eyebrow"><c:out value="${rcEyebrow}"/></span>
+                        <h1><c:out value="${rcHero}"/></h1>
+                        <p><c:out value="${rcSubtitle}"/></p>
+                    </div>
+                </header>
+            </c:if>
+            <c:if test="${not empty sessionScope.successMessage}">
+                <div class="alert alert-success activity-alert"><c:out value="${sessionScope.successMessage}"/></div>
+                <c:remove var="successMessage" scope="session"/>
+            </c:if>
+            <c:if test="${not empty sessionScope.errorMessage}">
+                <div class="alert alert-error activity-alert"><c:out value="${sessionScope.errorMessage}"/></div>
+                <c:remove var="errorMessage" scope="session"/>
+            </c:if>
+            <c:if test="${not empty error}">
+                <div class="alert alert-error activity-alert"><c:out value="${error}"/></div>
+            </c:if>
 <c:set var="ctx" value="${pageContext.request.contextPath}"/>
 <c:set var="tab" value="${param.tab eq 'applied' ? 'applied' : 'open'}"/>
 <section class="card rc-card">
@@ -108,4 +146,10 @@
     });
 </script>
 <script src="${ctx}/assets/js/recruitment-pagination.js?v=20261113-1"></script>
-<%@ include file="_bottom.jspf" %>
+        </main>
+    </div>
+</div>
+<script src="${ctx}/assets/js/action-menu.js?v=5"></script>
+<script src="${ctx}/assets/js/hero-scroll.js?v=1"></script>
+</body>
+</html>
