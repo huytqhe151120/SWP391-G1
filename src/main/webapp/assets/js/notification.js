@@ -93,7 +93,7 @@
         return '<a class="notif-item unread notif-feedback-reminder" data-feedback-reminder href="' +
             (window.APP_CTX || '') + '/activity-feedback">' +
             '<strong>Yêu cầu feedback hoạt động</strong>' +
-            '<span>Bạn có ' + count + ' hoạt động đã tham gia cần gửi feedback. Các chức năng khác vẫn dùng bình thường.</span>' +
+            '<span>Bạn có ' + count + ' hoạt động đã tham gia cần gửi feedback. Vui lòng đánh giá hoạt động sau khi tham gia.</span>' +
             '<small>Cần phản hồi</small></a>';
     }
     // Đánh dấu đã đọc rồi mới chuyển trang tới chi tiết yêu cầu

@@ -17,7 +17,7 @@
     <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
     <div class="activity-app-main-wrapper">
         <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-        <main class="activity-app-main page feedback-page">
+        <main class="activity-app-main page activity-list-page">
             <header class="activity-hero">
                 <div class="activity-hero-copy">
                     <span class="eyebrow">EAMS <span aria-hidden="true">/</span> QUẢN LÝ FEEDBACK</span>

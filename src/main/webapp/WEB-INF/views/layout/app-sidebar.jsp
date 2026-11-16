@@ -28,11 +28,12 @@
             || "registration-forms".equals(navActive)
             || "assessments".equals(navActive)
             || "recruitment".equals(navActive)
-            || ("activity-feedback".equals(navActive) && AccessPolicy.canManageActivityFeedback(navUser))
+            || "activity-feedback".equals(navActive)
             || "attendance".equals(navActive)
             || "participation-grading".equals(navActive)
             || "student-grades".equals(navActive)
             || "partner-invitations".equals(navActive);
+    boolean isStudentSupportGroupActive = "student-qa".equals(navActive) || "student-inbox".equals(navActive);
     boolean isHrGroupActive = "students".equals(navActive)
             || "staff".equals(navActive)
             || "accounts".equals(navActive);
@@ -73,7 +74,7 @@
 
         <!-- 1. Quản lý Hoạt động -->
         <div class="activity-nav-accordion is-open <%= isActivityGroupActive ? "has-active" : "" %>" data-group="activity">
-            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Quản lý Hoạt động">
+            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Hoạt động">
                 <span class="activity-nav-icon" aria-hidden="true">
                     <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
                         <rect width="18" height="18" x="3" y="4" rx="2"/>
@@ -82,7 +83,7 @@
                         <line x1="3" x2="21" y1="10" y2="10"/>
                     </svg>
                 </span>
-                <span class="activity-nav-label">Quản lý Hoạt động</span>
+                <span class="activity-nav-label">Hoạt động</span>
                 <svg class="sidebar-svg-icon activity-nav-chevron" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m6 9 6 6 6-6"/>
                 </svg>
@@ -135,9 +136,22 @@
                     </span>
                     <span class="activity-nav-label">Đơn đăng ký</span>
                 </a>
+                <a class="activity-nav-item <%= "recruitment".equals(navActive) && !"myApplications".equals(actionParam) ? "active" : "" %>"
+                   href="<%= ctx %>/organizer-recruitment"
+                   title="Ứng tuyển BTC"
+                        <%= "recruitment".equals(navActive) && !"myApplications".equals(actionParam) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M19 8v6"/><path d="M22 11h-6"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Ứng tuyển BTC</span>
+                </a>
                 <a class="activity-nav-item <%= "attendance".equals(navActive) ? "active" : "" %>"
                    href="<%= ctx %>/attendance?action=detail"
-                   title="Điểm danh của tôi"
+                   title="Điểm danh"
                    <%= "attendance".equals(navActive) ? "aria-current=\"page\"" : "" %>>
                     <span class="activity-nav-icon" aria-hidden="true">
                         <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
@@ -146,11 +160,11 @@
                             <path d="m9 14 2 2 4-4"/>
                         </svg>
                     </span>
-                    <span class="activity-nav-label">Điểm danh của tôi</span>
+                    <span class="activity-nav-label">Điểm danh</span>
                 </a>
                 <a class="activity-nav-item <%= "assessments".equals(navActive) ? "active" : "" %>"
                    href="<%= ctx %>/assessment?action=list"
-                   title="Bài đánh giá của tôi"
+                   title="Bài thu hoạch"
                    <%= "assessments".equals(navActive) ? "aria-current=\"page\"" : "" %>>
                     <span class="activity-nav-icon" aria-hidden="true">
                         <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
@@ -159,7 +173,7 @@
                             <path d="M9 12h6"/><path d="M9 16h6"/>
                         </svg>
                     </span>
-                    <span class="activity-nav-label">Bài đánh giá của tôi</span>
+                    <span class="activity-nav-label">Bài đánh giá</span>
                 </a>
                 <% } %>
                 <% if (navAdmin || navStaff) { %>
@@ -175,20 +189,6 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label">Tuyển ban tổ chức</span>
-                </a>
-                <% } else if (navStudent) { %>
-                <a class="activity-nav-item <%= "recruitment".equals(navActive) && !"myApplications".equals(actionParam) ? "active" : "" %>"
-                   href="<%= ctx %>/organizer-recruitment"
-                   title="Ứng tuyển BTC"
-                   <%= "recruitment".equals(navActive) && !"myApplications".equals(actionParam) ? "aria-current=\"page\"" : "" %>>
-                    <span class="activity-nav-icon" aria-hidden="true">
-                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M19 8v6"/><path d="M22 11h-6"/>
-                        </svg>
-                    </span>
-                    <span class="activity-nav-label">Ứng tuyển BTC</span>
                 </a>
                 <% } %>
                 <% if (navCanTakeAttendance) { %>
@@ -253,6 +253,21 @@
                         </svg>
                     </span>
                     <span class="activity-nav-label"><%= navStudent ? "Điểm hoạt động" : "Điểm hoạt động" %></span>
+                </a>
+                <% } %>
+                <% if (navStudent) { %>
+                <a class="activity-nav-item <%= "activity-feedback".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/activity-feedback"
+                   title="Feedback hoạt động"
+                        <%= "activity-feedback".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                       <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                           <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>
+                           <path d="M8 10h8M8 14h5"/>
+                       </svg>
+                    </span>
+                    <span class="activity-nav-label">Feedback hoạt động</span>
+                    <span class="feedback-nav-badge" id="feedbackNavBadge" hidden>0</span>
                 </a>
                 <% } %>
                 <% if (!navStudent) { %>
@@ -406,41 +421,51 @@
 
         <!-- Nhóm: HỖ TRỢ SINH VIÊN -->
         <% if (navStudent) { %>
-        <span class="activity-nav-group">Hỗ trợ sinh viên</span>
-        <a class="activity-nav-item <%= "student-qa".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-qa"
-           title="Hỏi &amp; Đáp"
-           <%= "student-qa".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">
-                <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                    <path d="M12 17h.01"/>
+        <div class="activity-nav-accordion is-open <%= isStudentSupportGroupActive ? "has-active" : "" %>"
+             data-group="student-support">
+            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Hỗ trợ sinh viên">
+                <span class="activity-nav-icon" aria-hidden="true">
+                    <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="m4.93 4.93 4.24 4.24"/>
+                        <path d="m14.83 9.17 4.24-4.24"/>
+                        <path d="m14.83 14.83 4.24 4.24"/>
+                        <path d="m9.17 14.83-4.24 4.24"/>
+                    </svg>
+                </span>
+                <span class="activity-nav-label">Hỗ trợ sinh viên</span>
+                <svg class="sidebar-svg-icon activity-nav-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
                 </svg>
-            </span>
-            <span class="activity-nav-label">Hỏi &amp; Đáp</span>
-        </a>
-        <a class="activity-nav-item <%= "student-inbox".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-inbox"
-           title="Hộp thư của tôi"
-           <%= "student-inbox".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">
-                <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-            </span>
-            <span class="activity-nav-label">Hộp thư của tôi</span>
-        </a>
-        <a class="activity-nav-item <%= "activity-feedback".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/activity-feedback"
-           title="Feedback hoạt động"
-           <%= "activity-feedback".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">
-               <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
-                   <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/>
-                   <path d="M8 10h8M8 14h5"/>
-               </svg>
-            </span>
-            <span class="activity-nav-label">Feedback hoạt động</span>
-            <span class="feedback-nav-badge" id="feedbackNavBadge" hidden>0</span>
-        </a>
+            </button>
+            <div class="activity-nav-submenu">
+                <a class="activity-nav-item <%= "student-qa".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/student-qa"
+                   title="Hỏi &amp; Đáp"
+                        <%= "student-qa".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                            <path d="M12 17h.01"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Hỏi &amp; Đáp</span>
+                </a>
+                <a class="activity-nav-item <%= "student-inbox".equals(navActive) ? "active" : "" %>"
+                   href="<%= ctx %>/student-inbox"
+                   title="Hộp thư của tôi"
+                        <%= "student-inbox".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Hộp thư</span>
+                </a>
+            </div>
+        </div>
         <% } %>
     </nav>
 

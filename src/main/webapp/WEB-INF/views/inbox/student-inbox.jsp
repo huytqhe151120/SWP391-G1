@@ -26,11 +26,6 @@
             <h1>Hộp thư của tôi</h1>
             <p>Trao đổi riêng với ban tổ chức hoặc nhân viên hỗ trợ.</p>
         </div>
-        <nav class="hero-nav" aria-label="Điều hướng hộp thư">
-            <a href="${pageContext.request.contextPath}/home">Trang chủ</a>
-            <a href="${pageContext.request.contextPath}/student-qa">Hỏi &amp; Đáp</a>
-            <a class="active" href="${pageContext.request.contextPath}/student-inbox" aria-current="page">Hộp thư</a>
-        </nav>
     </header>
 
     <section class="inbox-shell" aria-labelledby="inbox-title">

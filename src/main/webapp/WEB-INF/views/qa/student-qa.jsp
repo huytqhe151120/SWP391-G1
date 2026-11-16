@@ -3,43 +3,42 @@
 <%@ taglib prefix="dt" uri="http://swp391.g1/datetime" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <c:set var="activeNav" value="" scope="request"/>
+<c:set var="rcTitle" value="Hỏi & Đáp" scope="request"/>
+<c:set var="rcHero" value="Kênh hỏi đáp" scope="request"/>
+<c:set var="rcEyebrow" value="EAMS / KÊNH HỖ TRỢ" scope="request"/>
+<c:set var="rcSubtitle" value="Đặt câu hỏi và nhận phản hồi từ bộ phận phụ trách." scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hỏi &amp; Đáp - SWP391-G1</title>
+    <title><c:out value="${rcTitle}"/> | SWP391-G1</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/activity.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/student-qa.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-theme.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/support-pagination.css?v=20261113">
 </head>
 <body class="support-page student-qa-page">
-<div class="activity-app-shell">
+<div class="activity-app-shell hero-scroll">
     <jsp:include page="/WEB-INF/views/layout/app-sidebar.jsp"/>
     <div class="activity-app-main-wrapper">
         <jsp:include page="/WEB-INF/views/layout/app-navigation.jsp"/>
-        <div class="activity-app-main">
-<header class="topbar">
-    <a class="brand" href="${pageContext.request.contextPath}/home">
-        <span class="brand-mark" aria-hidden="true">Q</span>
-        <span>Hỏi &amp; Đáp sinh viên</span>
-    </a>
-    <a class="back-link" href="${pageContext.request.contextPath}/home">Về trang chủ</a>
-</header>
-
-<main class="qa-page">
-    <section class="intro" aria-labelledby="page-title">
-        <div>
-            <p class="eyebrow">KÊNH HỖ TRỢ</p>
-            <h1 id="page-title">Gửi câu hỏi, nhận câu trả lời rõ ràng</h1>
-            <p class="intro-copy">Bạn có thể xem các câu hỏi đã được trả lời. Câu hỏi đang chờ chỉ hiển thị với chính bạn và bộ phận phụ trách.</p>
-        </div>
-        <div class="student-chip">
-            <span class="student-avatar">SV</span>
-            <span><strong><c:out value="${student.name}"/></strong><small><c:out value="${student.code}"/></small></span>
-        </div>
-    </section>
+        <main class="activity-app-main page activity-list-page">
+            <c:if test="${not empty rcHero}">
+                <header class="activity-hero">
+                    <div class="activity-hero-copy">
+                        <span class="eyebrow"><c:out value="${rcEyebrow}"/></span>
+                        <h1><c:out value="${rcHero}"/></h1>
+                        <p><c:out value="${rcSubtitle}"/></p>
+                    </div>
+                    <div class="student-chip">
+                        <span class="student-avatar">SV</span>
+                        <span><strong><c:out value="${student.name}"/></strong><small><c:out value="${student.code}"/></small></span>
+                    </div>
+                </header>
+            </c:if>
 
     <c:if test="${param.msg == 'created'}">
         <div class="notice notice-success" role="status">Câu hỏi đã được gửi và đang chờ phản hồi.</div>
@@ -127,10 +126,11 @@
             </c:choose>
         </section>
     </div>
-</main>
-        </div>
+        </main>
     </div>
 </div>
+<script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
+<script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
 <script src="${pageContext.request.contextPath}/assets/js/support-pagination.js?v=20261113"></script>
 </body>
 </html>
