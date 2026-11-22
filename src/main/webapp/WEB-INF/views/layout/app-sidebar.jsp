@@ -74,7 +74,10 @@
 
         <!-- 1. Quản lý Hoạt động -->
         <div class="activity-nav-accordion is-open <%= isActivityGroupActive ? "has-active" : "" %>" data-group="activity">
-            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="true" title="Hoạt động">
+            <button type="button"
+                    class="activity-nav-accordion-trigger"
+                    aria-expanded="true"
+                    title="<%= navStudent ? "Hoạt động" : "Quản lý Hoạt động" %>">
                 <span class="activity-nav-icon" aria-hidden="true">
                     <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
                         <rect width="18" height="18" x="3" y="4" rx="2"/>
@@ -83,7 +86,9 @@
                         <line x1="3" x2="21" y1="10" y2="10"/>
                     </svg>
                 </span>
-                <span class="activity-nav-label">Hoạt động</span>
+                <span class="activity-nav-label">
+                    <%= navStudent ? "Hoạt động" : "Quản lý Hoạt động" %>
+                </span>
                 <svg class="sidebar-svg-icon activity-nav-chevron" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="m6 9 6 6 6-6"/>
                 </svg>
@@ -164,7 +169,7 @@
                 </a>
                 <a class="activity-nav-item <%= "assessments".equals(navActive) ? "active" : "" %>"
                    href="<%= ctx %>/assessment?action=list"
-                   title="Bài thu hoạch"
+                   title="Bài đánh giá"
                    <%= "assessments".equals(navActive) ? "aria-current=\"page\"" : "" %>>
                     <span class="activity-nav-icon" aria-hidden="true">
                         <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
