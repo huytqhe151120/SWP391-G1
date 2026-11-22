@@ -13,4 +13,6 @@ public interface IStaffDAO extends IGenericDAO<Staff, Integer> {
     Staff findFirst();
 
     List<Staff> findByDepartmentId(int departmentId);
+
+    List<String> findDepartmentNamesByStaffId(int staffId);
 }

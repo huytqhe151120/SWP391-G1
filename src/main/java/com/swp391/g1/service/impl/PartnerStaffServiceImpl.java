@@ -51,6 +51,14 @@ public class PartnerStaffServiceImpl implements IPartnerStaffService {
     }
 
     @Override
+    public PartnerStaff getPartnerStaffByAccountId(int accountId) {
+        if (accountId <= 0) {
+            return null;
+        }
+        return partnerStaffDAO.findByAccountId(accountId);
+    }
+
+    @Override
     public boolean createPartnerStaff(PartnerStaffRequestDTO dto) throws Exception {
         // 1. Validate dữ liệu đầu vào
         validateRequestDTO(dto, false);

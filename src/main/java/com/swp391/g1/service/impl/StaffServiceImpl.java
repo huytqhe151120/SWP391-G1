@@ -125,4 +125,13 @@ public class StaffServiceImpl implements IStaffService {
     private boolean isEmpty(String value) {
         return value == null || value.trim().isEmpty();
     }
+
+    @Override
+    public List<String> getDepartmentNamesByStaffId(int staffId) {
+        if (staffId <= 0) {
+            return List.of();
+        }
+
+        return staffDAO.findDepartmentNamesByStaffId(staffId);
+    }
 }

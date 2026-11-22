@@ -21,11 +21,16 @@
         else if (reqUri.contains("/organizer-recruitment")) navActive = "recruitment";
         else if (reqUri.contains("/notification")) navActive = "notifications";
         else if (reqUri.contains("/student-profile")) navActive = "student-profile";
+        else if (reqUri.contains("/staff-profile")) navActive = "staff-profile";
+        else if (reqUri.contains("/partner-staff-profile")) navActive = "partner-staff-profile";
     }
 
     String breadcrumbGroup = "";
     String breadcrumbCurrent = "Tổng quan";
     String searchAction = ctx + "/activities";
+
+    boolean isHrGroupActive = "students".equals(navActive) || "staff".equals(navActive) || "accounts".equals(navActive);
+    boolean isProfileGroupActive = "student-profile".equals(navActive) || "student-profile-edit".equals(navActive);
 
     if ("activities".equals(navActive)) {
         breadcrumbGroup = "Quản lý Hoạt động";
@@ -96,7 +101,15 @@
     } else if ("student-profile".equals(navActive)) {
         breadcrumbGroup = "Cá nhân";
         if ("edit".equals(actionParam)) breadcrumbCurrent = "Cập nhật hồ sơ";
-        else breadcrumbCurrent = "Hồ sơ cá nhân";
+        else breadcrumbCurrent = "Thông tin cá nhân";
+    } else if ("staff-profile".equals(navActive)) {
+        breadcrumbGroup = "Cá nhân";
+        if ("edit".equals(actionParam)) breadcrumbCurrent = "Cập nhật hồ sơ";
+        else breadcrumbCurrent = "Thông tin cá nhân";
+    } else if ("partner-staff-profile".equals(navActive)) {
+        breadcrumbGroup = "Cá nhân";
+        if ("edit".equals(actionParam)) breadcrumbCurrent = "Cập nhật hồ sơ";
+        else breadcrumbCurrent = "Thông tin cá nhân";
     } else if ("notifications".equals(navActive)) {
         breadcrumbGroup = "Tiện ích";
         breadcrumbCurrent = "Thông báo";

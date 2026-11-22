@@ -118,6 +118,7 @@ public class AccountServlet extends HttpServlet {
             request.setAttribute("accounts", pageAccounts);
             request.setAttribute("accountTypes", accountService.getAccountTypes());
             request.setAttribute("accountRoles", accountService.getAccountRoles());
+            request.setAttribute("rolesByType", accountService.getRolesByType());
             request.setAttribute("pageSize", pageSize);
             request.setAttribute("currentPage", currentPage);
             request.setAttribute("totalPages", totalPages);

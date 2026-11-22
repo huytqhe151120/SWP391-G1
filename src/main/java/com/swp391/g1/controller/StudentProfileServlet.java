@@ -1,8 +1,11 @@
 package com.swp391.g1.controller;
 
 import com.swp391.g1.dto.CurrentUser;
+import com.swp391.g1.model.Account;
 import com.swp391.g1.model.Student;
+import com.swp391.g1.service.IAccountService;
 import com.swp391.g1.service.IStudentService;
+import com.swp391.g1.service.impl.AccountServiceImpl;
 import com.swp391.g1.service.impl.StudentServiceImpl;
 import com.swp391.g1.util.AuthContext;
 import com.swp391.g1.util.ParamUtil;
@@ -18,11 +21,13 @@ import java.io.IOException;
 public class StudentProfileServlet extends HttpServlet {
 
     private final IStudentService studentService = new StudentServiceImpl();
+    private final IAccountService accountService = new AccountServiceImpl();
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         CurrentUser currentUser = AuthContext.getCurrentUser(request);
+        request.setAttribute("profileAccount", currentUser);
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -81,6 +86,8 @@ public class StudentProfileServlet extends HttpServlet {
         String gender = ParamUtil.getString(request, "gender", "");
         String email = ParamUtil.getString(request, "email", "");
         String phoneNumber = ParamUtil.getString(request, "phoneNumber", "");
+        String newPassword = ParamUtil.getString(request, "newPassword", "");
+        String confirmPassword = ParamUtil.getString(request, "confirmPassword", "");
         
         student.setName(name);
         student.setDob(dob);
@@ -88,9 +95,32 @@ public class StudentProfileServlet extends HttpServlet {
         student.setEmail(email);
         student.setPhoneNumber(phoneNumber);
         
-        boolean updated = studentService.updateStudent(student);
+        boolean profileUpdated = studentService.updateStudent(student);
+        boolean passwordUpdated = true;
         
-        if (updated) {
+        if (!newPassword.isEmpty() || !confirmPassword.isEmpty()) {
+            if (!newPassword.equals(confirmPassword)) {
+                request.setAttribute("message", "Mật khẩu xác nhận không khớp!");
+                request.setAttribute("messageType", "error");
+                request.setAttribute("student", student);
+                request.getRequestDispatcher("/WEB-INF/views/student-profile/edit.jsp").forward(request, response);
+                return;
+            }
+            if (newPassword.length() < 6) {
+                request.setAttribute("message", "Mật khẩu phải có ít nhất 6 ký tự!");
+                request.setAttribute("messageType", "error");
+                request.setAttribute("student", student);
+                request.getRequestDispatcher("/WEB-INF/views/student-profile/edit.jsp").forward(request, response);
+                return;
+            }
+            Account account = accountService.getAccountById(currentUser.getId());
+            if (account != null) {
+                account.setPassword(newPassword);
+                passwordUpdated = accountService.updateAccount(account).isSuccess();
+            }
+        }
+        
+        if (profileUpdated && passwordUpdated) {
             request.setAttribute("message", "Cập nhật hồ sơ thành công!");
             request.setAttribute("messageType", "success");
         } else {

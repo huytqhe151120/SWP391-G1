@@ -208,3 +208,85 @@
         flex-direction: column;
     }
 }
+
+/* ===== Bảng tài khoản: vừa khung, cân đối các cột ===== */
+
+.account-page .activity-table-wrap .account-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+/* Khoảng cách và xử lý nội dung dài */
+.account-page .account-table th,
+.account-page .account-table td {
+    min-width: 0;
+    max-width: none;
+    padding: 12px 10px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+}
+
+/* Độ rộng các cột */
+.account-page .account-table th:nth-child(1) {
+    width: 7%;
+}
+
+.account-page .account-table th:nth-child(2) {
+    width: 22%;
+}
+
+.account-page .account-table th:nth-child(3) {
+    width: 19%;
+}
+
+.account-page .account-table th:nth-child(4) {
+    width: 22%;
+}
+
+.account-page .account-table th:nth-child(5) {
+    width: 17%;
+}
+
+.account-page .account-table th:nth-child(6) {
+    width: 13%;
+}
+
+/* Căn trái: Tên đăng nhập, Loại, Vai trò */
+.account-page .account-table th:nth-child(2),
+.account-page .account-table td:nth-child(2),
+.account-page .account-table th:nth-child(3),
+.account-page .account-table td:nth-child(3),
+.account-page .account-table th:nth-child(4),
+.account-page .account-table td:nth-child(4) {
+    text-align: left;
+}
+
+/* Căn giữa: ID, Trạng thái, Thao tác */
+.account-page .account-table th:nth-child(1),
+.account-page .account-table td:nth-child(1),
+.account-page .account-table th:nth-child(5),
+.account-page .account-table td:nth-child(5),
+.account-page .account-table th:nth-child(6),
+.account-page .account-table td:nth-child(6) {
+    text-align: center;
+}
+
+/* Các nút thao tác */
+.account-page .account-table .activity-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Nhãn trạng thái */
+.account-page .account-table .account-status {
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+}

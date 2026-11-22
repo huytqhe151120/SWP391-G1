@@ -25,4 +25,6 @@ public interface IStaffService {
     boolean updateStaff(Staff staff) throws Exception;
 
     boolean deleteStaff(int id);
+
+    List<String> getDepartmentNamesByStaffId(int staffId);
 }

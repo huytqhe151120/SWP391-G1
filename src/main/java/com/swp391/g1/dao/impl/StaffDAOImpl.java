@@ -287,4 +287,38 @@ public class StaffDAOImpl implements IStaffDAO {
             ps.setInt(parameterIndex, accountId);
         }
     }
+
+    @Override
+    public List<String> findDepartmentNamesByStaffId(int staffId) {
+        List<String> names = new ArrayList<>();
+
+        String sql = """
+            SELECT DISTINCT d.name
+            FROM dbo.staff_assignment sa
+            JOIN dbo.department d ON d.id = sa.department_id
+            WHERE sa.staff_id = ?
+            ORDER BY d.name
+            """;
+
+        try (Connection connection = DBContext.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, staffId);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    String name = rs.getString("name");
+
+                    if (name != null && !name.isBlank()) {
+                        names.add(name);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(
+                    "Không thể tải đơn vị công tác của nhân viên.", e);
+        }
+
+        return names;
+    }
 }

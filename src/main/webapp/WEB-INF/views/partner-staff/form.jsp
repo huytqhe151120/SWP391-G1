@@ -2,6 +2,7 @@
 <%--@elvariable id="formData" type="com.swp391.g1.dto.request.PartnerStaffRequestDTO"--%>
 <%--@elvariable id="partnerStaff" type="com.swp391.g1.model.PartnerStaff"--%>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="selectedCompany" value="${not empty formData ? formData.companyId : partnerStaff.companyId}"/>
 <c:set var="selectedGender" value="${not empty formData ? formData.gender : (partnerStaff.gender == null ? '' : (partnerStaff.gender ? '1' : '0'))}"/>
 <c:set var="selectedStatus" value="${not empty formData ? formData.status : partnerStaff.status}"/>
@@ -13,7 +14,6 @@
         <c:set var="dobValue" value="${fn:substring(partnerStaff.dob, 8, 10)}-${fn:substring(partnerStaff.dob, 5, 7)}-${fn:substring(partnerStaff.dob, 0, 4)}"/>
     </c:when>
 </c:choose>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <c:set var="activeNav" value="partner-staff" scope="request"/>
 <!DOCTYPE html>
 <html lang="vi">

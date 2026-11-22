@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261110-3">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/action-menu.css?v=20261107-2">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/hero-scroll.css?v=20261107-2">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/account.css?v=20261117-1">
 </head>
 <body>
 <div class="activity-app-shell hero-scroll">
@@ -101,8 +102,14 @@
                     <label for="filter-role">Vai trò</label>
                     <select id="filter-role" name="role">
                         <option value="">Tất cả</option>
-                        <c:forEach items="${accountRoles}" var="r">
-                            <option value="${fn:escapeXml(r)}" ${r == filterRole ? 'selected' : ''}><c:out value="${r}"/></option>
+                        <c:forEach items="${rolesByType}" var="entry">
+                            <c:forEach items="${entry.value}" var="r">
+                                <option value="${fn:escapeXml(r)}"
+                                        data-type="${fn:escapeXml(entry.key)}"
+                                    ${r == filterRole ? 'selected' : ''}>
+                                    <c:out value="${r}"/>
+                                </option>
+                            </c:forEach>
                         </c:forEach>
                     </select>
                 </div>
@@ -262,5 +269,6 @@
 </div>
 <script src="${pageContext.request.contextPath}/assets/js/action-menu.js?v=5"></script>
 <script src="${pageContext.request.contextPath}/assets/js/hero-scroll.js?v=1"></script>
+<script src="${pageContext.request.contextPath}/assets/js/account-filter.js?v=20261117-1"></script>
 </body>
 </html>

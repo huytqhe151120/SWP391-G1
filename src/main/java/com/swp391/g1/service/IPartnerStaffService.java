@@ -2,6 +2,7 @@ package com.swp391.g1.service;
 
 import com.swp391.g1.dto.request.PartnerStaffRequestDTO;
 import com.swp391.g1.dto.response.PartnerStaffResponseDTO;
+import com.swp391.g1.model.PartnerStaff;
 
 import java.util.List;
 
@@ -15,6 +16,9 @@ public interface IPartnerStaffService {
 
     // Lấy chi tiết nhân viên theo ID
     PartnerStaffResponseDTO getPartnerStaffById(int id);
+
+    // Lấy nhân viên theo account ID
+    PartnerStaff getPartnerStaffByAccountId(int accountId);
 
     // Tạo mới nhân viên đối tác
     boolean createPartnerStaff(PartnerStaffRequestDTO requestDTO) throws Exception;

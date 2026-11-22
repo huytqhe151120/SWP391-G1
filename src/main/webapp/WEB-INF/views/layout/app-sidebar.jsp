@@ -8,13 +8,17 @@
     boolean navAdmin = "ADMIN".equals(navType);
     boolean navStaff = "STAFF".equals(navType);
     boolean navStudent = "STUDENT".equals(navType);
+    boolean navPartnerStaff = "PARTNER_STAFF".equals(navType);
     boolean navCanTakeAttendance = AccessPolicy.canTakeAttendance(navUser);
     Object navActiveAttr = request.getAttribute("activeNav");
     String navActive = navActiveAttr == null ? "" : navActiveAttr.toString();
     String reqUri = request.getRequestURI() == null ? "" : request.getRequestURI();
     String actionParam = request.getParameter("action") == null ? "" : request.getParameter("action");
     if (navActive.isEmpty()) {
-        if (reqUri.contains("/qa-management") || reqUri.contains("/answer-question")) navActive = "qa-management";
+        if (reqUri.contains("/student-profile")) navActive = "student-profile";
+        else if (reqUri.contains("/staff-profile")) navActive = "staff-profile";
+        else if (reqUri.contains("/partner-staff-profile")) navActive = "partner-staff-profile";
+        else if (reqUri.contains("/qa-management") || reqUri.contains("/answer-question")) navActive = "qa-management";
         else if (reqUri.contains("/organizer-inbox") || reqUri.contains("/organizer-chat")) navActive = "organizer-inbox";
         else if (reqUri.contains("/student-qa")) navActive = "student-qa";
         else if (reqUri.contains("/student-inbox") || reqUri.contains("/student-chat")) navActive = "student-inbox";
@@ -35,6 +39,9 @@
             || "accounts".equals(navActive);
     boolean isPartnerGroupActive = "partner-companies".equals(navActive)
             || "partner-staff".equals(navActive);
+    boolean isProfileGroupActive = "student-profile".equals(navActive) || "student-profile-edit".equals(navActive);
+    boolean isStaffProfileGroupActive = "staff-profile".equals(navActive) || "staff-profile-edit".equals(navActive);
+    boolean isPartnerStaffProfileGroupActive = "partner-staff-profile".equals(navActive) || "partner-staff-profile-edit".equals(navActive);
 
     String ctx = request.getContextPath();
     String displayName = navUser == null || navUser.getDisplayName() == null ? "" : navUser.getDisplayName().trim();
@@ -361,29 +368,128 @@
 
         <!-- Nhóm: CÁ NHÂN (Sinh viên) -->
         <% if (navStudent) { %>
-        <span class="activity-nav-group">Cá nhân</span>
-        <a class="activity-nav-item <%= "student-profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-profile"
-           title="Hồ sơ cá nhân"
-           <%= "student-profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">
-                <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
+        <div class="activity-nav-accordion <%= isProfileGroupActive ? "is-open has-active" : "" %>" data-group="profile">
+            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="<%= isProfileGroupActive ? "true" : "false" %>" title="Cá nhân">
+                <span class="activity-nav-icon" aria-hidden="true">
+                    <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </span>
+                <span class="activity-nav-label">Cá nhân</span>
+                <svg class="sidebar-svg-icon activity-nav-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
                 </svg>
-            </span>
-            <span class="activity-nav-label">Hồ sơ cá nhân</span>
-        </a>
-        <a class="activity-nav-item <%= "student-profile-edit".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-profile?action=edit"
-           title="Cập nhật hồ sơ"
-           <%= "student-profile-edit".equals(navActive) ? "aria-current=\"page\"" : "" %>>
-            <span class="activity-nav-icon" aria-hidden="true">
-                <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </button>
+            <div class="activity-nav-submenu">
+                <a class="activity-nav-item <%= "student-profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-profile"
+                   title="Thông tin cá nhân"
+                   <%= "student-profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Thông tin cá nhân</span>
+                </a>
+                <a class="activity-nav-item <%= "student-profile-edit".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/student-profile?action=edit"
+                   title="Cập nhật hồ sơ"
+                   <%= "student-profile-edit".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Cập nhật hồ sơ</span>
+                </a>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Nhóm: CÁ NHÂN (Staff) -->
+        <% if (navStaff) { %>
+        <div class="activity-nav-accordion <%= isStaffProfileGroupActive ? "is-open has-active" : "" %>" data-group="staff-profile">
+            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="<%= isStaffProfileGroupActive ? "true" : "false" %>" title="Cá nhân">
+                <span class="activity-nav-icon" aria-hidden="true">
+                    <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </span>
+                <span class="activity-nav-label">Cá nhân</span>
+                <svg class="sidebar-svg-icon activity-nav-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
                 </svg>
-            </span>
-            <span class="activity-nav-label">Cập nhật hồ sơ</span>
-        </a>
+            </button>
+            <div class="activity-nav-submenu">
+                <a class="activity-nav-item <%= "staff-profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/staff-profile"
+                   title="Thông tin cá nhân"
+                   <%= "staff-profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Thông tin cá nhân</span>
+                </a>
+                <a class="activity-nav-item <%= "staff-profile-edit".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/staff-profile?action=edit"
+                   title="Cập nhật hồ sơ"
+                   <%= "staff-profile-edit".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Cập nhật hồ sơ</span>
+                </a>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Nhóm: CÁ NHÂN (Partner Staff) -->
+        <% if (navPartnerStaff) { %>
+        <div class="activity-nav-accordion <%= isPartnerStaffProfileGroupActive ? "is-open has-active" : "" %>" data-group="partner-staff-profile">
+            <button type="button" class="activity-nav-accordion-trigger" aria-expanded="<%= isPartnerStaffProfileGroupActive ? "true" : "false" %>" title="Cá nhân">
+                <span class="activity-nav-icon" aria-hidden="true">
+                    <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </span>
+                <span class="activity-nav-label">Cá nhân</span>
+                <svg class="sidebar-svg-icon activity-nav-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            </button>
+            <div class="activity-nav-submenu">
+                <a class="activity-nav-item <%= "partner-staff-profile".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-staff-profile"
+                   title="Thông tin cá nhân"
+                   <%= "partner-staff-profile".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Thông tin cá nhân</span>
+                </a>
+                <a class="activity-nav-item <%= "partner-staff-profile-edit".equals(navActive) ? "active" : "" %>" href="<%= ctx %>/partner-staff-profile?action=edit"
+                   title="Cập nhật hồ sơ"
+                   <%= "partner-staff-profile-edit".equals(navActive) ? "aria-current=\"page\"" : "" %>>
+                    <span class="activity-nav-icon" aria-hidden="true">
+                        <svg class="sidebar-svg-icon" viewBox="0 0 24 24">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </span>
+                    <span class="activity-nav-label">Cập nhật hồ sơ</span>
+                </a>
+            </div>
+        </div>
         <% } %>
 
         <!-- Nhóm: HỖ TRỢ SINH VIÊN -->
@@ -492,9 +598,14 @@
                 if (hasActive) {
                     acc.classList.add('is-open');
                     trigger.setAttribute('aria-expanded', 'true');
+                    // Save state when has active
+                    localStorage.setItem(GROUP_PREFIX + groupName, '1');
                 } else if (saved === '0') {
                     acc.classList.remove('is-open');
                     trigger.setAttribute('aria-expanded', 'false');
+                } else if (saved === '1') {
+                    acc.classList.add('is-open');
+                    trigger.setAttribute('aria-expanded', 'true');
                 }
             } catch (e) {}
 
