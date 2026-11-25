@@ -14,11 +14,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Lớp triển khai DAO bằng JDBC cho bảng phân công nhân sự nội bộ {@code activity_staff}.
+ * Hỗ trợ truy vấn danh sách nhân sự phân công, nhãn đơn vị theo nhân sự, kiểm tra thuộc đơn vị và thêm/xóa phân công an toàn theo trạng thái hoạt động.
+ */
 public class ActivityStaffDAOImpl implements IActivityStaffDAO {
 
+    /**
+     * Lấy danh sách nhân sự đã được phân công vào hoạt động kèm thông tin cá nhân, chức vụ và đơn vị ưu tiên.
+     *
+     * @param activityId ID hoạt động cần tra cứu
+     * @return Danh sách {@link ActivityStaffResponseDTO} sắp xếp theo thời điểm phân công mới nhất trước
+     */
     @Override
     public List<ActivityStaffResponseDTO> findStaffsByActivityId(int activityId) {
         List<ActivityStaffResponseDTO> list = new ArrayList<>();
+        // Truy vấn kết hợp OUTER APPLY để lấy 1 chức vụ/đơn vị đại diện của nhân sự trong phạm vi các đơn vị của hoạt động,
+        // ưu tiên đơn vị phụ trách chính (priority = 0) trước các đơn vị đồng phụ trách (priority = 1)
         String sql = """
                 SELECT ast.activity_id, ast.staff_id, ast.assigned_on,
                        s.code AS staff_code, s.name AS staff_name, s.gender AS staff_gender, s.status AS staff_status,
@@ -44,15 +56,18 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             try (ResultSet rs = ps.executeQuery()) {
+                // Duyệt từng dòng kết quả và ánh xạ sang ActivityStaffResponseDTO
                 while (rs.next()) {
                     ActivityStaffResponseDTO dto = new ActivityStaffResponseDTO();
                     dto.setActivityId(rs.getInt("activity_id"));
                     dto.setStaffId(rs.getInt("staff_id"));
                     Timestamp ts = rs.getTimestamp("assigned_on");
+                    // Chuyển thời điểm phân công sang LocalDateTime nếu khác null
                     dto.setAssignedOn(ts == null ? null : ts.toLocalDateTime());
                     dto.setStaffCode(rs.getString("staff_code"));
                     dto.setStaffName(rs.getString("staff_name"));
                     boolean gender = rs.getBoolean("staff_gender");
+                    // Nếu cột gender bị NULL trong DB thì để null; ngược lại true -> "Nam", false -> "Nữ"
                     dto.setStaffGender(rs.wasNull() ? null : (gender ? "Nam" : "Nữ"));
                     dto.setStaffStatus(rs.getString("staff_status"));
                     dto.setPosition(rs.getString("staff_position"));
@@ -62,14 +77,23 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
                 }
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi truy vấn danh sách nhân sự của hoạt động
             throw new IllegalStateException("Failed to find assigned staffs for activity " + activityId, e);
         }
         return list;
     }
 
+    /**
+     * Lấy bản đồ nhãn đơn vị hiển thị cho từng nhân sự thuộc phạm vi các đơn vị của hoạt động.
+     * Nếu một nhân sự thuộc nhiều đơn vị tham gia hoạt động, các nhãn được nối bằng dấu phẩy theo thứ tự ưu tiên đơn vị phụ trách chính trước.
+     *
+     * @param activityId ID hoạt động
+     * @return Map ánh xạ {@code staffId -> "CODE - Name, ..."}
+     */
     @Override
     public Map<Integer, String> findDepartmentLabelsByStaff(int activityId) {
         Map<Integer, String> labels = new LinkedHashMap<>();
+        // Lấy tất cả cặp (nhân sự, đơn vị) thuộc đơn vị phụ trách chính hoặc đồng phụ trách, sắp xếp ưu tiên đơn vị chính rồi theo mã đơn vị
         String sql = """
                 SELECT DISTINCT sa.staff_id, d.code, d.name,
                        CASE WHEN d.id = ea.responsible_department_id THEN 0 ELSE 1 END AS priority
@@ -86,19 +110,30 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             try (ResultSet rs = ps.executeQuery()) {
+                // Duyệt từng dòng và gộp nhãn đơn vị theo staffId bằng phương thức merge
                 while (rs.next()) {
                     String label = rs.getString("code") + " - " + rs.getString("name");
                     labels.merge(rs.getInt("staff_id"), label, (a, b) -> a + ", " + b);
                 }
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi tải nhãn đơn vị theo nhân sự
             throw new IllegalStateException("Failed to find department labels for activity " + activityId, e);
         }
         return labels;
     }
 
+    /**
+     * Thêm bản ghi phân công nhân sự vào hoạt động với thời gian phân công theo múi giờ Việt Nam (GMT+7).
+     * Câu lệnh SQL kiểm tra nguyên tử (atomic) điều kiện hoạt động vẫn ở trạng thái {@code UPCOMING} và chưa tới {@code start_time} (UTC).
+     *
+     * @param activityId ID hoạt động
+     * @param staffId    ID nhân sự được phân công
+     * @return {@code true} nếu chèn thành công 1 dòng, {@code false} nếu hoạt động không còn thỏa điều kiện
+     */
     @Override
     public boolean insert(int activityId, int staffId) {
+        // Dùng INSERT ... SELECT ... WHERE EXISTS để đảm bảo ràng buộc thời gian ngay tại tầng DB, tránh race condition
         String sql = """
                 INSERT INTO activity_staff (activity_id, staff_id, assigned_on)
                 SELECT ?, ?, CAST(SWITCHOFFSET(SYSDATETIMEOFFSET(), '+07:00') AS DATETIME2)
@@ -118,12 +153,21 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
             ps.setInt(3, activityId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi phân công nhân sự vào hoạt động
             throw new IllegalStateException("Failed to assign staff to activity.", e);
         }
     }
 
+    /**
+     * Xóa bản ghi phân công nhân sự khỏi hoạt động, chỉ thực thi khi hoạt động vẫn {@code UPCOMING} và chưa bắt đầu.
+     *
+     * @param activityId ID hoạt động
+     * @param staffId    ID nhân sự cần gỡ
+     * @return {@code true} nếu có bản ghi bị xóa, ngược lại {@code false}
+     */
     @Override
     public boolean delete(int activityId, int staffId) {
+        // JOIN với extracurricular_activity để ràng buộc chỉ cho xóa trước thời điểm bắt đầu (so sánh UTC)
         String sql = """
                 DELETE ast
                 FROM activity_staff ast
@@ -140,10 +184,18 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
             ps.setInt(2, staffId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi gỡ nhân sự khỏi hoạt động
             throw new IllegalStateException("Failed to delete assigned staff from activity.", e);
         }
     }
 
+    /**
+     * Kiểm tra nhân sự đã được phân công vào hoạt động hay chưa.
+     *
+     * @param activityId ID hoạt động
+     * @param staffId    ID nhân sự
+     * @return {@code true} nếu đã tồn tại bản ghi phân công, ngược lại {@code false}
+     */
     @Override
     public boolean exists(int activityId, int staffId) {
         String sql = "SELECT 1 FROM activity_staff WHERE activity_id = ? AND staff_id = ?";
@@ -156,12 +208,22 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
                 return rs.next();
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi kiểm tra tồn tại phân công
             throw new IllegalStateException("Failed to check if staff is assigned to activity.", e);
         }
     }
 
+    /**
+     * Kiểm tra nhân sự có đang ở trạng thái {@code ACTIVE} và thuộc ít nhất một đơn vị đang {@code ACTIVE}
+     * là đơn vị phụ trách chính hoặc đơn vị đồng phụ trách của hoạt động hay không.
+     *
+     * @param staffId    ID nhân sự
+     * @param activityId ID hoạt động
+     * @return {@code true} nếu nhân sự thỏa điều kiện thuộc đơn vị của hoạt động
+     */
     @Override
     public boolean isStaffInActivityDepartments(int staffId, int activityId) {
+        // Kiểm tra chéo giữa staff, staff_assignment, department và danh sách đơn vị của hoạt động
         String sql = """
                 SELECT 1
                 FROM staff s
@@ -182,10 +244,18 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
                 return rs.next();
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi kiểm tra nhân sự thuộc đơn vị hoạt động
             throw new IllegalStateException("Failed to check if staff belongs to activity departments.", e);
         }
     }
 
+    /**
+     * Kiểm tra nhân sự có thuộc một đơn vị cụ thể hay không thông qua bảng {@code staff_assignment}.
+     *
+     * @param staffId      ID nhân sự
+     * @param departmentId ID đơn vị
+     * @return {@code true} nếu có phân công nhân sự tại đơn vị đó
+     */
     @Override
     public boolean isStaffInDepartment(int staffId, int departmentId) {
         String sql = "SELECT 1 FROM staff_assignment WHERE staff_id = ? AND department_id = ?";
@@ -198,6 +268,7 @@ public class ActivityStaffDAOImpl implements IActivityStaffDAO {
                 return rs.next();
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL khi kiểm tra nhân sự thuộc đơn vị
             throw new IllegalStateException("Failed to check if staff belongs to department.", e);
         }
     }

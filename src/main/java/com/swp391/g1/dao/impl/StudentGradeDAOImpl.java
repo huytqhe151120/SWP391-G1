@@ -17,8 +17,18 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Triển khai tầng DAO truy vấn và đồng bộ dữ liệu điểm hoạt động ngoại khóa của sinh viên từ SQL Server.
+ * Chịu trách nhiệm đồng bộ bảng tổng hợp học kỳ ({@code student_semester_result}) và ánh xạ chi tiết điểm từng hoạt động.
+ */
 public class StudentGradeDAOImpl implements IStudentGradeDAO {
 
+    /**
+     * Câu lệnh MERGE (UPSERT) đồng bộ bảng tổng hợp điểm theo học kỳ {@code student_semester_result}
+     * từ dữ liệu tham gia ({@code activity_participant}) và kết quả từng hoạt động ({@code student_activity_result}).
+     * Tự động gom nhóm theo cặp {@code (student_id, semester_id)} để tính tổng số hoạt động đăng ký/tham dự,
+     * tổng các điểm thành phần, điểm cộng ({@code final_point > 0}), điểm trừ ({@code ABS(final_point < 0)}) và điểm cuối.
+     */
     private static final String SYNC_SEMESTER_RESULTS_SQL = """
             MERGE dbo.student_semester_result AS target
             USING (
@@ -70,6 +80,10 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                 );
             """;
 
+    /**
+     * Câu truy vấn tổng hợp điểm của sinh viên trong một học kỳ cụ thể ({@code ?} = {@code semesterId}),
+     * LEFT JOIN chuỗi đơn vị học thuật (lớp -> chương trình -> ngành -> khoa) và bảng kết quả học kỳ.
+     */
     private static final String SUMMARY_BY_SEMESTER_SQL = """
             SELECT s.id AS student_id,
                    s.code AS student_code,
@@ -100,6 +114,10 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
             LEFT JOIN dbo.student_semester_result ssr ON ssr.student_id = s.id AND ssr.semester_id = ?
             """;
 
+    /**
+     * Câu truy vấn cộng dồn tổng hợp điểm của sinh viên xuyên suốt tất cả học kỳ (gán {@code semester_id = 0}),
+     * dùng hàm {@code SUM} kết hợp với {@link #SUMMARY_GROUP_BY}.
+     */
     private static final String SUMMARY_ALL_SEMESTERS_SQL = """
             SELECT s.id AS student_id,
                    s.code AS student_code,
@@ -129,10 +147,17 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
             LEFT JOIN dbo.student_semester_result ssr ON ssr.student_id = s.id
             """;
 
+    /** Mệnh đề GROUP BY đi kèm {@link #SUMMARY_ALL_SEMESTERS_SQL} để gom nhóm theo từng sinh viên. */
     private static final String SUMMARY_GROUP_BY = """
             GROUP BY s.id, s.code, s.name, mc.code, p.name, m.name, d.name
             """;
 
+    /**
+     * Câu truy vấn chi tiết điểm từng hoạt động của sinh viên:
+     * kết hợp thông tin sinh viên, hoạt động, cấp tổ chức, 3 loại hệ số (ưu tiên giá trị đã lưu trong
+     * {@code student_activity_result}, fallback theo quy tắc mặc định), thống kê chuyên cần theo buổi
+     * ({@code OUTER APPLY sess_stats}) và bản ghi lịch sử điểm danh gần nhất ({@code OUTER APPLY att_hist}).
+     */
     private static final String ACTIVITY_GRADES_SQL = """
             SELECT ap.id AS participant_id,
                    ap.student_id,
@@ -218,23 +243,36 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
             ) att_hist
             """;
 
+    /**
+     * Thực thi câu lệnh MERGE để đồng bộ bảng tổng hợp {@code student_semester_result}
+     * đảm bảo số liệu mới nhất trước khi đọc báo cáo tổng hợp điểm.
+     */
     private void syncSemesterResults(Connection conn) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(SYNC_SEMESTER_RESULTS_SQL)) {
             ps.executeUpdate();
         }
     }
 
+    /**
+     * Lấy danh sách tổng hợp điểm của tất cả sinh viên đang hoạt động cộng dồn trên mọi học kỳ.
+     */
     @Override
     public List<StudentGradeSummaryDTO> findAllStudentGradeSummaries() {
         return findAllStudentGradeSummaries(0);
     }
 
+    /**
+     * Đồng bộ bảng kết quả học kỳ rồi truy vấn danh sách tổng hợp điểm của toàn bộ sinh viên {@code ACTIVE},
+     * lọc theo {@code semesterId} (nếu {@code > 0}) hoặc cộng dồn tất cả học kỳ (nếu {@code <= 0}).
+     */
     @Override
     public List<StudentGradeSummaryDTO> findAllStudentGradeSummaries(int semesterId) {
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
         List<StudentGradeSummaryDTO> list = new ArrayList<>();
         try (Connection conn = DBContext.getConnection()) {
+            // Đồng bộ dữ liệu tổng hợp theo học kỳ trước khi truy vấn
             syncSemesterResults(conn);
+            // Nhánh truy vấn theo một học kỳ cụ thể
             if (semesterId > 0) {
                 String sql = SUMMARY_BY_SEMESTER_SQL
                         + " WHERE s.status = 'ACTIVE' "
@@ -243,11 +281,13 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                     ps.setInt(1, semesterId);
                     ps.setInt(2, semesterId);
                     try (ResultSet rs = ps.executeQuery()) {
+                        // Ánh xạ từng dòng kết quả sang StudentGradeSummaryDTO
                         while (rs.next()) {
                             list.add(mapSummary(rs));
                         }
                     }
                 }
+            // Nhánh truy vấn cộng dồn tất cả học kỳ (semesterId <= 0)
             } else {
                 String sql = SUMMARY_ALL_SEMESTERS_SQL
                         + " WHERE s.status = 'ACTIVE' "
@@ -255,30 +295,42 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                         + " ORDER BY s.code ASC";
                 try (PreparedStatement ps = conn.prepareStatement(sql);
                      ResultSet rs = ps.executeQuery()) {
+                    // Ánh xạ từng dòng tổng hợp toàn khóa của sinh viên sang DTO
                     while (rs.next()) {
                         list.add(mapSummary(rs));
                     }
                 }
             }
+        // Bọc lỗi SQL thành IllegalStateException với thông điệp nghiệp vụ rõ ràng
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể tải danh sách điểm hoạt động của sinh viên.", e);
         }
         return list;
     }
 
+    /**
+     * Lấy tổng hợp điểm của một sinh viên theo ID, cộng dồn trên tất cả học kỳ.
+     */
     @Override
     public StudentGradeSummaryDTO findStudentGradeSummaryById(int studentId) {
         return findStudentGradeSummaryById(studentId, 0);
     }
 
+    /**
+     * Đồng bộ bảng kết quả học kỳ và truy vấn tổng hợp điểm của một sinh viên theo {@code studentId}
+     * và {@code semesterId} ({@code <= 0} để cộng dồn tất cả học kỳ). Trả về {@code null} nếu không tồn tại.
+     */
     @Override
     public StudentGradeSummaryDTO findStudentGradeSummaryById(int studentId, int semesterId) {
+        // Trả về null ngay nếu studentId không hợp lệ
         if (studentId <= 0) {
             return null;
         }
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
         try (Connection conn = DBContext.getConnection()) {
+            // Đồng bộ dữ liệu tổng hợp trước khi đọc
             syncSemesterResults(conn);
+            // Nhánh lọc theo một học kỳ cụ thể
             if (semesterId > 0) {
                 String sql = SUMMARY_BY_SEMESTER_SQL
                         + " WHERE s.id = ? ";
@@ -287,9 +339,11 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                     ps.setInt(2, semesterId);
                     ps.setInt(3, studentId);
                     try (ResultSet rs = ps.executeQuery()) {
+                        // Trả về DTO nếu tìm thấy sinh viên, ngược lại trả null
                         return rs.next() ? mapSummary(rs) : null;
                     }
                 }
+            // Nhánh cộng dồn điểm xuyên suốt tất cả học kỳ của sinh viên
             } else {
                 String sql = SUMMARY_ALL_SEMESTERS_SQL
                         + " WHERE s.id = ? "
@@ -297,28 +351,39 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setInt(1, studentId);
                     try (ResultSet rs = ps.executeQuery()) {
+                        // Trả về DTO tổng hợp toàn khóa hoặc null nếu không có sinh viên
                         return rs.next() ? mapSummary(rs) : null;
                     }
                 }
             }
+        // Bắt lỗi truy vấn SQL và ném ngoại lệ tầng ứng dụng
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể tải tổng hợp điểm của sinh viên.", e);
         }
     }
 
+    /**
+     * Lấy lịch sử điểm tất cả các hoạt động mà sinh viên tham gia (không giới hạn học kỳ).
+     */
     @Override
     public List<StudentActivityGradeDTO> findActivityGradesByStudentId(int studentId) {
         return findActivityGradesByStudentId(studentId, 0);
     }
 
+    /**
+     * Lấy danh sách chi tiết điểm từng hoạt động của một sinh viên, có thể lọc thêm theo học kỳ ({@code semesterId > 0}),
+     * sắp xếp mới nhất trước theo thời gian bắt đầu hoạt động.
+     */
     @Override
     public List<StudentActivityGradeDTO> findActivityGradesByStudentId(int studentId, int semesterId) {
         List<StudentActivityGradeDTO> list = new ArrayList<>();
+        // Không truy vấn DB nếu studentId không hợp lệ
         if (studentId <= 0) {
             return list;
         }
         ExtracurricularActivityDAOImpl.ensureAttendanceSessionSchema();
         RecruitmentSchema.ensure();
+        // Ghép động điều kiện lọc học kỳ khi semesterId > 0, sắp xếp theo thời gian bắt đầu giảm dần
         String sql = ACTIVITY_GRADES_SQL
                 + " WHERE ap.student_id = ? "
                 + (semesterId > 0 ? " AND ea.semester_id = ? " : "")
@@ -326,22 +391,30 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, studentId);
+            // Gán tham số học kỳ nếu câu SQL có mệnh đề lọc theo semester_id
             if (semesterId > 0) {
                 ps.setInt(2, semesterId);
             }
             try (ResultSet rs = ps.executeQuery()) {
+                // Duyệt kết quả truy vấn và ánh xạ từng bản ghi điểm hoạt động sang DTO
                 while (rs.next()) {
                     list.add(mapActivityGrade(rs));
                 }
             }
+        // Bắt lỗi SQL và thông báo không thể tải lịch sử điểm hoạt động
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể tải lịch sử điểm hoạt động của sinh viên.", e);
         }
         return list;
     }
 
+    /**
+     * Truy vấn chi tiết điểm của một sinh viên trong một hoạt động cụ thể.
+     * Trả về {@code null} nếu tham số không hợp lệ hoặc sinh viên không tham gia hoạt động này.
+     */
     @Override
     public StudentActivityGradeDTO findActivityGradeDetail(int studentId, int activityId) {
+        // Trả về null ngay nếu studentId hoặc activityId không dương
         if (studentId <= 0 || activityId <= 0) {
             return null;
         }
@@ -354,13 +427,19 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
             ps.setInt(1, studentId);
             ps.setInt(2, activityId);
             try (ResultSet rs = ps.executeQuery()) {
+                // Ánh xạ bản ghi chi tiết nếu tồn tại, ngược lại trả về null
                 return rs.next() ? mapActivityGrade(rs) : null;
             }
+        // Bắt lỗi truy vấn SQL khi tải chi tiết điểm hoạt động
         } catch (SQLException e) {
             throw new IllegalStateException("Không thể tải chi tiết điểm của sinh viên trong hoạt động.", e);
         }
     }
 
+    /**
+     * Ánh xạ một dòng {@link ResultSet} từ truy vấn tổng hợp sang {@link StudentGradeSummaryDTO},
+     * tự động chuẩn hóa các cột điểm cộng/trừ về {@code 0} nếu null và tính fallback điểm tích lũy.
+     */
     private StudentGradeSummaryDTO mapSummary(ResultSet rs) throws SQLException {
         StudentGradeSummaryDTO dto = new StudentGradeSummaryDTO();
         dto.setStudentId(rs.getInt("student_id"));
@@ -385,14 +464,21 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         BigDecimal plus = rs.getBigDecimal("plus_points");
         BigDecimal minus = rs.getBigDecimal("minus_points");
         BigDecimal finalPt = rs.getBigDecimal("final_point");
+        // Chuẩn hóa điểm cộng/điểm trừ null sang 0 để đảm bảo phép tính và hiển thị an toàn
         if (plus == null) plus = BigDecimal.ZERO;
         if (minus == null) minus = BigDecimal.ZERO;
         dto.setTotalPlusPoints(plus);
         dto.setTotalMinusPoints(minus);
+        // Ưu tiên final_point từ DB; fallback về hiệu (điểm cộng - điểm trừ) nếu final_point null
         dto.setTotalAccumulatedPoints(finalPt != null ? finalPt : plus.subtract(minus));
         return dto;
     }
 
+    /**
+     * Ánh xạ một dòng {@link ResultSet} từ {@link #ACTIVITY_GRADES_SQL} sang {@link StudentActivityGradeDTO}.
+     * Bao gồm logic fallback tính lại điểm chuyên cần, điểm tham gia, điểm trung bình và điểm tổng kết
+     * cho dữ liệu cũ chưa có bản ghi đồng bộ trong {@code student_activity_result}.
+     */
     private StudentActivityGradeDTO mapActivityGrade(ResultSet rs) throws SQLException {
         StudentActivityGradeDTO dto = new StudentActivityGradeDTO();
         dto.setParticipantId(rs.getInt("participant_id"));
@@ -409,12 +495,15 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setActivityName(rs.getString("activity_name"));
         dto.setSemesterName(rs.getString("semester_name"));
         String actSt = rs.getString("activity_status");
+        // Chuyển đổi chuỗi trạng thái hoạt động sang enum ActivityStatus nếu có giá trị
         if (actSt != null) {
             try {
                 dto.setActivityStatus(ActivityStatus.valueOf(actSt));
+            // Bỏ qua an toàn nếu gặp mã trạng thái cũ không còn tồn tại trong enum
             } catch (IllegalArgumentException ignored) {}
         }
         Timestamp stTime = rs.getTimestamp("start_time");
+        // Chuyển đổi Timestamp sang LocalDateTime (giữ null nếu DB không có giá trị)
         dto.setStartTime(stTime == null ? null : stTime.toLocalDateTime());
         Timestamp endTime = rs.getTimestamp("end_time");
         dto.setEndTime(endTime == null ? null : endTime.toLocalDateTime());
@@ -428,10 +517,12 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setEarlyRegCoefficient(rs.getBigDecimal("reg_coeff"));
 
         String attStr = rs.getString("attendance_status");
+        // Mặc định trạng thái là NOT_YET nếu cột attendance_status trong DB đang null
         ParticipantStatus pst = attStr == null ? ParticipantStatus.NOT_YET : ParticipantStatus.valueOf(attStr);
         dto.setAttendanceStatus(pst);
         int totalSessions = Math.max(1, rs.getInt("total_sessions"));
         int attendedSessions = rs.getInt("attended_session_count");
+        // Fallback dữ liệu cũ: sinh viên có mặt nhưng bảng điểm danh theo buổi chưa có dòng nào -> tính 1 buổi có mặt
         if (attendedSessions == 0 && dto.isPresent()) {
             attendedSessions = 1;
         }
@@ -439,13 +530,16 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setAttendedSessionCount(attendedSessions);
 
         BigDecimal attScore = rs.getBigDecimal("attendance_score");
+        // Fallback tính điểm chuyên cần từ trạng thái tổng khi chưa có cả sar.attendance_score lẫn bảng theo buổi
         if (attScore == null) {
+            // Quy đổi trạng thái tổng sang điểm thô (ATTENDED=5, IN_LATE/OUT_EARLY=3, ABSENT=-5, khác=0)
             BigDecimal rawAtt = switch (pst) {
                 case ATTENDED -> new BigDecimal("5.00");
                 case IN_LATE, OUT_EARLY -> new BigDecimal("3.00");
                 case ABSENT -> new BigDecimal("-5.00");
                 default -> BigDecimal.ZERO;
             };
+            // Chia điểm thô cho tổng số buổi hoạt động và làm tròn 2 chữ số thập phân
             attScore = rawAtt.divide(BigDecimal.valueOf(totalSessions), 2, RoundingMode.HALF_UP);
         }
         dto.setAttendanceScore(attScore);
@@ -461,9 +555,12 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setParticipationGradedAt(evalAt == null ? null : evalAt.toLocalDateTime());
 
         BigDecimal partScore = rs.getBigDecimal("participation_score");
+        // Fallback tính điểm tham gia nếu chưa được lưu sẵn trong student_activity_result
         if (partScore == null) {
+            // Sinh viên có mặt: điểm tham gia = điểm chuyên cần + điểm đánh giá tham gia (mặc định 0 nếu chưa chấm)
             if (dto.isPresent()) {
                 partScore = attScore.add(evalScore == null ? BigDecimal.ZERO : evalScore);
+            // Không có mặt: điểm tham gia giữ nguyên theo điểm chuyên cần
             } else {
                 partScore = attScore;
             }
@@ -478,9 +575,12 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setSummaryGradedAt(sumAt == null ? null : sumAt.toLocalDateTime());
 
         BigDecimal avgScore = rs.getBigDecimal("average_score");
+        // Fallback tính điểm trung bình nếu chưa có giá trị đồng bộ từ DB
         if (avgScore == null) {
+            // Có mặt + yêu cầu bài thu hoạch + đã có điểm thu hoạch -> lấy trung bình cộng (điểm tham gia + điểm thu hoạch) / 2
             if (dto.isPresent() && dto.isSummaryRequired() && sumScore != null) {
                 avgScore = partScore.add(sumScore).divide(new BigDecimal("2"), 2, RoundingMode.HALF_UP);
+            // Các trường hợp còn lại -> điểm trung bình bằng đúng điểm tham gia
             } else {
                 avgScore = partScore;
             }
@@ -488,13 +588,16 @@ public class StudentGradeDAOImpl implements IStudentGradeDAO {
         dto.setAverageScore(avgScore);
 
         BigDecimal finalPt = rs.getBigDecimal("final_point");
+        // Fallback tính điểm tổng kết cuối cùng khi chưa có bản ghi student_activity_result
         if (finalPt == null) {
+            // Sinh viên có mặt: nhân điểm trung bình với cả 3 hệ số (cấp tổ chức, đăng ký sớm, ban tổ chức)
             if (dto.isPresent()) {
                 finalPt = avgScore
                         .multiply(dto.getOrgLevelCoefficient() == null ? BigDecimal.ONE : dto.getOrgLevelCoefficient())
                         .multiply(dto.getEarlyRegCoefficient() == null ? BigDecimal.ONE : dto.getEarlyRegCoefficient())
                         .multiply(dto.getOrganizerCoefficient())
                         .setScale(2, RoundingMode.HALF_UP);
+            // Không có mặt (ABSENT/NOT_YET): giữ nguyên điểm chuyên cần (không nhân hệ số)
             } else {
                 finalPt = attScore;
             }

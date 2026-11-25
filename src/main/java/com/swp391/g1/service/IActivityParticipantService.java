@@ -74,4 +74,11 @@ public interface IActivityParticipantService {
     default List<AttendanceHistoryDTO> getAttendanceHistory(int activityId, int participantId) {
         return List.of();
     }
+
+    /**
+     * Đồng bộ lại trạng thái điểm danh và bảng kết quả điểm cho toàn bộ người tham gia của hoạt động
+     * (dùng khi thay đổi cấu hình hoạt động như số buổi, cấp tổ chức, yêu cầu bài thu hoạch, học kỳ).
+     */
+    default void syncActivityResults(int activityId) {
+    }
 }

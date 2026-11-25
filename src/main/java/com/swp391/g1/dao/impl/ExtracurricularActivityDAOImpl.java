@@ -14,18 +14,35 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Lớp DAO triển khai JDBC quản lý dữ liệu hoạt động ngoại khóa ({@code extracurricular_activity}),
+ * bao gồm truy vấn chi tiết đa bảng, kiểm soát phạm vi truy cập theo vai trò cán bộ,
+ * cập nhật có điều kiện chống tranh chấp, xóa an toàn theo transaction và đồng bộ trạng thái theo thời gian UTC.
+ */
 public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityDAO {
     private static final Logger LOGGER = Logger.getLogger(ExtracurricularActivityDAOImpl.class.getName());
+    // Cờ đánh dấu schema điểm danh nhiều buổi và bảng kết quả học kỳ đã được kiểm tra/khởi tạo (dùng cho double-checked locking).
     private static volatile boolean attendanceSessionSchemaEnsured = false;
 
+    /**
+     * Đảm bảo lược đồ CSDL cho tính năng điểm danh nhiều buổi, chuẩn hóa khóa ngoại người cập nhật
+     * sang ID tài khoản (INT), bảng tổng hợp kết quả theo học kỳ và cờ công khai ({@code is_public})
+     * đã tồn tại và nhất quán. Thực thi tối đa một lần cho mỗi vòng đời ứng dụng nhờ cơ chế double-checked locking.
+     */
     public static void ensureAttendanceSessionSchema() {
+        // Bỏ qua nhanh nếu schema đã được đảm bảo ở lần gọi trước đó.
         if (attendanceSessionSchemaEnsured) {
             return;
         }
+        // Khóa đồng bộ mức lớp để tránh nhiều luồng chạy kịch bản DDL/migration cùng lúc.
         synchronized (ExtracurricularActivityDAOImpl.class) {
+            // Kiểm tra lại bên trong khối synchronized phòng trường hợp luồng khác vừa hoàn tất khởi tạo.
             if (attendanceSessionSchemaEnsured) {
                 return;
             }
+            // Kịch bản SQL idempotent: bổ sung cột số buổi điểm danh, tạo bảng điểm danh theo buổi,
+            // chuyển đổi dữ liệu cũ của created_by/updated_by từ chuỗi tên/mã sang account_id kiểu INT,
+            // đồng bộ dữ liệu điểm danh buổi 1, tạo bảng kết quả học kỳ và chuẩn hóa lại cột is_public.
             String ddl = """
                     IF COL_LENGTH('dbo.extracurricular_activity', 'attendance_session_count') IS NULL
                     BEGIN
@@ -227,20 +244,39 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 st.execute(ddl);
                 attendanceSessionSchemaEnsured = true;
             } catch (SQLException e) {
+                // Chỉ ghi cảnh báo nếu tài khoản DB thiếu quyền DDL để không làm gián đoạn luồng đọc dữ liệu chính.
                 LOGGER.log(Level.WARNING, "Could not auto-ensure attendance session schema.", e);
             }
         }
     }
 
+    /**
+     * Đọc an toàn số buổi điểm danh ({@code attendance_session_count}) từ {@link ResultSet},
+     * tự động fallback về 1 nếu cột chưa tồn tại hoặc có giá trị không dương.
+     *
+     * @param rs tập kết quả JDBC hiện tại
+     * @return số buổi điểm danh hợp lệ (>= 1)
+     */
     private int readAttendanceSessionCount(ResultSet rs) {
         try {
             int val = rs.getInt("attendance_session_count");
+            // Nếu giá trị đọc được <= 0 thì chuẩn hóa về tối thiểu 1 buổi điểm danh.
             return val > 0 ? val : 1;
         } catch (SQLException e) {
+            // Fallback về 1 nếu truy vấn không chứa cột attendance_session_count (tương thích ngược schema cũ).
             return 1;
         }
     }
 
+    /**
+     * Ánh xạ dòng hiện tại của {@link ResultSet} thành thực thể {@link ExtracurricularActivity},
+     * bao gồm chuyển đổi enum, quy đổi thời gian bắt đầu/kết thúc từ UTC về múi giờ hệ thống
+     * và tính lại trạng thái công khai hiệu lực.
+     *
+     * @param rs tập kết quả JDBC
+     * @return đối tượng {@link ExtracurricularActivity} đã điền đầy đủ thuộc tính
+     * @throws SQLException nếu xảy ra lỗi đọc dữ liệu từ cột JDBC
+     */
     private ExtracurricularActivity mapActivity(ResultSet rs) throws SQLException {
         ExtracurricularActivity activity = new ExtracurricularActivity();
         activity.setId(rs.getInt("id"));
@@ -251,6 +287,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
         activity.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
         activity.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
+        // Chuyển chuỗi tính chất hoạt động sang enum tương ứng (cho phép null).
         String nature = rs.getString("nature");
         activity.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
         activity.setSummaryRequired(rs.getBoolean("is_summary_required"));
@@ -259,22 +296,26 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         activity.setAddress(rs.getString("address"));
         activity.setDescription(rs.getString("description"));
 
+        // Chuyển đổi trạng thái hoạt động và trạng thái duyệt từ chuỗi DB sang enum (giữ null nếu DB rỗng).
         String activityStatus = rs.getString("activity_status");
         activity.setActivityStatus(activityStatus == null ? null : Enum.ActivityStatus.valueOf(activityStatus));
         String approvalStatus = rs.getString("approval_status");
         activity.setApprovalStatus(approvalStatus == null ? null : Enum.ApprovalStatus.valueOf(approvalStatus));
 
+        // Đọc thời điểm tạo bản ghi nếu không null.
         Timestamp createdAt = rs.getTimestamp("created_at");
         activity.setCreatedAt(createdAt == null ? null : createdAt.toLocalDateTime());
         activity.setActivityTypeId(rs.getInt("activity_type_id"));
         activity.setOrganizationLevelId(rs.getInt("organization_level_id"));
 
+        // Quy đổi start_time và end_time lưu theo UTC trong DB sang múi giờ địa phương hiển thị cho người dùng.
         Timestamp startTime = rs.getTimestamp("start_time");
         activity.setStartTime(startTime == null
                 ? null : DateTimeUtil.fromUtc(startTime.toLocalDateTime()));
         Timestamp endTime = rs.getTimestamp("end_time");
         activity.setEndTime(endTime == null
                 ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
+        // Hoạt động được coi là công khai nếu is_public = 1, hoặc không yêu cầu form đăng ký, hoặc không phải loại yêu cầu đăng ký.
         boolean requiresForm = rs.getBoolean("registration_form_required");
         activity.setRegistrationFormRequired(requiresForm);
         activity.setPublic(rs.getBoolean("is_public")
@@ -283,6 +324,12 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         return activity;
     }
 
+    /**
+     * Tìm danh sách hoạt động ngoại khóa theo mã hoạt động ({@code code}).
+     *
+     * @param code mã hoạt động cần tra cứu
+     * @return danh sách {@link ExtracurricularActivity} trùng mã
+     */
     @Override
     public List<ExtracurricularActivity> findByCode(String code) {
         List<ExtracurricularActivity> list = new ArrayList<>();
@@ -292,16 +339,24 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, code);
             try (ResultSet rs = ps.executeQuery()) {
+                // Duyệt từng dòng kết quả và ánh xạ sang model ExtracurricularActivity.
                 while (rs.next()) {
                     list.add(mapActivity(rs));
                 }
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to find extracurricular activities by code.", e);
         }
         return list;
     }
 
+    /**
+     * Tìm danh sách hoạt động ngoại khóa theo trạng thái hoạt động ({@code UPCOMING}, {@code ONGOING}, ...).
+     *
+     * @param status trạng thái hoạt động cần lọc
+     * @return danh sách {@link ExtracurricularActivity} khớp trạng thái
+     */
     @Override
     public List<ExtracurricularActivity> findByActivityStatus(Enum.ActivityStatus status) {
         List<ExtracurricularActivity> list = new ArrayList<>();
@@ -311,16 +366,24 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status.name());
             try (ResultSet rs = ps.executeQuery()) {
+                // Duyệt tập kết quả để ánh xạ từng hoạt động khớp trạng thái.
                 while (rs.next()) {
                     list.add(mapActivity(rs));
                 }
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to find extracurricular activities by status.", e);
         }
         return list;
     }
 
+    /**
+     * Tìm danh sách hoạt động ngoại khóa theo trạng thái phê duyệt ({@code PENDING}, {@code APPROVED}, ...).
+     *
+     * @param status trạng thái phê duyệt cần lọc
+     * @return danh sách {@link ExtracurricularActivity} khớp trạng thái phê duyệt
+     */
     @Override
     public List<ExtracurricularActivity> findByApprovalStatus(Enum.ApprovalStatus status) {
         List<ExtracurricularActivity> list = new ArrayList<>();
@@ -330,16 +393,23 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status.name());
             try (ResultSet rs = ps.executeQuery()) {
+                // Duyệt tập kết quả để ánh xạ từng hoạt động khớp trạng thái duyệt.
                 while (rs.next()) {
                     list.add(mapActivity(rs));
                 }
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to find extracurricular activities by approval status.", e);
         }
         return list;
     }
 
+    /**
+     * Lấy toàn bộ bản ghi hoạt động ngoại khóa từ bảng {@code extracurricular_activity}.
+     *
+     * @return danh sách tất cả {@link ExtracurricularActivity}
+     */
     @Override
     public List<ExtracurricularActivity> findAll() {
         List<ExtracurricularActivity> list = new ArrayList<>();
@@ -348,38 +418,66 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         try (Connection conn = DBContext.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
+            // Duyệt từng dòng trong bảng và ánh xạ thành thực thể ExtracurricularActivity.
             while (rs.next()) {
                 list.add(mapActivity(rs));
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to find all extracurricular activities.", e);
         }
         return list;
     }
 
+    /**
+     * Truy vấn toàn bộ danh sách hoạt động ngoại khóa kèm đầy đủ thông tin JOIN từ các bảng danh mục
+     * (học kỳ, loại hoạt động, cấp tổ chức, đơn vị phụ trách, cán bộ, đối tác).
+     *
+     * @return danh sách {@link ExtracurricularActivityResponseDTO} sắp xếp mới nhất trước
+     */
     @Override
     public List<ExtracurricularActivityResponseDTO> findAllWithDetails() {
         return queryActivitiesWithDetails(null, null);
     }
 
+    /**
+     * Truy vấn danh sách hoạt động chi tiết nằm trong phạm vi quản lý của một tài khoản cán bộ theo vai trò.
+     *
+     * @param accountId ID tài khoản cán bộ đang đăng nhập
+     * @param role      mã vai trò (ví dụ {@code STAFF}, {@code UNIT_HEAD}, {@code UNIT_DEPUTY_HEAD}, {@code UNIT_SECRETARY})
+     * @return danh sách hoạt động chi tiết thuộc phạm vi, hoặc danh sách rỗng nếu tài khoản/vai trò không hợp lệ
+     */
     @Override
     public List<ExtracurricularActivityResponseDTO> findAllWithDetailsForStaff(int accountId, String role) {
+        // Trả về danh sách rỗng nếu ID tài khoản không hợp lệ.
         if (accountId <= 0) {
             return List.of();
         }
+        // Xác định điều kiện WHERE theo vai trò; trả về rỗng nếu vai trò không được hỗ trợ phân phạm vi.
         String scope = staffScopePredicate(role);
         return scope == null ? List.of() : queryActivitiesWithDetails(scope, accountId);
     }
 
+    /**
+     * Kiểm tra một hoạt động cụ thể có nằm trong phạm vi quyền truy cập của tài khoản cán bộ theo vai trò hay không.
+     *
+     * @param activityId ID hoạt động cần kiểm tra
+     * @param accountId  ID tài khoản cán bộ
+     * @param role       mã vai trò của cán bộ
+     * @return {@code true} nếu hoạt động thuộc phạm vi quản lý của cán bộ, ngược lại {@code false}
+     */
     @Override
     public boolean isInStaffActivityScope(int activityId, int accountId, String role) {
+        // Từ chối ngay nếu ID hoạt động hoặc ID tài khoản không hợp lệ.
         if (activityId <= 0 || accountId <= 0) {
             return false;
         }
         String scope = staffScopePredicate(role);
+        // Nếu vai trò không có quy tắc phạm vi tương ứng thì không có quyền truy cập.
         if (scope == null) {
             return false;
         }
+        // Ghép điều kiện kiểm tra phạm vi theo vai trò vào mệnh đề WHERE để xác thực trực tiếp trên DB.
         String sql = "SELECT 1 FROM extracurricular_activity a WHERE a.id = ? AND " + scope;
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -389,11 +487,19 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 return rs.next();
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to check staff activity access.", e);
         }
     }
 
+    /**
+     * Sinh biểu thức điều kiện SQL (predicate) giới hạn phạm vi hoạt động dựa trên vai trò cán bộ.
+     *
+     * @param role mã vai trò người dùng
+     * @return đoạn điều kiện SQL {@code EXISTS (...)} sử dụng 1 tham số {@code account_id}, hoặc {@code null} nếu vai trò không khớp
+     */
     private String staffScopePredicate(String role) {
+        // Với vai trò STAFF: chỉ được xem/thao tác các hoạt động mà bản thân là cán bộ phụ trách trực tiếp.
         if ("STAFF".equals(role)) {
             return """
                     EXISTS (SELECT 1 FROM staff scoped_staff
@@ -401,6 +507,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                               AND scoped_staff.id = a.responsible_staff_id)
                     """;
         }
+        // Với lãnh đạo/thư ký đơn vị: được quản lý mọi hoạt động thuộc các đơn vị mà cán bộ được phân công.
         if ("UNIT_DEPUTY_HEAD".equals(role) || "UNIT_HEAD".equals(role)
                 || "UNIT_SECRETARY".equals(role)) {
             return """
@@ -411,12 +518,22 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                               AND sa.department_id = a.responsible_department_id)
                     """;
         }
+        // Các vai trò khác không có predicate phạm vi cán bộ.
         return null;
     }
 
+    /**
+     * Thực thi truy vấn lấy danh sách hoạt động ngoại khóa kèm đầy đủ thông tin JOIN từ các bảng danh mục,
+     * có thể lọc thêm theo điều kiện phạm vi ({@code scope}) của tài khoản cán bộ.
+     *
+     * @param scope     điều kiện WHERE bổ sung theo vai trò (null nếu lấy toàn bộ)
+     * @param accountId ID tài khoản để gán cho tham số trong {@code scope} (null nếu không lọc)
+     * @return danh sách {@link ExtracurricularActivityResponseDTO} sắp xếp theo ID giảm dần
+     */
     private List<ExtracurricularActivityResponseDTO> queryActivitiesWithDetails(String scope, Integer accountId) {
         ensureAttendanceSessionSchema();
         List<ExtracurricularActivityResponseDTO> list = new ArrayList<>();
+        // Truy vấn LEFT JOIN 7 bảng liên quan (học kỳ, loại, cấp tổ chức, đơn vị, cán bộ, đối tác) và ghép động mệnh đề WHERE nếu có phạm vi lọc.
         String sql = """
     SELECT
         a.*,
@@ -441,10 +558,12 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
         try (Connection conn = DBContext.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
+            // Chỉ gán tham số accountId khi truy vấn có mệnh đề WHERE lọc theo phạm vi cán bộ.
             if (accountId != null) {
                 stmt.setInt(1, accountId);
             }
             try (ResultSet rs = stmt.executeQuery()) {
+                // Duyệt từng dòng kết quả và ánh xạ toàn bộ thuộc tính chính cùng các cột JOIN sang DTO phản hồi.
                 while (rs.next()) {
                     ExtracurricularActivityResponseDTO dto = new ExtracurricularActivityResponseDTO();
                     dto.setId(rs.getInt("id"));
@@ -457,6 +576,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     dto.setResponsibleStaffId(rs.getInt("responsible_staff_id"));
                     dto.setPartnerCompanyId((Integer) rs.getObject("partner_company_id"));
                     dto.setPartnerStaffId((Integer) rs.getObject("partner_staff_id"));
+                    // Chuyển đổi tính chất hoạt động từ chuỗi DB sang enum (cho phép null).
                     String nature = rs.getString("nature");
                     dto.setNature(nature == null ? null : Enum.ActivityNature.valueOf(nature));
                     dto.setSummaryRequired(rs.getBoolean("is_summary_required"));
@@ -467,12 +587,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                     dto.setActivityStatus(Enum.ActivityStatus.valueOf(rs.getString("activity_status")));
                     dto.setApprovalStatus(Enum.ApprovalStatus.valueOf(rs.getString("approval_status")));
 
+                    // Quy đổi mốc thời gian bắt đầu và kết thúc từ UTC về múi giờ hệ thống.
                     Timestamp startTime = rs.getTimestamp("start_time");
                     dto.setStartTime(startTime == null
                             ? null : DateTimeUtil.fromUtc(startTime.toLocalDateTime()));
                     Timestamp endTime = rs.getTimestamp("end_time");
                     dto.setEndTime(endTime == null
                             ? null : DateTimeUtil.fromUtc(endTime.toLocalDateTime()));
+                    // Xác định trạng thái công khai hiệu lực dựa trên cờ is_public, yêu cầu form và tính chất hoạt động.
                     boolean requiresForm = rs.getBoolean("registration_form_required");
                     dto.setRegistrationFormRequired(requiresForm);
                     dto.setPublic(rs.getBoolean("is_public")
@@ -500,12 +622,19 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 }
             }
         } catch (SQLException e) {
+            // Ghi log mức SEVERE và ném ngoại lệ runtime nếu truy vấn danh sách chi tiết thất bại.
             LOGGER.log(Level.SEVERE, "Failed to query extracurricular activity list.", e);
             throw new IllegalStateException("Failed to find all activity details.", e);
         }
         return list;
     }
 
+    /**
+     * Tìm một hoạt động ngoại khóa theo khóa chính ({@code id}).
+     *
+     * @param id ID hoạt động cần tìm
+     * @return đối tượng {@link ExtracurricularActivity} hoặc {@code null} nếu không tồn tại
+     */
     @Override
     public ExtracurricularActivity findById(Integer id) {
         String sql = "SELECT * FROM extracurricular_activity WHERE id = ?";
@@ -514,43 +643,71 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
+                // Nếu có bản ghi khớp thì ánh xạ sang model, ngược lại trả về null.
                 return rs.next() ? mapActivity(rs) : null;
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to find extracurricular activity by ID.", e);
         }
     }
 
+    /**
+     * Đếm số đơn đăng ký đang giữ chỗ ({@code SUBMITTED} hoặc {@code APPROVED}) của một hoạt động
+     * để kiểm tra sức chứa tối đa ({@code max_participants}).
+     *
+     * @param activityId ID hoạt động cần đếm
+     * @return số đơn đăng ký đang chiếm chỗ
+     */
     @Override
     public int countReservedApplications(int activityId) {
+        // JOIN bảng đơn đăng ký với biểu mẫu đăng ký của hoạt động và chỉ đếm các đơn chưa bị hủy/từ chối.
         String sql = "SELECT COUNT(*) FROM dbo.activity_registration r "
                 + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
                 + "WHERE f.activity_id=? AND r.status IN ('SUBMITTED','APPROVED')";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             try (ResultSet rs = ps.executeQuery()) {
+                // Đọc giá trị COUNT(*) ở cột đầu tiên (mặc định 0 nếu không có dòng trả về).
                 return rs.next() ? rs.getInt(1) : 0;
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to count reserved activity registrations.", e);
         }
     }
 
+    /**
+     * Đếm tổng số đơn đăng ký chưa bị sinh viên rút ({@code status <> 'WITHDRAWN'}) của một hoạt động.
+     *
+     * @param activityId ID hoạt động cần đếm
+     * @return số đơn đăng ký đang hiệu lực
+     */
     @Override
     public int countActiveApplications(int activityId) {
+        // Đếm mọi đơn đăng ký gắn với form của hoạt động ngoại trừ các đơn đã rút (WITHDRAWN).
         String sql = "SELECT COUNT(*) FROM dbo.activity_registration r "
                 + "JOIN dbo.activity_registration_form f ON f.id=r.form_id "
                 + "WHERE f.activity_id=? AND r.status<>'WITHDRAWN'";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, activityId);
             try (ResultSet rs = ps.executeQuery()) {
+                // Đọc kết quả COUNT(*) ở cột đầu tiên (mặc định 0 nếu không có dòng trả về).
                 return rs.next() ? rs.getInt(1) : 0;
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to count reserved activity registrations.", e);
         }
     }
 
+    /**
+     * Thêm mới một hoạt động ngoại khóa vào CSDL và trả về ID tự sinh.
+     *
+     * @param activity đối tượng {@link ExtracurricularActivity} chứa thông tin cần chèn
+     * @return ID mới được sinh ra, hoặc {@code null} nếu không chèn được bản ghi nào
+     * @throws IllegalArgumentException nếu mã hoạt động ({@code code}) bị trùng khóa duy nhất
+     */
     @Override
     public Integer insert(ExtracurricularActivity activity) {
         ensureAttendanceSessionSchema();
@@ -563,13 +720,16 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         try (Connection conn = DBContext.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             bindActivity(ps, activity);
+            // Nếu lệnh INSERT không tác động dòng nào thì trả về null.
             if (ps.executeUpdate() == 0) {
                 return null;
             }
             try (ResultSet keys = ps.getGeneratedKeys()) {
+                // Trả về khóa tự tăng vừa được sinh nếu có, ngược lại null.
                 return keys.next() ? keys.getInt(1) : null;
             }
         } catch (SQLException e) {
+            // Phát hiện lỗi trùng khóa duy nhất (mã hoạt động) để ném ngoại lệ nghiệp vụ thân thiện.
             if (isDuplicateCodeError(e)) {
                 throw new IllegalArgumentException("Extracurricular activity with the same code already exists.", e);
             }
@@ -577,18 +737,34 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
     }
 
+    /**
+     * Cập nhật thông tin hoạt động ngoại khóa mà không thay đổi trạng thái phê duyệt hiện tại.
+     *
+     * @param activity đối tượng hoạt động chứa dữ liệu mới
+     * @return {@code true} nếu cập nhật thành công ít nhất 1 dòng, ngược lại {@code false}
+     */
     @Override
     public boolean update(ExtracurricularActivity activity) {
         return update(activity, null);
     }
 
+    /**
+     * Cập nhật thông tin hoạt động ngoại khóa và tùy chọn cập nhật kèm trạng thái phê duyệt mới.
+     *
+     * @param activity          đối tượng hoạt động cần cập nhật (phải có {@code id > 0})
+     * @param newApprovalStatus trạng thái phê duyệt mới (truyền {@code null} nếu giữ nguyên)
+     * @return {@code true} nếu cập nhật thành công, ngược lại {@code false}
+     * @throws IllegalArgumentException nếu mã hoạt động mới bị trùng với bản ghi khác
+     */
     @Override
     public boolean update(ExtracurricularActivity activity, Enum.ApprovalStatus newApprovalStatus) {
+        // Không thực hiện cập nhật nếu đối tượng null hoặc ID không hợp lệ.
         if (activity == null || activity.getId() <= 0) {
             return false;
         }
         ensureAttendanceSessionSchema();
 
+        // Ghép động cột approval_status vào câu lệnh UPDATE chỉ khi caller yêu cầu đổi trạng thái duyệt.
         String sql = "UPDATE extracurricular_activity SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
@@ -603,22 +779,26 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setString(3, activity.getName());
             ps.setInt(4, activity.getResponsibleDepartmentId());
             ps.setInt(5, activity.getResponsibleStaffId());
+            // Gán NULL nếu hoạt động không gắn doanh nghiệp đối tác, ngược lại gán ID doanh nghiệp.
             if (activity.getPartnerCompanyId() == null) {
                 ps.setNull(6, Types.INTEGER);
             } else {
                 ps.setInt(6, activity.getPartnerCompanyId());
             }
+            // Gán NULL nếu không có cán bộ đối tác đi kèm, ngược lại gán ID cán bộ đối tác.
             if (activity.getPartnerStaffId() == null) {
                 ps.setNull(7, Types.INTEGER);
             } else {
                 ps.setInt(7, activity.getPartnerStaffId());
             }
+            // Gán tên enum tính chất hoạt động (hoặc null nếu chưa thiết lập).
             ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
             ps.setBoolean(9, activity.isSummaryRequired());
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
             ps.setInt(13, activity.getOrganizationLevelId());
+            // Quy đổi thời gian bắt đầu và kết thúc từ múi giờ ứng dụng sang UTC trước khi lưu DB.
             ps.setTimestamp(14, activity.getStartTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
             ps.setTimestamp(15, activity.getEndTime() == null
@@ -628,12 +808,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setBoolean(18, activity.isPublic());
             ps.setInt(19, activity.getAttendanceSessionCount());
             int next = 20;
+            // Nếu có truyền trạng thái phê duyệt mới thì gán tham số động tương ứng trước tham số WHERE id.
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
             ps.setInt(next, activity.getId());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
+            // Kiểm tra mã lỗi SQL trùng unique index/constraint cho mã hoạt động.
             if (isDuplicateCodeError(e)) {
                 throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
             }
@@ -641,18 +823,34 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
     }
 
+    /**
+     * Cập nhật có điều kiện và khóa chống tranh chấp ({@code UPDLOCK, HOLDLOCK}) cho một hoạt động
+     * đang ở trạng thái sắp diễn ra ({@code UPCOMING}), chưa tới giờ bắt đầu ({@code start_time > now}),
+     * còn giữ đúng trạng thái duyệt kỳ vọng và không giảm {@code max_participants} xuống thấp hơn
+     * số lượng đơn đăng ký đã giữ chỗ.
+     *
+     * @param activity               dữ liệu hoạt động mới cần lưu
+     * @param expectedApprovalStatus trạng thái phê duyệt kỳ vọng hiện tại để chống ghi đè lạc quan
+     * @param newApprovalStatus      trạng thái phê duyệt mới (null nếu giữ nguyên)
+     * @param now                    thời điểm hiện tại theo UTC để đối chiếu với {@code start_time}
+     * @return {@code true} nếu thỏa mọi điều kiện và cập nhật thành công, ngược lại {@code false}
+     * @throws IllegalArgumentException nếu mã hoạt động mới bị trùng
+     */
     @Override
     public boolean updateUpcoming(
             ExtracurricularActivity activity,
             Enum.ApprovalStatus expectedApprovalStatus,
             Enum.ApprovalStatus newApprovalStatus,
             LocalDateTime now) {
+        // Từ chối sớm nếu thiếu bất kỳ tham số bắt buộc nào cho điều kiện cập nhật an toàn.
         if (activity == null || activity.getId() <= 0
                 || expectedApprovalStatus == null || now == null) {
             return false;
         }
         ensureAttendanceSessionSchema();
 
+        // Sử dụng gợi ý khóa UPDLOCK + HOLDLOCK trên cả hoạt động lẫn đơn đăng ký để đảm bảo kiểm tra
+        // trạng thái UPCOMING, giờ bắt đầu, trạng thái duyệt kỳ vọng và sức chứa tối đa diễn ra nguyên tử.
         String sql = "UPDATE a WITH (UPDLOCK,HOLDLOCK) SET "
                 + "semester_id = ?, code = ?, name = ?, responsible_department_id = ?, responsible_staff_id = ?, "
                 + "partner_company_id = ?, partner_staff_id = ?, nature = ?, is_summary_required = ?, "
@@ -676,22 +874,26 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setString(3, activity.getName());
             ps.setInt(4, activity.getResponsibleDepartmentId());
             ps.setInt(5, activity.getResponsibleStaffId());
+            // Gán NULL nếu không có doanh nghiệp đối tác, ngược lại gán ID doanh nghiệp.
             if (activity.getPartnerCompanyId() == null) {
                 ps.setNull(6, Types.INTEGER);
             } else {
                 ps.setInt(6, activity.getPartnerCompanyId());
             }
+            // Gán NULL nếu không có cán bộ đối tác, ngược lại gán ID cán bộ đối tác.
             if (activity.getPartnerStaffId() == null) {
                 ps.setNull(7, Types.INTEGER);
             } else {
                 ps.setInt(7, activity.getPartnerStaffId());
             }
+            // Chuyển enum tính chất sang chuỗi hoặc null.
             ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
             ps.setBoolean(9, activity.isSummaryRequired());
             ps.setString(10, activity.getAddress());
             ps.setString(11, activity.getDescription());
             ps.setInt(12, activity.getActivityTypeId());
             ps.setInt(13, activity.getOrganizationLevelId());
+            // Quy đổi thời gian bắt đầu và kết thúc sang UTC trước khi lưu DB.
             ps.setTimestamp(14, activity.getStartTime() == null
                     ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
             ps.setTimestamp(15, activity.getEndTime() == null
@@ -702,9 +904,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setInt(19, activity.getAttendanceSessionCount());
 
             int next = 20;
+            // Gán tham số approval_status mới nếu có yêu cầu chuyển trạng thái duyệt.
             if (newApprovalStatus != null) {
                 ps.setString(next++, newApprovalStatus.name());
             }
+            // Gán các tham số điều kiện WHERE: id, thời điểm hiện tại UTC, trạng thái duyệt kỳ vọng và kiểm tra sức chứa.
             ps.setInt(next++, activity.getId());
             ps.setTimestamp(next++, Timestamp.valueOf(now));
             ps.setString(next++, expectedApprovalStatus.name());
@@ -715,6 +919,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
+            // Chuyển lỗi trùng mã hoạt động thành IllegalArgumentException hiển thị cho người dùng.
             if (isDuplicateCodeError(e)) {
                 throw new IllegalArgumentException("Mã hoạt động đã tồn tại. Vui lòng nhập mã khác.", e);
             }
@@ -722,7 +927,17 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
     }
 
+    /**
+     * Gán giá trị giới hạn số lượng người tham gia ({@code max_participants}) vào {@link PreparedStatement},
+     * lưu thành SQL NULL nếu hoạt động không giới hạn số lượng.
+     *
+     * @param ps       câu lệnh chuẩn bị JDBC
+     * @param index    vị trí tham số trong câu lệnh SQL
+     * @param activity hoạt động nguồn chứa giá trị {@code maxParticipants}
+     * @throws SQLException nếu lỗi gán tham số JDBC
+     */
     private void setMaxParticipants(PreparedStatement ps, int index, ExtracurricularActivity activity) throws SQLException {
+        // Nếu không thiết lập giới hạn người tham gia thì gán SQL NULL, ngược lại gán giá trị số nguyên.
         if (activity.getMaxParticipants() == null) {
             ps.setNull(index, Types.INTEGER);
         } else {
@@ -730,8 +945,17 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         }
     }
 
+    /**
+     * Kiểm tra chuỗi ngoại lệ {@link SQLException} có chứa mã lỗi vi phạm khóa duy nhất của SQL Server
+     * ({@code 2601} - trùng unique index hoặc {@code 2627} - trùng primary/unique constraint) hay không.
+     *
+     * @param exception ngoại lệ SQL gốc
+     * @return {@code true} nếu là lỗi trùng mã, ngược lại {@code false}
+     */
     private boolean isDuplicateCodeError(SQLException exception) {
+        // Duyệt toàn bộ chuỗi ngoại lệ liên kết (getNextException) vì driver JDBC có thể bọc lỗi thực bên dưới.
         for (SQLException current = exception; current != null; current = current.getNextException()) {
+            // Mã 2601 (Unique Index) và 2627 (Unique/Primary Key Constraint) là hai mã lỗi trùng khóa của SQL Server.
             if (current.getErrorCode() == 2601 || current.getErrorCode() == 2627) {
                 return true;
             }
@@ -739,22 +963,32 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         return false;
     }
 
+    /**
+     * Gán toàn bộ 21 tham số của một {@link ExtracurricularActivity} vào câu lệnh {@code INSERT}.
+     *
+     * @param ps       câu lệnh {@link PreparedStatement} cho lệnh chèn
+     * @param activity đối tượng hoạt động nguồn
+     * @throws SQLException nếu lỗi gán tham số JDBC
+     */
     private void bindActivity(PreparedStatement ps, ExtracurricularActivity activity) throws SQLException {
         ps.setInt(1, activity.getSemesterId());
         ps.setString(2, activity.getCode());
         ps.setString(3, activity.getName());
         ps.setInt(4, activity.getResponsibleDepartmentId());
         ps.setInt(5, activity.getResponsibleStaffId());
+        // Gán NULL cho partner_company_id nếu không chọn doanh nghiệp đối tác.
         if (activity.getPartnerCompanyId() == null) {
             ps.setNull(6, Types.INTEGER);
         } else {
             ps.setInt(6, activity.getPartnerCompanyId());
         }
+        // Gán NULL cho partner_staff_id nếu không chọn cán bộ đối tác.
         if (activity.getPartnerStaffId() == null) {
             ps.setNull(7, Types.INTEGER);
         } else {
             ps.setInt(7, activity.getPartnerStaffId());
         }
+        // Gán tên enum cho các cột nature, activity_status, approval_status (giữ null nếu chưa thiết lập).
         ps.setString(8, activity.getNature() == null ? null : activity.getNature().name());
         ps.setBoolean(9, activity.isSummaryRequired());
         ps.setString(10, activity.getAddress());
@@ -763,6 +997,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         ps.setString(13, activity.getApprovalStatus() == null ? null : activity.getApprovalStatus().name());
         ps.setInt(14, activity.getActivityTypeId());
         ps.setInt(15, activity.getOrganizationLevelId());
+        // Quy đổi start_time và end_time sang UTC trước khi lưu vào DB.
         ps.setTimestamp(16, activity.getStartTime() == null
                 ? null : Timestamp.valueOf(DateTimeUtil.toUtc(activity.getStartTime())));
         ps.setTimestamp(17, activity.getEndTime() == null
@@ -773,14 +1008,23 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
         ps.setInt(21, activity.getAttendanceSessionCount());
     }
 
+    /**
+     * Xóa hoàn toàn một hoạt động ngoại khóa cùng toàn bộ dữ liệu phụ thuộc (lịch sử điểm danh,
+     * danh sách tham gia, phân công cán bộ/đơn vị, đối tác và lời mời hợp tác) trong cùng một transaction.
+     *
+     * @param id ID hoạt động cần xóa
+     * @return {@code true} nếu tìm thấy và xóa thành công, {@code false} nếu {@code id} null hoặc không tồn tại
+     */
     @Override
     public boolean delete(Integer id) {
+        // Không thực hiện nếu ID truyền vào là null.
         if (id == null) {
             return false;
         }
 
         String existsSql = "SELECT 1 FROM extracurricular_activity WHERE id = ?";
-        // Remove the partner-company link before its invitation because it references that invitation.
+        // Xóa các bảng con theo thứ tự ràng buộc khóa ngoại (xóa lịch sử điểm danh trước participant,
+        // và xóa liên kết doanh nghiệp đối tác trước lời mời hợp tác vì có khóa ngoại tham chiếu).
         String[] dependentDeletes = {
                 "DELETE h FROM activity_attendance_history h "
                         + "JOIN activity_participant ap ON ap.id = h.activity_participant_id "
@@ -793,18 +1037,21 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
         };
 
+        // Mở transaction để đảm bảo toàn bộ các bước xóa bảng phụ thuộc và bảng chính diễn ra nguyên tử.
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 try (PreparedStatement ps = conn.prepareStatement(existsSql)) {
                     ps.setInt(1, id);
                     try (ResultSet rs = ps.executeQuery()) {
+                        // Nếu hoạt động không tồn tại thì hoàn tác và kết thúc sớm.
                         if (!rs.next()) {
                             conn.rollback();
                             return false;
                         }
                     }
                 }
+                // Duyệt lần lượt các câu lệnh xóa dữ liệu phụ thuộc của hoạt động trước khi xóa bảng chính.
                 for (String sql : dependentDeletes) {
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, id);
@@ -814,26 +1061,41 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 try (PreparedStatement ps =
                              conn.prepareStatement("DELETE FROM extracurricular_activity WHERE id = ?")) {
                     ps.setInt(1, id);
+                    // Nếu bản ghi chính không còn để xóa (ví dụ bị xóa đồng thời) thì rollback.
                     if (ps.executeUpdate() == 0) {
                         conn.rollback();
                         return false;
                     }
                 }
+                // Xác nhận lưu toàn bộ thao tác xóa khi tất cả các bước đều thành công.
                 conn.commit();
                 return true;
             } catch (SQLException e) {
+                // Có lỗi SQL trong transaction thì hoàn tác mọi thay đổi trước khi ném lại ngoại lệ.
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackException) {
+                    // Đính kèm lỗi rollback vào ngoại lệ gốc để không làm mất nguyên nhân ban đầu.
                     e.addSuppressed(rollbackException);
                 }
                 throw e;
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException("Failed to delete extracurricular activity.", e);
         }
     }
 
+    /**
+     * Cập nhật trạng thái phê duyệt của một hoạt động chỉ khi hoạt động đang ở trạng thái {@code UPCOMING},
+     * chưa tới thời điểm bắt đầu ({@code start_time > now}) và trạng thái duyệt hiện tại nằm trong danh sách cho phép.
+     *
+     * @param id          ID hoạt động cần chuyển trạng thái duyệt
+     * @param status      trạng thái phê duyệt đích
+     * @param allowedFrom danh sách các trạng thái phê duyệt hiện tại được phép chuyển đổi
+     * @param now         thời điểm hiện tại theo UTC
+     * @return {@code true} nếu thỏa điều kiện và cập nhật thành công, ngược lại {@code false}
+     */
     @Override
     public boolean updateApprovalStatusIfUpcoming(
             int id,
@@ -841,12 +1103,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             List<Enum.ApprovalStatus> allowedFrom,
             LocalDateTime now) {
 
+        // Kiểm tra tính hợp lệ của tất cả tham số đầu vào trước khi dựng câu lệnh SQL.
         if (id <= 0 || status == null
                 || allowedFrom == null || allowedFrom.isEmpty()
                 || now == null) {
             return false;
         }
 
+        // Xây dựng câu lệnh SQL động với mệnh đề IN (?, ?, ...) tương ứng số phần tử của allowedFrom.
         StringBuilder sql = new StringBuilder(
                 "UPDATE extracurricular_activity "
                         + "SET approval_status = ? "
@@ -856,7 +1120,9 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                         + "AND start_time > ? "
                         + "AND approval_status IN (");
 
+        // Duyệt số lượng trạng thái cho phép để nối đủ placeholder "?" vào mệnh đề IN.
         for (int i = 0; i < allowedFrom.size(); i++) {
+            // Thêm dấu phẩy ngăn cách từ phần tử thứ hai trở đi.
             if (i > 0) {
                 sql.append(",");
             }
@@ -873,6 +1139,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             ps.setTimestamp(3, Timestamp.valueOf(now));
 
             int index = 4;
+            // Gán lần lượt tên enum của các trạng thái duyệt nguồn hợp lệ vào các placeholder trong mệnh đề IN.
             for (Enum.ApprovalStatus from : allowedFrom) {
                 ps.setString(index++, from.name());
             }
@@ -881,26 +1148,32 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException(
                     "Failed to update approval status: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Đồng bộ trạng thái hoạt động bằng thời gian UTC.
+     * Đồng bộ trạng thái hoạt động ngoại khóa và lời mời hợp tác liên quan dựa trên mốc thời gian UTC hiện tại
+     * trong một transaction duy nhất.
+     * Xử lý đầy đủ các chuyển trạng thái quá giờ chưa duyệt (REJECTED/CANCELLED), bắt kịp hoạt động đã qua giờ
+     * kết thúc khi máy chủ Tomcat tạm ngưng, chuyển sang ONGOING và COMPLETED, đồng thời hủy lời mời PENDING.
      *
-     * Xử lý cả trường hợp Tomcat tắt trong thời gian diễn ra hoạt động.
+     * @param now thời điểm đồng bộ theo UTC (không được {@code null})
      */
     @Override
     public void synchronizeActivityStatuses(
             java.time.LocalDateTime now) {
 
+        // Bắt buộc phải có mốc thời gian đồng bộ hợp lệ.
         if (now == null) {
             throw new IllegalArgumentException(
                     "The synchronization time must not be null.");
         }
 
-        // Transition newly rejected activities and their linked partner records atomically.
+        // Bước 1: Tự động từ chối & hủy các hoạt động quá giờ bắt đầu nhưng chưa được duyệt,
+        // đồng thời dùng bảng tạm OUTPUT để hủy lời mời hợp tác và vô hiệu hóa liên kết đối tác tương ứng.
         String rejectUnapprovedSql = """
                 DECLARE @RejectedActivities TABLE (id INT PRIMARY KEY);
 
@@ -954,6 +1227,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                         "AND approval_status = 'APPROVED' " +
                         "AND end_time IS NOT NULL AND end_time <= ?";
 
+        // 5. Hủy mọi lời mời hợp tác đang PENDING thuộc các hoạt động không còn ở trạng thái UPCOMING.
         String cancelInactiveInvitationsSql =
                 "UPDATE activity_collaboration_invitation " +
                         "SET approval_status = 'CANCELLED' " +
@@ -964,6 +1238,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
 
         try (Connection conn = DBContext.getConnection()) {
 
+            // Lưu lại chế độ autoCommit gốc và bắt đầu transaction để 5 bước đồng bộ diễn ra nhất quán.
             boolean originalAutoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
@@ -1016,12 +1291,14 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackException) {
+                    // Gắn lỗi rollback làm suppressed exception để giữ nguyên ngoại lệ nguyên nhân.
                     e.addSuppressed(rollbackException);
                 }
 
                 throw e;
 
             } finally {
+                // Khôi phục lại chế độ autoCommit ban đầu trước khi trả kết nối về pool/đóng kết nối.
                 try {
                     conn.setAutoCommit(originalAutoCommit);
                 } catch (SQLException ignored) {
@@ -1030,18 +1307,29 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             }
 
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException(
                     "Failed to synchronize extracurricular activity statuses.",
                     e);
         }
     }
 
+    /**
+     * Xóa hoạt động và các bảng phụ thuộc trong một transaction chỉ khi hoạt động chưa bắt đầu
+     * ({@code UPCOMING} và {@code start_time > SYSUTCDATETIME()}) hoặc đã bị hủy ({@code CANCELLED}).
+     * Nếu hoạt động đang diễn ra ({@code ONGOING}) hoặc đã hoàn thành ({@code COMPLETED}), toàn bộ thao tác sẽ rollback.
+     *
+     * @param id ID hoạt động cần xóa có điều kiện
+     * @return {@code true} nếu đủ điều kiện và xóa thành công, ngược lại {@code false}
+     */
     @Override
     public boolean deleteIfNotOngoingOrCompleted(int id) {
+        // Bỏ qua ngay nếu ID hoạt động không hợp lệ.
         if (id <= 0) {
             return false;
         }
 
+        // Danh sách câu lệnh xóa các bảng con theo đúng thứ tự phụ thuộc khóa ngoại.
         String[] dependentDeletes = {
                 "DELETE h FROM activity_attendance_history h "
                         + "JOIN activity_participant ap ON ap.id = h.activity_participant_id "
@@ -1053,6 +1341,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 "DELETE FROM activity_partner_company WHERE activity_id = ?",
                 "DELETE FROM activity_collaboration_invitation WHERE activity_id = ?"
         };
+        // Chỉ cho phép xóa bản ghi chính nếu trạng thái là CANCELLED hoặc UPCOMING chưa tới giờ bắt đầu UTC.
         String deleteActivitySql = """
                 DELETE FROM extracurricular_activity
                 WHERE id = ?
@@ -1064,9 +1353,11 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                   )
                 """;
 
+        // Thực thi xóa bảng con và xóa có điều kiện bảng chính trong cùng một transaction để dễ rollback nếu điều kiện không thỏa.
         try (Connection conn = DBContext.getConnection()) {
             conn.setAutoCommit(false);
             try {
+                // Duyệt và xóa tạm các dữ liệu phụ thuộc của hoạt động trong phạm vi transaction.
                 for (String sql : dependentDeletes) {
                     try (PreparedStatement ps = conn.prepareStatement(sql)) {
                         ps.setInt(1, id);
@@ -1075,29 +1366,42 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
                 }
                 try (PreparedStatement ps = conn.prepareStatement(deleteActivitySql)) {
                     ps.setInt(1, id);
+                    // Nếu lệnh xóa chính không xóa được dòng nào (đang ONGOING/COMPLETED hoặc không tồn tại) thì rollback cả dữ liệu con.
                     if (ps.executeUpdate() == 0) {
                         conn.rollback();
                         return false;
                     }
                 }
+                // Xác nhận xóa thành công sau khi bản ghi chính thỏa điều kiện và đã được xóa.
                 conn.commit();
                 return true;
             } catch (SQLException e) {
+                // Hoàn tác toàn bộ transaction nếu xảy ra lỗi SQL ở bất kỳ bước nào.
                 try {
                     conn.rollback();
                 } catch (SQLException rollbackException) {
+                    // Giữ lại lỗi rollback dưới dạng suppressed exception.
                     e.addSuppressed(rollbackException);
                 }
                 throw e;
             }
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime.
             throw new IllegalStateException(
                     "Failed to delete activity that has not started or was cancelled.", e);
         }
     }
 
+    /**
+     * Tính toán lại và cập nhật cột {@code is_public} của một hoạt động dựa trên tính chất,
+     * cấu hình yêu cầu biểu mẫu đăng ký và sự tồn tại của biểu mẫu đăng ký trong CSDL.
+     *
+     * @param activityId ID hoạt động cần đồng bộ cờ công khai
+     * @return {@code true} nếu cập nhật được bản ghi hoạt động, ngược lại {@code false}
+     */
     @Override
     public boolean refreshPublic(int activityId) {
+        // Hoạt động được công khai (is_public = 1) nếu không yêu cầu đăng ký, không yêu cầu form đăng ký, hoặc đã tạo form đăng ký.
         String sql = """
                 UPDATE dbo.extracurricular_activity
                 SET is_public = CASE
@@ -1117,6 +1421,7 @@ public class ExtracurricularActivityDAOImpl implements IExtracurricularActivityD
             p.setInt(2, activityId);
             return p.executeUpdate() > 0;
         } catch (SQLException e) {
+            // Bọc lỗi SQL thành ngoại lệ runtime kèm thông điệp tiếng Việt.
             throw new IllegalStateException("Không thể cập nhật trạng thái công khai của hoạt động.", e);
         }
     }
