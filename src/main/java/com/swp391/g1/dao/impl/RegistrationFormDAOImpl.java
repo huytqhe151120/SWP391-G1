@@ -157,6 +157,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra hoạt động được Duyệt
     @Override
     public boolean isActivityApproved(int activityId) {
         String sql = "SELECT 1 FROM dbo.extracurricular_activity WHERE id=? AND approval_status='APPROVED'";
@@ -170,6 +171,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra hoạt động Chưa diễn ra
     @Override
     public boolean isActivityUpcoming(int activityId) {
         String sql = "SELECT 1 FROM dbo.extracurricular_activity WHERE id=? AND activity_status='UPCOMING'";
@@ -183,6 +185,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra hoạt động yêu cầu Điền form đăng ký
     @Override
     public boolean isActivityFormRequired(int activityId) {
         String sql = "SELECT 1 FROM dbo.extracurricular_activity WHERE id=? AND registration_form_required=1";
@@ -196,6 +199,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra form Đăng ký nhanh
     @Override
     public boolean isQuickRegistrationForm(int formId) {
         String sql = "SELECT 1 FROM dbo.activity_registration_form f "
@@ -211,6 +215,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra số chỗ đăng ký
     @Override
     public boolean isAtCapacity(int formId) {
         String sql = "SELECT 1 FROM dbo.activity_registration_form f "
@@ -228,6 +233,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra trạng thái nhận đơn và sức chứa
     @Override
     public boolean isOpenFormAtCapacity(int formId) {
         String sql = "SELECT 1 FROM dbo.activity_registration_form f "
@@ -251,6 +257,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra điều kiện xét duyệt đơn
     @Override
     public boolean isActivityEligibleForApplicationReview(int formId) {
         String sql = "SELECT 1 FROM dbo.activity_registration_form f "
@@ -267,6 +274,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra hoạt động cần điền form đã có form đăng ký chưa
     @Override
     public boolean hasFormForActivity(int activityId, int exceptFormId) {
         String sql = "SELECT 1 FROM dbo.activity_registration_form WHERE activity_id=? AND id<>?";
@@ -286,6 +294,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         synchronizeFormStatusesWithTransitions();
     }
 
+    // Đồng bộ trạng thái form đăng ký theo thời gian
     @Override
     public List<FormStatusTransition> synchronizeFormStatusesWithTransitions() {
         String sql = "SET NOCOUNT ON; "
@@ -366,6 +375,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Tìm Đơn đăng ký trong danh sách
     @Override
     public List<RegistrationApplication> findApplications(int formId) {
         String sql = "SELECT r.id,r.form_id,r.student_id,"
@@ -403,6 +413,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         return applications;
     }
 
+    // Chi tiết đơn
     @Override
     public RegistrationApplication findApplicationById(int registrationId) {
         String sql = "SELECT r.id,r.form_id,r.student_id,"
@@ -507,6 +518,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         return fields;
     }
 
+    // Khóa bản ghi hoạt động
     private boolean lockActivityForForm(Connection c, int formId) throws SQLException {
         String sql = "SELECT a.id FROM dbo.activity_registration_form f "
                 + "JOIN dbo.extracurricular_activity a WITH (UPDLOCK,HOLDLOCK) ON a.id=f.activity_id "
@@ -559,10 +571,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
-    /**
-     * Trả về các đơn đang chờ xử lý nằm trong danh sách chọn theo đúng thứ tự hàng đợi;
-     * nếu có đơn không hợp lệ hoặc không ở trạng thái SUBMITTED thì trả null.
-     */
+
+    // Trả về các đơn đang chờ xử lý nằm trong danh sách chọn theo đúng thứ tự hàng đợi
     private List<Integer> takeQueuePrefix(Connection c, int formId, List<Integer> selected) throws SQLException {
         String sql = "SELECT r.id FROM dbo.activity_registration r "
                 + "WHERE r.form_id=? AND r.status='SUBMITTED' ORDER BY r.pending_since, r.id";
@@ -790,6 +800,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra trạng thái đăng ký đơn
     @Override
     public String getRegistrationStatus(int formId, int studentId) {
         String sql = "SELECT status FROM dbo.activity_registration WHERE form_id=? AND student_id=?";
@@ -804,6 +815,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Duyệt từng đơn 1
     @Override
     public boolean reviewApplication(int registrationId, String expectedStatus, String newStatus,
                                      String rejectionReason) {
@@ -862,6 +874,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Từ chối nhiều đơn
     @Override
     public boolean rejectApplications(int formId, List<Integer> registrationIds, String reason) {
         String sql = "UPDATE r SET status='REJECTED',rejection_reason=? "
@@ -903,6 +916,8 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+
+    // Duyệt nhiều đơn
     @Override
     public boolean approveApplications(int formId, List<Integer> registrationIds) {
         String sql = "UPDATE r SET status='APPROVED',rejection_reason=NULL "
@@ -946,6 +961,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra số lượng, trùng đơn form Đăng ký điền
     @Override
     public boolean registerStudentWithAnswers(int formId, int studentId, String note,
                                               List<RegistrationFormField> answers) {
@@ -969,7 +985,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
                     return false;
                 }
                 
-                // Check for CANCELLED registration to delete before inserting new one
+                // Kiểm tra xem có đăng ký nào đã bị HỦY để xóa trước khi thêm đăng ký mới.
                 String findCancelledSql = "SELECT r.id FROM dbo.activity_registration r "
                         + "WHERE r.form_id=? AND r.student_id=? "
                         + "AND (r.status='WITHDRAWN' OR (r.status='CANCELLED' AND r.cancelled_for_organizer=1))";
@@ -1077,6 +1093,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         return currentFieldCount == submittedFields.size();
     }
 
+    // Lưu thông tin hồ sơ
     @Override
     public Map<String, String> findSavedProfile(int studentId) {
         Map<String, String> profile = new LinkedHashMap<>();
@@ -1314,6 +1331,7 @@ public class RegistrationFormDAOImpl implements IRegistrationFormDAO {
         }
     }
 
+    // Kiểm tra form Đăng ký nhanh
     @Override
     public String registerStudentQuick(int activityId, int studentId, String note) {
         try (Connection c = DBContext.getConnection()) {

@@ -18,7 +18,7 @@ public interface IRecruitmentRoundDAO {
     /** Các đợt đang nhận hồ sơ, hoạt động đã duyệt và chưa diễn ra; kèm vị trí và số đã trúng tuyển. */
     List<RecruitmentRound> findOpenRounds();
 
-    /** Thêm đợt cùng vị trí và câu hỏi trong một transaction; trả về id. Trùng hoạt động thì ném DataAccessException duplicateKey. */
+    // Thêm đợt cùng vị trí và câu hỏi trong một transaction; trả về id.
     int insert(RecruitmentRound round);
 
     /** Cập nhật thông tin chung; chỉ thay vị trí và câu hỏi khi replaceStructure = true. */
@@ -36,7 +36,7 @@ public interface IRecruitmentRoundDAO {
     /** Đợt đã có bất kỳ hồ sơ nào (kể cả đã rút): khóa việc sửa vị trí và câu hỏi. */
     boolean hasApplications(int roundId);
 
-    /** Hoạt động đủ điều kiện và chưa có đợt tuyển (kèm hoạt động includeActivityId nếu có); chỉ điền activityId, activityName. */
+    /** Hoạt động đủ điều kiện và chưa có đợt tuyển (kèm hoạt động includeActivityId nếu có) */
     List<RecruitmentRound> findEligibleActivities(Integer includeActivityId);
 
     /** Giờ mở của đợt đăng ký tham gia cùng hoạt động; null nếu không có. */

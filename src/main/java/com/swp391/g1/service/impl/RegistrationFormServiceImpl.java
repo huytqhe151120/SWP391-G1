@@ -222,6 +222,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         return "Chỉ có thể hủy từ chối đơn đã bị từ chối.";
     }
 
+    // Thu hồi kết quả từ Duyệt
     @Override
     public String undoApplicationApproval(int registrationId) {
         if (registrationId <= 0) return "Đơn đăng ký không hợp lệ.";
@@ -249,7 +250,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (!dao.isActivityUpcoming(f.getActivityId())) {
             return "Chỉ được tạo hoặc chỉnh sửa form đăng ký cho hoạt động ở trạng thái Chưa diễn ra.";
         }
-        // Reject if activity doesn't require registration form
+        // Từ chối nếu hoạt động không yêu cầu điền form
         if (!dao.isActivityFormRequired(f.getActivityId())) {
             return "Hoạt động này không yêu cầu form đăng ký (đăng ký nhanh).";
         }
@@ -476,6 +477,7 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         if (personalInfoError != null) return personalInfoError;
         answerList.add(personalAnswer("application_attendance_commitment",
                 "Tôi cam kết tham dự đầy đủ và đúng giờ.", "true"));
+        // gọi dao
         if (dao.registerStudentWithAnswers(formId, studentId, note == null ? "" : note.trim(), answerList)) return null;
         RegistrationForm currentForm = getById(formId);
         if (currentForm != null && !sameFields(form.getFields(), currentForm.getFields())) {
@@ -498,8 +500,6 @@ public class RegistrationFormServiceImpl implements IRegistrationFormService {
         String restrictionReason = dao.getCancelRestrictionReason(registrationId);
         return restrictionReason != null ? restrictionReason : "Không thể hủy đăng ký.";
     }
-
-
 
     private static String validateFields(List<RegistrationFormField> fields) {
         if (fields == null) return null;

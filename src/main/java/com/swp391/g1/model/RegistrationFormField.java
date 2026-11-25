@@ -5,16 +5,16 @@ import java.util.List;
 
 public class RegistrationFormField {
     private int id;
-    private int formId;
-    private String fieldKey;
-    private String label;
-    private String fieldType;
-    private boolean required;
-    private String options;
-    private boolean saveToProfile;
-    private int sortOrder;
-    private String value;
-    private List<String> selectedOptions = new ArrayList<>();
+    private int formId; // id form
+    private String fieldKey; // mã định danh hoạt động
+    private String label; // nội dung câu hỏi
+    private String fieldType; // loại câu hỏi
+    private boolean required; // bắt buộc trả lời
+    private String options; // danh sách đáp án cho multiple choice
+    private boolean saveToProfile; // lưu thông tin vào hồ sơ sinh viên tái sử dụng
+    private int sortOrder; // thứ tự hiển thị câu hỏi trong form
+    private String value; // giá trị trả lời
+    private List<String> selectedOptions = new ArrayList<>(); // danh sách lựa chọn cho câu hỏi nhiều đáp án
 
     public int getId() {
         return id;

@@ -349,6 +349,7 @@ public class RecruitmentRoundDAOImpl implements IRecruitmentRoundDAO {
         }
     }
 
+    // Xác định chỉ tiêu các đợt tuyển
     private static List<RecruitmentPosition> loadPositions(Connection c, int roundId) throws SQLException {
         String sql = "SELECT p.id,p.round_id,p.name,p.quota,p.sort_order, "
                 + "(SELECT COUNT(*) FROM dbo.organizer_application x WHERE x.accepted_position_id=p.id AND x.status='ACCEPTED') AS accepted_count "

@@ -659,6 +659,7 @@ public class OrganizerRecruitmentServlet extends HttpServlet {
         request.setAttribute("initialJson", structureJson(round));
     }
 
+    // Nhận thao tác staff
     private void managerPost(HttpServletRequest request, HttpServletResponse response, CurrentUser user,
                              String action) throws ServletException, IOException {
         String ctx = request.getContextPath();

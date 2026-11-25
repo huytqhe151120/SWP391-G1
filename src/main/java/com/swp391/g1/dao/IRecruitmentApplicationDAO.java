@@ -46,6 +46,7 @@ public interface IRecruitmentApplicationDAO {
     /** Thu hồi quyết định trúng tuyển/không đạt về revertStatus, trả lại chỉ tiêu. */
     boolean revertDecision(int id, String revertStatus);
 
+    // Cập nhật ghi chú nội bộ
     boolean updateInternalNote(int id, String note);
 
     RecruitmentInterview findInterview(int applicationId);

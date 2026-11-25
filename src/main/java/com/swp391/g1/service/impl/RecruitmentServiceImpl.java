@@ -87,6 +87,7 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
         return activityId > 0 ? roundDao.findParticipationOpenAt(activityId) : null;
     }
 
+    // Khóa vị trí và câu hỏi khi có hồ sơ ứng tuyển
     @Override
     public boolean isStructureLocked(int roundId) {
         return roundId > 0 && roundDao.hasApplications(roundId);
@@ -146,6 +147,7 @@ public class RecruitmentServiceImpl implements IRecruitmentService {
         }
     }
 
+    // Kiểm tra thời gian, vị trí, chỉ tiêu, câu hỏi
     private static String validateRound(RecruitmentRound round) {
         if (round == null) {
             return "Thông tin đợt tuyển không hợp lệ.";

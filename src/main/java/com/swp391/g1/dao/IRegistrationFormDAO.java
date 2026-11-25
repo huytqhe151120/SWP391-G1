@@ -58,6 +58,7 @@ public interface IRegistrationFormDAO {
         return List.of();
     }
 
+    // Tạo form đăng ký mới cho hoạt động
     boolean insert(RegistrationForm form);
 
     boolean update(RegistrationForm form);
@@ -68,9 +69,11 @@ public interface IRegistrationFormDAO {
 
     String getRegistrationStatus(int formId, int studentId);
 
+    // Thực hiện transaction đăng ký và kiểm tra lại sức chứa trước khi lưu
     boolean registerStudentWithAnswers(int formId, int studentId, String note,
                                        List<RegistrationFormField> answers);
 
+    // // Duyệt từng đơn 1
     boolean reviewApplication(int registrationId, String expectedStatus, String newStatus,
                               String rejectionReason);
 

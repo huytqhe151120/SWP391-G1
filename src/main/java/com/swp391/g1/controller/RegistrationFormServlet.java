@@ -325,6 +325,7 @@ public class RegistrationFormServlet extends HttpServlet {
                     answers.add(field);
                 }
                 Map<String, String> submittedInfo = personalInfo(student);
+                // gọi service
                 error = service.registerWithAnswers(id(req), student.getId(), req.getParameter("note"), answers,
                         submittedInfo, "true".equals(req.getParameter("attendanceCommitment")));
                 if (error == null) {
